@@ -35,7 +35,15 @@ export async function updateSession(request: NextRequest) {
     const path = request.nextUrl.pathname
 
     // Public paths that don't need protection
-    if (path.startsWith('/auth') || path === '/auth/login' || path === '/') {
+    if (path.startsWith('/auth') ||
+        path === '/auth/login' ||
+        path === '/' ||
+        path.includes('manifest') ||
+        path.endsWith('.png') ||
+        path.endsWith('.jpg') ||
+        path.endsWith('.svg') ||
+        path.endsWith('.ico')
+    ) {
         return supabaseResponse
     }
 
