@@ -21,6 +21,10 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Talia Gym",
   },
+  icons: {
+    icon: "/icon.jpg",
+    apple: "/apple-icon.jpg",
+  },
 };
 
 export const viewport: Viewport = {
