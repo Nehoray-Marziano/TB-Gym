@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   turbopack: {}, // Silence Turbopack/Webpack conflict
-  allowedDevOrigins: ["http://192.168.31.219", "http://192.168.31.219:3000", "http://localhost:3000"],
+  // allowedDevOrigins only needed for local dev, Vercel handles this automatically
 };
 
 export default withPWA(nextConfig);
