@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { AnimatePresence, motion } from "framer-motion";
+import confetti from "canvas-confetti";
+import { ArrowRight, ArrowLeft, Check, Heart, AlertCircle, Sparkles } from "lucide-react";
 
 type FormData = {
     fullName: string;
@@ -14,359 +16,195 @@ type FormData = {
     medicalConditions: string;
 };
 
-type FormErrors = {
-    fullName?: string;
-    age?: string;
-    phone?: string;
-    medicalConditions?: string;
-    healthStatus?: string;
-};
-
-// Input Helper Component (Moved Outside)
-interface InputFieldProps {
-    label: string;
-    name: keyof FormData;
-    type?: string;
-    placeholder?: string;
-    dir?: string;
-    formData: FormData;
-    setFormData: React.Dispatch<React.SetStateAction<FormData>>;
-    touched: Record<string, boolean>;
-    errors: FormErrors;
-    handleBlur: (field: string) => void;
-    handlePhoneChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-const InputField = ({
-    label,
-    name,
-    type = "text",
-    placeholder,
-    dir = "rtl",
-    formData,
-    setFormData,
-    touched,
-    errors,
-    handleBlur,
-    handlePhoneChange,
-}: InputFieldProps) => (
-    <div className="relative group">
-        <label className="block text-sm font-medium mb-1.5 text-neutral-400 ml-1">
-            {label}
-        </label>
-        <input
-            type={type}
-            name={name}
-            placeholder={placeholder}
-            value={formData[name] as string}
-            dir={dir}
-            onChange={
-                name === "phone" && handlePhoneChange
-                    ? handlePhoneChange
-                    : (e) => setFormData({ ...formData, [name]: e.target.value })
-            }
-            onBlur={() => handleBlur(name)}
-            className={`w-full bg-neutral-900/50 border rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none [&::-webkit-inner-spin-button]:appearance-none
-        ${touched[name] && errors[name as keyof FormErrors]
-                    ? "border-red-500/50 focus:border-red-500 text-red-100 placeholder:text-red-900/50"
-                    : "border-neutral-800 focus:border-primary text-white placeholder:text-neutral-700"
-                }`}
-        />
-        <AnimatePresence>
-            {touched[name] && errors[name as keyof FormErrors] && (
-                <motion.p
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-xs mt-1 absolute right-1"
-                >
-                    {errors[name as keyof FormErrors]}
-                </motion.p>
-            )}
-        </AnimatePresence>
-    </div>
-);
+const STEPS = [
+    { id: 1, title: "נעים להכיר", description: "מה השם שלך?", field: "fullName" },
+    { id: 2, title: "פרטים אישיים", description: "קצת מספרים", field: "age" },
+    { id: 3, title: "יצירת קשר", description: "איך להשיג אותך?", field: "phone" },
+    { id: 4, title: "הצהרת בריאות", description: "המצב הגופני שלך", field: "health" },
+];
 
 export default function OnboardingPage() {
     const router = useRouter();
     const supabase = createClient();
-    const containerRef = useRef<HTMLDivElement>(null);
-    const formRef = useRef<HTMLFormElement>(null);
 
+    // State
+    const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<FormData>({
         fullName: "",
         age: "",
         phone: "",
-        isHealthy: true,
+        isHealthy: null,
         medicalConditions: "",
     });
+    const [direction, setDirection] = useState(1);
 
-    const [errors, setErrors] = useState<FormErrors>({});
-    const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-    // Validation Logic
-    const validate = (data: FormData): FormErrors => {
-        const newErrors: FormErrors = {};
-        if (!data.fullName.trim()) newErrors.fullName = "אנא הזיני שם מלא";
-
-        if (!data.age) newErrors.age = "אנא הזיני גיל";
-        else {
-            const ageNum = parseInt(data.age);
-            if (isNaN(ageNum) || ageNum < 16 || ageNum > 120)
-                newErrors.age = "גיל חייב להיות בין 16 ל-120";
-        }
-
-        // Phone validation: numbers/dashes, started with 05
-        const phoneRegex = /^05\d-?\d{7}$/;
-        // This allows 0501234567 or 050-1234567
-
-        if (!data.phone.trim()) newErrors.phone = "אנא הזיני מספר טלפון";
-        else if (!phoneRegex.test(data.phone.replace(/-/g, ""))) {
-            newErrors.phone = "מספר טלפון תקין (050-0000000)";
-        }
-
-        if (data.isHealthy === false && !data.medicalConditions.trim()) {
-            newErrors.medicalConditions = "אנא פרטי את המגבלות הרפואיות";
-        }
-        return newErrors;
-    };
-
-    const isValid = Object.keys(validate(formData)).length === 0;
-
-    // Real-time validation
+    // Initial LOAD anim
     useEffect(() => {
-        setErrors(validate(formData));
-    }, [formData]);
-
-    // Auth check only (removed name pre-fill)
-    useEffect(() => {
-        const checkUser = async () => {
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
-            if (!user) {
-                router.push("/auth/login");
-            }
-        };
-        checkUser();
-    }, [router, supabase]);
-
-    // Animation
-    useEffect(() => {
-        const ctx = gsap.context(() => {
-            gsap.fromTo(
-                formRef.current,
-                { y: 30, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.2 }
-            );
-        }, containerRef);
-        return () => ctx.revert();
+        gsap.fromTo(".onboarding-card",
+            { y: 50, opacity: 0 },
+            { y: 0, opacity: 1, duration: 1, ease: "power4.out", delay: 0.2 }
+        );
     }, []);
 
-    const handleBlur = (field: string) => {
-        setTouched((prev) => ({ ...prev, [field]: true }));
+    // Validation
+    const isStepValid = () => {
+        switch (step) {
+            case 1: return formData.fullName.length > 2;
+            case 2: return formData.age && parseInt(formData.age) > 12 && parseInt(formData.age) < 120;
+            case 3: return /^05\d-?\d{7}$/.test(formData.phone);
+            case 4: return formData.isHealthy !== null && (formData.isHealthy === true || formData.medicalConditions.length > 3);
+            default: return false;
+        }
     };
 
-    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value.replace(/[^\d-]/g, "");
-        setFormData({ ...formData, phone: val });
+    const handleNext = () => {
+        if (!isStepValid()) return;
+
+        if (step < STEPS.length) {
+            setDirection(1);
+            setStep(s => s + 1);
+        } else {
+            handleSubmit();
+        }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!isValid) return;
+    const handleBack = () => {
+        if (step > 1) {
+            setDirection(-1);
+            setStep(s => s - 1);
+        }
+    };
 
+    const handleSubmit = async () => {
         setLoading(true);
         try {
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
+            const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("No user found");
 
-            const { error: profileError } = await supabase
-                .from("profiles")
-                .update({
-                    full_name: formData.fullName,
-                    age: parseInt(formData.age),
-                    phone: formData.phone,
-                    onboarding_completed: true,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq("id", user.id);
+            // 1. Update Profile
+            await supabase.from("profiles").update({
+                full_name: formData.fullName,
+                age: parseInt(formData.age),
+                phone: formData.phone,
+                onboarding_completed: true,
+                updated_at: new Date().toISOString(),
+            }).eq("id", user.id);
 
-            if (profileError) throw profileError;
+            // 2. Health Declaration
+            await supabase.from("health_declarations").upsert({
+                id: user.id,
+                is_healthy: formData.isHealthy,
+                medical_conditions: formData.isHealthy ? null : formData.medicalConditions,
+            });
 
-            const { error: healthError } = await supabase
-                .from("health_declarations")
-                .upsert({
-                    id: user.id,
-                    is_healthy: formData.isHealthy,
-                    medical_conditions: formData.isHealthy
-                        ? null
-                        : formData.medicalConditions,
-                });
+            // 3. EXPLOSIVE CONFETTI
+            triggerConfetti();
 
-            if (healthError) throw healthError;
+            // 4. Redirect with delay
+            setTimeout(() => {
+                router.push("/");
+                router.refresh();
+            }, 2500);
 
-            router.push("/");
-            router.refresh();
         } catch (error) {
             console.error(error);
-            alert("שגיאה בשמירה. אנא נסי שוב.");
-        } finally {
+            alert("שגיאה בשמירה, נסי שוב");
             setLoading(false);
         }
     };
 
-    return (
-        <div
-            ref={containerRef}
-            className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden"
-        >
-            <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-primary/20 blur-[128px] rounded-full pointer-events-none" />
-            <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-blue-500/10 blur-[128px] rounded-full pointer-events-none" />
+    const triggerConfetti = () => {
+        const duration = 2000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
-            <form
-                ref={formRef}
-                onSubmit={handleSubmit}
-                className="w-full max-w-lg bg-[#0A0A0A] border border-neutral-800 p-8 md:p-10 rounded-3xl shadow-2xl relative z-10"
-                noValidate
-            >
-                <div className="mb-8 text-center sm:text-right">
-                    <h1 className="text-3xl font-bold mb-2 text-white">נעים להכיר 👋</h1>
-                    <p className="text-neutral-500">
-                        נשמח להכיר אותך קצת יותר לפני שמתחילים.
-                    </p>
-                </div>
+        const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
-                <div className="space-y-6">
-                    <InputField
-                        label="שם מלא"
-                        name="fullName"
-                        placeholder="ישראל ישראלי"
-                        formData={formData}
-                        setFormData={setFormData}
-                        touched={touched}
-                        errors={errors}
-                        handleBlur={handleBlur}
-                    />
+        const interval: any = setInterval(function () {
+            const timeLeft = animationEnd - Date.now();
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <InputField
-                            label="גיל"
-                            name="age"
-                            type="number"
-                            placeholder="25"
-                            formData={formData}
-                            setFormData={setFormData}
-                            touched={touched}
-                            errors={errors}
-                            handleBlur={handleBlur}
-                        />
-                        <InputField
-                            label="טלפון"
-                            name="phone"
+            if (timeLeft <= 0) {
+                return clearInterval(interval);
+            }
+
+            const particleCount = 50 * (timeLeft / duration);
+            confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+            confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+        }, 250);
+    };
+
+    // Render Steps
+    const renderStepContent = () => {
+        switch (step) {
+            case 1:
+                return (
+                    <div className="space-y-4">
+                        <div className="relative group">
+                            <label className="text-[#E2F163] text-sm font-bold uppercase tracking-wider mb-2 block">שם מלא</label>
+                            <input
+                                autoFocus
+                                value={formData.fullName}
+                                onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                                onKeyDown={e => e.key === 'Enter' && handleNext()}
+                                className="w-full bg-transparent border-b-2 border-neutral-800 text-3xl font-black text-white py-2 focus:outline-none focus:border-[#E2F163] transition-colors placeholder:text-neutral-800 text-center"
+                                placeholder="לדוגמה: יעל כהן"
+                            />
+                        </div>
+                    </div>
+                );
+            case 2:
+                return (
+                    <div className="space-y-4 text-center">
+                        <label className="text-[#E2F163] text-sm font-bold uppercase tracking-wider mb-2 block">גיל</label>
+                        <div className="flex justify-center items-center gap-4">
+                            <button onClick={() => setFormData({ ...formData, age: String(Math.max(16, (parseInt(formData.age) || 25) - 1)) })} className="w-12 h-12 rounded-full border border-white/10 hover:bg-white/10 flex items-center justify-center text-white transition-colors text-2xl font-bold">-</button>
+                            <input
+                                type="number"
+                                autoFocus
+                                value={formData.age}
+                                onChange={e => setFormData({ ...formData, age: e.target.value })}
+                                className="w-32 bg-transparent text-6xl font-black text-white py-2 focus:outline-none text-center appearance-none"
+                                placeholder="25"
+                            />
+                            <button onClick={() => setFormData({ ...formData, age: String(Math.min(100, (parseInt(formData.age) || 25) + 1)) })} className="w-12 h-12 rounded-full bg-[#E2F163] text-black flex items-center justify-center transition-colors text-2xl font-bold hover:scale-105">+</button>
+                        </div>
+                    </div>
+                );
+            case 3:
+                return (
+                    <div className="space-y-4">
+                        <label className="text-[#E2F163] text-sm font-bold uppercase tracking-wider mb-2 block text-center">מספר נייד</label>
+                        <input
                             type="tel"
-                            placeholder="050-0000000"
+                            autoFocus
                             dir="ltr"
-                            formData={formData}
-                            setFormData={setFormData}
-                            touched={touched}
-                            errors={errors}
-                            handleBlur={handleBlur}
-                            handlePhoneChange={handlePhoneChange}
+                            value={formData.phone}
+                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                            onKeyDown={e => e.key === 'Enter' && handleNext()}
+                            className="w-full bg-transparent border-b-2 border-neutral-800 text-4xl font-black text-white py-2 focus:outline-none focus:border-[#E2F163] transition-colors placeholder:text-neutral-800 text-center tracking-widest"
+                            placeholder="050-0000000"
                         />
                     </div>
-
-                    <div className="pt-2">
-                        <label className="block text-sm font-medium mb-3 text-neutral-400">
-                            הצהרת בריאות
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div
-                                onClick={() =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        isHealthy: true,
-                                        medicalConditions: "",
-                                    }))
-                                }
-                                className={`relative p-4 rounded-2xl cursor-pointer border transition-all duration-300 flex flex-col items-center justify-center text-center gap-2 group
-                        ${formData.isHealthy
-                                        ? "bg-primary/10 border-primary shadow-[0_0_20px_rgba(245,158,11,0.1)]"
-                                        : "bg-neutral-900 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
-                                    }`}
+                );
+            case 4:
+                return (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                onClick={() => setFormData({ ...formData, isHealthy: true, medicalConditions: "" })}
+                                className={`p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-4 group ${formData.isHealthy === true ? "border-[#E2F163] bg-[#E2F163]/10" : "border-white/5 bg-neutral-900/50 hover:border-white/20"}`}
                             >
-                                <span className="text-2xl mb-1">💪</span>
-                                <span
-                                    className={`text-sm font-semibold transition-colors ${formData.isHealthy ? "text-primary" : "text-neutral-300"
-                                        }`}
-                                >
-                                    בריאה וכשירה
-                                </span>
-                                {formData.isHealthy && (
-                                    <motion.div
-                                        layoutId="check"
-                                        className="absolute top-2 left-2 text-primary"
-                                    >
-                                        <svg
-                                            className="w-5 h-5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M5 13l4 4L19 7"
-                                            />
-                                        </svg>
-                                    </motion.div>
-                                )}
-                            </div>
-
-                            <div
-                                onClick={() =>
-                                    setFormData((prev) => ({ ...prev, isHealthy: false }))
-                                }
-                                className={`relative p-4 rounded-2xl cursor-pointer border transition-all duration-300 flex flex-col items-center justify-center text-center gap-2 group
-                        ${formData.isHealthy === false
-                                        ? "bg-primary/10 border-primary shadow-[0_0_20px_rgba(245,158,11,0.1)]"
-                                        : "bg-neutral-900 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
-                                    }`}
+                                <span className="text-4xl group-hover:scale-110 transition-transform">💪</span>
+                                <span className={`font-bold ${formData.isHealthy === true ? "text-[#E2F163]" : "text-neutral-400"}`}>כשירה לאימון</span>
+                            </button>
+                            <button
+                                onClick={() => setFormData({ ...formData, isHealthy: false })}
+                                className={`p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-4 group ${formData.isHealthy === false ? "border-red-400 bg-red-400/10" : "border-white/5 bg-neutral-900/50 hover:border-white/20"}`}
                             >
-                                <span className="text-2xl mb-1">🩺</span>
-                                <span
-                                    className={`text-sm font-semibold transition-colors ${formData.isHealthy === false
-                                        ? "text-primary"
-                                        : "text-neutral-300"
-                                        }`}
-                                >
-                                    יש לי רגישויות
-                                </span>
-                                {formData.isHealthy === false && (
-                                    <motion.div
-                                        layoutId="check"
-                                        className="absolute top-2 left-2 text-primary"
-                                    >
-                                        <svg
-                                            className="w-5 h-5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M5 13l4 4L19 7"
-                                            />
-                                        </svg>
-                                    </motion.div>
-                                )}
-                            </div>
+                                <span className="text-4xl group-hover:scale-110 transition-transform">🩺</span>
+                                <span className={`font-bold ${formData.isHealthy === false ? "text-red-400" : "text-neutral-400"}`}>יש רגישויות</span>
+                            </button>
                         </div>
 
                         <AnimatePresence>
@@ -374,48 +212,86 @@ export default function OnboardingPage() {
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: "auto", opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-3 relative"
+                                    className="overflow-hidden"
                                 >
                                     <textarea
+                                        autoFocus
                                         value={formData.medicalConditions}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                medicalConditions: e.target.value,
-                                            }))
-                                        }
-                                        className={`w-full bg-neutral-900/50 border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none h-28
-                                ${touched.medicalConditions &&
-                                                errors.medicalConditions
-                                                ? "border-red-500/50 focus:border-red-500"
-                                                : "border-neutral-800 focus:border-primary"
-                                            }`}
-                                        placeholder="פרטי לנו בקצרה על המגבלות הרפואיות..."
+                                        onChange={e => setFormData({ ...formData, medicalConditions: e.target.value })}
+                                        placeholder="פרטי לנו בקצרה..."
+                                        className="w-full bg-neutral-900 border border-white/10 rounded-2xl p-4 text-white focus:border-red-400 focus:outline-none min-h-[100px]"
                                     />
-                                    {touched.medicalConditions && errors.medicalConditions && (
-                                        <p className="text-red-500 text-xs mt-1 absolute right-1">
-                                            {errors.medicalConditions}
-                                        </p>
-                                    )}
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
+                );
+        }
+    }
+
+    if (loading) return (
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden">
+            {/* Creating a celebration background */}
+            <div className="absolute inset-0 bg-[#E2F163]/10 animate-pulse" />
+            <h1 className="text-5xl font-black text-white mb-4 relative z-10">ברוכה הבאה! 🎉</h1>
+            <p className="text-neutral-400 text-lg relative z-10">המנוי שלך הוגדר בהצלחה</p>
+        </div>
+    );
+
+    return (
+        <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-[#E2F163] selection:text-black">
+            {/* Ambient Backgrounds based on step */}
+            <div className={`absolute inset-0 transition-colors duration-1000 ${step === 4 ? "bg-red-900/5" : "bg-[#E2F163]/5"}`} />
+            <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#E2F163]/10 blur-[150px] rounded-full pointer-events-none animate-pulse" />
+
+            <div className="w-full max-w-xl relative z-10">
+                {/* Progress Bar */}
+                <div className="flex gap-2 mb-12 justify-center">
+                    {STEPS.map((s, i) => (
+                        <div key={s.id} className={`h-1.5 rounded-full transition-all duration-500 ${i + 1 <= step ? "w-8 bg-[#E2F163]" : "w-2 bg-neutral-800"}`} />
+                    ))}
+                </div>
+
+                <motion.div
+                    key={step}
+                    custom={direction}
+                    initial={{ x: direction * 50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: direction * -50, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="onboarding-card"
+                >
+                    <div className="text-center mb-10">
+                        <motion.h2 className="text-4xl md:text-5xl font-black text-white mb-3" layoutId="title">
+                            {STEPS[step - 1].title}
+                        </motion.h2>
+                        <p className="text-neutral-500 text-lg font-medium">{STEPS[step - 1].description}</p>
+                    </div>
+
+                    <div className="min-h-[200px] flex flex-col justify-center">
+                        {renderStepContent()}
+                    </div>
+                </motion.div>
+
+                <div className="flex justify-between items-center mt-12 px-4">
+                    <button
+                        onClick={handleBack}
+                        className={`text-neutral-500 font-bold hover:text-white transition-colors flex items-center gap-2 ${step === 1 ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+                    >
+                        <ArrowRight className="w-5 h-5" />
+                        חזרה
+                    </button>
 
                     <button
-                        type="submit"
-                        disabled={!isValid || loading}
-                        className={`w-full font-bold py-4 rounded-xl transition-all duration-300 text-lg
-                ${isValid && !loading
-                                ? "bg-primary text-black hover:bg-amber-400 hover:shadow-[0_4px_24px_rgba(245,158,11,0.4)] translate-y-0"
-                                : "bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-50"
-                            }`}
+                        onClick={handleNext}
+                        disabled={!isStepValid()}
+                        className={`group flex items-center gap-3 bg-white text-black px-8 py-4 rounded-full font-black text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all ${!isStepValid() ? "opacity-50 cursor-not-allowed grayscale" : "hover:scale-105 hover:bg-[#E2F163] hover:shadow-[0_0_40px_rgba(226,241,99,0.4)]"}`}
                     >
-                        {loading ? "שומר נתונים..." : "בואי נתחיל!"}
+                        {step === STEPS.length ? "סיום והרשמה" : "המשך"}
+                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     );
 }

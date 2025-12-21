@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Trash2, Users, Plus, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -56,6 +56,14 @@ export default function AdminSchedulePage() {
     const [sessionBookings, setSessionBookings] = useState<Booking[]>([]);
     const [loadingBookings, setLoadingBookings] = useState(false);
 
+    // Deletion State
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{
+        isOpen: boolean;
+        session: Session | null;
+        userCount: number;
+    }>({ isOpen: false, session: null, userCount: 0 });
+    const [isDeleting, setIsDeleting] = useState(false);
+
     // Form State
     const [newSession, setNewSession] = useState<{
         title: string;
@@ -70,13 +78,6 @@ export default function AdminSchedulePage() {
         time: "08:00",
         max_capacity: 10,
     });
-
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{
-        isOpen: boolean;
-        session: Session | null;
-        userCount: number;
-    }>({ isOpen: false, session: null, userCount: 0 });
-    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         fetchSessions();
@@ -105,9 +106,6 @@ export default function AdminSchedulePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
             const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-            console.log("Current User Role:", profile?.role);
-
-            // Check for 'administrator' specifically
             if (profile?.role !== 'administrator') {
                 alert(`שגיאה: למשתמש זה (${profile?.role}) אין הרשאות מחיקה. נדרש 'administrator'.`);
                 setIsDeleting(false);
@@ -117,62 +115,44 @@ export default function AdminSchedulePage() {
         }
 
         try {
-            // 1. Fetch confimed bookings to refund
+            // 1. Refund Loop
             const { data: bookings } = await supabase
                 .from("bookings")
                 .select("user_id")
                 .eq("session_id", deleteConfirmation.session.id)
                 .eq("status", "confirmed");
 
-            // 2. Refund Loop
             if (bookings && bookings.length > 0) {
-                // Process sequentially to be safe
                 for (const booking of bookings) {
-                    const { data: credit } = await supabase
-                        .from("user_credits")
-                        .select("balance")
-                        .eq("user_id", booking.user_id)
-                        .single();
-
+                    const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", booking.user_id).single();
                     if (credit) {
-                        await supabase
-                            .from("user_credits")
-                            .update({ balance: credit.balance + 1 })
-                            .eq("user_id", booking.user_id);
+                        await supabase.from("user_credits").update({ balance: credit.balance + 1 }).eq("user_id", booking.user_id);
                     }
                 }
             }
 
-            // 2.5 Delete ALL bookings for this session (Foreign Key Cleanup)
-            // Using count: 'exact' to verify we actually deleted them
+            // 2. Delete Bookings
             const { error: bookingsError, count: deletedCount } = await supabase
                 .from("bookings")
                 .delete({ count: 'exact' })
                 .eq("session_id", deleteConfirmation.session.id);
 
-            if (bookingsError) {
-                console.error("Error deleting bookings:", bookingsError);
-                throw new Error("Booking delete failed: " + bookingsError.message);
-            }
+            if (bookingsError) throw new Error("Booking delete failed: " + bookingsError.message);
 
-            // RLS Check: If we found bookings but deleted none, RLS is blocking us
             const expectedToDelete = bookings?.length || 0;
-
             if (expectedToDelete > 0 && (deletedCount === null || deletedCount === 0)) {
-                console.error("RLS BLOCKING: Found bookings but deleted 0.");
                 throw new Error("Critical: Admin cannot delete user bookings. RLS Policy required.");
             }
 
             // 3. Delete Session
             const { error } = await supabase.from("gym_sessions").delete().eq("id", deleteConfirmation.session.id);
-
             if (error) throw error;
 
-            alert(`האימון נמחק ו-${bookings?.length || 0} מתאמנות זוכו!`);
+            // Success feedback
             fetchSessions();
         } catch (err: any) {
-            console.error("Full delete error object:", err);
-            alert("שגיאה במחיקה: " + (err.message || JSON.stringify(err)));
+            console.error("Delete error:", err);
+            alert("שגיאה במחיקה: " + err.message);
         } finally {
             setIsDeleting(false);
             setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 });
@@ -183,18 +163,12 @@ export default function AdminSchedulePage() {
         setLoadingBookings(true);
         const { data, error } = await supabase
             .from("bookings")
-            .select(`
-                id,
-                status,
-                created_at,
-                user_id,
-                users:profiles!user_id (id, full_name, email, phone)
-            `)
+            .select(`id, status, created_at, user_id, users:profiles!user_id (id, full_name, email, phone)`)
             .eq("session_id", sessionId)
             .eq("status", "confirmed");
 
         if (error) {
-            console.error("Error fetching bookings:", error);
+            console.error(error);
             alert("שגיאה בטעינת נרשמות");
         } else {
             // @ts-ignore
@@ -205,30 +179,15 @@ export default function AdminSchedulePage() {
 
     const handleCancelBooking = async (booking: Booking & { user_id: string }) => {
         if (!confirm("האם לבטל את ההרשמה ולזכות את המנויה?")) return;
-
         try {
-            // 1. Refund
-            const { data: credit } = await supabase
-                .from("user_credits")
-                .select("balance")
-                .eq("user_id", booking.user_id)
-                .single();
-
+            const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", booking.user_id).single();
             if (credit) {
-                await supabase
-                    .from("user_credits")
-                    .update({ balance: credit.balance + 1 })
-                    .eq("user_id", booking.user_id);
+                await supabase.from("user_credits").update({ balance: credit.balance + 1 }).eq("user_id", booking.user_id);
             }
-
-            // 2. Delete Booking
             const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
-
             if (error) throw error;
-
-            alert("ההרשמה בוטלה והזיכוי בוצע! 💸");
             if (viewBookingsSession) fetchBookings(viewBookingsSession.id);
-            fetchSessions(); // Update counts
+            fetchSessions();
         } catch (err: any) {
             alert("שגיאה בביטול: " + err.message);
         }
@@ -236,86 +195,63 @@ export default function AdminSchedulePage() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // 1. Validation
-        if (!newSession.title) {
-            alert("אנא הזיני שם לאימון");
-            return;
-        }
-        if (!newSession.date) {
-            alert("אנא בחרי תאריך");
+        if (!newSession.title || !newSession.date) {
+            alert("אנא מלאי את כל השדות");
             return;
         }
 
         try {
-            // Combine Date + Time
             const [hours, minutes] = newSession.time.split(":").map(Number);
             const start = new Date(newSession.date);
             start.setHours(hours, minutes, 0, 0);
+            const end = new Date(start.getTime() + 60 * 60 * 1000);
 
-            const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 Hour
-
-            console.log("Creating session:", { title: newSession.title, start, end });
-
-            const { data, error } = await supabase.from("gym_sessions").insert({
+            const { error } = await supabase.from("gym_sessions").insert({
                 title: newSession.title,
                 description: newSession.description,
                 start_time: start.toISOString(),
                 end_time: end.toISOString(),
                 max_capacity: newSession.max_capacity
-            }).select();
+            });
 
-            if (error) {
-                console.error("Supabase Error:", error);
-                alert(`שגיאה בשמירה: ${error.message}`);
-                return;
-            }
-
-            // Success
-            alert("האימון נוצר בהצלחה! ⚡");
+            if (error) throw error;
             setIsModalOpen(false);
             setNewSession({ title: "", description: "", date: undefined, time: "08:00", max_capacity: 10 });
             fetchSessions();
-        } catch (err) {
-            console.error("Unexpected error:", err);
-            alert("אירעה שגיאה בלתי צפויה");
+        } catch (err: any) {
+            console.error(err);
+            alert("שגיאה בשמירה: " + err.message);
         }
     };
 
-    const incrementCapacity = () => setNewSession(prev => ({ ...prev, max_capacity: prev.max_capacity + 1 }));
-    const decrementCapacity = () => setNewSession(prev => ({ ...prev, max_capacity: Math.max(1, prev.max_capacity - 1) }));
-
-    const formatTime = (iso: string) => {
-        return new Date(iso).toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' });
-    };
-
-    const formatDate = (iso: string) => {
-        return new Date(iso).toLocaleDateString("he-IL", { weekday: 'long', day: 'numeric', month: 'long' });
-    };
-
     return (
-        <div className="pb-20">
-            <header className="flex justify-between items-center mb-8">
+        <div className="pb-24 font-sans text-neutral-100">
+            {/* Header */}
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-1">ניהול מערכת שעות</h1>
-                    <p className="text-neutral-400 text-sm">צרי ועכני אימונים</p>
+                    <h1 className="text-4xl font-black text-white mb-2 tracking-tight">ניהול מערכת שעות</h1>
+                    <p className="text-neutral-400 font-medium">צרי ועכני אימונים לקהילה שלך</p>
                 </div>
                 <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-primary text-black px-5 py-3 rounded-2xl font-bold shadow-[0_0_20px_rgba(156,169,134,0.3)] flex items-center gap-2"
+                    className="group bg-[#E2F163] text-black px-6 py-3 rounded-2xl font-bold shadow-[0_0_30px_rgba(226,241,99,0.3)] flex items-center gap-2 hover:shadow-[0_0_40px_rgba(226,241,99,0.5)] transition-all"
                 >
-                    <span className="text-xl">+</span>
-                    <span className="hidden sm:inline">אימון חדש</span>
+                    <div className="bg-black/10 rounded-full p-1 group-hover:bg-black/20 transition-colors">
+                        <Plus className="w-5 h-5" />
+                    </div>
+                    <span>אימון חדש</span>
                 </motion.button>
             </header>
 
             {loading ? (
-                <div className="flex justify-center mt-20 text-primary">טוען נתונים...</div>
+                <div className="flex justify-center mt-20">
+                    <div className="w-10 h-10 border-4 border-[#E2F163] border-t-transparent rounded-full animate-spin" />
+                </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <AnimatePresence>
+                    <AnimatePresence mode="popLayout">
                         {sessions.map((session, index) => {
                             const count = session.bookings[0]?.count || 0;
                             const fillPercent = Math.min((count / session.max_capacity) * 100, 100);
@@ -324,56 +260,66 @@ export default function AdminSchedulePage() {
                             return (
                                 <motion.div
                                     key={session.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
+                                    layout
+                                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className="bg-neutral-900/60 border border-neutral-800 p-6 rounded-3xl relative overflow-hidden group hover:border-primary/50 transition-colors"
+                                    transition={{ duration: 0.4, delay: index * 0.05, type: "spring" }}
+                                    className="group relative bg-neutral-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-[2rem] overflow-hidden hover:bg-neutral-900/60 hover:border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
                                 >
-                                    <div className="absolute -top-10 -left-10 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
+                                    {/* Glass reflection effect */}
+                                    <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-                                    <div className="flex justify-between items-start mb-4 relative z-10">
+                                    {/* Top Metadata */}
+                                    <div className="flex justify-between items-start mb-6 relative z-10">
                                         <div>
-                                            <h3 className="text-xl font-bold text-white mb-1">{session.title}</h3>
-                                            <p className="text-neutral-400 text-sm flex items-center gap-1">
-                                                <span>🗓️</span> {formatDate(session.start_time)}
-                                            </p>
-                                            <p className="text-neutral-400 text-sm flex items-center gap-1 mt-1">
-                                                <span>⏰</span> {formatTime(session.start_time)} - {formatTime(session.end_time)}
-                                            </p>
+                                            <h3 className="text-2xl font-black text-white mb-2 leading-none">{session.title}</h3>
+                                            <div className="flex items-center gap-4 text-sm font-medium text-neutral-400">
+                                                <div className="flex items-center gap-1.5 bg-neutral-800/50 px-2.5 py-1 rounded-lg">
+                                                    <CalendarIcon className="w-4 h-4 text-[#E2F163]" />
+                                                    {new Date(session.start_time).toLocaleDateString("he-IL", { day: 'numeric', month: 'numeric' })}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 bg-neutral-800/50 px-2.5 py-1 rounded-lg">
+                                                    <Clock className="w-4 h-4 text-[#E2F163]" />
+                                                    {new Date(session.start_time).toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            </div>
                                         </div>
                                         <button
                                             onClick={() => handleDeleteClick(session)}
-                                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-500/10 text-neutral-500 hover:text-red-500 transition-colors"
+                                            className="w-10 h-10 flex items-center justify-center rounded-full bg-neutral-800/50 text-neutral-500 hover:bg-red-500/20 hover:text-red-500 transition-all active:scale-95"
                                         >
-                                            🗑️
+                                            <Trash2 className="w-5 h-5" />
                                         </button>
                                     </div>
 
-                                    <div className="relative z-10">
-                                        <div className="flex justify-between text-xs mb-2 font-medium">
-                                            <span className={isFull ? "text-red-400" : "text-primary"}>
-                                                {isFull ? "מלא" : `${count} נרשמו`}
+                                    {/* Progress Bar */}
+                                    <div className="relative z-10 mb-6">
+                                        <div className="flex justify-between text-xs font-bold mb-2 uppercase tracking-wide">
+                                            <span className={isFull ? "text-red-400" : "text-[#E2F163]"}>
+                                                {isFull ? "NO SEATS" : `${count} REGISTERED`}
                                             </span>
-                                            <span className="text-neutral-500">מתוך {session.max_capacity}</span>
+                                            <span className="text-neutral-600">{session.max_capacity} MAX</span>
                                         </div>
-                                        <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden">
+                                        <div className="h-1.5 w-full bg-neutral-800/80 rounded-full overflow-hidden">
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${fillPercent}%` }}
-                                                className={`h-full rounded-full ${isFull ? "bg-red-500" : "bg-primary"}`}
+                                                className={`h-full rounded-full shadow-[0_0_10px_currentColor] ${isFull ? "bg-red-500 text-red-500" : "bg-[#E2F163] text-[#E2F163]"}`}
                                             />
                                         </div>
                                     </div>
 
+                                    {/* Action Button */}
                                     <button
                                         onClick={() => {
                                             setViewBookingsSession(session);
                                             fetchBookings(session.id);
                                         }}
-                                        className="w-full mt-4 py-2 bg-neutral-800 text-neutral-300 text-sm font-medium rounded-xl hover:bg-neutral-700 transition-colors flex items-center justify-center gap-2"
+                                        className="w-full py-3 bg-white/5 border border-white/5 hover:bg-white/10 text-neutral-200 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 group-hover:border-white/10"
                                     >
-                                        <span>📋</span> צפייה בנרשמות
+                                        <Users className="w-4 h-4 opacity-50" />
+                                        ניהול נרשמות
                                     </button>
                                 </motion.div>
                             )
@@ -382,108 +328,83 @@ export default function AdminSchedulePage() {
                 </div>
             )}
 
-            {
-                !loading && sessions.length === 0 && (
-                    <div className="text-center py-20 bg-neutral-900/30 rounded-3xl border border-dashed border-neutral-800">
-                        <span className="text-4xl block mb-4">🧘‍♀️</span>
-                        <p className="text-lg text-neutral-400">אין אימונים עדיין</p>
-                        <button onClick={() => setIsModalOpen(true)} className="text-primary mt-2 hover:underline">צרי את הראשון</button>
-                    </div>
-                )
-            }
+            {/* Empty State */}
+            {!loading && sessions.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-32 text-center opacity-60">
+                    <div className="w-24 h-24 bg-neutral-800 rounded-full flex items-center justify-center text-4xl mb-6 grayscale">🧘‍♀️</div>
+                    <h3 className="text-xl font-bold text-white mb-2">אין אימונים השבוע</h3>
+                    <p className="text-neutral-500">הלוח ריק, זה הזמן להוסיף קצת אנרגיה!</p>
+                </div>
+            )}
 
-            {/* Create Modal */}
+            {/* CREATE MODAL */}
             <AnimatePresence>
                 {isModalOpen && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             onClick={() => setIsModalOpen(false)}
-                            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                            className="absolute inset-0 bg-black/60 backdrop-blur-xl"
                         />
                         <motion.div
-                            initial={{ scale: 0.9, y: 50, opacity: 0 }}
+                            initial={{ scale: 0.95, y: 20, opacity: 0 }}
                             animate={{ scale: 1, y: 0, opacity: 1 }}
-                            exit={{ scale: 0.9, y: 50, opacity: 0 }}
-                            transition={{ type: "spring", damping: 20 }}
-                            className="bg-[#131512] border border-neutral-700/50 p-8 rounded-[2rem] w-full max-w-md relative z-10 shadow-2xl"
+                            exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                            className="bg-[#1A1C19] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl"
                         >
-                            <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                                    💪
-                                </div>
-                                <h2 className="text-2xl font-bold text-white">אימון חדש</h2>
-                                <p className="text-neutral-500 text-sm">הוסיפי אימון למערכת השעות</p>
-                            </div>
+                            <button onClick={() => setIsModalOpen(false)} className="absolute top-6 left-6 p-2 bg-neutral-800/50 rounded-full hover:bg-neutral-700 transition-colors">
+                                <X className="w-5 h-5 text-neutral-400" />
+                            </button>
+
+                            <h2 className="text-3xl font-black text-white mb-8 text-center tracking-tight">אימון חדש 🔥</h2>
 
                             <form onSubmit={handleCreate} className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-neutral-400 mr-1">שם השיעור</label>
+                                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">שם השיעור</label>
                                     <input
                                         type="text"
                                         value={newSession.title}
                                         onChange={e => setNewSession({ ...newSession, title: e.target.value })}
-                                        placeholder="לדוגמה: פילאטיס מכשירים"
-                                        className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-neutral-700 text-lg"
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-neutral-400 mr-1">תיאור (אופציונלי)</label>
-                                    <textarea
-                                        value={newSession.description}
-                                        onChange={e => setNewSession({ ...newSession, description: e.target.value })}
-                                        placeholder="פירוט קצר על האימון..."
-                                        className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-neutral-700 text-lg min-h-[100px] resize-none"
+                                        className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-[#E2F163] focus:ring-1 focus:ring-[#E2F163]/50 transition-all font-bold text-lg"
+                                        placeholder="לדוגמה: פונקציונלי חזק"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-neutral-400 mr-1">תאריך</label>
+                                        <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">תאריך</label>
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full justify-start text-left font-normal h-14 rounded-2xl bg-neutral-900/50 border-neutral-800 hover:bg-neutral-800 hover:text-white px-3 gap-2",
-                                                        !newSession.date && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                                                    {newSession.date ? format(newSession.date, "PPP", { locale: he }) : <span>בחר תאריך</span>}
+                                                <Button variant={"outline"} className="w-full h-14 rounded-2xl bg-neutral-900 border-neutral-800 text-white hover:bg-neutral-800 hover:text-white justify-between px-4 text-base font-medium">
+                                                    {newSession.date ? format(newSession.date, "dd/MM/yyyy") : <span className="text-neutral-500">בחרי תאריך</span>}
+                                                    <CalendarIcon className="h-4 w-4 opacity-50" />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0 z-[70]" align="start">
-                                                <div dir="ltr">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={newSession.date}
-                                                        onSelect={(d) => d && setNewSession({ ...newSession, date: d })}
-                                                        initialFocus
-                                                    />
-                                                </div>
+                                            <PopoverContent className="w-auto p-0 border-neutral-800 bg-[#1A1C19]" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={newSession.date}
+                                                    onSelect={(d) => d && setNewSession({ ...newSession, date: d })}
+                                                    initialFocus
+                                                    className="rounded-xl border border-neutral-800"
+                                                />
                                             </PopoverContent>
                                         </Popover>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-neutral-400 mr-1">שעה</label>
-                                        <Select
-                                            value={newSession.time}
-                                            onValueChange={(value) => setNewSession({ ...newSession, time: value })}
-                                        >
-                                            <SelectTrigger className="w-full h-14 bg-neutral-900/50 border-neutral-800 rounded-2xl text-lg px-4 text-white">
+                                        <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">שעה</label>
+                                        <Select value={newSession.time} onValueChange={(v) => setNewSession({ ...newSession, time: v })}>
+                                            <SelectTrigger className="w-full h-14 bg-neutral-900 border-neutral-800 rounded-2xl text-base font-medium px-4 text-white hover:bg-neutral-800 focus:ring-[#E2F163]">
                                                 <SelectValue placeholder="בחר שעה" />
                                             </SelectTrigger>
-                                            <SelectContent className="max-h-60 bg-[#1A1C19] border-neutral-800 text-white">
-                                                {Array.from({ length: 35 }).map((_, i) => {
-                                                    const hour = Math.floor(i / 2) + 6;
-                                                    const minute = i % 2 === 0 ? "00" : "30";
-                                                    const timeStr = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                            <SelectContent className="bg-[#1A1C19] border-neutral-800 text-white max-h-60">
+                                                {Array.from({ length: 29 }).map((_, i) => {
+                                                    const h = Math.floor(i / 2) + 7;
+                                                    const m = i % 2 === 0 ? "00" : "30";
+                                                    const t = `${h.toString().padStart(2, '0')}:${m}`;
                                                     return (
-                                                        <SelectItem key={timeStr} value={timeStr} className="text-lg py-3 focus:bg-neutral-800 focus:text-white cursor-pointer">
-                                                            {timeStr}
+                                                        <SelectItem key={t} value={t} className="focus:bg-neutral-800 focus:text-[#E2F163] cursor-pointer">
+                                                            {t}
                                                         </SelectItem>
                                                     );
                                                 })}
@@ -493,113 +414,86 @@ export default function AdminSchedulePage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-neutral-400 mr-1">משתתפות</label>
-                                    <div className="flex items-center justify-center gap-6 bg-neutral-900/50 border border-neutral-800 rounded-2xl p-2">
-                                        <motion.button
-                                            type="button"
-                                            whileTap={{ scale: 0.9 }}
-                                            onClick={decrementCapacity}
-                                            className="w-12 h-12 flex items-center justify-center bg-neutral-800 rounded-xl text-white hover:bg-neutral-700 transition-colors text-2xl"
-                                        >
-                                            -
-                                        </motion.button>
-
-                                        <span className="text-3xl font-bold w-16 text-center">{newSession.max_capacity}</span>
-
-                                        <motion.button
-                                            type="button"
-                                            whileTap={{ scale: 0.9 }}
-                                            onClick={incrementCapacity}
-                                            className="w-12 h-12 flex items-center justify-center bg-primary text-black rounded-xl hover:bg-[#8B9A76] transition-colors text-2xl font-bold"
-                                        >
-                                            +
-                                        </motion.button>
+                                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">מקסימום נרשמות</label>
+                                    <div className="flex items-center gap-4 bg-neutral-900 border border-neutral-800 rounded-2xl p-2 pl-4">
+                                        <div className="flex-1 text-right mr-2 font-bold text-white text-lg">{newSession.max_capacity}</div>
+                                        <div className="flex gap-2">
+                                            <button type="button" onClick={() => setNewSession(p => ({ ...p, max_capacity: Math.max(1, p.max_capacity - 1) }))} className="w-10 h-10 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center font-bold transition-colors">-</button>
+                                            <button type="button" onClick={() => setNewSession(p => ({ ...p, max_capacity: p.max_capacity + 1 }))} className="w-10 h-10 rounded-xl bg-[#E2F163] text-black hover:bg-[#d4e450] flex items-center justify-center font-bold transition-colors">+</button>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="pt-4 flex gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsModalOpen(false)}
-                                        className="flex-1 py-4 rounded-xl font-bold bg-neutral-900 text-neutral-400 hover:bg-neutral-800 border border-neutral-800 transition-colors"
-                                    >
-                                        ביטול
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-1 py-4 rounded-xl font-bold bg-primary text-black hover:bg-[#8B9A76] shadow-[0_4px_20px_rgba(156,169,134,0.3)] transition-all hover:scale-[1.02]"
-                                    >
-                                        שמירה ופרסום
-                                    </button>
-                                </div>
+                                <button
+                                    type="submit"
+                                    className="w-full py-4 rounded-2xl font-black bg-[#E2F163] text-black text-lg hover:shadow-[0_0_30px_rgba(226,241,99,0.4)] hover:scale-[1.02] transition-all active:scale-95"
+                                >
+                                    פרסום אימון
+                                </button>
                             </form>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
 
-            {/* View Bookings Modal */}
+            {/* View Bookings Modal - Glass Style */}
             <AnimatePresence>
-                {
-                    viewBookingsSession && (
-                        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                            <motion.div
-                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                onClick={() => setViewBookingsSession(null)}
-                                className="absolute inset-0 bg-black/80 backdrop-blur-md"
-                            />
-                            <motion.div
-                                initial={{ scale: 0.9, y: 50, opacity: 0 }}
-                                animate={{ scale: 1, y: 0, opacity: 1 }}
-                                exit={{ scale: 0.9, y: 50, opacity: 0 }}
-                                className="bg-[#131512] border border-neutral-700/50 p-8 rounded-[2rem] w-full max-w-lg relative z-10 shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"
-                            >
-                                <div className="text-center mb-6 shrink-0">
-                                    <h2 className="text-2xl font-bold text-white mb-1">רשימת משתתפות</h2>
-                                    <p className="text-neutral-400 text-sm">{viewBookingsSession.title} · {formatDate(viewBookingsSession.start_time)}</p>
-                                </div>
+                {viewBookingsSession && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setViewBookingsSession(null)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+                        />
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                            className="bg-[#1A1C19] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl max-h-[80vh] flex flex-col"
+                        >
+                            <div className="text-center mb-6 shrink-0">
+                                <h2 className="text-2xl font-black text-white mb-1">רשימת משתתפות</h2>
+                                <p className="text-neutral-500 font-medium text-sm">{viewBookingsSession.title}</p>
+                            </div>
 
-                                <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                                    {loadingBookings ? (
-                                        <div className="text-center py-10 text-neutral-500">טוען...</div>
-                                    ) : sessionBookings.length === 0 ? (
-                                        <div className="text-center py-10 text-neutral-500 bg-neutral-900/30 rounded-2xl border border-dashed border-neutral-800">
-                                            אף אחת לא נרשמה עדיין 🦗
-                                        </div>
-                                    ) : (
-                                        sessionBookings.map(booking => (
-                                            <div key={booking.id} className="bg-neutral-900/50 border border-neutral-800 p-4 rounded-2xl flex justify-between items-center group hover:bg-neutral-900 transition-colors">
+                            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                                {loadingBookings ? (
+                                    <div className="flex justify-center p-8"><div className="w-6 h-6 border-2 border-[#E2F163] border-t-transparent rounded-full animate-spin" /></div>
+                                ) : sessionBookings.length === 0 ? (
+                                    <div className="text-center py-10 text-neutral-500 bg-neutral-900/50 rounded-2xl border border-dashed border-neutral-800">
+                                        אף אחת לא נרשמה עדיין 🦗
+                                    </div>
+                                ) : (
+                                    sessionBookings.map(booking => (
+                                        <div key={booking.id} className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl flex justify-between items-center group">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-lg">👩‍</div>
                                                 <div>
-                                                    <p className="font-bold text-white">{booking.users?.full_name || "ללא שם"}</p>
-                                                    <p className="text-xs text-neutral-500">{booking.users?.email}</p>
+                                                    <p className="font-bold text-white text-sm">{booking.users?.full_name || "ללא שם"}</p>
+                                                    <p className="text-xs text-neutral-500 font-mono">{booking.users?.phone}</p>
                                                 </div>
-                                                <button
-                                                    // @ts-ignore
-                                                    onClick={() => handleCancelBooking(booking)}
-                                                    className="text-neutral-500 hover:text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-all"
-                                                    title="בטל הרשמה וזכה למנויה"
-                                                >
-                                                    ❌ ביטול
-                                                </button>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
+                                            <button
+                                                // @ts-ignore
+                                                onClick={() => handleCancelBooking(booking)}
+                                                className="text-xs font-bold text-red-400 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 px-3 py-2 rounded-lg transition-colors"
+                                            >
+                                                ביטול
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
 
-                                <div className="mt-6 pt-4 border-t border-neutral-800 shrink-0">
-                                    <button
-                                        onClick={() => setViewBookingsSession(null)}
-                                        className="w-full py-3 bg-neutral-900 text-neutral-400 hover:text-white rounded-xl font-medium transition-colors"
-                                    >
-                                        סגירה
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
+                            <button onClick={() => setViewBookingsSession(null)} className="mt-6 w-full py-3 bg-neutral-900 text-neutral-400 hover:text-white rounded-xl font-bold transition-colors">
+                                סגירה
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
             </AnimatePresence>
 
-            {/* DELETE SESSION CONFIRMATION MODAL */}
+            {/* Delete Confirmation Modal - Glass Style */}
             <AnimatePresence>
                 {deleteConfirmation.isOpen && (
                     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
@@ -609,40 +503,28 @@ export default function AdminSchedulePage() {
                             className="absolute inset-0 bg-black/80 backdrop-blur-md"
                         />
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[#131512] border border-red-500/30 p-8 rounded-[2rem] w-full max-w-sm relative z-10 shadow-2xl text-center"
+                            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-[#1A1C19] border border-red-500/20 p-8 rounded-[2.5rem] w-full max-w-sm relative z-10 shadow-[0_0_50px_rgba(239,68,68,0.1)] text-center"
                         >
-                            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                                ⚠️
-                            </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">מחיקת אימון</h2>
-                            <p className="text-neutral-400 mb-6">
-                                {deleteConfirmation.userCount > 0 ? (
-                                    <>
-                                        ישנן <span className="text-white font-bold">{deleteConfirmation.userCount}</span> רשומות לאימון זה.
-                                        <br />
-                                        מחיקת האימון תבטל את ההרשמות <br />
-                                        <span className="text-green-400 font-bold">ותזכה את המתאמנות אוטומטית.</span>
-                                    </>
-                                ) : (
-                                    "האם את בטוחה שברצונך למחוק את האימון?"
-                                )}
+                            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-pulse">⚠️</div>
+                            <h2 className="text-2xl font-black text-white mb-2">מחיקת אימון</h2>
+                            <p className="text-neutral-400 mb-8 text-sm leading-relaxed">
+                                {deleteConfirmation.userCount > 0
+                                    ? `ישנן ${deleteConfirmation.userCount} נרשמות. המחיקה תזכה אותן אוטומטית.`
+                                    : "האם את בטוחה? פעולה זו אינה הפיכה."}
                             </p>
 
                             <div className="space-y-3">
                                 <button
                                     onClick={executeDeleteSession}
                                     disabled={isDeleting}
-                                    className="w-full py-4 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full py-4 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
                                 >
-                                    {isDeleting ? "מבצע מחיקה וזיכוי..." : "כן, למחוק ולזכות"}
+                                    {isDeleting ? "מוחק..." : "כן, למחוק"}
                                 </button>
                                 <button
-                                    disabled={isDeleting}
                                     onClick={() => setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 })}
-                                    className="w-full py-4 bg-transparent text-neutral-500 hover:text-white transition-colors"
+                                    className="w-full py-4 text-neutral-500 hover:text-white font-bold transition-colors"
                                 >
                                     ביטול
                                 </button>
