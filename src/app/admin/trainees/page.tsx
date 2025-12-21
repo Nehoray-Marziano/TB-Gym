@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, User, CreditCard } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 type Profile = {
     id: string;
@@ -28,6 +29,7 @@ export default function AdminTraineesPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [editingCredit, setEditingCredit] = useState<{ userId: string; balance: number } | null>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         fetchTrainees();
@@ -63,7 +65,7 @@ export default function AdminTraineesPage() {
 
         if (error) {
             console.error(error);
-            alert("Error fetching profiles: " + error.message);
+            toast({ title: "שגיאה בטעינה", description: error.message, type: "error" });
         } else {
             const formatted = profiles.map((p: any) => ({
                 ...p,
@@ -86,8 +88,9 @@ export default function AdminTraineesPage() {
                 t.id === userId ? { ...t, credits: { balance: newBalance } } : t
             ));
             setEditingCredit(null);
+            toast({ title: "היתרה עודכנה", type: "success" });
         } catch (err: any) {
-            alert("שגיאה בעדכון יתרה");
+            toast({ title: "שגיאה בעדכון יתרה", type: "error" });
         }
     };
 

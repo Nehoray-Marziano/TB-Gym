@@ -3,6 +3,9 @@ import { Geist, Geist_Mono, Rubik } from "next/font/google";
 import "./globals.css";
 import GSAPRegistry from "@/components/gsap-registry";
 import CustomCursor from "@/components/ui/CustomCursor";
+import { ToastProvider } from "@/components/ui/use-toast";
+import { ThemeProvider } from "@/components/theme-provider";
+import PageTransition from "@/components/PageTransition";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,39 +53,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl">
+    <html lang="he" dir="rtl" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} ${rubik.variable} antialiased font-sans`}
       >
         <GSAPRegistry>
           <CustomCursor />
-          <style dangerouslySetInnerHTML={{
-            __html: `
-            :root {
-              --background: 19 21 18;
-              --foreground: 236 240 231;
-              --card: 19 21 18;
-              --card-foreground: 236 240 231;
-              --popover: 19 21 18;
-              --popover-foreground: 236 240 231;
-              --primary: 156 169 134;
-              --primary-foreground: 19 21 18;
-              --secondary: 26 28 25;
-              --secondary-foreground: 236 240 231;
-              --muted: 95 111 82;
-              --muted-foreground: 163 177 160;
-              --accent: 201 213 181;
-              --accent-foreground: 19 21 18;
-              --destructive: 127 29 29;
-              --destructive-foreground: 254 242 242;
-              --border: 44 48 43;
-              --input: 44 48 43;
-              --ring: 156 169 134;
-              --radius: 0.5rem;
-            }
-          `}} />
-          {children}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ToastProvider>
+              <PageTransition>
+                {children}
+              </PageTransition>
+            </ToastProvider>
+          </ThemeProvider>
         </GSAPRegistry>
       </body>
     </html>

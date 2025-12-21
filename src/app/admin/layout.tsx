@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Calendar, Users, Settings, ArrowRight, LogOut } from "lucide-react";
 
 export default function AdminLayout({
     children,
@@ -10,83 +11,41 @@ export default function AdminLayout({
 }) {
     const pathname = usePathname();
 
-    const navItems = [
-        { name: "לוח זמנים", href: "/admin/schedule", icon: "📅" },
-        { name: "ניהול מתאמנות", href: "/admin/trainees", icon: "👥" },
-        { name: "הגדרות", href: "/admin/settings", icon: "⚙️" },
-    ];
-
     return (
-        <div className="flex min-h-screen bg-background text-foreground dir-rtl">
-            {/* Sidebar (Desktop) */}
-            <aside className="w-64 bg-neutral-900 border-l border-neutral-800 p-6 hidden md:flex flex-col fixed inset-y-0 right-0 z-50">
-                <div className="mb-10 flex items-center gap-2">
-                    <span className="text-2xl">🔒</span>
-                    <h1 className="text-xl font-bold bg-gradient-to-br from-primary to-white bg-clip-text text-transparent">
-                        ניהול טליה
-                    </h1>
-                </div>
-
-                <nav className="flex-1 space-y-2">
-                    {navItems.map((item) => {
-                        const isActive = pathname.startsWith(item.href);
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-                  ${isActive
-                                        ? "bg-primary/20 text-primary font-bold shadow-[0_0_15px_rgba(156,169,134,0.1)]"
-                                        : "text-neutral-400 hover:text-white hover:bg-neutral-800"
-                                    }`}
-                            >
-                                <span>{item.icon}</span>
-                                <span>{item.name}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                <div className="mt-auto">
-                    <Link href="/" className="flex items-center gap-2 text-sm text-neutral-500 hover:text-white">
-                        <span>⬅️</span>
-                        חזרה לאתר
-                    </Link>
-                </div>
-            </aside>
+        <div className="min-h-screen bg-[#0A0A0A] text-foreground font-sans relative overflow-x-hidden selection:bg-[#E2F163] selection:text-black">
+            {/* Background Ambient Light */}
+            <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-red-500/5 blur-[120px] rounded-full pointer-events-none" />
+            <div className="fixed bottom-0 right-0 w-[300px] h-[300px] bg-[#E2F163]/5 blur-[100px] rounded-full pointer-events-none" />
 
             {/* Main Content */}
-            <main className="flex-1 p-8 overflow-y-auto pb-24 md:pb-8 md:pr-72">
-                <div className="md:hidden mb-6 flex justify-between items-center">
-                    <h1 className="text-xl font-bold">ניהול טליה</h1>
-                </div>
+            <main className="p-6 pb-32 max-w-5xl mx-auto relative z-10">
                 {children}
             </main>
 
-            {/* Mobile Bottom Nav */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-neutral-800 p-4 pb-6 flex justify-around z-50">
-                {navItems.map((item) => {
-                    const isActive = pathname.startsWith(item.href);
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors
-                    ${isActive ? "text-primary" : "text-neutral-500"}`}
-                        >
-                            <span className="text-xl">{item.icon}</span>
-                            <span>{item.name}</span>
-                        </Link>
-                    )
-                })}
-                <Link
-                    href="/"
-                    className="flex flex-col items-center gap-1 text-xs font-medium text-neutral-500"
-                >
-                    <span className="text-xl">⬅️</span>
-                    <span>יציאה</span>
-                </Link>
-            </nav>
+            {/* Floating Admin Navigation */}
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
+                <div className="bg-[#131512]/90 backdrop-blur-xl border border-white/10 rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/50">
+
+                    <NavIcon href="/admin/schedule" icon={Calendar} isActive={pathname.startsWith("/admin/schedule")} />
+
+                    <div className="w-px h-8 bg-white/10" /> {/* Divider */}
+
+                    <NavIcon href="/admin/trainees" icon={Users} isActive={pathname.startsWith("/admin/trainees")} />
+
+                    <div className="w-px h-8 bg-white/10" /> {/* Divider */}
+
+                    <NavIcon href="/" icon={ArrowRight} isActive={false} /> {/* Back to App */}
+
+                </div>
+            </div>
         </div>
+    );
+}
+
+function NavIcon({ href, icon: Icon, isActive }: { href: string; icon: any; isActive?: boolean }) {
+    return (
+        <Link href={href} className={`w-14 h-14 flex items-center justify-center rounded-full transition-all duration-300 ${isActive ? "bg-[#E2F163] text-black shadow-[0_0_20px_rgba(226,241,99,0.3)] scale-110" : "text-neutral-500 hover:text-white hover:bg-white/5"}`}>
+            <Icon className="w-6 h-6" />
+        </Link>
     );
 }
