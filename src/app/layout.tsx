@@ -1,3 +1,4 @@
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Rubik } from "next/font/google";
 import "./globals.css";
 import GSAPRegistry from "@/components/gsap-registry";
