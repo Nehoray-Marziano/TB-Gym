@@ -1,7 +1,7 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Rubik } from "next/font/google";
 import "./globals.css";
 import GSAPRegistry from "@/components/gsap-registry";
+import CustomCursor from "@/components/ui/CustomCursor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,6 +11,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["hebrew", "latin"],
+  weight: ["300", "400", "500", "700", "900"], // Comprehensive weights
 });
 
 export const metadata: Metadata = {
@@ -46,9 +52,10 @@ export default function RootLayout({
     <html lang="he" dir="rtl">
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${rubik.variable} antialiased font-sans`}
       >
         <GSAPRegistry>
+          <CustomCursor />
           <style dangerouslySetInnerHTML={{
             __html: `
             :root {

@@ -59,6 +59,37 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
+            {/* Navigation Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a href="/admin/schedule" className="block group">
+                    <div className="bg-neutral-900/50 border border-neutral-800 hover:border-primary/50 p-8 rounded-3xl transition-all hover:bg-neutral-800/80">
+                        <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-3xl group-hover:scale-110 transition-transform">
+                            📅
+                        </div>
+                        <h2 className="text-2xl font-bold text-white mb-2">ניהול מערכת שעות</h2>
+                        <p className="text-neutral-400">הוסיפי אימונים חדשים, עכני שעות וצפי בנרשמות.</p>
+                        <div className="mt-6 flex items-center text-primary font-bold text-sm">
+                            <span className="underline">מעבר ליומן</span>
+                            <span className="mr-2 transform group-hover:-translate-x-1 transition-transform">←</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="/admin/trainees" className="block group">
+                    <div className="bg-neutral-900/50 border border-neutral-800 hover:border-primary/50 p-8 rounded-3xl transition-all hover:bg-neutral-800/80">
+                        <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-3xl group-hover:scale-110 transition-transform">
+                            👥
+                        </div>
+                        <h2 className="text-2xl font-bold text-white mb-2">ניהול מתאמנות</h2>
+                        <p className="text-neutral-400">צפי בכל המשתמשות, עכני יתרות כרטיסייה ופרטים אישיים.</p>
+                        <div className="mt-6 flex items-center text-blue-400 font-bold text-sm">
+                            <span className="underline">לרשימת המתאמנות</span>
+                            <span className="mr-2 transform group-hover:-translate-x-1 transition-transform">←</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
             <div className="p-4 bg-neutral-900/50 border border-neutral-800 rounded-2xl text-center text-sm text-neutral-500">
                 הנתונים מתעדכנים בזמן אמת
             </div>
