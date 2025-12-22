@@ -207,83 +207,88 @@ export default function LandingPage() {
                                     )}
                                 </motion.button>
 
-                                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.8 9.9c.2-.5.3-1.1.3-1.7 0-1.2-.5-2.3-1.3-3.1-.8-.8-1.9-1.3-3.1-1.3-1.2 0-2.3.5-3.1 1.3-.8.8-1.3 1.9-1.3 3.1 0 .6.1 1.2.3 1.7L6 19.4h2.5l2.2-4.7c.4.2.9.3 1.3.3.5 0 .9-.1 1.3-.3l2.2 4.7H18l-3.6-9.5c.2-.5.3-1.1.3-1.7zm-5.8 0c0-.8.3-1.6.9-2.2.6-.6 1.3-.9 2.2-.9.8 0 1.6.3 2.2.9.6.6.9 1.3.9 2.2 0 1-.4 1.9-1 2.5l-1.4-2.9h-1.3l-1.4 2.9c-.6-.6-1-1.5-1-2.5z" /></svg>
-                                Apple
-                            </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.02, backgroundColor: "white" }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="flex items-center gap-3 bg-white text-black font-bold py-4 px-6 rounded-2xl transition-colors min-w-[200px] justify-center"
+                                >
+                                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.8 9.9c.2-.5.3-1.1.3-1.7 0-1.2-.5-2.3-1.3-3.1-.8-.8-1.9-1.3-3.1-1.3-1.2 0-2.3.5-3.1 1.3-.8.8-1.3 1.9-1.3 3.1 0 .6.1 1.2.3 1.7L6 19.4h2.5l2.2-4.7c.4.2.9.3 1.3.3.5 0 .9-.1 1.3-.3l2.2 4.7H18l-3.6-9.5c.2-.5.3-1.1.3-1.7zm-5.8 0c0-.8.3-1.6.9-2.2.6-.6 1.3-.9 2.2-.9.8 0 1.6.3 2.2.9.6.6.9 1.3.9 2.2 0 1-.4 1.9-1 2.5l-1.4-2.9h-1.3l-1.4 2.9c-.6-.6-1-1.5-1-2.5z" /></svg>
+                                    Apple
+                                </motion.button>
 
                                 {/* TEMP DEV LOGIN */}
-                        <motion.button
-                            onClick={async () => {
-                                setIsLoading(true);
-                                const email = `dev_${Date.now()}@test.com`;
-                                const password = "password123";
-                                const { error } = await supabase.auth.signUp({
-                                    email,
-                                    password,
-                                    options: {
-                                        data: {
-                                            first_name: "Dev",
-                                            last_name: "Tester",
+                                <motion.button
+                                    onClick={async () => {
+                                        setIsLoading(true);
+                                        const email = `dev_${Date.now()}@test.com`;
+                                        const password = "password123";
+                                        const { error } = await supabase.auth.signUp({
+                                            email,
+                                            password,
+                                            options: {
+                                                data: {
+                                                    first_name: "Dev",
+                                                    last_name: "Tester",
+                                                }
+                                            }
+                                        });
+                                        if (error) {
+                                            // If sign up fails (maybe user exists logic, though timestamp prevents it), try sign in
+                                            console.error("Dev Signup Error", error);
+                                            await supabase.auth.signInWithPassword({ email, password });
                                         }
-                                    }
-                                });
-                                if (error) {
-                                    // If sign up fails (maybe user exists logic, though timestamp prevents it), try sign in
-                                    console.error("Dev Signup Error", error);
-                                    await supabase.auth.signInWithPassword({ email, password });
-                                }
-                                // Force redirect
-                                window.location.href = "/book";
-                            }}
-                            whileHover={{ scale: 1.05 }}
-                            className="px-4 py-2 bg-red-500/20 text-red-400 text-xs rounded-lg border border-red-500/50 mt-2"
-                        >
-                            Dev Login
-                        </motion.button>
-                    </motion.div>
+                                        // Force redirect
+                                        window.location.href = "/book";
+                                    }}
+                                    whileHover={{ scale: 1.05 }}
+                                    className="px-4 py-2 bg-red-500/20 text-red-400 text-xs rounded-lg border border-red-500/50 mt-2"
+                                >
+                                    Dev Login
+                                </motion.button>
+                            </motion.div>
                         )}
-                </AnimatePresence>
-        </div>
+                    </AnimatePresence>
+                </div>
 
-                {/* Live Stats */ }
-    <div className="stats-section mt-32 flex flex-wrap justify-center gap-8 md:gap-16 text-center">
-        <div>
-            <div className="text-4xl md:text-6xl font-black text-white mb-2 flex items-center justify-center gap-1 shadow-green-glow">
-                <span ref={counterRef}>0</span><span>+</span>
-            </div>
-            <div className="text-sm font-black text-neutral-500 uppercase tracking-[0.2em]">מתאמנות פעילות</div>
-        </div>
-        <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-neutral-700 to-transparent" />
-        <div>
-            <div className="text-4xl md:text-6xl font-black text-white mb-2">
-                24/7
-            </div>
-            <div className="text-sm font-black text-neutral-500 uppercase tracking-[0.2em]">זמינות בסטודיו</div>
-        </div>
-    </div>
+                {/* Live Stats */}
+                <div className="stats-section mt-32 flex flex-wrap justify-center gap-8 md:gap-16 text-center">
+                    <div>
+                        <div className="text-4xl md:text-6xl font-black text-white mb-2 flex items-center justify-center gap-1 shadow-green-glow">
+                            <span ref={counterRef}>0</span><span>+</span>
+                        </div>
+                        <div className="text-sm font-black text-neutral-500 uppercase tracking-[0.2em]">מתאמנות פעילות</div>
+                    </div>
+                    <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-neutral-700 to-transparent" />
+                    <div>
+                        <div className="text-4xl md:text-6xl font-black text-white mb-2">
+                            24/7
+                        </div>
+                        <div className="text-sm font-black text-neutral-500 uppercase tracking-[0.2em]">זמינות בסטודיו</div>
+                    </div>
+                </div>
 
             </section >
 
-        {/* Dynamic Feature Cards */ }
-        < section className = "relative z-10 py-32 px-6 max-w-7xl mx-auto" >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[
-                    { icon: Trophy, title: "אלופה", desc: "תחרויות ואתגרים חודשיים שיוציאו ממך את המקסימום." },
-                    { icon: Users, title: "ביחד", desc: "אימונים בקבוצות קטנות שמרגישים בדיוק כמו משפחה." },
-                    { icon: Zap, title: "אנרגיה", desc: "מוזיקה, תאורה ואווירה שגורמים לך לשכוח מהכל ולהתמקד." }
-                ].map((feature, i) => (
-                    <div key={i} className="group p-10 rounded-[2.5rem] bg-neutral-900/40 border border-white/5 backdrop-blur-md hover:bg-neutral-800/80 hover:border-[#E2F163]/30 transition-all duration-500 hover:-translate-y-3 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-[#E2F163]/5 rounded-full blur-[60px] group-hover:bg-[#E2F163]/20 transition-all duration-700" />
+            {/* Dynamic Feature Cards */}
+            < section className="relative z-10 py-32 px-6 max-w-7xl mx-auto" >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {[
+                        { icon: Trophy, title: "אלופה", desc: "תחרויות ואתגרים חודשיים שיוציאו ממך את המקסימום." },
+                        { icon: Users, title: "ביחד", desc: "אימונים בקבוצות קטנות שמרגישים בדיוק כמו משפחה." },
+                        { icon: Zap, title: "אנרגיה", desc: "מוזיקה, תאורה ואווירה שגורמים לך לשכוח מהכל ולהתמקד." }
+                    ].map((feature, i) => (
+                        <div key={i} className="group p-10 rounded-[2.5rem] bg-neutral-900/40 border border-white/5 backdrop-blur-md hover:bg-neutral-800/80 hover:border-[#E2F163]/30 transition-all duration-500 hover:-translate-y-3 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-[#E2F163]/5 rounded-full blur-[60px] group-hover:bg-[#E2F163]/20 transition-all duration-700" />
 
-                        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 border border-white/5 group-hover:border-[#E2F163]/50">
-                            <feature.icon className="w-8 h-8 text-[#E2F163] group-hover:text-white transition-colors" />
+                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 border border-white/5 group-hover:border-[#E2F163]/50">
+                                <feature.icon className="w-8 h-8 text-[#E2F163] group-hover:text-white transition-colors" />
+                            </div>
+
+                            <h3 className="text-2xl font-black mb-3 text-white group-hover:text-[#E2F163] transition-colors">{feature.title}</h3>
+                            <p className="text-neutral-400 font-medium leading-relaxed group-hover:text-neutral-300">{feature.desc}</p>
                         </div>
-
-                        <h3 className="text-2xl font-black mb-3 text-white group-hover:text-[#E2F163] transition-colors">{feature.title}</h3>
-                        <p className="text-neutral-400 font-medium leading-relaxed group-hover:text-neutral-300">{feature.desc}</p>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
             </section >
         </div >
     );
