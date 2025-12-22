@@ -38,168 +38,170 @@ export default function UserDashboard({ user }: { user: any }) {
     }
 
     return (
-        <div className="min-h-[100dvh] bg-background text-foreground pb-32 overflow-x-hidden selection:bg-primary selection:text-black font-sans transition-colors duration-300">
+        <div className="h-[100dvh] bg-background text-foreground overflow-hidden selection:bg-primary selection:text-black font-sans transition-colors duration-300 relative">
             {/* Background Ambient Light */}
             <div className="fixed top-0 right-0 w-[300px] h-[300px] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
             <div className="fixed bottom-0 left-0 w-[200px] h-[200px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-            <div className="p-6 max-w-md mx-auto relative z-10">
-                {/* Header */}
-                <header className="flex justify-between items-start mb-8">
-                    <div>
-                        <p className="text-muted-foreground text-sm font-medium mb-1">{greeting},</p>
-                        <h1 className="text-4xl font-bold text-foreground tracking-tight">
-                            {firstName} <span className="inline-block animate-wave origin-bottom-right">👋</span>
-                        </h1>
-                    </div>
+            {/* Scrollable Content Area */}
+            <div className="h-full overflow-y-auto pb-32">
+                <div className="p-6 max-w-md mx-auto relative z-10">
+                    {/* Header */}
+                    <header className="flex justify-between items-start mb-8">
+                        <div>
+                            <p className="text-muted-foreground text-sm font-medium mb-1">{greeting},</p>
+                            <h1 className="text-4xl font-bold text-foreground tracking-tight">
+                                {firstName} <span className="inline-block animate-wave origin-bottom-right">👋</span>
+                            </h1>
+                        </div>
 
-                    <div className="flex gap-3">
-                        {profile?.role === 'administrator' && (
-                            <Link href="/admin/schedule" passHref>
+                        <div className="flex gap-3">
+                            {profile?.role === 'administrator' && (
+                                <Link href="/admin/schedule" passHref>
+                                    <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black"
+                                        title="ניהול המערכת"
+                                    >
+                                        <Activity className="w-6 h-6" />
+                                    </motion.button>
+                                </Link>
+                            )}
+
+                            <Link href="/profile" passHref>
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black"
-                                    title="ניהול המערכת"
+                                    className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden"
                                 >
-                                    <Activity className="w-6 h-6" />
+                                    <div className="w-full h-full bg-gradient-to-br from-card to-card flex items-center justify-center text-lg font-bold text-foreground">
+                                        {firstName[0]}
+                                    </div>
                                 </motion.button>
                             </Link>
-                        )}
+                        </div>
+                    </header>
 
-                        <Link href="/profile" passHref>
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden"
-                            >
-                                <div className="w-full h-full bg-gradient-to-br from-card to-card flex items-center justify-center text-lg font-bold text-foreground">
-                                    {firstName[0]}
+                    {/* Stats / Credit Card */}
+                    <div className="mb-8">
+                        <div className="bg-gradient-to-br from-[#E2F163] to-[#d4e450] dark:from-[#E2F163] dark:to-[#d4e450] rounded-[2rem] p-6 text-black shadow-[0_10px_40px_rgba(226,241,99,0.2)] relative overflow-hidden group">
+                            <div className="absolute right-[-20%] top-[-20%] w-40 h-40 bg-white/20 blur-3xl rounded-full" />
+
+                            <div className="relative z-10 flex justify-between items-start mb-12">
+                                <div>
+                                    <p className="font-bold text-black/60 text-sm mb-1 uppercase tracking-wider">היתרה שלך</p>
+                                    <h2 className="text-5xl font-bold tracking-tighter counter-value">
+                                        {credits}
+                                    </h2>
                                 </div>
-                            </motion.button>
-                        </Link>
-                    </div>
-                </header>
-
-                {/* Stats / Credit Card */}
-                <div className="mb-8">
-                    <div className="bg-gradient-to-br from-[#E2F163] to-[#d4e450] dark:from-[#E2F163] dark:to-[#d4e450] rounded-[2rem] p-6 text-black shadow-[0_10px_40px_rgba(226,241,99,0.2)] relative overflow-hidden group">
-                        <div className="absolute right-[-20%] top-[-20%] w-40 h-40 bg-white/20 blur-3xl rounded-full" />
-
-                        <div className="relative z-10 flex justify-between items-start mb-12">
-                            <div>
-                                <p className="font-bold text-black/60 text-sm mb-1 uppercase tracking-wider">היתרה שלך</p>
-                                <h2 className="text-5xl font-bold tracking-tighter counter-value">
-                                    {credits}
-                                </h2>
+                                <div className="bg-black/10 p-2 rounded-xl backdrop-blur-sm">
+                                    <Zap className="w-6 h-6 text-black" />
+                                </div>
                             </div>
-                            <div className="bg-black/10 p-2 rounded-xl backdrop-blur-sm">
-                                <Zap className="w-6 h-6 text-black" />
+
+                            <div className="relative z-10 flex justify-between items-end">
+                                <p className="font-medium text-sm text-black/70">שיעורים זמינים</p>
+                                <button className="bg-black text-[#E2F163] px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:scale-105 transition-transform">
+                                    רכישה מהירה +
+                                </button>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="relative z-10 flex justify-between items-end">
-                            <p className="font-medium text-sm text-black/70">שיעורים זמינים</p>
-                            <button className="bg-black text-[#E2F163] px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:scale-105 transition-transform">
-                                רכישה מהירה +
+                    {/* Next Workout */}
+                    <div className="mb-8">
+                        <div className="flex justify-between items-end mb-4 px-1">
+                            <h2 className="text-xl font-bold text-foreground">האימון הבא</h2>
+                            {upcomingSession && <Link href="/book" className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
+                        </div>
+
+                        {upcomingSession ? (
+                            <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 relative overflow-hidden group">
+                                <div className="bg-muted/50 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4 relative z-10">
+                                    <span className="text-primary font-bold text-xl leading-none">
+                                        {new Date(upcomingSession.start_time).getDate()}
+                                    </span>
+                                    <span className="text-muted-foreground text-xs font-medium uppercase mt-1">
+                                        {new Date(upcomingSession.start_time).toLocaleDateString('en-US', { month: 'short' })}
+                                    </span>
+                                </div>
+                                <div className="py-4 relative z-10">
+                                    <h3 className="font-bold text-lg text-foreground mb-1">{upcomingSession.title}</h3>
+                                    <p className="text-muted-foreground text-sm">
+                                        {new Date(upcomingSession.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} • סטודיו ראשי
+                                    </p>
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                            </div>
+                        ) : (
+                            <Link href="/book" className="block">
+                                <div className="bg-card/30 border border-dashed border-border rounded-[2rem] p-8 text-center transition-colors hover:bg-card/40">
+                                    <div className="mx-auto w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3">
+                                        <Activity className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                    <p className="text-muted-foreground text-sm font-medium">לא נרשמת לאימונים קרובים</p>
+                                    <span className="text-primary text-sm font-bold mt-2 inline-block hover:underline">
+                                        זה הזמן להירשם →
+                                    </span>
+                                </div>
+                            </Link>
+                        )}
+                    </div>
+
+                    {/* Quick Actions Grid */}
+                    <div>
+                        <h2 className="text-xl font-bold text-foreground mb-4 px-1">פעולות מהירות</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Link href="/book" className="group">
+                                <div className="bg-card/50 border border-border hover:border-primary/30 p-5 rounded-[2rem] h-32 flex flex-col justify-between transition-all hover:bg-card/80">
+                                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                        <Calendar className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-right">
+                                        <h3 className="text-foreground font-bold">מערכת שעות</h3>
+                                        <p className="text-muted-foreground text-xs mt-1">שרייני מקום</p>
+                                    </div>
+                                </div>
+                            </Link>
+
+                            <button className="group text-right">
+                                <div className="bg-card/50 border border-border hover:border-blue-500/30 p-5 rounded-[2rem] h-32 flex flex-col justify-between transition-all hover:bg-card/80 w-full">
+                                    <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                        <CreditCard className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-foreground font-bold">מחירון</h3>
+                                        <p className="text-muted-foreground text-xs mt-1">רכישת כרטיסייה</p>
+                                    </div>
+                                </div>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Next Workout */}
-                <div className="mb-8">
-                    <div className="flex justify-between items-end mb-4 px-1">
-                        <h2 className="text-xl font-bold text-foreground">האימון הבא</h2>
-                        {upcomingSession && <Link href="/book" className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
-                    </div>
+                {/* Floating Navigation */}
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
+                    <div className="bg-card/80 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20">
+                        <NavIcon href="/" icon={Home} isActive={true} />
 
-                    {upcomingSession ? (
-                        <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 relative overflow-hidden group">
-                            <div className="bg-muted/50 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4 relative z-10">
-                                <span className="text-primary font-bold text-xl leading-none">
-                                    {new Date(upcomingSession.start_time).getDate()}
-                                </span>
-                                <span className="text-muted-foreground text-xs font-medium uppercase mt-1">
-                                    {new Date(upcomingSession.start_time).toLocaleDateString('en-US', { month: 'short' })}
-                                </span>
-                            </div>
-                            <div className="py-4 relative z-10">
-                                <h3 className="font-bold text-lg text-foreground mb-1">{upcomingSession.title}</h3>
-                                <p className="text-muted-foreground text-sm">
-                                    {new Date(upcomingSession.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} • סטודיו ראשי
-                                </p>
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                        </div>
-                    ) : (
-                        <Link href="/book" className="block">
-                            <div className="bg-card/30 border border-dashed border-border rounded-[2rem] p-8 text-center transition-colors hover:bg-card/40">
-                                <div className="mx-auto w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3">
-                                    <Activity className="w-6 h-6 text-muted-foreground" />
-                                </div>
-                                <p className="text-muted-foreground text-sm font-medium">לא נרשמת לאימונים קרובים</p>
-                                <span className="text-primary text-sm font-bold mt-2 inline-block hover:underline">
-                                    זה הזמן להירשם →
-                                </span>
-                            </div>
-                        </Link>
-                    )}
-                </div>
-
-                {/* Quick Actions Grid */}
-                <div>
-                    <h2 className="text-xl font-bold text-foreground mb-4 px-1">פעולות מהירות</h2>
-                    <div className="grid grid-cols-2 gap-4">
-                        <Link href="/book" className="group">
-                            <div className="bg-card/50 border border-border hover:border-primary/30 p-5 rounded-[2rem] h-32 flex flex-col justify-between transition-all hover:bg-card/80">
-                                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                    <Calendar className="w-5 h-5" />
-                                </div>
-                                <div className="text-right">
-                                    <h3 className="text-foreground font-bold">מערכת שעות</h3>
-                                    <p className="text-muted-foreground text-xs mt-1">שרייני מקום</p>
-                                </div>
+                        <Link href="/book">
+                            <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/30 border-[4px] border-background cursor-pointer hover:scale-105 transition-transform relative z-10">
+                                <Plus className="w-8 h-8 text-black" />
                             </div>
                         </Link>
 
-                        <button className="group text-right">
-                            <div className="bg-card/50 border border-border hover:border-blue-500/30 p-5 rounded-[2rem] h-32 flex flex-col justify-between transition-all hover:bg-card/80 w-full">
-                                <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                                    <CreditCard className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h3 className="text-foreground font-bold">מחירון</h3>
-                                    <p className="text-muted-foreground text-xs mt-1">רכישת כרטיסייה</p>
-                                </div>
-                            </div>
-                        </button>
+                        <NavIcon href="/book" icon={Calendar} />
                     </div>
                 </div>
             </div>
-
-            {/* Floating Navigation */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
-                <div className="bg-card/80 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20">
-                    <NavIcon href="/" icon={Home} isActive={true} />
-
-                    <Link href="/book">
-                        <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/30 border-[4px] border-background cursor-pointer hover:scale-105 transition-transform relative z-10">
-                            <Plus className="w-8 h-8 text-black" />
-                        </div>
-                    </Link>
-
-                    <NavIcon href="/book" icon={Calendar} />
-                </div>
-            </div>
-        </div>
-    );
+            );
 }
 
-function NavIcon({ href, icon: Icon, isActive }: { href: string; icon: any; isActive?: boolean }) {
+            function NavIcon({href, icon: Icon, isActive }: {href: string; icon: any; isActive?: boolean }) {
     return (
-        <Link href={href} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}>
-            <Icon className="w-5 h-5" />
-        </Link>
-    );
+            <Link href={href} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}>
+                <Icon className="w-5 h-5" />
+            </Link>
+            );
 }
