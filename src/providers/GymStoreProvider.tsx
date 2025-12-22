@@ -14,7 +14,6 @@ type Session = {
     title: string;
     start_time: string;
     max_capacity: number;
-    max_capacity: number;
     current_bookings: number;
     description?: string | null;
     isRegistered?: boolean;
