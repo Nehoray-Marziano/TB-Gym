@@ -3,21 +3,10 @@
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useGymStore } from "@/providers/GymStoreProvider";
+import { useGymStore, type Session } from "@/providers/GymStoreProvider";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, MapPin, ChevronRight, Check, CalendarPlus, X, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-
-type Session = {
-    id: string;
-    title: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    max_capacity: number;
-    current_bookings?: number;
-    isRegistered?: boolean;
-};
 
 export default function BookingPage() {
     const supabase = createClient();

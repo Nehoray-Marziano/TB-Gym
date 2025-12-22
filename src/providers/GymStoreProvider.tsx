@@ -9,10 +9,11 @@ type Profile = {
     role: string;
 };
 
-type Session = {
+export type Session = {
     id: string;
     title: string;
     start_time: string;
+    end_time: string;
     max_capacity: number;
     current_bookings: number;
     description?: string | null;
