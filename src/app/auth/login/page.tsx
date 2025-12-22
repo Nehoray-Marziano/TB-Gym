@@ -136,7 +136,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Massive Typography */}
-                <h1 className="relative font-black leading-[0.9] tracking-tighter mb-8 drop-shadow-2xl select-none">
+                <h1 className="relative font-bold leading-[0.9] tracking-tighter mb-8 drop-shadow-2xl select-none">
                     <div className="hero-line text-[14vw] md:text-[11vw] text-white mix-blend-overlay">
                         כושר
                     </div>
@@ -164,7 +164,7 @@ export default function LandingPage() {
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(226,241,99,0.4)" }}
                                 whileTap={{ scale: 0.95 }}
-                                className="group relative px-12 py-6 bg-[#E2F163] text-black font-black text-2xl rounded-full overflow-hidden shadow-2xl"
+                                className="group relative px-12 py-6 bg-[#E2F163] text-black font-bold text-2xl rounded-full overflow-hidden shadow-2xl"
                             >
                                 <span className="relative z-10 flex items-center gap-3">
                                     הצטרפי למהפכה <Zap className="w-6 h-6 fill-black animate-pulse" />
@@ -253,17 +253,17 @@ export default function LandingPage() {
                 {/* Live Stats */}
                 <div className="stats-section mt-32 flex flex-wrap justify-center gap-8 md:gap-16 text-center">
                     <div>
-                        <div className="text-4xl md:text-6xl font-black text-white mb-2 flex items-center justify-center gap-1 shadow-green-glow">
+                        <div className="text-4xl md:text-6xl font-bold text-white mb-2 flex items-center justify-center gap-1 shadow-green-glow">
                             <span ref={counterRef}>0</span><span>+</span>
                         </div>
-                        <div className="text-sm font-black text-neutral-500 uppercase tracking-[0.2em]">מתאמנות פעילות</div>
+                        <div className="text-sm font-bold text-neutral-500 uppercase tracking-[0.2em]">מתאמנות פעילות</div>
                     </div>
                     <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-neutral-700 to-transparent" />
                     <div>
-                        <div className="text-4xl md:text-6xl font-black text-white mb-2">
+                        <div className="text-4xl md:text-6xl font-bold text-white mb-2">
                             24/7
                         </div>
-                        <div className="text-sm font-black text-neutral-500 uppercase tracking-[0.2em]">זמינות בסטודיו</div>
+                        <div className="text-sm font-bold text-neutral-500 uppercase tracking-[0.2em]">זמינות בסטודיו</div>
                     </div>
                 </div>
 
@@ -284,7 +284,7 @@ export default function LandingPage() {
                                 <feature.icon className="w-8 h-8 text-[#E2F163] group-hover:text-white transition-colors" />
                             </div>
 
-                            <h3 className="text-2xl font-black mb-3 text-white group-hover:text-[#E2F163] transition-colors">{feature.title}</h3>
+                            <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-[#E2F163] transition-colors">{feature.title}</h3>
                             <p className="text-neutral-400 font-medium leading-relaxed group-hover:text-neutral-300">{feature.desc}</p>
                         </div>
                     ))}

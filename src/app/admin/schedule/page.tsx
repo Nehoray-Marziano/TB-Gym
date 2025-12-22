@@ -229,7 +229,7 @@ export default function AdminSchedulePage() {
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                 <div>
-                    <h1 className="text-4xl font-black text-white mb-2 tracking-tight">ניהול מערכת שעות</h1>
+                    <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">ניהול מערכת שעות</h1>
                     <p className="text-neutral-400 font-medium">צרי ועכני אימונים לקהילה שלך</p>
                 </div>
                 <motion.button
@@ -273,7 +273,7 @@ export default function AdminSchedulePage() {
                                     {/* Top Metadata */}
                                     <div className="flex justify-between items-start mb-6 relative z-10">
                                         <div>
-                                            <h3 className="text-2xl font-black text-white mb-2 leading-none">{session.title}</h3>
+                                            <h3 className="text-2xl font-bold text-white mb-2 leading-none">{session.title}</h3>
                                             <div className="flex items-center gap-4 text-sm font-medium text-neutral-400">
                                                 <div className="flex items-center gap-1.5 bg-neutral-800/50 px-2.5 py-1 rounded-lg">
                                                     <CalendarIcon className="w-4 h-4 text-[#E2F163]" />
@@ -356,7 +356,7 @@ export default function AdminSchedulePage() {
                                 <X className="w-5 h-5 text-neutral-400" />
                             </button>
 
-                            <h2 className="text-3xl font-black text-white mb-8 text-center tracking-tight">אימון חדש 🔥</h2>
+                            <h2 className="text-3xl font-bold text-white mb-8 text-center tracking-tight">אימון חדש 🔥</h2>
 
                             <form onSubmit={handleCreate} className="space-y-6">
                                 <div className="space-y-2">
@@ -425,8 +425,7 @@ export default function AdminSchedulePage() {
                                 </div>
 
                                 <button
-                                    type="submit"
-                                    className="w-full py-4 rounded-2xl font-black bg-[#E2F163] text-black text-lg hover:shadow-[0_0_30px_rgba(226,241,99,0.4)] hover:scale-[1.02] transition-all active:scale-95"
+                                    className="w-full py-4 rounded-2xl font-bold bg-[#E2F163] text-black text-lg hover:shadow-[0_0_30px_rgba(226,241,99,0.4)] hover:scale-[1.02] transition-all active:scale-95"
                                 >
                                     פרסום אימון
                                 </button>
@@ -452,7 +451,7 @@ export default function AdminSchedulePage() {
                             className="bg-[#1A1C19] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl max-h-[80vh] flex flex-col"
                         >
                             <div className="text-center mb-6 shrink-0">
-                                <h2 className="text-2xl font-black text-white mb-1">רשימת משתתפות</h2>
+                                <h2 className="text-2xl font-bold text-white mb-1">רשימת משתתפות</h2>
                                 <p className="text-neutral-500 font-medium text-sm">{viewBookingsSession.title}</p>
                             </div>
 
@@ -507,7 +506,7 @@ export default function AdminSchedulePage() {
                             className="bg-[#1A1C19] border border-red-500/20 p-8 rounded-[2.5rem] w-full max-w-sm relative z-10 shadow-[0_0_50px_rgba(239,68,68,0.1)] text-center"
                         >
                             <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-pulse">⚠️</div>
-                            <h2 className="text-2xl font-black text-white mb-2">מחיקת אימון</h2>
+                            <h2 className="text-2xl font-bold text-white mb-2">מחיקת אימון</h2>
                             <p className="text-neutral-400 mb-8 text-sm leading-relaxed">
                                 {deleteConfirmation.userCount > 0
                                     ? `ישנן ${deleteConfirmation.userCount} נרשמות. המחיקה תזכה אותן אוטומטית.`

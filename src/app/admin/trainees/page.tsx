@@ -105,7 +105,7 @@ export default function AdminTraineesPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
                 <div>
-                    <h1 className="text-4xl font-black text-white mb-2 tracking-tight">ניהול מתאמנות</h1>
+                    <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">ניהול מתאמנות</h1>
                     <p className="text-neutral-400 font-medium">{trainees.length} מתאמנות רשומות במערכת</p>
                 </div>
 
@@ -177,7 +177,7 @@ export default function AdminTraineesPage() {
                                     ) : (
                                         <span
                                             onClick={() => setEditingCredit({ userId: trainee.id, balance: trainee.credits?.balance || 0 })}
-                                            className="text-xl font-black text-white hover:text-[#E2F163] cursor-pointer"
+                                            className="text-xl font-bold text-white hover:text-[#E2F163] cursor-pointer"
                                         >
                                             {trainee.credits?.balance || 0}
                                         </span>

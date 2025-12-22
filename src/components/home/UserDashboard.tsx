@@ -48,7 +48,7 @@ export default function UserDashboard({ user }: { user: any }) {
                 <header className="flex justify-between items-start mb-8">
                     <div>
                         <p className="text-muted-foreground text-sm font-medium mb-1">{greeting},</p>
-                        <h1 className="text-4xl font-black text-foreground tracking-tight">
+                        <h1 className="text-4xl font-bold text-foreground tracking-tight">
                             {firstName} <span className="inline-block animate-wave origin-bottom-right">👋</span>
                         </h1>
                     </div>
@@ -89,7 +89,7 @@ export default function UserDashboard({ user }: { user: any }) {
                         <div className="relative z-10 flex justify-between items-start mb-12">
                             <div>
                                 <p className="font-bold text-black/60 text-sm mb-1 uppercase tracking-wider">היתרה שלך</p>
-                                <h2 className="text-5xl font-black tracking-tighter counter-value">
+                                <h2 className="text-5xl font-bold tracking-tighter counter-value">
                                     {credits}
                                 </h2>
                             </div>

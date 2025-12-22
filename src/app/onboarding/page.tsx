@@ -147,7 +147,7 @@ export default function OnboardingPage() {
                                 value={formData.fullName}
                                 onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                                 onKeyDown={e => e.key === 'Enter' && handleNext()}
-                                className="w-full bg-transparent border-b-2 border-neutral-800 text-3xl font-black text-white py-2 focus:outline-none focus:border-[#E2F163] transition-colors placeholder:text-neutral-800 text-center"
+                                className="w-full bg-transparent border-b-2 border-neutral-800 text-3xl font-bold text-white py-2 focus:outline-none focus:border-[#E2F163] transition-colors placeholder:text-neutral-800 text-center"
                                 placeholder="לדוגמה: יעל כהן"
                             />
                         </div>
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
                                 autoFocus
                                 value={formData.age}
                                 onChange={e => setFormData({ ...formData, age: e.target.value })}
-                                className="w-32 bg-transparent text-6xl font-black text-white py-2 focus:outline-none text-center appearance-none"
+                                className="w-32 bg-transparent text-6xl font-bold text-white py-2 focus:outline-none text-center appearance-none"
                                 placeholder="25"
                             />
                             <button onClick={() => setFormData({ ...formData, age: String(Math.min(100, (parseInt(formData.age) || 25) + 1)) })} className="w-12 h-12 rounded-full bg-[#E2F163] text-black flex items-center justify-center transition-colors text-2xl font-bold hover:scale-105">+</button>
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
                             value={formData.phone}
                             onChange={e => setFormData({ ...formData, phone: e.target.value })}
                             onKeyDown={e => e.key === 'Enter' && handleNext()}
-                            className="w-full bg-transparent border-b-2 border-neutral-800 text-4xl font-black text-white py-2 focus:outline-none focus:border-[#E2F163] transition-colors placeholder:text-neutral-800 text-center tracking-widest"
+                            className="w-full bg-transparent border-b-2 border-neutral-800 text-4xl font-bold text-white py-2 focus:outline-none focus:border-[#E2F163] transition-colors placeholder:text-neutral-800 text-center tracking-widest"
                             placeholder="050-0000000"
                         />
                     </div>
@@ -233,7 +233,7 @@ export default function OnboardingPage() {
         <div className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden">
             {/* Creating a celebration background */}
             <div className="absolute inset-0 bg-[#E2F163]/10 animate-pulse" />
-            <h1 className="text-5xl font-black text-white mb-4 relative z-10">ברוכה הבאה! 🎉</h1>
+            <h1 className="text-5xl font-bold text-white mb-4 relative z-10">ברוכה הבאה! 🎉</h1>
             <p className="text-neutral-400 text-lg relative z-10">המנוי שלך הוגדר בהצלחה</p>
         </div>
     );
@@ -262,7 +262,7 @@ export default function OnboardingPage() {
                     className="onboarding-card"
                 >
                     <div className="text-center mb-10">
-                        <motion.h2 className="text-4xl md:text-5xl font-black text-white mb-3" layoutId="title">
+                        <motion.h2 className="text-4xl md:text-5xl font-bold text-white mb-3" layoutId="title">
                             {STEPS[step - 1].title}
                         </motion.h2>
                         <p className="text-neutral-500 text-lg font-medium">{STEPS[step - 1].description}</p>
@@ -285,7 +285,7 @@ export default function OnboardingPage() {
                     <button
                         onClick={handleNext}
                         disabled={!isStepValid()}
-                        className={`group flex items-center gap-3 bg-white text-black px-8 py-4 rounded-full font-black text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all ${!isStepValid() ? "opacity-50 cursor-not-allowed grayscale" : "hover:scale-105 hover:bg-[#E2F163] hover:shadow-[0_0_40px_rgba(226,241,99,0.4)]"}`}
+                        className={`group flex items-center gap-3 bg-white text-black px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all ${!isStepValid() ? "opacity-50 cursor-not-allowed grayscale" : "hover:scale-105 hover:bg-[#E2F163] hover:shadow-[0_0_40px_rgba(226,241,99,0.4)]"}`}
                     >
                         {step === STEPS.length ? "סיום והרשמה" : "המשך"}
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />

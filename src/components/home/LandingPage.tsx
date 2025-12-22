@@ -206,7 +206,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Massive Typography - Optimized for Mobile */}
-                <h1 className="hero-move relative font-black leading-[0.9] tracking-tighter mb-6 md:mb-8 drop-shadow-2xl select-none">
+                <h1 className="hero-move relative font-bold leading-[0.9] tracking-tighter mb-6 md:mb-8 drop-shadow-2xl select-none">
                     <div className="hero-line text-[20vw] md:text-[11vw] text-white mix-blend-overlay">
                         כושר
                     </div>
@@ -233,7 +233,7 @@ export default function LandingPage() {
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="group relative w-full md:w-auto px-12 py-6 bg-[#E2F163] text-black font-black text-2xl rounded-full overflow-hidden shadow-2xl active:scale-95 transition-transform"
+                                className="group relative w-full md:w-auto px-12 py-6 bg-[#E2F163] text-black font-bold text-2xl rounded-full overflow-hidden shadow-2xl active:scale-95 transition-transform"
                             >
                                 <span className="relative z-10 flex items-center justify-center gap-3">
                                     הצטרפי למהפכה <Zap className="w-6 h-6 fill-black animate-pulse" />
@@ -292,19 +292,19 @@ export default function LandingPage() {
                 {/* Live Stats - Mobile Grid */}
                 <div className="stats-section mt-24 md:mt-32 w-full max-w-2xl mx-auto px-4 grid grid-cols-2 gap-8 md:flex md:justify-center md:gap-16 text-center">
                     <div>
-                        <div className="text-4xl md:text-6xl font-black text-white mb-2 flex items-center justify-center gap-1 shadow-green-glow">
+                        <div className="text-4xl md:text-6xl font-bold text-white mb-2 flex items-center justify-center gap-1 shadow-green-glow">
                             <span ref={counterRef}>0</span><span>+</span>
                         </div>
-                        <div className="text-xs md:text-sm font-black text-neutral-500 uppercase tracking-widest">מתאמנות פעילות</div>
+                        <div className="text-xs md:text-sm font-bold text-neutral-500 uppercase tracking-widest">מתאמנות פעילות</div>
                     </div>
 
                     <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-neutral-700 to-transparent" />
 
                     <div>
-                        <div className="text-4xl md:text-6xl font-black text-white mb-2">
+                        <div className="text-4xl md:text-6xl font-bold text-white mb-2">
                             24/7
                         </div>
-                        <div className="text-xs md:text-sm font-black text-neutral-500 uppercase tracking-widest">זמינות בסטודיו</div>
+                        <div className="text-xs md:text-sm font-bold text-neutral-500 uppercase tracking-widest">זמינות בסטודיו</div>
                     </div>
                 </div>
 
@@ -325,7 +325,7 @@ export default function LandingPage() {
                                 <feature.icon className="w-7 h-7 md:w-8 md:h-8 text-[#E2F163] group-hover:text-white transition-colors" />
                             </div>
 
-                            <h3 className="text-xl md:text-2xl font-black mb-3 text-white group-hover:text-[#E2F163] transition-colors">{feature.title}</h3>
+                            <h3 className="text-xl md:text-2xl font-bold mb-3 text-white group-hover:text-[#E2F163] transition-colors">{feature.title}</h3>
                             <p className="text-neutral-400 font-medium leading-relaxed group-hover:text-neutral-300 text-sm md:text-base">{feature.desc}</p>
                         </div>
                     ))}

@@ -148,7 +148,7 @@ export default function ProfilePage() {
                     <button onClick={() => router.back()} className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted/10 transition-colors">
                         <ChevronRight className="w-5 h-5 text-foreground" />
                     </button>
-                    <h1 className="text-2xl font-black tracking-tight">הפרופיל שלי</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">הפרופיל שלי</h1>
                 </div>
 
                 <motion.button
@@ -207,11 +207,11 @@ export default function ProfilePage() {
                     <input
                         value={formData.full_name}
                         onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                        className="text-2xl font-black mb-1 bg-transparent border-b border-border text-center w-full max-w-[200px] focus:outline-none focus:border-primary text-foreground"
+                        className="text-2xl font-bold mb-1 bg-transparent border-b border-border text-center w-full max-w-[200px] focus:outline-none focus:border-primary text-foreground"
                         placeholder="שם מלא"
                     />
                 ) : (
-                    <h2 className="text-2xl font-black mb-1 text-foreground">{profile?.full_name || "אורחת"}</h2>
+                    <h2 className="text-2xl font-bold mb-1 text-foreground">{profile?.full_name || "אורחת"}</h2>
                 )}
 
                 <div className="flex items-center gap-2 mt-2">
@@ -227,7 +227,7 @@ export default function ProfilePage() {
                     <div className="relative z-10 flex justify-between items-center">
                         <div>
                             <p className="font-bold text-black/60 text-xs mb-1 uppercase tracking-wider">יתרה נוכחית</p>
-                            <h3 className="text-4xl font-black tracking-tighter">{profile?.balance} שיעורים</h3>
+                            <h3 className="text-4xl font-bold tracking-tighter">{profile?.balance} שיעורים</h3>
                         </div>
                         <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center backdrop-blur-md">
                             <Zap className="w-6 h-6 text-black" />

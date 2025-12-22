@@ -129,14 +129,36 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     }, [supabase]);
 
     const cancelBooking = async (sessionId: string) => {
+        // Optimistic Update: Immediately mark as not registered locally
+        const previousSessions = [...sessions];
+        setSessions(prev => prev.map(s =>
+            s.id === sessionId
+                ? { ...s, isRegistered: false, current_bookings: Math.max(0, s.current_bookings - 1) }
+                : s
+        ));
+
+        // Also optimistically update credits (add 1)
+        const previousCredits = credits;
+        setCredits(prev => prev + 1);
+
         try {
+            console.log("Calling RPC cancel_booking with:", sessionId);
             const { data, error } = await supabase.rpc("cancel_booking", { session_id_param: sessionId });
+
+            console.log("RPC Response:", { data, error });
+
             if (error) throw error;
 
-            await fetchData(); // Refresh data to show updated credits and buttons
-            return data; // { success: true, message: ... }
+            // Trigger actual data refresh in background to ensure consistency
+            fetchData();
+
+            // Safeguard against null data
+            return data || { success: false, message: "No response from server" };
         } catch (error: any) {
             console.error("Cancel error:", error);
+            // Revert on failure
+            setSessions(previousSessions);
+            setCredits(previousCredits);
             return { success: false, message: error.message || "Failed to cancel" };
         }
     };

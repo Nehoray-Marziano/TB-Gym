@@ -45,6 +45,22 @@ export default function BookingPage() {
         };
     };
 
+    // State for confirmation modal
+    const [sessionToCancel, setSessionToCancel] = useState<Session | null>(null);
+
+    const confirmCancel = async () => {
+        if (!sessionToCancel) return;
+
+        const result = await cancelBooking(sessionToCancel.id);
+
+        if (result.success) {
+            toast({ title: "האימון בוטל", description: "הזיכוי הוחזר לחשבונך", type: "success" });
+        } else {
+            toast({ title: "לא ניתן לבטל", description: result.message, type: "error" });
+        }
+        setSessionToCancel(null);
+    };
+
     return (
         <div className="min-h-screen bg-background text-foreground p-6 pb-32 font-sans selection:bg-primary selection:text-black">
             {/* Background Ambient Light */}
@@ -55,7 +71,7 @@ export default function BookingPage() {
                 <button onClick={() => router.back()} className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted/10 transition-colors">
                     <ChevronRight className="w-5 h-5 text-foreground" />
                 </button>
-                <h1 className="text-2xl font-black tracking-tight text-foreground">הירשמי לאימון 📅</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">הירשמי לאימון 📅</h1>
             </header>
 
             {loading ? (
@@ -124,16 +140,9 @@ END:VCALENDAR`;
                                 }
                             };
 
-                            const handleCancel = async (e: React.MouseEvent) => {
+                            const handleCancelClick = (e: React.MouseEvent) => {
                                 e.stopPropagation();
-                                if (!confirm("האם את בטוחה שברצונך לבטל את האימון?")) return;
-
-                                const result = await cancelBooking(session.id);
-                                if (result.success) {
-                                    toast({ title: "האימון בוטל", description: "הזיכוי הוחזר לחשבונך", type: "success" });
-                                } else {
-                                    toast({ title: "לא ניתן לבטל", description: result.message, type: "error" });
-                                }
+                                setSessionToCancel(session);
                             };
 
                             return (
@@ -155,7 +164,7 @@ END:VCALENDAR`;
                                                 : isFull
                                                     ? "bg-muted text-muted-foreground"
                                                     : "bg-muted/20 text-foreground"}`}>
-                                            <span className="text-xl font-black leading-none">{date.day}</span>
+                                            <span className="text-xl font-bold leading-none">{date.day}</span>
                                             <span className="text-xs font-bold uppercase opacity-80">{date.month}</span>
                                         </div>
 
@@ -165,26 +174,26 @@ END:VCALENDAR`;
                                                 <h3 className="text-lg font-bold mb-1 text-foreground flex items-center gap-2">
                                                     {session.title}
                                                     {isFull && !session.isRegistered && (
-                                                        <span className="text-[10px] font-black bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
+                                                        <span className="text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
                                                             מלא
                                                         </span>
                                                     )}
                                                 </h3>
                                                 {session.isRegistered && (
-                                                    <div className="flex gap-2">
+                                                    <div className="flex gap-3 relative z-50 pointer-events-auto">
                                                         <button
                                                             onClick={addToCalendar}
-                                                            className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+                                                            className="w-10 h-10 rounded-full bg-black text-[#E2F163] flex items-center justify-center hover:scale-110 shadow-md transition-all cursor-pointer"
                                                             title="הוספה ליומן"
                                                         >
-                                                            <CalendarPlus className="w-4 h-4" />
+                                                            <CalendarPlus className="w-5 h-5" />
                                                         </button>
                                                         <button
-                                                            onClick={handleCancel}
-                                                            className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-red-500 hover:border-red-500 transition-colors"
+                                                            onClick={handleCancelClick}
+                                                            className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 hover:scale-110 shadow-md transition-all cursor-pointer"
                                                             title="ביטול הרשמה"
                                                         >
-                                                            <X className="w-4 h-4" />
+                                                            <X className="w-5 h-5" />
                                                         </button>
                                                     </div>
                                                 )}
@@ -212,10 +221,10 @@ END:VCALENDAR`;
                                         disabled={bookingId === session.id || (isFull && !session.isRegistered) || session.isRegistered}
                                         className={`w-full mt-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
                                             ${session.isRegistered
-                                                ? "bg-green-500/10 text-green-600 cursor-default border border-green-500/20"
+                                                ? "bg-green-100 text-green-700 cursor-default border border-green-200"
                                                 : isFull
                                                     ? "bg-muted text-muted-foreground cursor-not-allowed border border-transparent"
-                                                    : "bg-foreground text-background hover:bg-primary hover:text-black hover:scale-[1.02] shadow-lg active:scale-95"
+                                                    : "bg-black text-white hover:bg-primary hover:text-black hover:scale-[1.02] shadow-lg active:scale-95"
                                             }`}
                                     >
                                         {session.isRegistered
@@ -232,6 +241,55 @@ END:VCALENDAR`;
                     </AnimatePresence>
                 </div>
             )}
+
+            {/* Custom Confirmation Modal */}
+            <AnimatePresence>
+                {sessionToCancel && (
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSessionToCancel(null)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ translateY: "100%", opacity: 0 }}
+                            animate={{ translateY: "0%", opacity: 1 }}
+                            exit={{ translateY: "100%", opacity: 0 }}
+                            className="relative w-full max-w-sm bg-card border border-border rounded-3xl p-6 shadow-2xl overflow-hidden"
+                        >
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                            <div className="flex flex-col items-center text-center gap-4">
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-2">
+                                    <AlertCircle className="w-8 h-8 text-red-600" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-foreground">ביטול אימון?</h3>
+                                <p className="text-muted-foreground text-sm leading-relaxed">
+                                    האם את בטוחה שברצונך לבטל את הרישום לאימון
+                                    <span className="font-bold text-foreground block mt-1">"{sessionToCancel.title}"?</span>
+                                </p>
+
+                                <div className="grid grid-cols-2 gap-3 w-full mt-4">
+                                    <button
+                                        onClick={() => setSessionToCancel(null)}
+                                        className="py-3 rounded-xl font-bold text-foreground bg-muted hover:bg-muted/80 transition-colors"
+                                    >
+                                        חזרה
+                                    </button>
+                                    <button
+                                        onClick={confirmCancel}
+                                        className="py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all active:scale-95"
+                                    >
+                                        כן, לבטל
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Rubik } from "next/font/google";
+import { Geist, Geist_Mono, Varela_Round } from "next/font/google";
 import "./globals.css";
 import GSAPRegistry from "@/components/gsap-registry";
 import CustomCursor from "@/components/ui/CustomCursor";
@@ -17,10 +17,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const rubik = Rubik({
-  variable: "--font-rubik",
+const varelaRound = Varela_Round({
+  variable: "--font-varela-round",
   subsets: ["hebrew", "latin"],
-  weight: ["300", "400", "500", "700", "900"], // Comprehensive weights
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -56,7 +56,7 @@ export default function RootLayout({
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${rubik.variable} antialiased font-sans`}
+        className={`${geistSans.variable} ${geistMono.variable} ${varelaRound.variable} antialiased font-sans`}
       >
         <GSAPRegistry>
           <CustomCursor />
