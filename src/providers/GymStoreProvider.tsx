@@ -60,62 +60,40 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            // 1. Fetch Profile
-            const { data: profileData } = await supabase
-                .from("profiles")
-                .select("id, full_name, role")
-                .eq("id", user.id)
-                .single();
+            // PARALLEL FETCHING: Fire all independent requests at once
+            const [profileRes, creditRes, sessionRes, bookingsRes] = await Promise.all([
+                supabase.from("profiles").select("id, full_name, role").eq("id", user.id).single(),
+                supabase.from("user_credits").select("balance").eq("user_id", user.id).single(),
+                supabase.from("gym_sessions_with_counts").select("*").gte("start_time", new Date().toISOString()).order("start_time", { ascending: true }),
+                supabase.from("bookings").select("session_id, status, session:gym_sessions(*)").eq("user_id", user.id).eq("status", "confirmed")
+            ]);
 
-            if (profileData) setProfile(profileData);
+            // 1. Set Profile
+            if (profileRes.data) setProfile(profileRes.data);
 
-            // 2. Fetch Credits
-            const { data: creditData } = await supabase
-                .from("user_credits")
-                .select("balance")
-                .eq("user_id", user.id)
-                .single();
+            // 2. Set Credits
+            if (creditRes.data) setCredits(creditRes.data.balance);
 
-            if (creditData) setCredits(creditData.balance);
-
-            // 3. Fetch Sessions with Counts (Using View)
-            const { data: sessionData } = await supabase
-                .from("gym_sessions_with_counts") // <-- Querying the VIEW
-                .select("*")
-                .gte("start_time", new Date().toISOString())
-                .order("start_time", { ascending: true });
+            // 3. Process Sessions & Bookings
+            const sessionData = sessionRes.data;
+            const myBookings = bookingsRes.data;
 
             if (sessionData) {
-                // 4. Fetch My Bookings (to check registration)
-                const { data: myBookings } = await supabase
-                    .from("bookings")
-                    .select("session_id, status, session:gym_sessions(*)")
-                    .eq("user_id", user.id)
-                    .eq("status", "confirmed");
-
                 const registeredIds = new Set(myBookings?.map(b => b.session_id));
-
                 const sessionsWithStatus = sessionData.map(session => ({
                     ...session,
                     isRegistered: registeredIds.has(session.id),
-                    // current_bookings is now valid from the view!
                 }));
-
                 setSessions(sessionsWithStatus);
 
-                // 5. Calculate Upcoming Session
+                // 4. Calculate Upcoming Session
                 if (myBookings && myBookings.length > 0) {
-                    // Filter for future confirmed bookings
                     const futureBookings = myBookings
                         .map((b: any) => b.session)
                         .filter((s: any) => s && new Date(s.start_time) > new Date())
                         .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
-                    if (futureBookings.length > 0) {
-                        setUpcomingSession(futureBookings[0]);
-                    } else {
-                        setUpcomingSession(null);
-                    }
+                    setUpcomingSession(futureBookings.length > 0 ? futureBookings[0] : null);
                 } else {
                     setUpcomingSession(null);
                 }

@@ -179,29 +179,30 @@ export default function UserDashboard({ user }: { user: any }) {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Floating Navigation */}
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
-                    <div className="bg-card/80 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20">
-                        <NavIcon href="/" icon={Home} isActive={true} />
+            {/* Floating Navigation */}
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
+                <div className="bg-card/80 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20">
+                    <NavIcon href="/" icon={Home} isActive={true} />
 
-                        <Link href="/book">
-                            <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/30 border-[4px] border-background cursor-pointer hover:scale-105 transition-transform relative z-10">
-                                <Plus className="w-8 h-8 text-black" />
-                            </div>
-                        </Link>
+                    <Link href="/book">
+                        <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/30 border-[4px] border-background cursor-pointer hover:scale-105 transition-transform relative z-10">
+                            <Plus className="w-8 h-8 text-black" />
+                        </div>
+                    </Link>
 
-                        <NavIcon href="/book" icon={Calendar} />
-                    </div>
+                    <NavIcon href="/book" icon={Calendar} />
                 </div>
             </div>
-            );
+        </div>
+    );
 }
 
-            function NavIcon({href, icon: Icon, isActive }: {href: string; icon: any; isActive?: boolean }) {
+function NavIcon({ href, icon: Icon, isActive }: { href: string; icon: any; isActive?: boolean }) {
     return (
-            <Link href={href} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}>
-                <Icon className="w-5 h-5" />
-            </Link>
-            );
+        <Link href={href} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}>
+            <Icon className="w-5 h-5" />
+        </Link>
+    );
 }
