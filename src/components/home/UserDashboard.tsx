@@ -4,55 +4,16 @@ import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useGymStore } from "@/providers/GymStoreProvider";
 import { Calendar, User, Home, CreditCard, Plus, ArrowRight, Activity, Zap, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function UserDashboard({ user }: { user: any }) {
     const supabase = createClient();
     const router = useRouter();
-    const [profile, setProfile] = useState<any>(null);
-    const [credits, setCredits] = useState<number>(0);
-    const [loading, setLoading] = useState(true);
-    const [upcomingSession, setUpcomingSession] = useState<any>(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const { data: profileData } = await supabase
-                .from("profiles")
-                .select("*")
-                .eq("id", user.id)
-                .single();
-
-            setProfile(profileData);
-
-            const { data: creditData } = await supabase
-                .from("user_credits")
-                .select("balance")
-                .eq("user_id", user.id)
-                .single();
-
-            if (creditData) setCredits(creditData.balance);
-
-            const { data: allBookings } = await supabase
-                .from("bookings")
-                .select("*, session:gym_sessions(*)")
-                .eq("user_id", user.id)
-                .eq("status", "confirmed");
-
-            if (allBookings) {
-                const future = allBookings
-                    .map((b: any) => b.session)
-                    .filter((s: any) => new Date(s.start_time) > new Date())
-                    .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-
-                if (future.length > 0) setUpcomingSession(future[0]);
-            }
-
-            setLoading(false);
-        };
-
-        fetchData();
-    }, [user, supabase]);
+    // Using Cached Data!
+    const { profile, credits, upcomingSession, loading } = useGymStore(); // <-- NEW
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -60,6 +21,7 @@ export default function UserDashboard({ user }: { user: any }) {
     };
 
     if (loading) return (
+        // Kept for initial first load, but usually this won't show on navigation
         <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -84,16 +46,12 @@ export default function UserDashboard({ user }: { user: any }) {
             <div className="p-6 max-w-md mx-auto relative z-10">
                 {/* Header */}
                 <header className="flex justify-between items-start mb-8">
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
+                    <div>
                         <p className="text-muted-foreground text-sm font-medium mb-1">{greeting},</p>
                         <h1 className="text-4xl font-black text-foreground tracking-tight">
                             {firstName} <span className="inline-block animate-wave origin-bottom-right">👋</span>
                         </h1>
-                    </motion.div>
+                    </div>
 
                     <div className="flex gap-3">
                         {profile?.role === 'administrator' && (
@@ -124,12 +82,7 @@ export default function UserDashboard({ user }: { user: any }) {
                 </header>
 
                 {/* Stats / Credit Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="mb-8"
-                >
+                <div className="mb-8">
                     <div className="bg-gradient-to-br from-[#E2F163] to-[#d4e450] dark:from-[#E2F163] dark:to-[#d4e450] rounded-[2rem] p-6 text-black shadow-[0_10px_40px_rgba(226,241,99,0.2)] relative overflow-hidden group">
                         <div className="absolute right-[-20%] top-[-20%] w-40 h-40 bg-white/20 blur-3xl rounded-full" />
 
@@ -152,15 +105,10 @@ export default function UserDashboard({ user }: { user: any }) {
                             </button>
                         </div>
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Next Workout */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="mb-8"
-                >
+                <div className="mb-8">
                     <div className="flex justify-between items-end mb-4 px-1">
                         <h2 className="text-xl font-bold text-foreground">האימון הבא</h2>
                         {upcomingSession && <Link href="/book" className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
@@ -197,14 +145,10 @@ export default function UserDashboard({ user }: { user: any }) {
                             </div>
                         </Link>
                     )}
-                </motion.div>
+                </div>
 
                 {/* Quick Actions Grid */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                >
+                <div>
                     <h2 className="text-xl font-bold text-foreground mb-4 px-1">פעולות מהירות</h2>
                     <div className="grid grid-cols-2 gap-4">
                         <Link href="/book" className="group">
@@ -231,7 +175,7 @@ export default function UserDashboard({ user }: { user: any }) {
                             </div>
                         </button>
                     </div>
-                </motion.div>
+                </div>
             </div>
 
             {/* Floating Navigation */}

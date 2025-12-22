@@ -3,8 +3,9 @@
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useGymStore } from "@/providers/GymStoreProvider";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, MapPin, ChevronRight, Check } from "lucide-react";
+import { Calendar, Clock, MapPin, ChevronRight, Check, CalendarPlus, X, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 type Session = {
@@ -22,51 +23,13 @@ export default function BookingPage() {
     const supabase = createClient();
     const router = useRouter();
     const { toast } = useToast();
-    const [sessions, setSessions] = useState<Session[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Using Cached Data!
+    const { sessions, loading, refreshData, cancelBooking } = useGymStore(); // <-- NEW (No waiting for fetch!)
     const [bookingId, setBookingId] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchSessions();
-    }, []);
+    // No useEffect needed for fetching! Data is already here.
 
-    const fetchSessions = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            router.push("/auth/login");
-            return;
-        }
-
-        const { data: sessionData, error } = await supabase
-            .from("gym_sessions")
-            .select("*")
-            .gte("start_time", new Date().toISOString())
-            .order("start_time", { ascending: true });
-
-        if (error) {
-            console.error("Error fetching sessions:", error);
-            setLoading(false);
-            return;
-        }
-
-        const { data: myBookings } = await supabase
-            .from("bookings")
-            .select("session_id, status")
-            .eq("user_id", user.id)
-            .in("session_id", sessionData.map(s => s.id));
-
-        const sessionsWithStatus = sessionData.map(session => {
-            const isRegistered = myBookings?.some(b => b.session_id === session.id && b.status === 'confirmed');
-            return {
-                ...session,
-                isRegistered,
-                current_bookings: 0
-            };
-        });
-
-        setSessions(sessionsWithStatus);
-        setLoading(false);
-    };
 
     const handleBook = async (sessionId: string) => {
         setBookingId(sessionId);
@@ -77,7 +40,7 @@ export default function BookingPage() {
         } else if (data && !data.success) {
             toast({ title: "לא ניתן להירשם", description: data.message, type: "error" });
         } else {
-            setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, isRegistered: true } : s));
+            await refreshData(); // Refresh global store to update credits & registration status everywhere
             toast({ title: "נרשמת בהצלחה! 🎉", description: "נתראה באימון", type: "success" });
         }
         setBookingId(null);
@@ -125,22 +88,66 @@ export default function BookingPage() {
                             const date = formatDate(session.start_time);
                             const isFull = (session.current_bookings || 0) >= session.max_capacity;
 
+                            // Calendar Event Generator
+                            const addToCalendar = (e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                const start = new Date(session.start_time).toISOString().replace(/-|:|\.\d+/g, "");
+                                const end = new Date(session.end_time).toISOString().replace(/-|:|\.\d+/g, "");
+                                const title = encodeURIComponent(`אימון ${session.title} - Talia Gym`);
+                                const location = encodeURIComponent("סטודיו טליה");
+                                const details = encodeURIComponent(session.description || "אימון בסטודיו טליה");
+
+                                const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+DTSTART:${start}
+DTEND:${end}
+SUMMARY:אימון ${session.title} - Talia Gym
+DESCRIPTION:${session.description || ""}
+LOCATION:סטודיו טליה
+END:VEVENT
+END:VCALENDAR`;
+
+                                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                                const link = document.createElement('a');
+                                link.href = window.URL.createObjectURL(blob);
+                                link.setAttribute('download', `workout-${session.id}.ics`);
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            };
+
+                            const handleCancel = async (e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                if (!confirm("האם את בטוחה שברצונך לבטל את האימון?")) return;
+
+                                const result = await cancelBooking(session.id);
+                                if (result.success) {
+                                    toast({ title: "האימון בוטל", description: "הזיכוי הוחזר לחשבונך", type: "success" });
+                                } else {
+                                    toast({ title: "לא ניתן לבטל", description: result.message, type: "error" });
+                                }
+                            };
+
                             return (
-                                <motion.div
+                                <div
                                     key={session.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
                                     className={`relative p-5 rounded-[2rem] border transition-all overflow-hidden group
                                         ${session.isRegistered
                                             ? "bg-primary/5 border-primary/30"
-                                            : "bg-card/60 border-border hover:border-primary/20"
+                                            : isFull
+                                                ? "bg-muted/30 border-border opacity-70 grayscale-[0.5]" // Dimmed if full
+                                                : "bg-card/60 border-border hover:border-primary/20"
                                         }`}
                                 >
                                     <div className="flex gap-5">
                                         {/* Date Box */}
                                         <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl shrink-0 backdrop-blur-sm
-                                            ${session.isRegistered ? "bg-primary text-black" : "bg-muted/20 text-foreground"}`}>
+                                            ${session.isRegistered
+                                                ? "bg-primary text-black"
+                                                : isFull
+                                                    ? "bg-muted text-muted-foreground"
+                                                    : "bg-muted/20 text-foreground"}`}>
                                             <span className="text-xl font-black leading-none">{date.day}</span>
                                             <span className="text-xs font-bold uppercase opacity-80">{date.month}</span>
                                         </div>
@@ -148,8 +155,30 @@ export default function BookingPage() {
                                         {/* Details */}
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
-                                                <h3 className="text-lg font-bold mb-1 text-foreground">{session.title}</h3>
-                                                {session.isRegistered && <Check className="w-5 h-5 text-primary" />}
+                                                <h3 className="text-lg font-bold mb-1 text-foreground flex items-center gap-2">
+                                                    {session.title}
+                                                    <span className="text-[10px] font-black bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
+                                                        מלא
+                                                    </span>
+                                                </h3>
+                                                {session.isRegistered && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={addToCalendar}
+                                                            className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+                                                            title="הוספה ליומן"
+                                                        >
+                                                            <CalendarPlus className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={handleCancel}
+                                                            className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-red-500 hover:border-red-500 transition-colors"
+                                                            title="ביטול הרשמה"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="flex flex-col gap-1 text-sm text-muted-foreground font-medium my-2">
@@ -160,6 +189,9 @@ export default function BookingPage() {
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="w-3 h-3" />
                                                     סטודיו ראשי
+                                                    {/* Capacity Indicator for visual consistency */}
+                                                    <span className="mx-1">•</span>
+                                                    <span>{session.current_bookings || 0}/{session.max_capacity} רשומים</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -167,19 +199,25 @@ export default function BookingPage() {
 
                                     {/* Action Button */}
                                     <button
-                                        onClick={() => !session.isRegistered && handleBook(session.id)}
-                                        disabled={bookingId === session.id || isFull || session.isRegistered}
+                                        onClick={() => !session.isRegistered && !isFull && handleBook(session.id)}
+                                        disabled={bookingId === session.id || (isFull && !session.isRegistered) || session.isRegistered}
                                         className={`w-full mt-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
                                             ${session.isRegistered
-                                                ? "bg-primary/10 text-primary cursor-default"
+                                                ? "bg-green-500/10 text-green-600 cursor-default border border-green-500/20"
                                                 : isFull
-                                                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                                                    ? "bg-muted text-muted-foreground cursor-not-allowed border border-transparent"
                                                     : "bg-foreground text-background hover:bg-primary hover:text-black hover:scale-[1.02] shadow-lg active:scale-95"
                                             }`}
                                     >
-                                        {session.isRegistered ? "נרשמת לאימון זה" : bookingId === session.id ? "מבצע רישום..." : "שרייני מקום"}
+                                        {session.isRegistered
+                                            ? <><Check className="w-4 h-4" /> נרשמת לאימון זה</>
+                                            : bookingId === session.id
+                                                ? "מבצע רישום..."
+                                                : isFull
+                                                    ? "האימון מלא"
+                                                    : "שרייני מקום"}
                                     </button>
-                                </motion.div>
+                                </div>
                             )
                         })}
                     </AnimatePresence>

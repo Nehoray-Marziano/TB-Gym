@@ -5,7 +5,7 @@ import GSAPRegistry from "@/components/gsap-registry";
 import CustomCursor from "@/components/ui/CustomCursor";
 import { ToastProvider } from "@/components/ui/use-toast";
 import { ThemeProvider } from "@/components/theme-provider";
-import PageTransition from "@/components/PageTransition";
+import { GymStoreProvider } from "@/providers/GymStoreProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,9 +67,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ToastProvider>
-              <PageTransition>
+              <GymStoreProvider>
                 {children}
-              </PageTransition>
+              </GymStoreProvider>
             </ToastProvider>
           </ThemeProvider>
         </GSAPRegistry>
