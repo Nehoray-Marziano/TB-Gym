@@ -1,6 +1,6 @@
 export default function Loading() {
     return (
-        <div className="min-h-screen bg-background p-6 space-y-8 pb-32 overflow-hidden">
+        <div className="min-h-[100dvh] bg-background p-6 space-y-8 pb-32 overflow-hidden">
             {/* Header Skeleton */}
             <div className="flex justify-between items-start mb-8 animate-pulse">
                 <div>
