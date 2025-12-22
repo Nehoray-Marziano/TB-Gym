@@ -1,6 +1,6 @@
 export default function Loading() {
     return (
-        <div className="min-h-screen bg-background p-6 pb-24 space-y-6">
+        <div className="min-h-[100dvh] bg-background p-6 pb-24 space-y-6">
             {/* Header Skeleton */}
             <div className="flex items-center justify-between mb-8 sticky top-0 py-4 bg-background/80 backdrop-blur-md z-10">
                 <div className="flex items-center gap-4">

@@ -55,32 +55,30 @@ export default function UserDashboard({ user }: { user: any }) {
                             </h1>
                         </div>
 
-                        <div className="flex gap-3">
-                            {profile?.role === 'administrator' && (
-                                <Link href="/admin/schedule" passHref>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black"
-                                        title="ניהול המערכת"
-                                    >
-                                        <Activity className="w-6 h-6" />
-                                    </motion.button>
-                                </Link>
-                            )}
-
-                            <Link href="/profile" passHref>
-                                <motion.button
+                        {profile?.role === 'administrator' && (
+                            <Link href="/admin/schedule" passHref>
+                                <motion.div
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden"
+                                    className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black cursor-pointer"
+                                    title="ניהול המערכת"
                                 >
-                                    <div className="w-full h-full bg-gradient-to-br from-card to-card flex items-center justify-center text-lg font-bold text-foreground">
-                                        {firstName[0]}
-                                    </div>
-                                </motion.button>
+                                    <Activity className="w-6 h-6" />
+                                </motion.div>
                             </Link>
-                        </div>
+                        )}
+
+                        <Link href="/profile" passHref>
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden cursor-pointer"
+                            >
+                                <div className="w-full h-full bg-gradient-to-br from-card to-card flex items-center justify-center text-lg font-bold text-foreground">
+                                    {firstName[0]}
+                                </div>
+                            </motion.div>
+                        </Link>
                     </header>
 
                     {/* Stats / Credit Card */}
