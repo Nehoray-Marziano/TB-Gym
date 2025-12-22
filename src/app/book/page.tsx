@@ -14,10 +14,45 @@ export default function BookingPage() {
     const { toast } = useToast();
 
     // Using Cached Data!
-    const { sessions, loading, refreshData, cancelBooking } = useGymStore(); // <-- NEW (No waiting for fetch!)
+    // Using Cached Data!
+    const { loading: globalLoading, refreshData, cancelBooking: globalCancel } = useGymStore();
+    const [sessions, setSessions] = useState<Session[]>([]);
+    const [loading, setLoading] = useState(true);
     const [bookingId, setBookingId] = useState<string | null>(null);
 
-    // No useEffect needed for fetching! Data is already here.
+    const fetchSessions = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Parallel Fetch: Sessions & My Bookings
+            const [sessionRes, bookingsRes] = await Promise.all([
+                supabase.from("gym_sessions_with_counts").select("*").gte("start_time", new Date().toISOString()).order("start_time", { ascending: true }),
+                supabase.from("bookings").select("session_id").eq("user_id", user.id).eq("status", "confirmed")
+            ]);
+
+            const sessionData = sessionRes.data;
+            const myBookings = bookingsRes.data;
+
+            if (sessionData) {
+                const registeredIds = new Set(myBookings?.map(b => b.session_id));
+                const sessionsWithStatus = sessionData.map(session => ({
+                    ...session,
+                    isRegistered: registeredIds.has(session.id),
+                }));
+                setSessions(sessionsWithStatus);
+            }
+        } catch (error) {
+            console.error("Error fetching sessions:", error);
+            toast({ title: "שגיאה בטעינת אימונים", type: "error" });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSessions();
+    }, []);
 
 
     const handleBook = async (sessionId: string) => {
@@ -29,7 +64,8 @@ export default function BookingPage() {
         } else if (data && !data.success) {
             toast({ title: "לא ניתן להירשם", description: data.message, type: "error" });
         } else {
-            await refreshData(); // Refresh global store to update credits & registration status everywhere
+            await refreshData(); // Update global credits
+            await fetchSessions(); // Update local list
             toast({ title: "נרשמת בהצלחה! 🎉", description: "נתראה באימון", type: "success" });
         }
         setBookingId(null);
@@ -51,11 +87,17 @@ export default function BookingPage() {
     const confirmCancel = async () => {
         if (!sessionToCancel) return;
 
-        const result = await cancelBooking(sessionToCancel.id);
+        // Optimistic UI Update
+        const prevSessions = [...sessions];
+        setSessions(curr => curr.map(s => s.id === sessionToCancel.id ? { ...s, isRegistered: false, current_bookings: Math.max(0, s.current_bookings - 1) } : s));
+
+        const result = await globalCancel(sessionToCancel.id); // Call global to update credits
 
         if (result.success) {
             toast({ title: "האימון בוטל", description: "הזיכוי הוחזר לחשבונך", type: "success" });
+            fetchSessions(); // Re-verify with server
         } else {
+            setSessions(prevSessions); // Revert
             toast({ title: "לא ניתן לבטל", description: result.message, type: "error" });
         }
         setSessionToCancel(null);
@@ -75,8 +117,17 @@ export default function BookingPage() {
             </header>
 
             {loading ? (
-                <div className="flex justify-center mt-20">
-                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="p-5 rounded-[2rem] border border-border bg-card/40 h-40 animate-pulse flex gap-5">
+                            <div className="w-16 h-16 bg-muted/20 rounded-2xl shrink-0" />
+                            <div className="flex-1 space-y-3">
+                                <div className="h-6 w-3/4 bg-muted/20 rounded-lg" />
+                                <div className="h-4 w-1/2 bg-muted/20 rounded-lg" />
+                                <div className="h-10 w-full bg-muted/20 rounded-xl mt-4" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             ) : sessions.length === 0 ? (
                 <div className="text-center py-20 px-6 bg-card/40 rounded-3xl border border-dashed border-border">

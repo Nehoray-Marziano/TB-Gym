@@ -60,12 +60,10 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            // PARALLEL FETCHING: Fire all independent requests at once
-            const [profileRes, creditRes, sessionRes, bookingsRes] = await Promise.all([
+            // PARALLEL FETCHING: Fire only essential user data requests
+            const [profileRes, creditRes] = await Promise.all([
                 supabase.from("profiles").select("id, full_name, role").eq("id", user.id).single(),
                 supabase.from("user_credits").select("balance").eq("user_id", user.id).single(),
-                supabase.from("gym_sessions_with_counts").select("*").gte("start_time", new Date().toISOString()).order("start_time", { ascending: true }),
-                supabase.from("bookings").select("session_id, status, session:gym_sessions(*)").eq("user_id", user.id).eq("status", "confirmed")
             ]);
 
             // 1. Set Profile
@@ -74,30 +72,8 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
             // 2. Set Credits
             if (creditRes.data) setCredits(creditRes.data.balance);
 
-            // 3. Process Sessions & Bookings
-            const sessionData = sessionRes.data;
-            const myBookings = bookingsRes.data;
-
-            if (sessionData) {
-                const registeredIds = new Set(myBookings?.map(b => b.session_id));
-                const sessionsWithStatus = sessionData.map(session => ({
-                    ...session,
-                    isRegistered: registeredIds.has(session.id),
-                }));
-                setSessions(sessionsWithStatus);
-
-                // 4. Calculate Upcoming Session
-                if (myBookings && myBookings.length > 0) {
-                    const futureBookings = myBookings
-                        .map((b: any) => b.session)
-                        .filter((s: any) => s && new Date(s.start_time) > new Date())
-                        .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-
-                    setUpcomingSession(futureBookings.length > 0 ? futureBookings[0] : null);
-                } else {
-                    setUpcomingSession(null);
-                }
-            }
+            // Sessions & Upcoming are loaded lazily by specific pages now
+            setLoading(false);
 
         } catch (error) {
             console.error("Error refreshing gym data:", error);

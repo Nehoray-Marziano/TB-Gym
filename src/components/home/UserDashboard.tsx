@@ -13,7 +13,32 @@ export default function UserDashboard({ user }: { user: any }) {
     const router = useRouter();
 
     // Using Cached Data!
-    const { profile, credits, upcomingSession, loading } = useGymStore(); // <-- NEW
+    const { profile, credits, loading } = useGymStore();
+    const [upcomingSession, setUpcomingSession] = useState<any | null>(null);
+    const [loadingSession, setLoadingSession] = useState(true);
+
+    useEffect(() => {
+        const fetchUpcoming = async () => {
+            if (!user) return;
+            const { data: myBookings } = await supabase
+                .from("bookings")
+                .select("session:gym_sessions(*)")
+                .eq("user_id", user.id)
+                .eq("status", "confirmed")
+                .gte("session.start_time", new Date().toISOString()); // Optimization: filter on DB side if possible, but complex with join.
+
+            // Client-side filter/sort for now to match logic
+            if (myBookings && myBookings.length > 0) {
+                const futureBookings = myBookings
+                    .map((b: any) => b.session)
+                    .filter((s: any) => s && new Date(s.start_time) > new Date())
+                    .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+                setUpcomingSession(futureBookings[0] || null);
+            }
+            setLoadingSession(false);
+        };
+        fetchUpcoming();
+    }, [user, supabase]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -114,7 +139,16 @@ export default function UserDashboard({ user }: { user: any }) {
                             {upcomingSession && <Link href="/book" className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
                         </div>
 
-                        {upcomingSession ? (
+                        {loadingSession ? (
+                            // Skeleton for Next Workout Card
+                            <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 relative overflow-hidden h-28 animate-pulse">
+                                <div className="bg-muted/20 w-20 h-20 rounded-[1.5rem] shrink-0 ml-4" />
+                                <div className="flex-1 py-4 space-y-2">
+                                    <div className="h-6 w-3/4 bg-muted/20 rounded-lg" />
+                                    <div className="h-4 w-1/2 bg-muted/20 rounded-lg" />
+                                </div>
+                            </div>
+                        ) : upcomingSession ? (
                             <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 relative overflow-hidden group">
                                 <div className="bg-muted/50 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4 relative z-10">
                                     <span className="text-primary font-bold text-xl leading-none">
