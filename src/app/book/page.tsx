@@ -91,30 +91,45 @@ export default function BookingPage() {
                             // Calendar Event Generator
                             const addToCalendar = (e: React.MouseEvent) => {
                                 e.stopPropagation();
-                                const start = new Date(session.start_time).toISOString().replace(/-|:|\.\d+/g, "");
-                                const end = new Date(session.end_time).toISOString().replace(/-|:|\.\d+/g, "");
-                                const title = encodeURIComponent(`אימון ${session.title} - Talia Gym`);
-                                const location = encodeURIComponent("סטודיו טליה");
-                                const details = encodeURIComponent(session.description || "אימון בסטודיו טליה");
 
-                                const icsContent = `BEGIN:VCALENDAR
+                                const title = `אימון ${session.title} - Talia Gym`;
+                                const location = "סטודיו טליה";
+                                const description = session.description || "אימון בסטודיו טליה";
+                                const start = new Date(session.start_time);
+                                const end = new Date(session.end_time);
+
+                                // 1. Check if iOS
+                                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+
+                                if (isIOS) {
+                                    // iOS: Download .ics file
+                                    const startStr = start.toISOString().replace(/-|:|\.\d+/g, "");
+                                    const endStr = end.toISOString().replace(/-|:|\.\d+/g, "");
+
+                                    const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
-DTSTART:${start}
-DTEND:${end}
-SUMMARY:אימון ${session.title} - Talia Gym
-DESCRIPTION:${session.description || ""}
-LOCATION:סטודיו טליה
+DTSTART:${startStr}
+DTEND:${endStr}
+SUMMARY:${title}
+DESCRIPTION:${description}
+LOCATION:${location}
 END:VEVENT
 END:VCALENDAR`;
 
-                                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                                const link = document.createElement('a');
-                                link.href = window.URL.createObjectURL(blob);
-                                link.setAttribute('download', `workout-${session.id}.ics`);
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
+                                    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                                    const link = document.createElement('a');
+                                    link.href = window.URL.createObjectURL(blob);
+                                    link.setAttribute('download', 'workout.ics');
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                } else {
+                                    // Android / Desktop: Open Google Calendar
+                                    const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d+/g, "");
+                                    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
+                                    window.open(url, '_blank');
+                                }
                             };
 
                             const handleCancel = async (e: React.MouseEvent) => {
