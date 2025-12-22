@@ -141,7 +141,7 @@ export default function ProfilePage() {
     );
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-6 pb-20 font-sans selection:bg-primary selection:text-black">
+        <div className="min-h-[100dvh] bg-background text-foreground p-6 pb-20 font-sans selection:bg-primary selection:text-black">
             {/* Header */}
             <header className="flex items-center justify-between mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-md py-4 -mx-6 px-6">
                 <div className="flex items-center gap-4">

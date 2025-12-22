@@ -117,7 +117,7 @@ export default function LandingPage() {
             </div>
 
             {/* HERO SECTION */}
-            <section className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-4 pt-10">
+            <section className="relative z-10 h-[100dvh] flex flex-col items-center justify-center text-center px-4 pt-10">
 
                 {/* Weightlifting Illustrations */}
                 <div className="mb-8 opacity-90 scale-90 md:scale-100 relative">

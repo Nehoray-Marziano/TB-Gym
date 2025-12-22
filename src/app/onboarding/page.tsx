@@ -239,7 +239,7 @@ export default function OnboardingPage() {
     );
 
     return (
-        <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-[#E2F163] selection:text-black">
+        <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-[#E2F163] selection:text-black">
             {/* Ambient Backgrounds based on step */}
             <div className={`absolute inset-0 transition-colors duration-1000 ${step === 4 ? "bg-red-900/5" : "bg-[#E2F163]/5"}`} />
             <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#E2F163]/10 blur-[150px] rounded-full pointer-events-none animate-pulse" />

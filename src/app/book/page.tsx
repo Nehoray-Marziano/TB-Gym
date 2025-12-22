@@ -62,7 +62,7 @@ export default function BookingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-6 pb-32 font-sans selection:bg-primary selection:text-black">
+        <div className="min-h-[100dvh] bg-background text-foreground p-6 pb-32 font-sans selection:bg-primary selection:text-black">
             {/* Background Ambient Light */}
             <div className="fixed top-[-10%] right-[-10%] w-[300px] h-[300px] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
 
