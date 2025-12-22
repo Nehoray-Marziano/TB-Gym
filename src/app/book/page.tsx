@@ -75,6 +75,9 @@ export default function BookingPage() {
                     <AnimatePresence>
                         {sessions.map((session, index) => {
                             const date = formatDate(session.start_time);
+                            // DEBUG: Check values
+                            console.log(`Session ${session.title}: Bookings=${session.current_bookings} (${typeof session.current_bookings}), Max=${session.max_capacity} (${typeof session.max_capacity})`);
+
                             const isFull = (session.current_bookings || 0) >= session.max_capacity;
 
                             // Calendar Event Generator
@@ -161,9 +164,11 @@ END:VCALENDAR`;
                                             <div className="flex justify-between items-start">
                                                 <h3 className="text-lg font-bold mb-1 text-foreground flex items-center gap-2">
                                                     {session.title}
-                                                    <span className="text-[10px] font-black bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
-                                                        מלא
-                                                    </span>
+                                                    {isFull && !session.isRegistered && (
+                                                        <span className="text-[10px] font-black bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
+                                                            מלא
+                                                        </span>
+                                                    )}
                                                 </h3>
                                                 {session.isRegistered && (
                                                     <div className="flex gap-2">
