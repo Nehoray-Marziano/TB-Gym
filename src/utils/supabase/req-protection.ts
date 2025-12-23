@@ -34,10 +34,9 @@ export async function updateSession(request: NextRequest) {
 
     const path = request.nextUrl.pathname
 
-    // Public paths that don't need protection
+    // Public paths that don't need protection (Static assets, Auth)
     if (path.startsWith('/auth') ||
         path === '/auth/login' ||
-        path === '/' ||
         path.includes('manifest') ||
         path.endsWith('.png') ||
         path.endsWith('.jpg') ||
@@ -49,9 +48,20 @@ export async function updateSession(request: NextRequest) {
 
     // 2. Protect Routes
     if (!user) {
-        // Redirect unauthenticated users to login
+        // Allow access to Landing Page ('/') for guests
+        if (path === '/') {
+            return supabaseResponse
+        }
+        // Redirect unauthenticated users to login for protected routes
         const url = request.nextUrl.clone()
         url.pathname = '/auth/login'
+        return NextResponse.redirect(url)
+    }
+
+    // 3. Authenticated User on Root -> Redirect to Dashboard
+    if (path === '/') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
         return NextResponse.redirect(url)
     }
 

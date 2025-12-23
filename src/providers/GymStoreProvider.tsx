@@ -52,35 +52,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
     const supabase = createClient();
 
-    const fetchData = useCallback(async () => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                setLoading(false);
-                return;
-            }
 
-            // PARALLEL FETCHING: Fire only essential user data requests
-            const [profileRes, creditRes] = await Promise.all([
-                supabase.from("profiles").select("id, full_name, role").eq("id", user.id).single(),
-                supabase.from("user_credits").select("balance").eq("user_id", user.id).single(),
-            ]);
-
-            // 1. Set Profile
-            if (profileRes.data) setProfile(profileRes.data);
-
-            // 2. Set Credits
-            if (creditRes.data) setCredits(creditRes.data.balance);
-
-            // Sessions & Upcoming are loaded lazily by specific pages now
-            setLoading(false);
-
-        } catch (error) {
-            console.error("Error refreshing gym data:", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [supabase]);
 
     const cancelBooking = async (sessionId: string) => {
         // Optimistic Update: Immediately mark as not registered locally
@@ -116,6 +88,55 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
             return { success: false, message: error.message || "Failed to cancel" };
         }
     };
+
+    // Initial Cache Loading
+    useEffect(() => {
+        const cachedProfile = localStorage.getItem("talia_profile");
+        const cachedCredits = localStorage.getItem("talia_credits");
+
+        if (cachedProfile) setProfile(JSON.parse(cachedProfile));
+        if (cachedCredits) setCredits(parseInt(cachedCredits));
+
+        // Even if cached, we set loading to true initially to trigger the background fetch? 
+        // No, for Stale-While-Revalidate, we want to show cached data immediately and loading=false if we have data.
+        if (cachedProfile && cachedCredits) setLoading(false);
+    }, []);
+
+    const fetchData = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+
+            // PARALLEL FETCHING: Fire only essential user data requests
+            const [profileRes, creditRes] = await Promise.all([
+                supabase.from("profiles").select("id, full_name, role").eq("id", user.id).single(),
+                supabase.from("user_credits").select("balance").eq("user_id", user.id).single(),
+            ]);
+
+            // 1. Set Profile
+            if (profileRes.data) {
+                setProfile(profileRes.data);
+                localStorage.setItem("talia_profile", JSON.stringify(profileRes.data));
+            }
+
+            // 2. Set Credits
+            if (creditRes.data) {
+                setCredits(creditRes.data.balance);
+                localStorage.setItem("talia_credits", creditRes.data.balance.toString());
+            }
+
+            // Sessions & Upcoming are loaded lazily by specific pages now
+            setLoading(false);
+
+        } catch (error) {
+            console.error("Error refreshing gym data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [supabase]);
 
     useEffect(() => {
         fetchData();

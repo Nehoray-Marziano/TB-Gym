@@ -246,8 +246,28 @@ export default function AdminSchedulePage() {
             </header>
 
             {loading ? (
-                <div className="flex justify-center mt-20">
-                    <div className="w-10 h-10 border-4 border-[#E2F163] border-t-transparent rounded-full animate-spin" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="bg-neutral-900/40 border border-neutral-800 p-6 rounded-[2rem] h-[200px] animate-pulse relative">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="space-y-2">
+                                    <div className="h-8 w-32 bg-neutral-800 rounded-lg" />
+                                    <div className="flex gap-2">
+                                        <div className="h-6 w-20 bg-neutral-800 rounded-lg" />
+                                        <div className="h-6 w-16 bg-neutral-800 rounded-lg" />
+                                    </div>
+                                </div>
+                                <div className="w-10 h-10 bg-neutral-800 rounded-full" />
+                            </div>
+                            <div className="space-y-2 mt-8">
+                                <div className="flex justify-between">
+                                    <div className="h-4 w-20 bg-neutral-800 rounded" />
+                                    <div className="h-4 w-10 bg-neutral-800 rounded" />
+                                </div>
+                                <div className="h-2 w-full bg-neutral-800 rounded-full" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -41,16 +41,24 @@ export default function BookingPage() {
                     isRegistered: registeredIds.has(session.id),
                 }));
                 setSessions(sessionsWithStatus);
+                // Save to Cache
+                localStorage.setItem("talia_sessions", JSON.stringify(sessionsWithStatus));
             }
         } catch (error) {
             console.error("Error fetching sessions:", error);
-            toast({ title: "שגיאה בטעינת אימונים", type: "error" });
+            // toast({ title: "שגיאה בטעינת אימונים", type: "error" }); // Quiet fail on background refresh
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
+        // Load from Cache first
+        const cached = localStorage.getItem("talia_sessions");
+        if (cached) {
+            setSessions(JSON.parse(cached));
+            setLoading(false);
+        }
         fetchSessions();
     }, []);
 

@@ -18,6 +18,13 @@ export default function UserDashboard({ user }: { user: any }) {
     const [loadingSession, setLoadingSession] = useState(true);
 
     useEffect(() => {
+        // Load from Cache first
+        const cached = localStorage.getItem("talia_upcoming");
+        if (cached) {
+            setUpcomingSession(JSON.parse(cached));
+            setLoadingSession(false);
+        }
+
         const fetchUpcoming = async () => {
             if (!user) return;
             const { data: myBookings } = await supabase
@@ -25,15 +32,20 @@ export default function UserDashboard({ user }: { user: any }) {
                 .select("session:gym_sessions(*)")
                 .eq("user_id", user.id)
                 .eq("status", "confirmed")
-                .gte("session.start_time", new Date().toISOString()); // Optimization: filter on DB side if possible, but complex with join.
+                .gte("session.start_time", new Date().toISOString());
 
-            // Client-side filter/sort for now to match logic
             if (myBookings && myBookings.length > 0) {
                 const futureBookings = myBookings
                     .map((b: any) => b.session)
                     .filter((s: any) => s && new Date(s.start_time) > new Date())
                     .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-                setUpcomingSession(futureBookings[0] || null);
+
+                const nextSession = futureBookings[0] || null;
+                setUpcomingSession(nextSession);
+                localStorage.setItem("talia_upcoming", JSON.stringify(nextSession));
+            } else {
+                setUpcomingSession(null);
+                localStorage.removeItem("talia_upcoming");
             }
             setLoadingSession(false);
         };

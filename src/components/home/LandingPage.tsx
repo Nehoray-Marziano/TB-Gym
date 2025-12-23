@@ -38,140 +38,139 @@ export default function LandingPage() {
     };
 
     useEffect(() => {
-        const ctx = gsap.context(() => {
-            // 1. Mobile Gyroscope + Desktop Mouse Parallax
-            // We combine both listeners. On desktop, mouse works. On mobile, tilt works.
+        // Defer animations to prioritize LCP
+        const timer = setTimeout(() => {
+            const ctx = gsap.context(() => {
+                // 1. Mobile Gyroscope + Desktop Mouse Parallax
+                // We combine both listeners. On desktop, mouse works. On mobile, tilt works.
 
-            const handleParallax = (xFactor: number, yFactor: number) => {
-                gsap.to(".hero-move", {
-                    x: xFactor * 20,
-                    y: yFactor * 20,
-                    duration: 1,
-                    ease: "power2.out"
-                });
+                const handleParallax = (xFactor: number, yFactor: number) => {
+                    gsap.to(".hero-move", {
+                        x: xFactor * 20,
+                        y: yFactor * 20,
+                        duration: 1,
+                        ease: "power2.out"
+                    });
 
-                gsap.to(".bg-float", {
-                    x: -xFactor * 40,
-                    y: -yFactor * 40,
-                    duration: 2,
-                    ease: "power2.out"
-                });
-            };
+                    gsap.to(".bg-float", {
+                        x: -xFactor * 40,
+                        y: -yFactor * 40,
+                        duration: 2,
+                        ease: "power2.out"
+                    });
+                };
 
-            // Mouse Listener
-            const handleMouseMove = (e: MouseEvent) => {
-                const x = (e.clientX / window.innerWidth - 0.5);
-                const y = (e.clientY / window.innerHeight - 0.5);
-                handleParallax(x, y);
-            };
+                // Mouse Listener
+                const handleMouseMove = (e: MouseEvent) => {
+                    const x = (e.clientX / window.innerWidth - 0.5);
+                    const y = (e.clientY / window.innerHeight - 0.5);
+                    handleParallax(x, y);
+                };
 
-            // Device Orientation Listener (Mobile)
-            // Note: iOS 13+ requires permission, but basic tilt often works on Android or dev modes.
-            // For production iOS, we might need a permission button, but for now we try standard event.
-            const handleOrientation = (e: DeviceOrientationEvent) => {
-                if (!e.gamma || !e.beta) return;
-                // gamma: left-to-right tilt in degrees [-90,90]
-                // beta: front-to-back tilt in degrees [-180,180]
-                const x = gsap.utils.clamp(-1, 1, e.gamma / 45);
-                const y = gsap.utils.clamp(-1, 1, (e.beta - 45) / 45); // Subtract 45 to assume holding phone at angle
-                handleParallax(x, y);
-            };
+                // Device Orientation Listener (Mobile)
+                const handleOrientation = (e: DeviceOrientationEvent) => {
+                    if (!e.gamma || !e.beta) return;
+                    const x = gsap.utils.clamp(-1, 1, e.gamma / 45);
+                    const y = gsap.utils.clamp(-1, 1, (e.beta - 45) / 45);
+                    handleParallax(x, y);
+                };
 
-            window.addEventListener("mousemove", handleMouseMove);
-            window.addEventListener("deviceorientation", handleOrientation);
+                window.addEventListener("mousemove", handleMouseMove);
+                window.addEventListener("deviceorientation", handleOrientation);
 
 
-            // 2. Ambient Floating Animation (Always Active)
-            gsap.to(".bg-float-1", {
-                y: -30,
-                rotation: 10,
-                duration: 5,
-                repeat: -1,
-                yoyo: true,
-                ease: "sine.inOut"
-            });
-
-            gsap.to(".bg-float-2", {
-                y: 40,
-                rotation: -5,
-                duration: 7,
-                repeat: -1,
-                yoyo: true,
-                ease: "sine.inOut",
-                delay: 1
-            });
-
-
-            // 3. Hero Text Explosion
-            const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-
-            tl.fromTo(".hero-line",
-                { y: 80, opacity: 0, rotateX: -45, scale: 0.9 },
-                { y: 0, opacity: 1, rotateX: 0, scale: 1, duration: 1.2, stagger: 0.1 }
-            )
-                .fromTo(".hero-desc",
-                    { y: 20, opacity: 0 },
-                    { y: 0, opacity: 1, duration: 1 },
-                    "-=0.8"
-                );
-
-            // 4. Weightlifting Animation (Barbell Bounce)
-            if (barbellRef.current) {
-                gsap.to(barbellRef.current, {
-                    y: -15,
-                    duration: 1.5,
-                    repeat: -1,
-                    yoyo: true,
-                    ease: "power1.inOut"
-                });
-
-                // More pronounced wobble for mobile visibility
-                gsap.to([platesLeftRef.current, platesRightRef.current], {
-                    rotation: 8,
-                    duration: 0.25,
+                // 2. Ambient Floating Animation (Always Active)
+                gsap.to(".bg-float-1", {
+                    y: -30,
+                    rotation: 10,
+                    duration: 5,
                     repeat: -1,
                     yoyo: true,
                     ease: "sine.inOut"
                 });
-            }
 
-            // 5. Counter Animation
-            gsap.to({}, {
-                duration: 2.5,
-                ease: "power3.out",
-                onUpdate: function () {
-                    const progress = this.progress();
-                    const value = Math.floor(progress * 1234);
-                    if (counterRef.current) {
-                        counterRef.current.innerText = value.toLocaleString();
-                    }
-                },
-                scrollTrigger: {
-                    trigger: ".stats-section",
-                    start: "top 90%", // Trigger earlier on mobile
+                gsap.to(".bg-float-2", {
+                    y: 40,
+                    rotation: -5,
+                    duration: 7,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "sine.inOut",
+                    delay: 1
+                });
+
+
+                // 3. Hero Text Explosion
+                const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+
+                tl.fromTo(".hero-line",
+                    { y: 20 }, // Removed opacity: 0 to ensure immediate visibility for LCP
+                    { y: 0, duration: 1.2, stagger: 0.1, ease: "power3.out" }
+                )
+                    .fromTo(".hero-desc",
+                        { y: 20, opacity: 0 },
+                        { y: 0, opacity: 1, duration: 1 },
+                        "-=0.8"
+                    );
+
+                // 4. Weightlifting Animation (Barbell Bounce)
+                if (barbellRef.current) {
+                    gsap.to(barbellRef.current, {
+                        y: -15,
+                        duration: 1.5,
+                        repeat: -1,
+                        yoyo: true,
+                        ease: "power1.inOut"
+                    });
+
+                    // More pronounced wobble for mobile visibility
+                    gsap.to([platesLeftRef.current, platesRightRef.current], {
+                        rotation: 8,
+                        duration: 0.25,
+                        repeat: -1,
+                        yoyo: true,
+                        ease: "sine.inOut"
+                    });
                 }
-            });
 
-            // 6. Features - Staggered Reveal
-            const cards = gsap.utils.toArray(".feature-card");
-            cards.forEach((card: any, i) => {
-                gsap.fromTo(card,
-                    { y: 50, opacity: 0, scale: 0.95 }, // Smaller start values for smoother mobile feel
-                    {
-                        y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power2.out",
-                        scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none reverse" }
+                // 5. Counter Animation
+                gsap.to({}, {
+                    duration: 2.5,
+                    ease: "power3.out",
+                    onUpdate: function () {
+                        const progress = this.progress();
+                        const value = Math.floor(progress * 1234);
+                        if (counterRef.current) {
+                            counterRef.current.innerText = value.toLocaleString();
+                        }
+                    },
+                    scrollTrigger: {
+                        trigger: ".stats-section",
+                        start: "top 90%", // Trigger earlier on mobile
                     }
-                );
-            });
+                });
 
-            return () => {
-                window.removeEventListener("mousemove", handleMouseMove);
-                window.removeEventListener("deviceorientation", handleOrientation);
-            };
+                // 6. Features - Staggered Reveal
+                const cards = gsap.utils.toArray(".feature-card");
+                cards.forEach((card: any, i) => {
+                    gsap.fromTo(card,
+                        { y: 50, opacity: 0, scale: 0.95 }, // Smaller start values for smoother mobile feel
+                        {
+                            y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power2.out",
+                            scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none reverse" }
+                        }
+                    );
+                });
 
-        }, containerRef);
+                return () => {
+                    window.removeEventListener("mousemove", handleMouseMove);
+                    window.removeEventListener("deviceorientation", handleOrientation);
+                };
 
-        return () => ctx.revert();
+            }, containerRef);
+        }, 100);
+
+        return () => clearTimeout(timer);
     }, []);
 
     return (
