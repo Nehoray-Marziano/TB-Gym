@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Varela_Round } from "next/font/google";
 import "./globals.css";
 import GSAPRegistry from "@/components/gsap-registry";
-import CustomCursor from "@/components/ui/CustomCursor";
 import { ToastProvider } from "@/components/ui/use-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GymStoreProvider } from "@/providers/GymStoreProvider";
@@ -60,7 +59,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${varelaRound.variable} antialiased font-sans`}
       >
         <GSAPRegistry>
-          <CustomCursor />
           <ServiceWorkerRegister />
           <ThemeProvider
             attribute="class"
