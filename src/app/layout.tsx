@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Varela_Round } from "next/font/google";
 import "./globals.css";
-import GSAPRegistry from "@/components/gsap-registry";
+
 import { ToastProvider } from "@/components/ui/use-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GymStoreProvider } from "@/providers/GymStoreProvider";
@@ -58,22 +58,21 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} ${varelaRound.variable} antialiased font-sans`}
       >
-        <GSAPRegistry>
-          <ServiceWorkerRegister />
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <ToastProvider>
-              <GymStoreProvider>
-                {children}
-              </GymStoreProvider>
-            </ToastProvider>
-          </ThemeProvider>
-        </GSAPRegistry>
+
+        <ServiceWorkerRegister />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ToastProvider>
+            <GymStoreProvider>
+              {children}
+            </GymStoreProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </body>
-    </html>
+    </html >
   );
 }
