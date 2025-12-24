@@ -193,35 +193,7 @@ export default function UserDashboard({ user }: { user: any }) {
                         )}
                     </div>
 
-                    {/* Quick Actions Grid */}
-                    <div>
-                        <h2 className="text-xl font-bold text-foreground mb-4 px-1">פעולות מהירות</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Link href="/book" className="group">
-                                <div className="bg-card/50 border border-border hover:border-primary/30 p-5 rounded-[2rem] h-32 flex flex-col justify-between transition-all hover:bg-card/80">
-                                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                        <Calendar className="w-5 h-5" />
-                                    </div>
-                                    <div className="text-right">
-                                        <h3 className="text-foreground font-bold">מערכת שעות</h3>
-                                        <p className="text-muted-foreground text-xs mt-1">שרייני מקום</p>
-                                    </div>
-                                </div>
-                            </Link>
 
-                            <button className="group text-right">
-                                <div className="bg-card/50 border border-border hover:border-blue-500/30 p-5 rounded-[2rem] h-32 flex flex-col justify-between transition-all hover:bg-card/80 w-full">
-                                    <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                                        <CreditCard className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-foreground font-bold">מחירון</h3>
-                                        <p className="text-muted-foreground text-xs mt-1">רכישת כרטיסייה</p>
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
 
