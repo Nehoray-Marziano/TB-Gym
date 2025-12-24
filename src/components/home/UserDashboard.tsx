@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { Calendar, User, Home, CreditCard, Plus, ArrowRight, Activity, Zap, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import StudioLogo from "@/components/StudioLogo";
 
 export default function UserDashboard({ user }: { user: any }) {
     const supabase = createClient();
@@ -83,6 +84,11 @@ export default function UserDashboard({ user }: { user: any }) {
             {/* Scrollable Content Area */}
             <div className="h-full overflow-y-auto pb-32">
                 <div className="p-6 max-w-md mx-auto relative z-10">
+                    {/* Sticky Logo Header */}
+                    <div className="sticky top-0 z-50 flex justify-center pb-6 pt-2 bg-gradient-to-b from-background via-background/95 to-transparent backdrop-blur-[2px] mb-2 -mx-6">
+                        <StudioLogo className="w-10 h-10" />
+                    </div>
+
                     {/* Header */}
                     <header className="flex justify-between items-start mb-8">
                         <div>
