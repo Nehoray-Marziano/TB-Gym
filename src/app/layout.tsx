@@ -6,6 +6,7 @@ import CustomCursor from "@/components/ui/CustomCursor";
 import { ToastProvider } from "@/components/ui/use-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GymStoreProvider } from "@/providers/GymStoreProvider";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +61,7 @@ export default function RootLayout({
       >
         <GSAPRegistry>
           <CustomCursor />
+          <ServiceWorkerRegister />
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"

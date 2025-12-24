@@ -3,7 +3,7 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  disable: false, // Force enable to ensure sw.js is generated
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: false,
@@ -26,7 +26,7 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Static Images: CacheFirst for long-term caching
+        // Static Images: CacheFirst
         urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
         handler: "CacheFirst",
         options: {
@@ -38,7 +38,7 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // JS/CSS Assets: StaleWhileRevalidate
+        // JS/CSS Assets
         urlPattern: /\.(?:js|css)$/i,
         handler: "StaleWhileRevalidate",
         options: {
