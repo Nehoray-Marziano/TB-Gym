@@ -12,37 +12,30 @@ export default function manifest(): MetadataRoute.Manifest {
         orientation: "portrait",
         icons: [
             {
-                src: "/icon.png",
+                src: "/icon.jpg",
                 sizes: "192x192",
-                type: "image/png",
+                type: "image/jpeg",
                 purpose: "any"
             },
             {
-                src: "/icon.png",
+                src: "/icon.jpg",
                 sizes: "192x192",
-                type: "image/png",
+                type: "image/jpeg",
                 purpose: "maskable"
             },
             {
-                src: "/icon.png",
+                src: "/icon.jpg",
                 sizes: "512x512",
-                type: "image/png",
+                type: "image/jpeg",
                 purpose: "any"
             },
             {
-                src: "/icon.png",
+                src: "/icon.jpg",
                 sizes: "512x512",
-                type: "image/png",
+                type: "image/jpeg",
                 purpose: "maskable"
             }
         ],
-        screenshots: [
-            {
-                src: "/screenshot-mobile.png", // We might not have this yet, but good to add structure
-                type: "image/png",
-                sizes: "1080x1920",
-                form_factor: "narrow"
-            }
-        ]
+
     };
 }
