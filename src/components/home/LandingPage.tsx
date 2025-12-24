@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowLeft, Check, Star, Zap, Users, Trophy, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 
-gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPage() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -39,7 +36,11 @@ export default function LandingPage() {
 
     useEffect(() => {
         // Defer animations to prioritize LCP
-        const timer = setTimeout(() => {
+        const timer = setTimeout(async () => {
+            const gsap = (await import("gsap")).default;
+            const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+            gsap.registerPlugin(ScrollTrigger);
+
             const ctx = gsap.context(() => {
                 // 1. Mobile Gyroscope + Desktop Mouse Parallax
                 // We combine both listeners. On desktop, mouse works. On mobile, tilt works.
@@ -62,6 +63,8 @@ export default function LandingPage() {
 
                 // Mouse Listener
                 const handleMouseMove = (e: MouseEvent) => {
+                    // Safe check if window exists (though we are in useEffect)
+                    if (typeof window === "undefined") return;
                     const x = (e.clientX / window.innerWidth - 0.5);
                     const y = (e.clientY / window.innerHeight - 0.5);
                     handleParallax(x, y);
@@ -178,7 +181,7 @@ export default function LandingPage() {
 
             {/* Background Noise & Atmosphere */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
+                <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-10 mix-blend-overlay"></div>
 
                 {/* Dynamic Floating Orbs - Optimized sizes for mobile */}
                 <div className="bg-float bg-float-1 absolute top-[5%] left-[10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-primary/5 rounded-full blur-[80px]" />
