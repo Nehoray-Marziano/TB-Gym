@@ -35,10 +35,15 @@ export async function GET(request: Request) {
             // Ensure we don't end up with just a generic error
             return NextResponse.redirect(finalRedirect)
         } else {
-            console.error("[AuthCallback] Code exchange error:", error)
+            console.error("[AuthCallback] Code exchange error:", error.message, error);
+            // Pass error info to the error page
+            const errorUrl = new URL(`${origin}/auth/auth-code-error`);
+            errorUrl.searchParams.set('error', error.message || 'Unknown error');
+            return NextResponse.redirect(errorUrl.toString());
         }
     }
 
-    // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+    // No code was provided
+    console.error("[AuthCallback] No code provided in callback");
+    return NextResponse.redirect(`${origin}/auth/auth-code-error?error=no_code`)
 }
