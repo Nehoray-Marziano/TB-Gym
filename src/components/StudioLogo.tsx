@@ -5,11 +5,11 @@ export default function StudioLogo({ className }: { className?: string }) {
         <div
             className={cn("bg-foreground w-12 h-12", className)}
             style={{
-                maskImage: 'url(/logo.svg)',
+                maskImage: 'url(/initials_logo.svg)',
                 maskSize: 'contain',
                 maskPosition: 'center',
                 maskRepeat: 'no-repeat',
-                WebkitMaskImage: 'url(/logo.svg)',
+                WebkitMaskImage: 'url(/initials_logo.svg)',
                 WebkitMaskSize: 'contain',
                 WebkitMaskPosition: 'center',
                 WebkitMaskRepeat: 'no-repeat',
