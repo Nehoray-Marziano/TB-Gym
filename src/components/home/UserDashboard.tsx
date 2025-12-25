@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import StudioLogo from "@/components/StudioLogo";
 
 export default function UserDashboard({ user }: { user: any }) {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     const router = useRouter();
 
     // Using Cached Data!

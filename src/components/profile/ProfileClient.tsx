@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, X, User, Moon, Sun } from "lucide-react";
@@ -44,7 +44,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     });
 
     const router = useRouter();
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     const { toast } = useToast();
 
     const handleSave = async () => {

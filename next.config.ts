@@ -7,12 +7,22 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: false,
+  // Enable dynamic start URL for faster app launch
+  dynamicStartUrl: true,
+  dynamicStartUrlRedirect: '/dashboard',
+  // Fallback for offline pages
+  fallbacks: {
+    document: '/~offline',
+  },
   workboxOptions: {
     disableDevLogs: true,
+    // Skip waiting to activate new service worker immediately
+    skipWaiting: true,
+    clientsClaim: true,
     runtimeCaching: [
       {
         // Supabase API: StaleWhileRevalidate for fast offline access
-        urlPattern: /^https:\/\/asoqaeujdduqqjfyayht\.supabase\.co\/rest\/v1\/.*/i,
+        urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/rest\/v1\/.*/i,
         handler: "StaleWhileRevalidate",
         options: {
           cacheName: "supabase-api-cache",
@@ -23,6 +33,19 @@ const withPWA = withPWAInit({
           cacheableResponse: {
             statuses: [0, 200],
           },
+        },
+      },
+      {
+        // Supabase Auth endpoints - NetworkFirst for auth (needs fresh data)
+        urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/auth\/.*/i,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "supabase-auth-cache",
+          expiration: {
+            maxEntries: 10,
+            maxAgeSeconds: 60 * 60, // 1 hour
+          },
+          networkTimeoutSeconds: 3,
         },
       },
       {

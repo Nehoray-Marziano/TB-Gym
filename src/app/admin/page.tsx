@@ -1,10 +1,10 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 
 export default function AdminDashboardPage() {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     const [stats, setStats] = useState({
         activeUsers: 0,
         sessionsToday: 0,

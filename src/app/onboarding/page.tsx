@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
@@ -25,7 +25,7 @@ const STEPS = [
 
 export default function OnboardingPage() {
     const router = useRouter();
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
 
     // State
     const [step, setStep] = useState(1);

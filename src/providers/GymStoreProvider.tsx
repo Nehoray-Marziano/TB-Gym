@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 type Profile = {
     id: string;
@@ -27,7 +27,7 @@ type GymStoreContextType = {
     todayBookingsCount?: number;
     upcomingSession: any | null;
     loading: boolean;
-    refreshData: () => Promise<void>;
+    refreshData: (force?: boolean) => Promise<void>;
     cancelBooking: (sessionId: string) => Promise<{ success: boolean; message: string }>;
 };
 
@@ -43,14 +43,26 @@ const GymStoreContext = createContext<GymStoreContextType>({
 
 export const useGymStore = () => useContext(GymStoreContext);
 
+// Cache freshness duration (5 minutes)
+const CACHE_FRESHNESS_MS = 5 * 60 * 1000;
+
+// Helper to check if cache is fresh
+function isCacheFresh(timestampKey: string): boolean {
+    const timestamp = localStorage.getItem(timestampKey);
+    if (!timestamp) return false;
+    return Date.now() - parseInt(timestamp, 10) < CACHE_FRESHNESS_MS;
+}
+
 export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [credits, setCredits] = useState<number>(0);
     const [sessions, setSessions] = useState<Session[]>([]);
     const [upcomingSession, setUpcomingSession] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+    const fetchedRef = useRef(false);
 
-    const supabase = createClient();
+    // Use singleton Supabase client
+    const supabase = getSupabaseClient();
 
 
 
@@ -76,7 +88,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
             if (error) throw error;
 
             // Trigger actual data refresh in background to ensure consistency
-            fetchData();
+            fetchData(true);
 
             // Safeguard against null data
             return data || { success: false, message: "No response from server" };
@@ -102,13 +114,22 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         if (cachedProfile && cachedCredits) setLoading(false);
     }, []);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (force: boolean = false) => {
+        // Skip fetch if cache is fresh and not forced
+        if (!force && isCacheFresh("talia_cache_timestamp")) {
+            console.log("[GymStore] Cache is fresh, skipping network fetch");
+            setLoading(false);
+            return;
+        }
+
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 setLoading(false);
                 return;
             }
+
+            console.log("[GymStore] Fetching fresh data from network");
 
             // PARALLEL FETCHING: Fire only essential user data requests
             const [profileRes, creditRes] = await Promise.all([
@@ -128,6 +149,9 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem("talia_credits", creditRes.data.balance.toString());
             }
 
+            // Save cache timestamp
+            localStorage.setItem("talia_cache_timestamp", Date.now().toString());
+
             // Sessions & Upcoming are loaded lazily by specific pages now
             setLoading(false);
 
@@ -139,6 +163,9 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     }, [supabase]);
 
     useEffect(() => {
+        // Prevent double-fetch in strict mode
+        if (fetchedRef.current) return;
+        fetchedRef.current = true;
         fetchData();
     }, [fetchData]);
 

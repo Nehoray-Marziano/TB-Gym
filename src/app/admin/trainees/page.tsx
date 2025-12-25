@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, User, CreditCard } from "lucide-react";
@@ -23,7 +23,7 @@ type Trainee = Profile & {
 };
 
 export default function AdminTraineesPage() {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     const [trainees, setTrainees] = useState<Trainee[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");

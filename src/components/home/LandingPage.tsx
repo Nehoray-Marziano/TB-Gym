@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, Star, Zap, Users, Trophy, Loader2 } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { AnimatePresence, motion } from "framer-motion";
 
 
@@ -19,7 +19,7 @@ export default function LandingPage() {
     // Login State
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
 
     const handleGoogleLogin = async () => {
         setIsLoading(true);

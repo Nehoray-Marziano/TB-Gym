@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
@@ -9,7 +9,7 @@ import { Calendar, Clock, MapPin, ChevronRight, Check, CalendarPlus, X, AlertCir
 import { useToast } from "@/components/ui/use-toast";
 
 export default function BookingPage() {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     const router = useRouter();
     const { toast } = useToast();
 
