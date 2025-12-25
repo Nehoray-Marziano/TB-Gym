@@ -140,6 +140,31 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         }
     }, [getClient]);
 
+    // Auth Listener for real-time state updates
+    useEffect(() => {
+        const supabase = getClient();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChanged((event: string, session: any) => {
+            if (event === 'SIGNED_OUT') {
+                setProfile(null);
+                setCredits(0);
+                localStorage.removeItem("talia_profile");
+                localStorage.removeItem("talia_credits");
+                localStorage.removeItem("talia_cache_timestamp");
+                setLoading(false);
+            } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                // If we have a session but empty profile, fetch data
+                if (session?.user && !profile) {
+                    fetchData(true, session.user.id);
+                }
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [getClient, fetchData, profile]);
+
     useEffect(() => {
         // Prevent double-fetch in strict mode
         if (fetchedRef.current) return;
