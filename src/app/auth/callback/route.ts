@@ -4,8 +4,8 @@ import { createClient } from '@/utils/supabase/server'
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
-    // if "next" is in param, use it as the redirect URL
-    const next = searchParams.get('next') ?? '/'
+    // if "next" is in param, use it as the redirect URL, otherwise go to dashboard
+    const next = searchParams.get('next') ?? '/dashboard'
 
     // Get the actual origin from the host header (preserves IP address on mobile)
     const host = request.headers.get('host') || 'localhost:3000'
