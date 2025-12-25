@@ -90,8 +90,8 @@ export default function UserDashboard({ user }: { user: any }) {
             <div className="fixed top-0 right-0 w-[300px] h-[300px] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
             <div className="fixed bottom-0 left-0 w-[200px] h-[200px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-            {/* Scrollable Content Area */}
-            <div className="h-full overflow-y-auto pb-32">
+            {/* Content Area - No Scroll */}
+            <div className="h-full flex flex-col pb-24">
                 <div className="p-6 max-w-md mx-auto relative z-10">
                     {/* Sticky Logo Header */}
                     <div className="sticky top-0 z-50 flex justify-center pb-4 pt-4 bg-gradient-to-b from-background via-background/95 to-transparent backdrop-blur-[2px] mb-2 -mx-6 -mt-6">
