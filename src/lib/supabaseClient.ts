@@ -32,7 +32,16 @@ export function getSupabaseClient() {
         try {
             supabaseInstance = createBrowserClient(
                 url || '',
-                key || ''
+                key || '',
+                {
+                    auth: {
+                        persistSession: true,
+                        storageKey: 'talia-auth',
+                        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true,
+                    }
+                }
             );
         } catch (error) {
             console.error("[Supabase] Failed to initialize client:", error);

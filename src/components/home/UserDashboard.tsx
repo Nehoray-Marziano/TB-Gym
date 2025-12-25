@@ -85,7 +85,7 @@ export default function UserDashboard({ user }: { user: any }) {
     }
 
     return (
-        <div className="h-[100dvh] bg-background text-foreground overflow-hidden selection:bg-primary selection:text-black font-sans transition-colors duration-300 relative">
+        <div className="h-[100dvh] bg-background text-foreground overflow-hidden overflow-y-hidden selection:bg-primary selection:text-black font-sans transition-colors duration-300 relative">
             {/* Background Ambient Light */}
             <div className="fixed top-0 right-0 w-[300px] h-[300px] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
             <div className="fixed bottom-0 left-0 w-[200px] h-[200px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
