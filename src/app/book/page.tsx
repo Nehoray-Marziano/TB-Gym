@@ -35,8 +35,8 @@ export default function BookingPage() {
             const myBookings = bookingsRes.data;
 
             if (sessionData) {
-                const registeredIds = new Set(myBookings?.map(b => b.session_id));
-                const sessionsWithStatus = sessionData.map(session => ({
+                const registeredIds = new Set(myBookings?.map((b: { session_id: string }) => b.session_id));
+                const sessionsWithStatus = sessionData.map((session: any) => ({
                     ...session,
                     isRegistered: registeredIds.has(session.id),
                 }));
