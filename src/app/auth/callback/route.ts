@@ -18,15 +18,22 @@ export async function GET(request: Request) {
         if (!error) {
             const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
             const isLocalEnv = process.env.NODE_ENV === 'development'
+
+            // Construct the final URL properly
+            let finalRedirect = ''
+
             if (isLocalEnv || host.includes('localhost')) {
-                // Local development or running 'npm start' locally
-                return NextResponse.redirect(`${origin}${next}`)
+                finalRedirect = `${origin}${next}`
             } else if (forwardedHost) {
-                // Vercel / Cloud environment
-                return NextResponse.redirect(`https://${forwardedHost}${next}`)
+                finalRedirect = `https://${forwardedHost}${next}`
             } else {
-                return NextResponse.redirect(`${origin}${next}`)
+                finalRedirect = `${origin}${next}`
             }
+
+            // Ensure we don't end up with just a generic error
+            return NextResponse.redirect(finalRedirect)
+        } else {
+            console.error("[AuthCallback] Code exchange error:", error)
         }
     }
 

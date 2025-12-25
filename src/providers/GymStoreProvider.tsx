@@ -97,20 +97,26 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         }
 
         const supabase = getClient();
+        if (!supabase) {
+            console.error("[GymStore] Supabase client is not available (check env vars)");
+            setLoading(false);
+            return;
+        }
 
         try {
             // Use passed userId if available (from SSR), otherwise check auth
             let uid = userId;
             if (!uid) {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) {
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                if (authError || !user) {
+                    console.log("[GymStore] No user found directly or error:", authError);
                     setLoading(false);
                     return;
                 }
                 uid = user.id;
             }
 
-            console.log("[GymStore] Fetching fresh data from network");
+            console.log("[GymStore] Fetching fresh data from network for:", uid);
 
             // PARALLEL FETCHING: Fire only essential user data requests
             const [profileRes, creditRes] = await Promise.all([
