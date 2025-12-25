@@ -24,9 +24,14 @@ export async function middleware(request: NextRequest) {
           response = NextResponse.next({
             request,
           });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Force persistence for Supabase cookies in middleware as well
+            const newOptions = { ...options };
+            if (name.startsWith('sb-')) {
+              newOptions.maxAge = 60 * 60 * 24 * 30; // 30 days
+            }
+            response.cookies.set(name, value, newOptions);
+          });
         },
       },
     }
