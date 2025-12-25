@@ -86,7 +86,7 @@ export default function UserDashboard({ user }: { user: any }) {
                 <div className="p-6 max-w-md mx-auto relative z-10">
                     {/* Sticky Logo Header */}
                     <div className="sticky top-0 z-50 flex justify-center pb-4 pt-4 bg-gradient-to-b from-background via-background/95 to-transparent backdrop-blur-[2px] mb-2 -mx-6 -mt-6">
-                        <StudioLogo className="w-12 h-12" />
+                        <StudioLogo className="w-16 h-16" />
                     </div>
 
                     {/* Header */}
