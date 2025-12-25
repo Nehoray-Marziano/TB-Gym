@@ -177,7 +177,7 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-[#131512] text-[#ECF0E7] overflow-x-hidden font-sans relative selection:bg-primary selection:text-black">
+        <div ref={containerRef} className="min-h-[100dvh] w-full bg-[#131512] text-[#ECF0E7] overflow-x-hidden font-sans relative selection:bg-primary selection:text-black">
 
             {/* Background Noise & Atmosphere */}
             <div className="fixed inset-0 pointer-events-none z-0">
