@@ -16,6 +16,7 @@ export async function GET(request: Request) {
         const supabase = await createClient()
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
+            console.log("[AuthCallback] Session exchange successful", { code });
             const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
             const isLocalEnv = process.env.NODE_ENV === 'development'
 
@@ -30,6 +31,7 @@ export async function GET(request: Request) {
                 finalRedirect = `${origin}${next}`
             }
 
+            console.log("[AuthCallback] Redirecting to:", finalRedirect);
             // Ensure we don't end up with just a generic error
             return NextResponse.redirect(finalRedirect)
         } else {

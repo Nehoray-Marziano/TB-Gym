@@ -34,7 +34,13 @@ export async function middleware(request: NextRequest) {
 
   // This will refresh session if expired - required for Server Components
   // https://supabase.com/docs/guides/auth/server-side/nextjs
-  await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (user) {
+    console.log("[Middleware] User authenticated:", user.id);
+  } else {
+    // Only log if not a static asset (though matcher handles this, safe to be sure)
+    console.log("[Middleware] No user found in middleware");
+  }
 
   return response;
 }
