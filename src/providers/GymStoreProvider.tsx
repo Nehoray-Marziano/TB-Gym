@@ -142,27 +142,35 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
     // Auth Listener for real-time state updates
     useEffect(() => {
-        const supabase = getClient();
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChanged((event: string, session: any) => {
-            if (event === 'SIGNED_OUT') {
-                setProfile(null);
-                setCredits(0);
-                localStorage.removeItem("talia_profile");
-                localStorage.removeItem("talia_credits");
-                localStorage.removeItem("talia_cache_timestamp");
-                setLoading(false);
-            } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                // If we have a session but empty profile, fetch data
-                if (session?.user && !profile) {
-                    fetchData(true, session.user.id);
-                }
+        try {
+            const supabase = getClient();
+            if (!supabase) {
+                console.error("[GymStore] Supabase client is null");
+                return;
             }
-        });
 
-        return () => {
-            subscription.unsubscribe();
-        };
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
+                if (event === 'SIGNED_OUT') {
+                    setProfile(null);
+                    setCredits(0);
+                    localStorage.removeItem("talia_profile");
+                    localStorage.removeItem("talia_credits");
+                    localStorage.removeItem("talia_cache_timestamp");
+                    setLoading(false);
+                } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                    // If we have a session but empty profile, fetch data
+                    if (session?.user && !profile) {
+                        fetchData(true, session.user.id);
+                    }
+                }
+            });
+
+            return () => {
+                subscription.unsubscribe();
+            };
+        } catch (error) {
+            console.error("[GymStore] Error in auth listener:", error);
+        }
     }, [getClient, fetchData, profile]);
 
     useEffect(() => {

@@ -19,10 +19,25 @@ export function getSupabaseClient() {
     }
 
     if (!supabaseInstance) {
-        supabaseInstance = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        if (!url || !key) {
+            console.error("[Supabase] Missing environment variables!", {
+                hasUrl: !!url,
+                hasKey: !!key
+            });
+        }
+
+        try {
+            supabaseInstance = createBrowserClient(
+                url || '',
+                key || ''
+            );
+        } catch (error) {
+            console.error("[Supabase] Failed to initialize client:", error);
+            // Return a dummy client or null if possible, but for now we let it fail gracefully or log
+        }
     }
 
     return supabaseInstance;
