@@ -9,33 +9,17 @@ type Profile = {
     role: string;
 };
 
-export type Session = {
-    id: string;
-    title: string;
-    start_time: string;
-    end_time: string;
-    max_capacity: number;
-    current_bookings: number;
-    description?: string | null;
-    isRegistered?: boolean;
-};
-
 type GymStoreContextType = {
     profile: Profile | null;
     credits: number;
-    sessions: Session[];
-    todayBookingsCount?: number;
-    upcomingSession: any | null;
     loading: boolean;
-    refreshData: (force?: boolean) => Promise<void>;
+    refreshData: (force?: boolean, userId?: string) => Promise<void>;
     cancelBooking: (sessionId: string) => Promise<{ success: boolean; message: string }>;
 };
 
 const GymStoreContext = createContext<GymStoreContextType>({
     profile: null,
     credits: 0,
-    sessions: [],
-    upcomingSession: null,
     loading: true,
     refreshData: async () => { },
     cancelBooking: async () => ({ success: false, message: "Not implemented" }),
@@ -48,35 +32,42 @@ const CACHE_FRESHNESS_MS = 5 * 60 * 1000;
 
 // Helper to check if cache is fresh
 function isCacheFresh(timestampKey: string): boolean {
+    if (typeof window === 'undefined') return false;
     const timestamp = localStorage.getItem(timestampKey);
     if (!timestamp) return false;
     return Date.now() - parseInt(timestamp, 10) < CACHE_FRESHNESS_MS;
 }
 
+// Helper to check if we have cached data
+function hasCachedData(): boolean {
+    if (typeof window === 'undefined') return false;
+    return !!(localStorage.getItem("talia_profile") && localStorage.getItem("talia_credits"));
+}
+
 export function GymStoreProvider({ children }: { children: React.ReactNode }) {
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [credits, setCredits] = useState<number>(0);
-    const [sessions, setSessions] = useState<Session[]>([]);
-    const [upcomingSession, setUpcomingSession] = useState<any | null>(null);
-    const [loading, setLoading] = useState(true);
+    // Start as NOT loading if we have cached data - show UI immediately!
+    const [loading, setLoading] = useState(() => !hasCachedData());
+    const [profile, setProfile] = useState<Profile | null>(() => {
+        if (typeof window === 'undefined') return null;
+        const cached = localStorage.getItem("talia_profile");
+        return cached ? JSON.parse(cached) : null;
+    });
+    const [credits, setCredits] = useState<number>(() => {
+        if (typeof window === 'undefined') return 0;
+        const cached = localStorage.getItem("talia_credits");
+        return cached ? parseInt(cached) : 0;
+    });
     const fetchedRef = useRef(false);
 
-    // Use singleton Supabase client
-    const supabase = getSupabaseClient();
+    // Lazy-initialize supabase client only when needed (client-side only)
+    const getClient = useCallback(() => {
+        return getSupabaseClient();
+    }, []);
 
+    const cancelBooking = useCallback(async (sessionId: string) => {
+        const supabase = getClient();
 
-
-    const cancelBooking = async (sessionId: string) => {
-        // Optimistic Update: Immediately mark as not registered locally
-        const previousSessions = [...sessions];
-        setSessions(prev => prev.map(s =>
-            s.id === sessionId
-                ? { ...s, isRegistered: false, current_bookings: Math.max(0, s.current_bookings - 1) }
-                : s
-        ));
-
-        // Also optimistically update credits (add 1)
-        const previousCredits = credits;
+        // Optimistically update credits (add 1)
         setCredits(prev => prev + 1);
 
         try {
@@ -87,34 +78,17 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
             if (error) throw error;
 
-            // Trigger actual data refresh in background to ensure consistency
-            fetchData(true);
-
             // Safeguard against null data
             return data || { success: false, message: "No response from server" };
         } catch (error: any) {
             console.error("Cancel error:", error);
             // Revert on failure
-            setSessions(previousSessions);
-            setCredits(previousCredits);
+            setCredits(prev => prev - 1);
             return { success: false, message: error.message || "Failed to cancel" };
         }
-    };
+    }, [getClient]);
 
-    // Initial Cache Loading
-    useEffect(() => {
-        const cachedProfile = localStorage.getItem("talia_profile");
-        const cachedCredits = localStorage.getItem("talia_credits");
-
-        if (cachedProfile) setProfile(JSON.parse(cachedProfile));
-        if (cachedCredits) setCredits(parseInt(cachedCredits));
-
-        // Even if cached, we set loading to true initially to trigger the background fetch? 
-        // No, for Stale-While-Revalidate, we want to show cached data immediately and loading=false if we have data.
-        if (cachedProfile && cachedCredits) setLoading(false);
-    }, []);
-
-    const fetchData = useCallback(async (force: boolean = false) => {
+    const fetchData = useCallback(async (force: boolean = false, userId?: string) => {
         // Skip fetch if cache is fresh and not forced
         if (!force && isCacheFresh("talia_cache_timestamp")) {
             console.log("[GymStore] Cache is fresh, skipping network fetch");
@@ -122,19 +96,26 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        const supabase = getClient();
+
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                setLoading(false);
-                return;
+            // Use passed userId if available (from SSR), otherwise check auth
+            let uid = userId;
+            if (!uid) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    setLoading(false);
+                    return;
+                }
+                uid = user.id;
             }
 
             console.log("[GymStore] Fetching fresh data from network");
 
             // PARALLEL FETCHING: Fire only essential user data requests
             const [profileRes, creditRes] = await Promise.all([
-                supabase.from("profiles").select("id, full_name, role").eq("id", user.id).single(),
-                supabase.from("user_credits").select("balance").eq("user_id", user.id).single(),
+                supabase.from("profiles").select("id, full_name, role").eq("id", uid).single(),
+                supabase.from("user_credits").select("balance").eq("user_id", uid).single(),
             ]);
 
             // 1. Set Profile
@@ -152,26 +133,41 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
             // Save cache timestamp
             localStorage.setItem("talia_cache_timestamp", Date.now().toString());
 
-            // Sessions & Upcoming are loaded lazily by specific pages now
-            setLoading(false);
-
         } catch (error) {
             console.error("Error refreshing gym data:", error);
         } finally {
             setLoading(false);
         }
-    }, [supabase]);
+    }, [getClient]);
 
     useEffect(() => {
         // Prevent double-fetch in strict mode
         if (fetchedRef.current) return;
         fetchedRef.current = true;
-        fetchData();
+
+        // Only fetch if cache is stale or missing
+        if (!hasCachedData() || !isCacheFresh("talia_cache_timestamp")) {
+            fetchData();
+        } else {
+            setLoading(false);
+        }
     }, [fetchData]);
 
     return (
-        <GymStoreContext.Provider value={{ profile, credits, sessions, upcomingSession, loading, refreshData: fetchData, cancelBooking }}>
+        <GymStoreContext.Provider value={{ profile, credits, loading, refreshData: fetchData, cancelBooking }}>
             {children}
         </GymStoreContext.Provider>
     );
 }
+
+// Re-export Session type for backward compatibility
+export type Session = {
+    id: string;
+    title: string;
+    start_time: string;
+    end_time: string;
+    max_capacity: number;
+    current_bookings: number;
+    description?: string | null;
+    isRegistered?: boolean;
+};

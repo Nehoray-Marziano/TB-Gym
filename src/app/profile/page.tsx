@@ -12,7 +12,7 @@ const CACHE_KEYS = {
     timestamp: "talia_profile_timestamp"
 };
 
-const CACHE_FRESHNESS_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_FRESHNESS_MS = 24 * 60 * 60 * 1000; // 24 hours for static profile data
 
 type UserProfile = {
     id: string;

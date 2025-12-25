@@ -53,13 +53,25 @@ export default function BookingPage() {
     };
 
     useEffect(() => {
-        // Load from Cache first
+        // Load from Cache first for instant UI
         const cached = localStorage.getItem("talia_sessions");
         if (cached) {
             setSessions(JSON.parse(cached));
             setLoading(false);
         }
+
+        // Always fetch fresh data on mount
         fetchSessions();
+
+        // Refetch when page becomes visible (user returns from other tab/app)
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                console.log("[Sessions] Page visible, refreshing...");
+                fetchSessions();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, []);
 
 
@@ -150,9 +162,6 @@ export default function BookingPage() {
                     <AnimatePresence>
                         {sessions.map((session, index) => {
                             const date = formatDate(session.start_time);
-                            // DEBUG: Check values
-                            console.log(`Session ${session.title}: Bookings=${session.current_bookings} (${typeof session.current_bookings}), Max=${session.max_capacity} (${typeof session.max_capacity})`);
-
                             const isFull = (session.current_bookings || 0) >= session.max_capacity;
 
                             // Calendar Event Generator

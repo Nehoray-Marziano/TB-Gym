@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Varela_Round } from "next/font/google";
+import { Varela_Round } from "next/font/google";
 import "./globals.css";
 
 import { ToastProvider } from "@/components/ui/use-toast";
@@ -7,20 +7,12 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { GymStoreProvider } from "@/providers/GymStoreProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
+// Only load the Hebrew font we actually use
 const varelaRound = Varela_Round({
   variable: "--font-varela-round",
   subsets: ["hebrew", "latin"],
   weight: "400",
+  display: "swap", // Prevent font blocking render
 });
 
 export const metadata: Metadata = {
@@ -56,7 +48,7 @@ export default function RootLayout({
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${varelaRound.variable} antialiased font-sans`}
+        className={`${varelaRound.variable} antialiased font-sans`}
       >
 
         <ServiceWorkerRegister />

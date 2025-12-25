@@ -10,15 +10,19 @@ import { useRouter } from "next/navigation";
 import StudioLogo from "@/components/StudioLogo";
 
 export default function UserDashboard({ user }: { user: any }) {
-    const supabase = getSupabaseClient();
     const router = useRouter();
 
     // Using Cached Data!
-    const { profile, credits, loading } = useGymStore();
+    const { profile, credits, loading, refreshData } = useGymStore();
     const [upcomingSession, setUpcomingSession] = useState<any | null>(null);
     const [loadingSession, setLoadingSession] = useState(true);
 
     useEffect(() => {
+        // Pass userId from SSR to skip redundant auth call
+        if (user?.id) {
+            refreshData(false, user.id);
+        }
+
         // Load from Cache first
         const cached = localStorage.getItem("talia_upcoming");
         if (cached) {
@@ -28,6 +32,10 @@ export default function UserDashboard({ user }: { user: any }) {
 
         const fetchUpcoming = async () => {
             if (!user) return;
+
+            // Initialize Supabase client inside async function (client-side only)
+            const supabase = getSupabaseClient();
+
             const { data: myBookings } = await supabase
                 .from("bookings")
                 .select("session:gym_sessions(*)")
@@ -51,9 +59,10 @@ export default function UserDashboard({ user }: { user: any }) {
             setLoadingSession(false);
         };
         fetchUpcoming();
-    }, [user, supabase]);
+    }, [user, refreshData]);
 
     const handleLogout = async () => {
+        const supabase = getSupabaseClient();
         await supabase.auth.signOut();
         router.refresh();
     };
