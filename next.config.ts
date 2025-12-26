@@ -36,16 +36,13 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Supabase Auth endpoints - NetworkFirst for auth (needs fresh data)
+        // Supabase Auth endpoints - NEVER cache auth (must always be fresh)
+        // This is critical for PWA session persistence
         urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/auth\/.*/i,
-        handler: "NetworkFirst",
+        handler: "NetworkOnly",
         options: {
-          cacheName: "supabase-auth-cache",
-          expiration: {
-            maxEntries: 10,
-            maxAgeSeconds: 60 * 60, // 1 hour
-          },
-          networkTimeoutSeconds: 3,
+          // NetworkOnly doesn't use cache, but we can add background sync for offline
+          cacheName: "supabase-auth-no-cache",
         },
       },
       {
