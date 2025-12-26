@@ -228,6 +228,7 @@ export default function LandingPage() {
                     <AnimatePresence mode="wait">
                         {!isLoginOpen ? (
                             <motion.button
+                                id="main-signin-button"
                                 key="join-btn"
                                 layoutId="login-container"
                                 onClick={() => setIsLoginOpen(true)}
@@ -266,6 +267,7 @@ export default function LandingPage() {
 
                                 <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                                     <motion.button
+                                        id="google-signin-button"
                                         onClick={handleGoogleLogin}
                                         whileTap={{ scale: 0.98 }}
                                         className="flex items-center gap-3 bg-white text-black font-bold py-4 px-6 rounded-2xl transition-colors w-full md:min-w-[200px] justify-center"
@@ -279,6 +281,7 @@ export default function LandingPage() {
                                     </motion.button>
 
                                     <motion.button
+                                        id="apple-signin-button"
                                         whileTap={{ scale: 0.98 }}
                                         className="flex items-center gap-3 bg-black/50 border border-neutral-700 text-white font-bold py-4 px-6 rounded-2xl transition-colors w-full md:min-w-[160px] justify-center grayscale opacity-80"
                                     >
