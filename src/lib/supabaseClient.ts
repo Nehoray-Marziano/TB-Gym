@@ -32,7 +32,15 @@ export function getSupabaseClient() {
         try {
             supabaseInstance = createBrowserClient(
                 url || '',
-                key || ''
+                key || '',
+                {
+                    cookieOptions: {
+                        maxAge: 60 * 60 * 24 * 30, // 30 days - persist session across browser restarts
+                        path: '/',
+                        sameSite: 'lax',
+                        secure: process.env.NODE_ENV === 'production',
+                    },
+                }
             );
         } catch (error) {
             console.error("[Supabase] Failed to initialize client:", error);

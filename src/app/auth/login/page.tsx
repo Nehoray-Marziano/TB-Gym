@@ -101,7 +101,18 @@ export default function LandingPage() {
 
         }, containerRef);
 
-        return () => ctx.revert();
+        return () => {
+            ctx.revert();
+            // Kill all ScrollTrigger instances to prevent artifacts
+            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+            ScrollTrigger.refresh();
+            // Reset scroll position to prevent it from affecting next page
+            if (typeof window !== 'undefined') {
+                window.scrollTo(0, 0);
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }
+        };
     }, []);
 
     return (
