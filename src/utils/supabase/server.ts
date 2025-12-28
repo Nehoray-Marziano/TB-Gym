@@ -14,16 +14,9 @@ export async function createClient() {
                 },
                 setAll(cookiesToSet) {
                     try {
-                        cookiesToSet.forEach(({ name, value, options }) => {
-                            // Force persistence for Supabase cookies (fix for "logout on close")
-                            const newOptions = { ...options };
-                            if (name.startsWith('sb-')) {
-                                newOptions.maxAge = 60 * 60 * 24 * 30; // 30 days
-                                newOptions.sameSite = 'lax';
-                                newOptions.secure = process.env.NODE_ENV === 'production';
-                            }
-                            cookieStore.set(name, value, newOptions)
-                        })
+                        cookiesToSet.forEach(({ name, value, options }) =>
+                            cookieStore.set(name, value, options)
+                        )
                     } catch {
                         // The `setAll` method was called from a Server Component.
                         // This can be ignored if you have middleware refreshing
@@ -31,6 +24,17 @@ export async function createClient() {
                     }
                 },
             },
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+            },
+            cookieOptions: {
+                maxAge: 60 * 60 * 24 * 30, // 30 days
+                path: '/',
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+            }
         }
     )
 }

@@ -19,28 +19,27 @@ export async function proxy(request: NextRequest) {
                     return request.cookies.getAll();
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) =>
+                    cookiesToSet.forEach(({ name, value, options }) =>
                         request.cookies.set(name, value)
                     );
                     response = NextResponse.next({
                         request,
                     });
-                    cookiesToSet.forEach(({ name, value, options }) => {
-                        // Force persistence for Supabase cookies in middleware as well
-                        const newOptions = { ...options };
-                        if (name.startsWith('sb-')) {
-                            newOptions.maxAge = 60 * 60 * 24 * 30; // 30 days
-                            newOptions.sameSite = 'lax';
-                            newOptions.secure = process.env.NODE_ENV === 'production';
-                        }
-                        response.cookies.set(name, value, newOptions);
-                    });
+                    cookiesToSet.forEach(({ name, value, options }) =>
+                        response.cookies.set(name, value, options)
+                    );
                 },
             },
             auth: {
                 persistSession: true,
                 autoRefreshToken: true,
                 detectSessionInUrl: true,
+            },
+            cookieOptions: {
+                maxAge: 60 * 60 * 24 * 30, // 30 days
+                path: '/',
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
             }
         }
     );
