@@ -4,9 +4,10 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   disable: false, // Force enable to ensure sw.js is generated
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: false,
+  // CRITICAL: Disable aggressive caching to prevent stale session pages
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
+  reloadOnOnline: true, // Reload when back online to refresh session
   // Enable dynamic start URL for faster app launch
   dynamicStartUrl: true,
   dynamicStartUrlRedirect: '/dashboard',
@@ -14,12 +15,30 @@ const withPWA = withPWAInit({
   fallbacks: {
     document: '/~offline',
   },
+  // Exclude auth-sensitive routes from navigation fallback
+  extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
     // Skip waiting to activate new service worker immediately
     skipWaiting: true,
     clientsClaim: true,
     runtimeCaching: [
+      {
+        // CRITICAL: Auth pages - NEVER cache (session-dependent)
+        urlPattern: /\/auth\/.*/i,
+        handler: "NetworkOnly",
+        options: {
+          cacheName: "auth-pages-no-cache",
+        },
+      },
+      {
+        // CRITICAL: Dashboard - NEVER cache (session-dependent)
+        urlPattern: /\/dashboard/i,
+        handler: "NetworkOnly",
+        options: {
+          cacheName: "dashboard-no-cache",
+        },
+      },
       {
         // Supabase API: StaleWhileRevalidate for fast offline access
         urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/rest\/v1\/.*/i,
