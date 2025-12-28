@@ -20,16 +20,9 @@ export async function GET(request: Request) {
             const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
             const isLocalEnv = process.env.NODE_ENV === 'development'
 
-            // Construct the final URL properly
-            let finalRedirect = ''
-
-            if (isLocalEnv || host.includes('localhost')) {
-                finalRedirect = `${origin}${next}`
-            } else if (forwardedHost) {
-                finalRedirect = `https://${forwardedHost}${next}`
-            } else {
-                finalRedirect = `${origin}${next}`
-            }
+            // Construct the final URL properly using the request's origin
+            // This ensures we stay on the same domain/protocol as the request
+            const finalRedirect = `${origin}${next}`
 
             console.log("[AuthCallback] Redirecting to:", finalRedirect);
             // Ensure we don't end up with just a generic error

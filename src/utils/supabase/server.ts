@@ -19,6 +19,8 @@ export async function createClient() {
                             const newOptions = { ...options };
                             if (name.startsWith('sb-')) {
                                 newOptions.maxAge = 60 * 60 * 24 * 30; // 30 days
+                                newOptions.sameSite = 'lax';
+                                newOptions.secure = process.env.NODE_ENV === 'production';
                             }
                             cookieStore.set(name, value, newOptions)
                         })
