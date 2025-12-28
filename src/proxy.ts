@@ -30,6 +30,8 @@ export async function proxy(request: NextRequest) {
                         const newOptions = { ...options };
                         if (name.startsWith('sb-')) {
                             newOptions.maxAge = 60 * 60 * 24 * 30; // 30 days
+                            newOptions.sameSite = 'lax';
+                            newOptions.secure = process.env.NODE_ENV === 'production';
                         }
                         response.cookies.set(name, value, newOptions);
                     });
