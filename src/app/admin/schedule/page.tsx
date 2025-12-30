@@ -554,16 +554,36 @@ export default function AdminSchedulePage() {
                                                             {selectedTrainees.length > 0 ? "עריכה" : "בחירה"}
                                                         </button>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowTraineeSelector(true)}
-                                                        className="w-full bg-neutral-900 border border-dashed border-neutral-700 hover:border-[#E2F163] hover:bg-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all group"
-                                                    >
-                                                        <div className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center group-hover:bg-[#E2F163] transition-colors">
-                                                            <Users className="w-5 h-5 text-neutral-400 group-hover:text-black" />
+                                                    {selectedTrainees.length === 0 ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowTraineeSelector(true)}
+                                                            className="w-full bg-neutral-900 border border-dashed border-neutral-700 hover:border-[#E2F163] hover:bg-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all group"
+                                                        >
+                                                            <div className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center group-hover:bg-[#E2F163] transition-colors">
+                                                                <Users className="w-5 h-5 text-neutral-400 group-hover:text-black" />
+                                                            </div>
+                                                            <span className="text-sm font-bold text-neutral-400 group-hover:text-white">לחצי להוספת מתאמנות</span>
+                                                        </button>
+                                                    ) : (
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {selectedTrainees.map(t => (
+                                                                <div key={t.id} className="bg-neutral-800 rounded-xl p-2 flex items-center gap-2 border border-white/5">
+                                                                    <div className="w-8 h-8 rounded-full bg-[#E2F163] text-black flex items-center justify-center font-bold text-xs shrink-0">
+                                                                        {t.full_name?.[0]}
+                                                                    </div>
+                                                                    <span className="text-sm text-white font-medium truncate">{t.full_name}</span>
+                                                                </div>
+                                                            ))}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowTraineeSelector(true)}
+                                                                className="bg-neutral-900 border border-dashed border-neutral-700 rounded-xl p-2 flex items-center justify-center gap-2 text-neutral-400 hover:text-[#E2F163] hover:border-[#E2F163] transition-all text-xs font-bold"
+                                                            >
+                                                                + עריכה
+                                                            </button>
                                                         </div>
-                                                        <span className="text-sm font-bold text-neutral-400 group-hover:text-white">לחצי להוספת מתאמנות</span>
-                                                    </button>
+                                                    )}
 
                                                     {/* Chips Preview - could be added here if needed, but the button text/count is decent for now */}
                                                 </div>
