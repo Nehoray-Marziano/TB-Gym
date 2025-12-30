@@ -594,7 +594,7 @@ export default function AdminSchedulePage() {
                     <AnimatePresence>
                         {showTraineeSelector && (
                             <TraineeSelector
-                                selectedIds={selectedTrainees}
+                                selectedTrainees={selectedTrainees}
                                 onSelect={setSelectedTrainees}
                                 onClose={() => setShowTraineeSelector(false)}
                             />
