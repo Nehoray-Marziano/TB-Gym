@@ -14,7 +14,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { TimePickerDial } from "@/components/ui/time-picker-dial";
+import { MuiTimePickerWrapper } from "@/components/ui/time-picker-mui";
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -414,20 +414,10 @@ export default function AdminSchedulePage() {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">שעה</label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button variant={"outline"} className="w-full h-14 bg-neutral-900 border-neutral-800 rounded-2xl text-base font-medium px-4 text-white hover:bg-neutral-800 focus:ring-[#E2F163] justify-between">
-                                                    {newSession.time}
-                                                    <Clock className="w-4 h-4 opacity-50" />
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-6 border-neutral-800 bg-[#1A1C19] rounded-[2rem]" align="center">
-                                                <TimePickerDial
-                                                    value={newSession.time}
-                                                    onChange={(t) => setNewSession({ ...newSession, time: t })}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                        <MuiTimePickerWrapper
+                                            value={newSession.time}
+                                            onChange={(t: string) => setNewSession({ ...newSession, time: t })}
+                                        />
                                     </div>
                                 </div>
 
