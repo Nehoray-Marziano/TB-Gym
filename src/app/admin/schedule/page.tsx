@@ -692,4 +692,5 @@ export default function AdminSchedulePage() {
                     </AnimatePresence>
                 </div>
             );
+        }
 
