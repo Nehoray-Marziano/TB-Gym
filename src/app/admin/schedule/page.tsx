@@ -87,6 +87,18 @@ export default function AdminSchedulePage() {
     const [selectedTrainees, setSelectedTrainees] = useState<Trainee[]>([]);
     const [showTraineeSelector, setShowTraineeSelector] = useState(false);
 
+    const fetchSessions = async () => {
+        const { data, error } = await supabase
+            .from("gym_sessions")
+            .select("*, bookings(count)")
+            .order("start_time", { ascending: true });
+
+        if (error) console.error(error);
+        // @ts-ignore
+        else setSessions(data || []);
+        setLoading(false);
+    };
+
     useEffect(() => {
         fetchSessions();
     }, []);
@@ -138,16 +150,7 @@ export default function AdminSchedulePage() {
                 }
             }
             // ...
-            const fetchSessions = async () => {
-                const { data, error } = await supabase
-                    .from("gym_sessions")
-                    .select("*, bookings(count)")
-                    .order("start_time", { ascending: true });
 
-                if (error) console.error(error);
-                else setSessions(data as any);
-                setLoading(false);
-            };
 
             const handleDeleteClick = (session: Session) => {
                 const count = session.bookings[0]?.count || 0;
