@@ -6,12 +6,15 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
 import type { } from '@mui/x-date-pickers/themeAugmentation';
 import dayjs, { Dayjs } from "dayjs";
+import "dayjs/locale/he"; // Import Hebrew locale
 import { Clock } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 // Create a custom MUI theme to match the app's dark neon aesthetics
+// Create a custom MUI theme to match the app's dark neon aesthetics
 const theme = createTheme({
+    direction: "rtl", // Fix visual direction
     palette: {
         mode: "dark",
         primary: {
@@ -38,6 +41,7 @@ const theme = createTheme({
                     border: "1px solid rgba(255, 255, 255, 0.1)",
                     backgroundImage: "none",
                     backgroundColor: "#1A1C19",
+                    direction: "rtl"
                 },
             },
         },
@@ -46,6 +50,7 @@ const theme = createTheme({
                 root: {
                     backgroundColor: "#1A1C19",
                     color: "#ffffff",
+                    direction: "rtl"
                 },
                 contentWrapper: {
                     backgroundColor: "#1A1C19",
@@ -101,19 +106,19 @@ interface MuiTimePickerWrapperProps {
 export function MuiTimePickerWrapper({ value, onChange, className }: MuiTimePickerWrapperProps) {
     const [open, setOpen] = useState(false);
 
-    // Convert string "HH:mm" to dayjs object
+    // Convert string "HH:mm" to dayjs object, ensure it parses correctly
+    // We use a fixed date to avoid issues, as we only care about time
     const timeValue = value ? dayjs(`2000-01-01T${value}`) : null;
 
-    const handleAccept = (newValue: Dayjs | null) => {
+    const handleChange = (newValue: Dayjs | null) => {
         if (newValue) {
             onChange(newValue.format("HH:mm"));
         }
-        setOpen(false);
     };
 
     return (
         <ThemeProvider theme={theme}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
                 <div className={className}>
                     {/* Trigger Button - Mimicking the existing button style */}
                     <button
@@ -133,9 +138,16 @@ export function MuiTimePickerWrapper({ value, onChange, className }: MuiTimePick
                         <MobileTimePicker
                             open={open}
                             onClose={() => setOpen(false)}
-                            onAccept={handleAccept}
+                            onChange={handleChange}
                             value={timeValue}
                             ampm={false}
+                            slotProps={{
+                                layout: {
+                                    sx: {
+                                        direction: 'rtl'
+                                    }
+                                }
+                            }}
                         />
                     </div>
                 </div>
