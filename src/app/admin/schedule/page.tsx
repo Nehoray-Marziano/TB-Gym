@@ -568,7 +568,8 @@ export default function AdminSchedulePage() {
                                         </div>
 
                                         <button
-                                            className="w-full py-4 rounded-2xl font-bold bg-[#E2F163] text-black text-lg hover:shadow-[0_0_30px_rgba(226,241,99,0.4)] hover:scale-[1.02] transition-all active:scale-95 mt-4"
+                                            disabled={!newSession.title || !newSession.date || (isPrivateSession && selectedTrainees.length === 0)}
+                                            className="w-full py-4 rounded-2xl font-bold bg-[#E2F163] text-black text-lg hover:shadow-[0_0_30px_rgba(226,241,99,0.4)] hover:scale-[1.02] transition-all active:scale-95 mt-4 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                                         >
                                             פרסום אימון
                                         </button>
