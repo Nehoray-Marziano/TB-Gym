@@ -14,6 +14,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { TimePickerDial } from "@/components/ui/time-picker-dial";
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -413,23 +414,20 @@ export default function AdminSchedulePage() {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">שעה</label>
-                                        <Select value={newSession.time} onValueChange={(v) => setNewSession({ ...newSession, time: v })}>
-                                            <SelectTrigger className="w-full h-14 bg-neutral-900 border-neutral-800 rounded-2xl text-base font-medium px-4 text-white hover:bg-neutral-800 focus:ring-[#E2F163]">
-                                                <SelectValue placeholder="בחר שעה" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-[#1A1C19] border-neutral-800 text-white max-h-60">
-                                                {Array.from({ length: 29 }).map((_, i) => {
-                                                    const h = Math.floor(i / 2) + 7;
-                                                    const m = i % 2 === 0 ? "00" : "30";
-                                                    const t = `${h.toString().padStart(2, '0')}:${m}`;
-                                                    return (
-                                                        <SelectItem key={t} value={t} className="focus:bg-neutral-800 focus:text-[#E2F163] cursor-pointer">
-                                                            {t}
-                                                        </SelectItem>
-                                                    );
-                                                })}
-                                            </SelectContent>
-                                        </Select>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant={"outline"} className="w-full h-14 bg-neutral-900 border-neutral-800 rounded-2xl text-base font-medium px-4 text-white hover:bg-neutral-800 focus:ring-[#E2F163] justify-between">
+                                                    {newSession.time}
+                                                    <Clock className="w-4 h-4 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-6 border-neutral-800 bg-[#1A1C19] rounded-[2rem]" align="center">
+                                                <TimePickerDial
+                                                    value={newSession.time}
+                                                    onChange={(t) => setNewSession({ ...newSession, time: t })}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </div>
 
