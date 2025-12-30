@@ -62,25 +62,39 @@ const theme = createTheme({
                 clock: {
                     backgroundColor: "rgba(255, 255, 255, 0.05)",
                 },
+                root: {
+                    direction: "ltr", // Enforce LTR for the clock face to ensure alignment
+                }
             },
         },
         MuiClockPointer: {
             styleOverrides: {
                 thumb: {
-                    border: "2px solid #E2F163",
-                    backgroundColor: "#000000",
+                    width: "12px", // Smaller thumb
+                    height: "12px",
+                    border: "none",
+                    backgroundColor: "#E2F163", // Solid neon
+                    boxShadow: "0 0 10px rgba(226, 241, 99, 0.5)", // Glow effect
+                    top: "calc(50% - 6px)", // Center adjustment
+                    left: "calc(50% - 6px)",
                 },
                 root: {
                     backgroundColor: "#E2F163",
+                    width: "2px", // Thinner line
                 }
             }
         },
         MuiClockNumber: {
             styleOverrides: {
                 root: {
+                    color: "rgba(255, 255, 255, 0.6)",
                     "&.Mui-selected": {
                         color: "#000000",
                         fontWeight: "bold",
+                        backgroundColor: "#E2F163",
+                    },
+                    "&:not(.Mui-selected):hover": {
+                        backgroundColor: "rgba(255,255,255,0.1)",
                     }
                 }
             }
@@ -141,13 +155,6 @@ export function MuiTimePickerWrapper({ value, onChange, className }: MuiTimePick
                             onChange={handleChange}
                             value={timeValue}
                             ampm={false}
-                            slotProps={{
-                                layout: {
-                                    sx: {
-                                        direction: 'rtl'
-                                    }
-                                }
-                            }}
                         />
                     </div>
                 </div>
