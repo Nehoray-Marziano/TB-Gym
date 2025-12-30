@@ -470,7 +470,7 @@ export default function AdminSchedulePage() {
                                         {/* Toggle Background Animation */}
                                         <motion.div
                                             initial={false}
-                                            animate={{ x: isPrivateSession ? "100%" : "0%" }}
+                                            animate={{ x: isPrivateSession ? "0%" : "100%" }}
                                             className="absolute w-1/2 h-full top-0 left-0 p-1.5"
                                         >
                                             <div className="w-full h-full bg-[#E2F163] rounded-xl shadow-lg" />
