@@ -3,20 +3,20 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url)
-    const code = searchParams.get('code')
-    const next = searchParams.get('next') ?? '/dashboard'
+    const requestUrl = new URL(request.url)
+    const code = requestUrl.searchParams.get('code')
+    const next = requestUrl.searchParams.get('next') ?? '/dashboard'
 
-    // Get the actual origin from the host header
-    const host = request.headers.get('host') || 'localhost:3000'
-    const protocol = request.headers.get('x-forwarded-proto') || 'http'
-    const origin = `${protocol}://${host}`
+    // Use the request URL origin directly - most reliable
+    const origin = requestUrl.origin
+    console.log("[AuthCallback] Origin:", origin, "Next:", next)
 
     if (code) {
         const cookieStore = await cookies()
 
-        // Create the redirect response FIRST
-        const redirectUrl = `${origin}${next}`
+        // Create the redirect response FIRST - use pathname only for next
+        const redirectUrl = `${origin}${next.startsWith('/') ? next : '/' + next}`
+        console.log("[AuthCallback] Will redirect to:", redirectUrl)
         const redirectResponse = NextResponse.redirect(redirectUrl)
 
         // Create Supabase client that sets cookies on the REDIRECT response
