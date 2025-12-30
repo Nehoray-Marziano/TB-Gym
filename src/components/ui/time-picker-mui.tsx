@@ -4,6 +4,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
+import type { } from '@mui/x-date-pickers/themeAugmentation';
 import dayjs, { Dayjs } from "dayjs";
 import { Clock } from "lucide-react";
 import { useState } from "react";
