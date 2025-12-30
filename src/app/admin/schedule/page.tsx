@@ -260,62 +260,6 @@ export default function AdminSchedulePage() {
         }
     };
 
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // Validation handled by button state, but redundant check is safe
-        if (!newSession.title || !newSession.date) return;
-
-        try {
-            const [hours, minutes] = newSession.time.split(":").map(Number);
-            const start = new Date(newSession.date);
-            start.setHours(hours, minutes, 0, 0);
-            const end = new Date(start.getTime() + 60 * 60 * 1000);
-
-            // Determine capacity: if private, capacity equals invited count
-            const finalCapacity = isPrivateSession ? selectedTrainees.length : newSession.max_capacity;
-
-            // 1. Create Session
-            const { data: sessionData, error } = await supabase.from("gym_sessions").insert({
-                title: newSession.title,
-                description: newSession.description,
-                start_time: start.toISOString(),
-                end_time: end.toISOString(),
-                max_capacity: finalCapacity
-            }).select("id").single();
-
-            if (error) throw error;
-            const newSessionId = sessionData.id;
-
-            // 2. If Private, Invite Trainees
-            if (isPrivateSession && selectedTrainees.length > 0) {
-                const bookingsToInsert = selectedTrainees.map(t => ({
-                    session_id: newSessionId,
-                    user_id: t.id,
-                    status: 'confirmed'
-                }));
-
-                const { error: bookingError } = await supabase.from("bookings").insert(bookingsToInsert);
-                if (bookingError) console.error("Auto-booking error:", bookingError);
-
-                for (const t of selectedTrainees) {
-                    const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", t.id).single();
-                    if (credit && credit.balance > 0) {
-                        await supabase.from("user_credits").update({ balance: credit.balance - 1 }).eq("user_id", t.id);
-                    }
-                }
-            }
-
-            setIsModalOpen(false);
-            setNewSession({ title: "", description: "", date: undefined, time: "08:00", max_capacity: 10 });
-            setIsPrivateSession(false);
-            setSelectedTrainees([]);
-            fetchSessions();
-        } catch (err: any) {
-            console.error(err);
-            alert("שגיאה בשמירה: " + err.message);
-        }
-    };
-
     return (
         <div className="pb-24 font-sans text-neutral-100">
             {/* Header */}
