@@ -140,7 +140,7 @@ export default function AdminSchedulePage() {
                 }));
 
                 const { error: bookingError } = await supabase.from("bookings").insert(bookingsToInsert);
-                if (bookingError) console.error("Auto-booking error:", bookingError);
+                if (bookingError) throw bookingError;
 
                 for (const t of selectedTrainees) {
                     const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", t.id).single();
