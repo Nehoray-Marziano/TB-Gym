@@ -357,9 +357,9 @@ export default function AdminSchedulePage() {
                                     <div className="relative z-10 mb-6">
                                         <div className="flex justify-between text-xs font-bold mb-2 uppercase tracking-wide">
                                             <span className={isFull ? "text-red-400" : "text-[#E2F163]"}>
-                                                {isFull ? "NO SEATS" : `${count} REGISTERED`}
+                                                {isFull ? "אין מקום" : `${count} רשומות`}
                                             </span>
-                                            <span className="text-neutral-600">{session.max_capacity} MAX</span>
+                                            <span className="text-neutral-600">מתוך {session.max_capacity}</span>
                                         </div>
                                         <div className="h-1.5 w-full bg-neutral-800/80 rounded-full overflow-hidden">
                                             <motion.div
