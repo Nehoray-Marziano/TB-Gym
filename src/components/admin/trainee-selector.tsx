@@ -34,7 +34,9 @@ export function TraineeSelector({ selectedIds, onSelect, onClose }: TraineeSelec
                 .select("id, full_name, email, phone, avatar_url")
                 .order("full_name", { ascending: true });
 
-            if (data) {
+            if (error) {
+                console.error("Error fetching trainees:", error);
+            } else if (data) {
                 // @ts-ignore
                 setTrainees(data);
                 setFiltered(data);
@@ -47,9 +49,9 @@ export function TraineeSelector({ selectedIds, onSelect, onClose }: TraineeSelec
     useEffect(() => {
         const lowerTerm = term.toLowerCase();
         setFiltered(trainees.filter(t =>
-            (t.full_name?.toLowerCase().includes(lowerTerm)) ||
-            (t.phone?.includes(lowerTerm)) ||
-            (t.email?.toLowerCase().includes(lowerTerm))
+            (t.full_name || "").toLowerCase().includes(lowerTerm) ||
+            (t.phone || "").includes(lowerTerm) ||
+            (t.email || "").toLowerCase().includes(lowerTerm)
         ));
     }, [term, trainees]);
 
