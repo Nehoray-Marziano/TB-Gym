@@ -6,7 +6,7 @@ import { Search, User, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-type Trainee = {
+export type Trainee = {
     id: string;
     full_name: string;
     email: string;
@@ -15,12 +15,12 @@ type Trainee = {
 };
 
 interface TraineeSelectorProps {
-    selectedIds: string[];
-    onSelect: (ids: string[]) => void;
+    selectedTrainees: Trainee[];
+    onSelect: (trainees: Trainee[]) => void;
     onClose: () => void;
 }
 
-export function TraineeSelector({ selectedIds, onSelect, onClose }: TraineeSelectorProps) {
+export function TraineeSelector({ selectedTrainees, onSelect, onClose }: TraineeSelectorProps) {
     const supabase = getSupabaseClient();
     const [trainees, setTrainees] = useState<Trainee[]>([]);
     const [filtered, setFiltered] = useState<Trainee[]>([]);
@@ -32,7 +32,7 @@ export function TraineeSelector({ selectedIds, onSelect, onClose }: TraineeSelec
         const fetchTrainees = async () => {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("*") // Select all to match AdminTraineesPage and avoid missing column errors
+                .select("*")
                 .order("full_name", { ascending: true });
 
             if (error) {
@@ -57,11 +57,11 @@ export function TraineeSelector({ selectedIds, onSelect, onClose }: TraineeSelec
         ));
     }, [term, trainees]);
 
-    const toggleSelection = (id: string) => {
-        if (selectedIds.includes(id)) {
-            onSelect(selectedIds.filter(sid => sid !== id));
+    const toggleSelection = (trainee: Trainee) => {
+        if (selectedTrainees.some(t => t.id === trainee.id)) {
+            onSelect(selectedTrainees.filter(t => t.id !== trainee.id));
         } else {
-            onSelect([...selectedIds, id]);
+            onSelect([...selectedTrainees, trainee]);
         }
     };
 
@@ -106,11 +106,11 @@ export function TraineeSelector({ selectedIds, onSelect, onClose }: TraineeSelec
                         <div className="text-neutral-500 text-center p-8">לא נמצאו מתאמנות</div>
                     ) : (
                         filtered.map(trainee => {
-                            const isSelected = selectedIds.includes(trainee.id);
+                            const isSelected = selectedTrainees.some(t => t.id === trainee.id);
                             return (
                                 <div
                                     key={trainee.id}
-                                    onClick={() => toggleSelection(trainee.id)}
+                                    onClick={() => toggleSelection(trainee)}
                                     className={cn(
                                         "flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer group",
                                         isSelected
@@ -145,7 +145,7 @@ export function TraineeSelector({ selectedIds, onSelect, onClose }: TraineeSelec
                 {/* Footer */}
                 <div className="p-4 border-t border-white/5 bg-[#1A1C19] z-20 flex justify-between items-center">
                     <span className="text-sm font-bold text-neutral-400 bg-neutral-900 px-3 py-1 rounded-lg">
-                        נבחרו: <span className="text-[#E2F163]">{selectedIds.length}</span>
+                        נבחרו: <span className="text-[#E2F163]">{selectedTrainees.length}</span>
                     </span>
                     <button
                         onClick={onClose}
