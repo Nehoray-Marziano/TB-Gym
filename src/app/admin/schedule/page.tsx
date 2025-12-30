@@ -139,7 +139,9 @@ export default function AdminSchedulePage() {
                     status: 'confirmed'
                 }));
 
-                const { error: bookingError } = await supabase.from("bookings").insert(bookingsToInsert);
+                console.log("DEBUG: Inserting bookings:", bookingsToInsert);
+                const { data: insertedBookings, error: bookingError } = await supabase.from("bookings").insert(bookingsToInsert).select();
+                console.log("DEBUG: Insert result:", { insertedBookings, bookingError });
                 if (bookingError) throw bookingError;
 
                 for (const t of selectedTrainees) {
@@ -228,11 +230,13 @@ export default function AdminSchedulePage() {
 
     const fetchBookings = async (sessionId: string) => {
         setLoadingBookings(true);
+        console.log("DEBUG: Fetching bookings for session:", sessionId);
         const { data, error } = await supabase
             .from("bookings")
             .select(`id, status, created_at, user_id, users:profiles!user_id (id, full_name, email, phone)`)
             .eq("session_id", sessionId)
             .eq("status", "confirmed");
+        console.log("DEBUG: Fetch result:", { data, error });
 
         if (error) {
             console.error(error);
