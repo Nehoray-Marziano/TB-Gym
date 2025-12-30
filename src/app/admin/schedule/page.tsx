@@ -551,7 +551,7 @@ export default function AdminSchedulePage() {
                                                             onClick={() => setShowTraineeSelector(true)}
                                                             className="text-[#E2F163] text-xs font-bold hover:underline"
                                                         >
-                                                            עריכה
+                                                            {selectedTrainees.length > 0 ? "עריכה" : "בחירה"}
                                                         </button>
                                                     </div>
                                                     <button
