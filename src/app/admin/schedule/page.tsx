@@ -250,10 +250,8 @@ export default function AdminSchedulePage() {
 
             const handleCreate = async (e: React.FormEvent) => {
                 e.preventDefault();
-                if (!newSession.title || !newSession.date) {
-                    alert("אנא מלאי את כל השדות");
-                    return;
-                }
+                // Validation handled by button state, but redundant check is safe
+                if (!newSession.title || !newSession.date) return;
 
                 try {
                     const [hours, minutes] = newSession.time.split(":").map(Number);
@@ -276,31 +274,21 @@ export default function AdminSchedulePage() {
                     if (error) throw error;
                     const newSessionId = sessionData.id;
 
-                    // 2. If Private, Invite Trainees (Book them)
-                    // Note: Currently we bypass credit check for admin session creation? 
-                    // Usually invalidating credits is expected. Let's assume admin override doesn't deduct credits OR assume it does.
-                    // Requirement says: "create a session with selected trainees".
-                    // Let's deduct 1 credit for each invited user to be consistent, or just book them.
-                    // Ideally, we loop and insert bookings.
+                    // 2. If Private, Invite Trainees
                     if (isPrivateSession && selectedTrainees.length > 0) {
-                        const bookingsToInsert = selectedTrainees.map(uid => ({
+                        const bookingsToInsert = selectedTrainees.map(t => ({
                             session_id: newSessionId,
-                            user_id: uid,
+                            user_id: t.id,
                             status: 'confirmed'
                         }));
 
                         const { error: bookingError } = await supabase.from("bookings").insert(bookingsToInsert);
                         if (bookingError) console.error("Auto-booking error:", bookingError);
 
-                        // Deduct credits?
-                        // For now, let's keep it simple: Just book them. If credit deduction is needed, we'd loop updates.
-                        // Given the request didn't specify credit deduction logic for this specific feature, avoiding complexity and risk is safer.
-                        // But typically bookings require credits.
-                        // Let's attempt to deduct credits for correctness if the table allows it.
-                        for (const uid of selectedTrainees) {
-                            const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", uid).single();
+                        for (const t of selectedTrainees) {
+                            const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", t.id).single();
                             if (credit && credit.balance > 0) {
-                                await supabase.from("user_credits").update({ balance: credit.balance - 1 }).eq("user_id", uid);
+                                await supabase.from("user_credits").update({ balance: credit.balance - 1 }).eq("user_id", t.id);
                             }
                         }
                     }
