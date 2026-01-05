@@ -50,6 +50,7 @@ export default function AdminSchedulePage() {
     const supabase = getSupabaseClient();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -264,10 +265,18 @@ export default function AdminSchedulePage() {
         }
     };
 
+    // Filter sessions by date
+    const now = new Date();
+    const upcomingSessions = sessions.filter(s => new Date(s.start_time) >= now);
+    const pastSessions = sessions.filter(s => new Date(s.start_time) < now).sort((a, b) =>
+        new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+    );
+    const displayedSessions = activeTab === 'upcoming' ? upcomingSessions : pastSessions;
+
     return (
         <div className="pb-24 font-sans text-neutral-100">
             {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">ניהול מערכת שעות</h1>
                     <p className="text-neutral-400 font-medium">צרי ועכני אימונים לקהילה שלך</p>
@@ -284,6 +293,50 @@ export default function AdminSchedulePage() {
                     <span>אימון חדש</span>
                 </motion.button>
             </header>
+
+            {/* Tabs */}
+            <div className="bg-neutral-900/40 border border-white/5 p-1.5 rounded-2xl flex relative overflow-hidden mb-8 max-w-md">
+                <motion.div
+                    initial={false}
+                    animate={{ x: activeTab === 'upcoming' ? "100%" : "0%" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="absolute w-1/2 h-full top-0 left-0 p-1.5"
+                >
+                    <div className="w-full h-full bg-[#E2F163] rounded-xl shadow-lg" />
+                </motion.div>
+
+                <button
+                    onClick={() => setActiveTab('upcoming')}
+                    className={cn(
+                        "flex-1 py-3 text-sm font-bold rounded-xl relative z-10 transition-colors flex items-center justify-center gap-2",
+                        activeTab === 'upcoming' ? "text-black" : "text-white/70 hover:text-white"
+                    )}
+                >
+                    אימונים קרובים
+                    <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full",
+                        activeTab === 'upcoming' ? "bg-black/20 text-black" : "bg-neutral-700 text-white"
+                    )}>
+                        {upcomingSessions.length}
+                    </span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('past')}
+                    className={cn(
+                        "flex-1 py-3 text-sm font-bold rounded-xl relative z-10 transition-colors flex items-center justify-center gap-2",
+                        activeTab === 'past' ? "text-black" : "text-white/70 hover:text-white"
+                    )}
+                >
+                    אימונים שעברו
+                    <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full",
+                        activeTab === 'past' ? "bg-black/20 text-black" : "bg-neutral-700 text-white"
+                    )}>
+                        {pastSessions.length}
+                    </span>
+
+                </button>
+            </div>
 
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -311,8 +364,8 @@ export default function AdminSchedulePage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <AnimatePresence mode="popLayout">
-                        {sessions.map((session, index) => {
+                    <AnimatePresence mode="wait">
+                        {displayedSessions.map((session, index) => {
                             const count = session.bookings[0]?.count || 0;
                             const fillPercent = Math.min((count / session.max_capacity) * 100, 100);
                             const isFull = count >= session.max_capacity;
@@ -320,11 +373,14 @@ export default function AdminSchedulePage() {
                             return (
                                 <motion.div
                                     key={session.id}
-                                    layout
-                                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ duration: 0.4, delay: index * 0.05, type: "spring" }}
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{
+                                        duration: 0.2,
+                                        delay: Math.min(index * 0.03, 0.15),
+                                        ease: "easeOut"
+                                    }}
                                     className="group relative bg-neutral-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-[2rem] overflow-hidden hover:bg-neutral-900/60 hover:border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
                                 >
                                     {/* Glass reflection effect */}
@@ -389,11 +445,19 @@ export default function AdminSchedulePage() {
             )}
 
             {/* Empty State */}
-            {!loading && sessions.length === 0 && (
+            {!loading && displayedSessions.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-32 text-center opacity-60">
-                    <div className="w-24 h-24 bg-neutral-800 rounded-full flex items-center justify-center text-4xl mb-6 grayscale">🧘‍♀️</div>
-                    <h3 className="text-xl font-bold text-white mb-2">אין אימונים השבוע</h3>
-                    <p className="text-neutral-500">הלוח ריק, זה הזמן להוסיף קצת אנרגיה!</p>
+                    <div className="w-24 h-24 bg-neutral-800 rounded-full flex items-center justify-center text-4xl mb-6 grayscale">
+                        {activeTab === 'upcoming' ? '🧘‍♀️' : '📚'}
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">
+                        {activeTab === 'upcoming' ? 'אין אימונים קרובים' : 'אין אימונים קודמים'}
+                    </h3>
+                    <p className="text-neutral-500">
+                        {activeTab === 'upcoming'
+                            ? 'הלוח ריק, זה הזמן להוסיף קצת אנרגיה!'
+                            : 'עדיין לא התקיימו אימונים'}
+                    </p>
                 </div>
             )}
 
