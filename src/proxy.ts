@@ -60,13 +60,16 @@ export async function proxy(request: NextRequest) {
 export const config = {
     matcher: [
         /*
-         * Match all request paths except:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-         * Feel free to modify this pattern to include more paths.
+         * Match ONLY pages that actually need auth:
+         * - /dashboard (user dashboard)
+         * - /admin/* (admin pages)
+         * - /profile (user profile)
+         * 
+         * Exclude static/public pages like:
+         * - /subscription, /book, /auth/*, /onboarding, etc.
          */
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+        "/dashboard",
+        "/admin/:path*",
+        "/profile",
     ],
 };
