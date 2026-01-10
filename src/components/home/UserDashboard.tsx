@@ -152,9 +152,11 @@ export default function UserDashboard({ user }: { user: any }) {
 
                             <div className="relative z-10 flex justify-between items-end">
                                 <p className="font-medium text-sm text-black/70">שיעורים זמינים</p>
-                                <button className="bg-black text-[#E2F163] px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:scale-105 transition-transform">
-                                    רכישה מהירה +
-                                </button>
+                                <Link href="/subscription">
+                                    <button className="bg-black text-[#E2F163] px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:scale-105 transition-transform">
+                                        רכישה מהירה +
+                                    </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
