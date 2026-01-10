@@ -12,6 +12,7 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@gsap/react": "^2.1.2",
     "@mui/material": "^7.3.6",
     "@mui/x-date-pickers": "^8.23.0",
     "@radix-ui/react-popover": "^1.1.15",
