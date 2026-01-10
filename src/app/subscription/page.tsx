@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { Check, Star, Zap, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -73,47 +70,30 @@ export default function SubscriptionPage() {
 
             {/* Header */}
             <div className="text-center max-w-3xl mx-auto mb-12">
-                <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-primary font-bold tracking-wide uppercase text-sm mb-3 block"
-                >
+                <span className="text-primary font-bold tracking-wide uppercase text-sm mb-3 block">
                     מסלולי הצטרפות
-                </motion.span>
-                <motion.h1
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-4"
-                >
+                </span>
+                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-4">
                     לבחור את הדרך שלך
-                </motion.h1>
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto"
-                >
+                </h1>
+                <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
                     בין אם אתם מתחילים או מקצוענים, יש לנו את המסלול עבורכם.
-                </motion.p>
+                </p>
             </div>
 
             {/* Tier Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mx-auto">
                 {tiers.map((tier, index) => (
-                    <motion.div
+                    <div
                         key={tier.name}
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: "-50px" }}
-                        transition={{ delay: index * 0.1, duration: 0.4 }}
                         className={cn(
-                            "relative flex flex-col p-6 rounded-3xl transition-shadow duration-300",
-                            "border",
+                            "relative flex flex-col p-6 rounded-3xl transition-all duration-300 group",
+                            "border animate-in fade-in slide-in-from-bottom-4",
                             tier.popular
                                 ? "bg-card shadow-2xl shadow-primary/10 border-primary/30 md:scale-[1.02]"
-                                : "bg-card/50 border-border/50 hover:shadow-xl hover:border-border"
+                                : "bg-card/50 border-border/50 hover:shadow-xl hover:border-border hover:-translate-y-1"
                         )}
+                        style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'backwards' }}
                     >
                         {tier.popular && (
                             <div className="absolute -top-3 right-1/2 translate-x-1/2 px-3 py-1 bg-primary text-black text-xs font-bold rounded-full shadow-lg">
@@ -166,7 +146,7 @@ export default function SubscriptionPage() {
                         >
                             {tier.cta}
                         </Button>
-                    </motion.div>
+                    </div>
                 ))}
             </div>
         </div>
