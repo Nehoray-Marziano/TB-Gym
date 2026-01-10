@@ -170,11 +170,3 @@ a,
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
 }
-
-/* GSAP Helper */
-.gsap-marker-scroller-start,
-.gsap-marker-scroller-end,
-.gsap-marker-start,
-.gsap-marker-end {
-  pointer-events: none;
-}

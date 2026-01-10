@@ -2,11 +2,10 @@
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { ArrowRight, ArrowLeft, Check, Heart, AlertCircle, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 
 type FormData = {
     fullName: string;
@@ -38,14 +37,6 @@ export default function OnboardingPage() {
         medicalConditions: "",
     });
     const [direction, setDirection] = useState(1);
-
-    // Initial LOAD anim
-    useEffect(() => {
-        gsap.fromTo(".onboarding-card",
-            { y: 50, opacity: 0 },
-            { y: 0, opacity: 1, duration: 1, ease: "power4.out", delay: 0.2 }
-        );
-    }, []);
 
     // Validation
     const isStepValid = () => {
@@ -134,6 +125,22 @@ export default function OnboardingPage() {
         }, 250);
     };
 
+    // Animation variants
+    const slideVariants = {
+        enter: (direction: number) => ({
+            x: direction > 0 ? 100 : -100,
+            opacity: 0,
+        }),
+        center: {
+            x: 0,
+            opacity: 1,
+        },
+        exit: (direction: number) => ({
+            x: direction < 0 ? 100 : -100,
+            opacity: 0,
+        }),
+    };
+
     // Render Steps
     const renderStepContent = () => {
         switch (step) {
@@ -158,7 +165,11 @@ export default function OnboardingPage() {
                     <div className="space-y-4 text-center">
                         <label className="text-[#E2F163] text-sm font-bold uppercase tracking-wider mb-2 block">גיל</label>
                         <div className="flex justify-center items-center gap-4">
-                            <button onClick={() => setFormData({ ...formData, age: String(Math.max(16, (parseInt(formData.age) || 25) - 1)) })} className="w-12 h-12 rounded-full border border-white/10 hover:bg-white/10 flex items-center justify-center text-white transition-colors text-2xl font-bold">-</button>
+                            <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setFormData({ ...formData, age: String(Math.max(16, (parseInt(formData.age) || 25) - 1)) })}
+                                className="w-12 h-12 rounded-full border border-white/10 hover:bg-white/10 flex items-center justify-center text-white transition-colors text-2xl font-bold"
+                            >-</motion.button>
                             <input
                                 type="number"
                                 autoFocus
@@ -167,7 +178,11 @@ export default function OnboardingPage() {
                                 className="w-32 bg-transparent text-6xl font-bold text-white py-2 focus:outline-none text-center appearance-none"
                                 placeholder="25"
                             />
-                            <button onClick={() => setFormData({ ...formData, age: String(Math.min(100, (parseInt(formData.age) || 25) + 1)) })} className="w-12 h-12 rounded-full bg-[#E2F163] text-black flex items-center justify-center transition-colors text-2xl font-bold hover:scale-105">+</button>
+                            <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setFormData({ ...formData, age: String(Math.min(100, (parseInt(formData.age) || 25) + 1)) })}
+                                className="w-12 h-12 rounded-full bg-[#E2F163] text-black flex items-center justify-center transition-colors text-2xl font-bold hover:scale-105"
+                            >+</motion.button>
                         </div>
                     </div>
                 );
@@ -191,20 +206,24 @@ export default function OnboardingPage() {
                 return (
                     <div className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
-                            <button
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                whileHover={{ scale: 1.02 }}
                                 onClick={() => setFormData({ ...formData, isHealthy: true, medicalConditions: "" })}
                                 className={`p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-4 group ${formData.isHealthy === true ? "border-[#E2F163] bg-[#E2F163]/10" : "border-white/5 bg-neutral-900/50 hover:border-white/20"}`}
                             >
                                 <span className="text-4xl group-hover:scale-110 transition-transform">💪</span>
                                 <span className={`font-bold ${formData.isHealthy === true ? "text-[#E2F163]" : "text-neutral-400"}`}>כשירה לאימון</span>
-                            </button>
-                            <button
+                            </motion.button>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                whileHover={{ scale: 1.02 }}
                                 onClick={() => setFormData({ ...formData, isHealthy: false })}
                                 className={`p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-4 group ${formData.isHealthy === false ? "border-red-400 bg-red-400/10" : "border-white/5 bg-neutral-900/50 hover:border-white/20"}`}
                             >
                                 <span className="text-4xl group-hover:scale-110 transition-transform">🩺</span>
                                 <span className={`font-bold ${formData.isHealthy === false ? "text-red-400" : "text-neutral-400"}`}>יש רגישויות</span>
-                            </button>
+                            </motion.button>
                         </div>
 
                         <AnimatePresence>
@@ -212,6 +231,8 @@ export default function OnboardingPage() {
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
                                     className="overflow-hidden"
                                 >
                                     <textarea
@@ -230,68 +251,119 @@ export default function OnboardingPage() {
     }
 
     if (loading) return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden"
+        >
             {/* Creating a celebration background */}
-            <div className="absolute inset-0 bg-[#E2F163]/10 animate-pulse" />
-            <h1 className="text-5xl font-bold text-white mb-4 relative z-10">ברוכה הבאה! 🎉</h1>
-            <p className="text-neutral-400 text-lg relative z-10">המנוי שלך הוגדר בהצלחה</p>
-        </div>
+            <motion.div
+                className="absolute inset-0 bg-[#E2F163]/10"
+                animate={{ opacity: [0.1, 0.2, 0.1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+            />
+            <motion.h1
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 200 }}
+                className="text-5xl font-bold text-white mb-4 relative z-10"
+            >
+                ברוכה הבאה! 🎉
+            </motion.h1>
+            <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-neutral-400 text-lg relative z-10"
+            >
+                המנוי שלך הוגדר בהצלחה
+            </motion.p>
+        </motion.div>
     );
 
     return (
         <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-[#E2F163] selection:text-black">
             {/* Ambient Backgrounds based on step */}
-            <div className={`absolute inset-0 transition-colors duration-1000 ${step === 4 ? "bg-red-900/5" : "bg-[#E2F163]/5"}`} />
-            <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#E2F163]/10 blur-[150px] rounded-full pointer-events-none animate-pulse" />
+            <motion.div
+                className="absolute inset-0"
+                animate={{ backgroundColor: step === 4 ? "rgba(127, 29, 29, 0.05)" : "rgba(226, 241, 99, 0.05)" }}
+                transition={{ duration: 0.5 }}
+            />
+            <motion.div
+                className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#E2F163]/10 blur-[150px] rounded-full pointer-events-none"
+                animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.15, 0.1] }}
+                transition={{ duration: 4, repeat: Infinity }}
+            />
 
-            <div className="w-full max-w-xl relative z-10">
+            <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="w-full max-w-xl relative z-10"
+            >
                 {/* Progress Bar */}
                 <div className="flex gap-2 mb-12 justify-center">
                     {STEPS.map((s, i) => (
-                        <div key={s.id} className={`h-1.5 rounded-full transition-all duration-500 ${i + 1 <= step ? "w-8 bg-[#E2F163]" : "w-2 bg-neutral-800"}`} />
+                        <motion.div
+                            key={s.id}
+                            className="h-1.5 rounded-full bg-neutral-800"
+                            animate={{
+                                width: i + 1 <= step ? 32 : 8,
+                                backgroundColor: i + 1 <= step ? "#E2F163" : "#262626"
+                            }}
+                            transition={{ duration: 0.3 }}
+                        />
                     ))}
                 </div>
 
-                <motion.div
-                    key={step}
-                    custom={direction}
-                    initial={{ x: direction * 50, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: direction * -50, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="onboarding-card"
-                >
-                    <div className="text-center mb-10">
-                        <motion.h2 className="text-4xl md:text-5xl font-bold text-white mb-3" layoutId="title">
-                            {STEPS[step - 1].title}
-                        </motion.h2>
-                        <p className="text-neutral-500 text-lg font-medium">{STEPS[step - 1].description}</p>
-                    </div>
+                <AnimatePresence mode="wait" custom={direction}>
+                    <motion.div
+                        key={step}
+                        custom={direction}
+                        variants={slideVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    >
+                        <div className="text-center mb-10">
+                            <motion.h2
+                                className="text-4xl md:text-5xl font-bold text-white mb-3"
+                                layoutId="title"
+                            >
+                                {STEPS[step - 1].title}
+                            </motion.h2>
+                            <p className="text-neutral-500 text-lg font-medium">{STEPS[step - 1].description}</p>
+                        </div>
 
-                    <div className="min-h-[200px] flex flex-col justify-center">
-                        {renderStepContent()}
-                    </div>
-                </motion.div>
+                        <div className="min-h-[200px] flex flex-col justify-center">
+                            {renderStepContent()}
+                        </div>
+                    </motion.div>
+                </AnimatePresence>
 
                 <div className="flex justify-between items-center mt-12 px-4">
-                    <button
+                    <motion.button
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleBack}
                         className={`text-neutral-500 font-bold hover:text-white transition-colors flex items-center gap-2 ${step === 1 ? "opacity-0 pointer-events-none" : "opacity-100"}`}
                     >
                         <ArrowRight className="w-5 h-5" />
                         חזרה
-                    </button>
+                    </motion.button>
 
-                    <button
+                    <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        whileHover={isStepValid() ? { scale: 1.05 } : {}}
                         onClick={handleNext}
                         disabled={!isStepValid()}
-                        className={`group flex items-center gap-3 bg-white text-black px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all ${!isStepValid() ? "opacity-50 cursor-not-allowed grayscale" : "hover:scale-105 hover:bg-[#E2F163] hover:shadow-[0_0_40px_rgba(226,241,99,0.4)]"}`}
+                        className={`group flex items-center gap-3 bg-white text-black px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all ${!isStepValid() ? "opacity-50 cursor-not-allowed grayscale" : "hover:bg-[#E2F163] hover:shadow-[0_0_40px_rgba(226,241,99,0.4)]"}`}
                     >
                         {step === STEPS.length ? "סיום והרשמה" : "המשך"}
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                    </button>
+                    </motion.button>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }
