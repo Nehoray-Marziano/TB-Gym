@@ -4,9 +4,9 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   disable: false, // Force enable to ensure sw.js is generated
-  // CRITICAL: Disable aggressive caching to prevent stale session pages
-  cacheOnFrontEndNav: false,
-  aggressiveFrontEndNavCaching: false,
+  // CRITICAL: Enable aggressive caching for instant navigation
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true, // Reload when back online to refresh session
   // Enable dynamic start URL for faster app launch
   dynamicStartUrl: true,
@@ -37,6 +37,21 @@ const withPWA = withPWAInit({
         handler: "NetworkOnly",
         options: {
           cacheName: "dashboard-no-cache",
+        },
+      },
+      {
+        // Static pages - CacheFirst for instant navigation
+        urlPattern: /\/(subscription|book|onboarding|profile)/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "static-pages",
+          expiration: {
+            maxEntries: 10,
+            maxAgeSeconds: 60 * 60 * 24, // 24 hours
+          },
+          cacheableResponse: {
+            statuses: [0, 200],
+          },
         },
       },
       {

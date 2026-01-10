@@ -61,6 +61,13 @@ export default function UserDashboard({ user }: { user: any }) {
         fetchUpcoming();
     }, [user, refreshData]);
 
+    // Prefetch common routes for instant navigation
+    useEffect(() => {
+        router.prefetch('/subscription');
+        router.prefetch('/book');
+        router.prefetch('/profile');
+    }, [router]);
+
     const handleLogout = async () => {
         const supabase = getSupabaseClient();
         await supabase.auth.signOut();
@@ -108,7 +115,7 @@ export default function UserDashboard({ user }: { user: any }) {
                         </div>
 
                         {profile?.role === 'administrator' && (
-                            <Link href="/admin/schedule" passHref>
+                            <Link href="/admin/schedule" prefetch={true}>
                                 <motion.div
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
@@ -120,7 +127,7 @@ export default function UserDashboard({ user }: { user: any }) {
                             </Link>
                         )}
 
-                        <Link href="/profile" passHref>
+                        <Link href="/profile" prefetch={true}>
                             <motion.div
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -165,7 +172,7 @@ export default function UserDashboard({ user }: { user: any }) {
                     <div className="mb-8">
                         <div className="flex justify-between items-end mb-4 px-1">
                             <h2 className="text-xl font-bold text-foreground">האימון הבא</h2>
-                            {upcomingSession && <Link href="/book" className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
+                            {upcomingSession && <Link href="/book" prefetch={true} className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
                         </div>
 
                         {loadingSession ? (
@@ -219,7 +226,7 @@ export default function UserDashboard({ user }: { user: any }) {
                 <div className="bg-card/80 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20">
                     <NavIcon href="/" icon={Home} isActive={true} />
 
-                    <Link href="/book">
+                    <Link href="/book" prefetch={true}>
                         <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/30 border-[4px] border-background cursor-pointer hover:scale-105 transition-transform relative z-10">
                             <Plus className="w-8 h-8 text-black" />
                         </div>

@@ -5,11 +5,18 @@ export default function manifest(): MetadataRoute.Manifest {
         name: "Talia Gym App",
         short_name: "Talia",
         description: "אפליקציית הכושר של טליה - הזמנת אימונים, מעקב קרדיטים וניהול פרופיל",
-        start_url: "/",
+        start_url: "/dashboard",
+        scope: "/",
+        id: "/",
         display: "standalone",
-        background_color: "#000000",
+        display_override: ["standalone", "minimal-ui"],
+        background_color: "#0A0A0A",
         theme_color: "#E2F163",
         orientation: "portrait",
+        categories: ["fitness", "health", "sports"],
+        launch_handler: {
+            client_mode: ["navigate-existing", "auto"]
+        },
         icons: [
             {
                 src: "/icon.jpg",
@@ -36,6 +43,5 @@ export default function manifest(): MetadataRoute.Manifest {
                 purpose: "maskable"
             }
         ],
-
     };
 }

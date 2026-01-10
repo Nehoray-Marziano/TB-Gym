@@ -99,6 +99,16 @@
   --ring: #9CA986;
 }
 
+/* ===== PWA NATIVE FEEL ===== */
+html {
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: none;
+  /* Smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Safe area for notched devices */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -106,6 +116,41 @@ body {
   overflow-x: hidden;
   width: 100%;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Remove 300ms tap delay */
+  touch-action: manipulation;
+  /* Remove tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Prevent text selection on interactive elements */
+  -webkit-touch-callout: none;
+  /* Prevent overscroll bounce */
+  overscroll-behavior: none;
+  /* Better text rendering */
+  text-rendering: optimizeLegibility;
+}
+
+/* Disable text selection on buttons and interactive elements */
+button,
+a,
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* Smooth scrolling for all scrollable containers */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Hardware acceleration for animations */
+.animate-pulse,
+.animate-spin,
+[class*="transition"],
+[class*="hover:"] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Custom Scrollbar */
