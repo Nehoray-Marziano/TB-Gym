@@ -131,22 +131,22 @@ export default function BookingPage() {
     };
 
     const itemVariants: any = {
-        hidden: { opacity: 0, y: 20 },
+        hidden: { opacity: 0, y: 10 },
         visible: {
             opacity: 1,
             y: 0,
-            transition: { type: "spring", stiffness: 100, damping: 15 }
+            transition: { duration: 0.3, ease: "easeOut" }
         },
         exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
     };
 
     return (
         <div className="min-h-[100dvh] bg-background text-foreground p-6 pb-32 font-sans selection:bg-primary selection:text-black">
-            {/* Background Ambient Light */}
-            <div className="fixed top-[-10%] right-[-10%] w-[300px] h-[300px] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
+            {/* Background Ambient Light - Reduced Blur */}
+            <div className="fixed top-[-10%] right-[-10%] w-[300px] h-[300px] bg-primary/5 blur-[50px] rounded-full pointer-events-none" />
 
             {/* Header */}
-            <header className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-md py-4 -mx-6 px-6">
+            <header className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-sm py-4 -mx-6 px-6">
                 <button onClick={() => router.back()} className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted/10 transition-colors">
                     <ChevronRight className="w-5 h-5 text-foreground" />
                 </button>

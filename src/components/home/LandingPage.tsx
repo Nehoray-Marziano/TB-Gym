@@ -80,17 +80,13 @@ export default function LandingPage() {
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-10 mix-blend-overlay"></div>
 
-                {/* Dynamic Floating Orbs with parallax */}
+                {/* Dynamic Floating Orbs - Optimized */}
                 <motion.div
-                    className="absolute top-[5%] left-[10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-primary/5 rounded-full blur-[80px]"
-                    animate={{ y: [-20, 20, -20], rotate: [0, 5, 0] }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-[5%] left-[10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-primary/5 rounded-full blur-[40px] will-change-transform"
                     style={{ x: smoothX, y: smoothY }}
                 />
                 <motion.div
-                    className="absolute bottom-[15%] right-[5%] w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#E2F163]/5 rounded-full blur-[60px]"
-                    animate={{ y: [30, -30, 30], rotate: [0, -5, 0] }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    className="absolute bottom-[15%] right-[5%] w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#E2F163]/5 rounded-full blur-[40px] will-change-transform"
                 />
             </div>
 
@@ -104,14 +100,14 @@ export default function LandingPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
                 >
-                    <div className="absolute inset-0 bg-primary/20 blur-[40px] rounded-full animate-pulse" />
+                    <div className="absolute inset-0 bg-primary/20 blur-[30px] rounded-full animate-pulse" />
                     <motion.svg
                         width="240"
                         height="120"
                         viewBox="0 0 200 100"
                         className="drop-shadow-[0_0_20px_rgba(156,169,134,0.6)] relative z-10"
-                        animate={{ y: [-8, 8, -8] }}
-                        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                        animate={{ y: [-4, 4, -4] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                     >
                         <rect x="20" y="45" width="160" height="10" rx="4" fill="#5F6F52" />
                         <motion.g

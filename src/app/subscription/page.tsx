@@ -84,25 +84,15 @@ export default function SubscriptionPage() {
             className="min-h-screen w-full bg-background py-16 px-4 sm:px-6 lg:px-8 overflow-x-hidden relative"
             dir="rtl"
         >
-            {/* Background Ambient */}
-            <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
-                <motion.div
-                    animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"
-                />
-                <motion.div
-                    animate={{ scale: [1, 1.3, 1], rotate: [0, -60, 0] }}
-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                    className="absolute bottom-[-10%] left-[-20%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[150px]"
-                />
-            </div>
+            {/* Background Ambient - Static for Performance */}
+            <div className="fixed top-[-20%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="fixed bottom-[-10%] left-[-20%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
 
             {/* Header */}
             <motion.div
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 0.5 }}
                 className="text-center max-w-3xl mx-auto mb-16"
             >
                 <motion.span

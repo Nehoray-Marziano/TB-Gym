@@ -89,24 +89,24 @@ export default function UserDashboard({ user }: { user: any }) {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            transition: { staggerChildren: 0.1 }
+            transition: { staggerChildren: 0.05 } // Fast stagger
         }
     };
 
     const itemVariants: any = {
-        hidden: { y: 20, opacity: 0 },
+        hidden: { y: 10, opacity: 0 },
         visible: {
             y: 0,
             opacity: 1,
-            transition: { type: "spring", stiffness: 100, damping: 12 }
+            transition: { duration: 0.4, ease: "easeOut" } // Simple ease instead of heavy spring
         }
     };
 
     return (
         <div className="fixed inset-0 bg-background text-foreground overflow-hidden selection:bg-primary selection:text-black font-sans transition-colors duration-300">
-            {/* Background Ambient Light */}
-            <div className="fixed top-0 right-0 w-[300px] h-[300px] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
-            <div className="fixed bottom-0 left-0 w-[200px] h-[200px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
+            {/* Background Ambient Light - Reduced Blur */}
+            <div className="fixed top-0 right-0 w-[300px] h-[300px] bg-primary/5 blur-[50px] rounded-full pointer-events-none" />
+            <div className="fixed bottom-0 left-0 w-[200px] h-[200px] bg-blue-500/5 blur-[40px] rounded-full pointer-events-none" />
 
             {/* Content Area - Fixed height, no scroll */}
             <div className="h-full overflow-hidden pb-24">
