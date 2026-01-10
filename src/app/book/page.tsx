@@ -4,7 +4,7 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Clock, MapPin, ChevronRight, Check, CalendarPlus, X, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -13,8 +13,7 @@ export default function BookingPage() {
     const router = useRouter();
     const { toast } = useToast();
 
-    // Using Cached Data!
-    const { loading: globalLoading, refreshData, cancelBooking: globalCancel } = useGymStore();
+    const { refreshData, cancelBooking: globalCancel } = useGymStore();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [bookingId, setBookingId] = useState<string | null>(null);
@@ -24,7 +23,6 @@ export default function BookingPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Parallel Fetch: Sessions & My Bookings
             const [sessionRes, bookingsRes] = await Promise.all([
                 supabase.from("gym_sessions_with_counts").select("*").gte("start_time", new Date().toISOString()).order("start_time", { ascending: true }),
                 supabase.from("bookings").select("session_id").eq("user_id", user.id).eq("status", "confirmed")
@@ -40,7 +38,6 @@ export default function BookingPage() {
                     isRegistered: registeredIds.has(session.id),
                 }));
                 setSessions(sessionsWithStatus);
-                // Save to Cache
                 localStorage.setItem("talia_sessions", JSON.stringify(sessionsWithStatus));
             }
         } catch (error) {
@@ -51,27 +48,21 @@ export default function BookingPage() {
     };
 
     useEffect(() => {
-        // Load from Cache first for instant UI
         const cached = localStorage.getItem("talia_sessions");
         if (cached) {
             setSessions(JSON.parse(cached));
             setLoading(false);
         }
-
-        // Always fetch fresh data on mount
         fetchSessions();
 
-        // Refetch when page becomes visible
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {
-                console.log("[Sessions] Page visible, refreshing...");
                 fetchSessions();
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
         return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, []);
-
 
     const handleBook = async (sessionId: string) => {
         setBookingId(sessionId);
@@ -82,8 +73,8 @@ export default function BookingPage() {
         } else if (data && !data.success) {
             toast({ title: "לא ניתן להירשם", description: data.message, type: "error" });
         } else {
-            await refreshData(); // Update global credits
-            await fetchSessions(); // Update local list
+            await refreshData();
+            await fetchSessions();
             toast({ title: "נרשמת בהצלחה! 🎉", description: "נתראה באימון", type: "success" });
         }
         setBookingId(null);
@@ -99,13 +90,11 @@ export default function BookingPage() {
         };
     };
 
-    // State for confirmation modal
     const [sessionToCancel, setSessionToCancel] = useState<Session | null>(null);
 
     const confirmCancel = async () => {
         if (!sessionToCancel) return;
 
-        // Optimistic UI Update
         const prevSessions = [...sessions];
         setSessions(curr => curr.map(s => s.id === sessionToCancel.id ? { ...s, isRegistered: false, current_bookings: Math.max(0, s.current_bookings - 1) } : s));
 
@@ -113,41 +102,19 @@ export default function BookingPage() {
 
         if (result.success) {
             toast({ title: "האימון בוטל", description: "הזיכוי הוחזר לחשבונך", type: "success" });
-            fetchSessions(); // Re-verify with server
+            fetchSessions();
         } else {
-            setSessions(prevSessions); // Revert
+            setSessions(prevSessions);
             toast({ title: "לא ניתן לבטל", description: result.message, type: "error" });
         }
         setSessionToCancel(null);
     };
 
-    // Animation Variants
-    const containerVariants: any = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 }
-        }
-    };
-
-    const itemVariants: any = {
-        hidden: { opacity: 0, y: 10 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.3, ease: "easeOut" }
-        },
-        exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
-    };
-
     return (
-        <div className="min-h-[100dvh] bg-background text-foreground p-6 pb-32 font-sans selection:bg-primary selection:text-black">
-            {/* Background Ambient Light - Reduced Blur */}
-            <div className="fixed top-[-10%] right-[-10%] w-[300px] h-[300px] bg-primary/5 blur-[50px] rounded-full pointer-events-none" />
-
+        <div className="min-h-[100dvh] bg-background text-foreground p-6 pb-32 font-sans">
             {/* Header */}
-            <header className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-sm py-4 -mx-6 px-6">
-                <button onClick={() => router.back()} className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted/10 transition-colors">
+            <header className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background py-4 -mx-6 px-6">
+                <button onClick={() => router.back()} className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center active:scale-95 transition-transform">
                     <ChevronRight className="w-5 h-5 text-foreground" />
                 </button>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground">הירשמי לאימון 📅</h1>
@@ -167,46 +134,33 @@ export default function BookingPage() {
                     ))}
                 </div>
             ) : sessions.length === 0 ? (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-20 px-6 bg-card/40 rounded-3xl border border-dashed border-border"
-                >
+                <div className="text-center py-20 px-6 bg-card/40 rounded-3xl border border-dashed border-border">
                     <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Calendar className="w-8 h-8 text-muted-foreground" />
                     </div>
                     <p className="text-lg font-bold text-foreground">אין אימונים השבוע</p>
                     <p className="text-muted-foreground text-sm mt-1">חזרי להתעדכן ביום ראשון!</p>
-                </motion.div>
+                </div>
             ) : (
-                <motion.div
-                    className="space-y-4"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                >
-                    <AnimatePresence mode="popLayout">
-                        {sessions.map((session) => {
-                            const date = formatDate(session.start_time);
-                            const isFull = (session.current_bookings || 0) >= session.max_capacity;
+                <div className="space-y-4">
+                    {sessions.map((session) => {
+                        const date = formatDate(session.start_time);
+                        const isFull = (session.current_bookings || 0) >= session.max_capacity;
 
-                            // Calendar Event Generator
-                            const addToCalendar = (e: React.MouseEvent) => {
-                                e.stopPropagation();
+                        const addToCalendar = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            const title = `אימון ${session.title} - Talia Gym`;
+                            const location = "סטודיו טליה";
+                            const description = session.description || "אימון בסטודיו טליה";
+                            const start = new Date(session.start_time);
+                            const end = new Date(session.end_time);
 
-                                const title = `אימון ${session.title} - Talia Gym`;
-                                const location = "סטודיו טליה";
-                                const description = session.description || "אימון בסטודיו טליה";
-                                const start = new Date(session.start_time);
-                                const end = new Date(session.end_time);
+                            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 
-                                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-
-                                if (isIOS) {
-                                    const startStr = start.toISOString().replace(/-|:|\.\d+/g, "");
-                                    const endStr = end.toISOString().replace(/-|:|\.\d+/g, "");
-
-                                    const icsContent = `BEGIN:VCALENDAR
+                            if (isIOS) {
+                                const startStr = start.toISOString().replace(/-|:|\.\d+/g, "");
+                                const endStr = end.toISOString().replace(/-|:|\.\d+/g, "");
+                                const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
 DTSTART:${startStr}
@@ -216,130 +170,114 @@ DESCRIPTION:${description}
 LOCATION:${location}
 END:VEVENT
 END:VCALENDAR`;
+                                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                                const link = document.createElement('a');
+                                link.href = window.URL.createObjectURL(blob);
+                                link.setAttribute('download', 'workout.ics');
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } else {
+                                const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d+/g, "");
+                                const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
+                                window.open(url, '_blank');
+                            }
+                        };
 
-                                    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                                    const link = document.createElement('a');
-                                    link.href = window.URL.createObjectURL(blob);
-                                    link.setAttribute('download', 'workout.ics');
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                } else {
-                                    const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d+/g, "");
-                                    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
-                                    window.open(url, '_blank');
-                                }
-                            };
+                        const handleCancelClick = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setSessionToCancel(session);
+                        };
 
-                            const handleCancelClick = (e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                setSessionToCancel(session);
-                            };
-
-                            return (
-                                <motion.div
-                                    key={session.id}
-                                    variants={itemVariants}
-                                    layout
-                                    className={`relative p-5 rounded-[2rem] border transition-all overflow-hidden group
+                        return (
+                            <div
+                                key={session.id}
+                                className={`relative p-5 rounded-[2rem] border transition-colors
+                                    ${session.isRegistered
+                                        ? "bg-primary/5 border-primary/30"
+                                        : isFull
+                                            ? "bg-muted/30 border-border opacity-70"
+                                            : "bg-card/60 border-border"
+                                    }`}
+                            >
+                                <div className="flex gap-5">
+                                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl shrink-0
                                         ${session.isRegistered
-                                            ? "bg-primary/5 border-primary/30"
+                                            ? "bg-primary text-black"
                                             : isFull
-                                                ? "bg-muted/30 border-border opacity-70 grayscale-[0.5]" // Dimmed if full
-                                                : "bg-card/60 border-border hover:border-primary/20"
-                                        }`}
-                                >
-                                    <div className="flex gap-5">
-                                        {/* Date Box */}
-                                        <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl shrink-0 backdrop-blur-sm
-                                            ${session.isRegistered
-                                                ? "bg-primary text-black"
-                                                : isFull
-                                                    ? "bg-muted text-muted-foreground"
-                                                    : "bg-muted/20 text-foreground"}`}>
-                                            <span className="text-xl font-bold leading-none">{date.day}</span>
-                                            <span className="text-xs font-bold uppercase opacity-80">{date.month}</span>
+                                                ? "bg-muted text-muted-foreground"
+                                                : "bg-muted/20 text-foreground"}`}>
+                                        <span className="text-xl font-bold leading-none">{date.day}</span>
+                                        <span className="text-xs font-bold uppercase opacity-80">{date.month}</span>
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="text-lg font-bold mb-1 text-foreground flex items-center gap-2">
+                                                {session.title}
+                                                {isFull && !session.isRegistered && (
+                                                    <span className="text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
+                                                        מלא
+                                                    </span>
+                                                )}
+                                            </h3>
+                                            {session.isRegistered && (
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        onClick={addToCalendar}
+                                                        className="w-10 h-10 rounded-full bg-black text-[#E2F163] flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                                                    >
+                                                        <CalendarPlus className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={handleCancelClick}
+                                                        className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                                                    >
+                                                        <X className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
 
-                                        {/* Details */}
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="text-lg font-bold mb-1 text-foreground flex items-center gap-2">
-                                                    {session.title}
-                                                    {isFull && !session.isRegistered && (
-                                                        <span className="text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
-                                                            מלא
-                                                        </span>
-                                                    )}
-                                                </h3>
-                                                {session.isRegistered && (
-                                                    <div className="flex gap-3 relative z-50 pointer-events-auto">
-                                                        <motion.button
-                                                            whileHover={{ scale: 1.1 }}
-                                                            whileTap={{ scale: 0.9 }}
-                                                            onClick={addToCalendar}
-                                                            className="w-10 h-10 rounded-full bg-black text-[#E2F163] flex items-center justify-center shadow-md cursor-pointer"
-                                                            title="הוספה ליומן"
-                                                        >
-                                                            <CalendarPlus className="w-5 h-5" />
-                                                        </motion.button>
-                                                        <motion.button
-                                                            whileHover={{ scale: 1.1 }}
-                                                            whileTap={{ scale: 0.9 }}
-                                                            onClick={handleCancelClick}
-                                                            className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shadow-md cursor-pointer"
-                                                            title="ביטול הרשמה"
-                                                        >
-                                                            <X className="w-5 h-5" />
-                                                        </motion.button>
-                                                    </div>
-                                                )}
+                                        <div className="flex flex-col gap-1 text-sm text-muted-foreground font-medium my-2">
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="w-3 h-3" />
+                                                {date.weekday}, {date.time}
                                             </div>
-
-                                            <div className="flex flex-col gap-1 text-sm text-muted-foreground font-medium my-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Clock className="w-3 h-3" />
-                                                    {date.weekday}, {date.time}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <MapPin className="w-3 h-3" />
-                                                    סטודיו ראשי
-                                                    <span className="mx-1">•</span>
-                                                    <span>{session.current_bookings || 0}/{session.max_capacity} מוזמנים</span>
-                                                </div>
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="w-3 h-3" />
+                                                סטודיו ראשי • {session.current_bookings || 0}/{session.max_capacity} מוזמנים
                                             </div>
                                         </div>
                                     </div>
+                                </div>
 
-                                    {/* Action Button */}
-                                    <motion.button
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={() => !session.isRegistered && !isFull && handleBook(session.id)}
-                                        disabled={bookingId === session.id || (isFull && !session.isRegistered) || session.isRegistered}
-                                        className={`w-full mt-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
-                                            ${session.isRegistered
-                                                ? "bg-green-100 text-green-700 cursor-default border border-green-200"
-                                                : isFull
-                                                    ? "bg-muted text-muted-foreground cursor-not-allowed border border-transparent"
-                                                    : "bg-black text-white hover:bg-primary hover:text-black hover:scale-[1.02] shadow-lg"
-                                            }`}
-                                    >
-                                        {session.isRegistered
-                                            ? <><Check className="w-4 h-4" /> נרשמת לאימון זה</>
-                                            : bookingId === session.id
-                                                ? "מבצע רישום..."
-                                                : isFull
-                                                    ? "האימון מלא"
-                                                    : "שרייני מקום"}
-                                    </motion.button>
-                                </motion.div>
-                            )
-                        })}
-                    </AnimatePresence>
-                </motion.div>
+                                <button
+                                    onClick={() => !session.isRegistered && !isFull && handleBook(session.id)}
+                                    disabled={bookingId === session.id || (isFull && !session.isRegistered) || session.isRegistered}
+                                    className={`w-full mt-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform
+                                        ${session.isRegistered
+                                            ? "bg-green-100 text-green-700 border border-green-200"
+                                            : isFull
+                                                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                                                : "bg-black text-white shadow-lg"
+                                        }`}
+                                >
+                                    {session.isRegistered
+                                        ? <><Check className="w-4 h-4" /> נרשמת לאימון זה</>
+                                        : bookingId === session.id
+                                            ? "מבצע רישום..."
+                                            : isFull
+                                                ? "האימון מלא"
+                                                : "שרייני מקום"}
+                                </button>
+                            </div>
+                        )
+                    })}
+                </div>
             )}
 
-            {/* Custom Confirmation Modal */}
+            {/* Confirmation Modal - Keep minimal animation */}
             <AnimatePresence>
                 {sessionToCancel && (
                     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
@@ -348,17 +286,15 @@ END:VCALENDAR`;
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setSessionToCancel(null)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            className="absolute inset-0 bg-black/60"
                         />
                         <motion.div
-                            initial={{ translateY: "100%", opacity: 0, scale: 0.9 }}
-                            animate={{ translateY: "0%", opacity: 1, scale: 1 }}
-                            exit={{ translateY: "100%", opacity: 0, scale: 0.9 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            className="relative w-full max-w-sm bg-card border border-border rounded-3xl p-6 shadow-2xl overflow-hidden"
+                            initial={{ translateY: "100%" }}
+                            animate={{ translateY: "0%" }}
+                            exit={{ translateY: "100%" }}
+                            transition={{ type: "tween", duration: 0.2 }}
+                            className="relative w-full max-w-sm bg-card border border-border rounded-3xl p-6 shadow-2xl"
                         >
-                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
-
                             <div className="flex flex-col items-center text-center gap-4">
                                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-2">
                                     <AlertCircle className="w-8 h-8 text-red-600" />
@@ -370,20 +306,18 @@ END:VCALENDAR`;
                                 </p>
 
                                 <div className="grid grid-cols-2 gap-3 w-full mt-4">
-                                    <motion.button
-                                        whileTap={{ scale: 0.95 }}
+                                    <button
                                         onClick={() => setSessionToCancel(null)}
-                                        className="py-3 rounded-xl font-bold text-foreground bg-muted hover:bg-muted/80 transition-colors"
+                                        className="py-3 rounded-xl font-bold text-foreground bg-muted active:scale-95 transition-transform"
                                     >
                                         חזרה
-                                    </motion.button>
-                                    <motion.button
-                                        whileTap={{ scale: 0.95 }}
+                                    </button>
+                                    <button
                                         onClick={confirmCancel}
-                                        className="py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all"
+                                        className="py-3 rounded-xl font-bold text-white bg-red-600 shadow-lg active:scale-95 transition-transform"
                                     >
                                         כן, לבטל
-                                    </motion.button>
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>

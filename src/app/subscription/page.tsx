@@ -3,7 +3,6 @@
 import { Check, Star, Zap, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 
 const tiers = [
     {
@@ -21,7 +20,6 @@ const tiers = [
         cta: "להצטרפות",
         popular: false,
         icon: Star,
-        color: "bg-zinc-100 dark:bg-zinc-900",
     },
     {
         name: "פרימיום",
@@ -39,7 +37,6 @@ const tiers = [
         cta: "אני רוצה את זה",
         popular: true,
         icon: Zap,
-        color: "bg-[#E2F163]",
     },
     {
         name: "עלית",
@@ -58,76 +55,38 @@ const tiers = [
         cta: "הצטרפות למועדון",
         popular: false,
         icon: Crown,
-        color: "bg-zinc-100 dark:bg-zinc-900",
     },
 ];
-
-const containerVariants: any = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.15,
-            delayChildren: 0.1,
-        },
-    },
-};
-
-const itemVariants: any = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 120, damping: 12 } },
-};
 
 export default function SubscriptionPage() {
     return (
         <div
-            className="min-h-screen w-full bg-background py-16 px-4 sm:px-6 lg:px-8 overflow-x-hidden relative"
+            className="min-h-screen w-full bg-background py-16 px-4 sm:px-6 lg:px-8 overflow-x-hidden"
             dir="rtl"
         >
-            {/* Background Ambient - Static for Performance */}
-            <div className="fixed top-[-20%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-            <div className="fixed bottom-[-10%] left-[-20%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
-
             {/* Header */}
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="text-center max-w-3xl mx-auto mb-16"
-            >
-                <motion.span
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="inline-block py-1 px-3 rounded-full bg-secondary text-secondary-foreground text-xs font-extrabold tracking-wider uppercase mb-4"
-                >
+            <div className="text-center max-w-3xl mx-auto mb-16">
+                <span className="inline-block py-1 px-3 rounded-full bg-secondary text-secondary-foreground text-xs font-extrabold tracking-wider uppercase mb-4">
                     מסלולי הצטרפות
-                </motion.span>
+                </span>
                 <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground mb-6 leading-tight">
                     לבחור את <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-[#d4e450]">הדרך שלך</span>
                 </h1>
                 <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed">
                     בין אם אתם מתחילים או מקצוענים, בנינו עבורכם מסלולים שיתאימו בדיוק לקצב שלכם.
                 </p>
-            </motion.div>
+            </div>
 
             {/* Tier Cards */}
-            <motion.div
-                className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-7xl mx-auto items-stretch"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-            >
-                {tiers.map((tier, index) => (
-                    <motion.div
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-7xl mx-auto items-stretch">
+                {tiers.map((tier) => (
+                    <div
                         key={tier.name}
-                        variants={itemVariants}
-                        whileHover={{ y: -10, transition: { duration: 0.3 } }}
                         className={cn(
-                            "relative flex flex-col p-8 rounded-[2.5rem] transition-all duration-300",
+                            "relative flex flex-col p-8 rounded-[2.5rem] transition-transform active:scale-[0.98]",
                             tier.popular
                                 ? "bg-card shadow-2xl shadow-primary/20 border-2 border-primary ring-4 ring-primary/10 z-10 md:scale-105"
-                                : "bg-card/50 border border-border/50 hover:bg-card hover:border-border hover:shadow-xl"
+                                : "bg-card/50 border border-border/50"
                         )}
                     >
                         {tier.popular && (
@@ -164,50 +123,38 @@ export default function SubscriptionPage() {
 
                         {/* Features */}
                         <ul className="space-y-4 flex-1 mb-8">
-                            {tier.features.map((feature, i) => (
-                                <motion.li
-                                    key={feature}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2 + (i * 0.05) }}
-                                    className="flex items-start gap-3"
-                                >
+                            {tier.features.map((feature) => (
+                                <li key={feature} className="flex items-start gap-3">
                                     <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
                                         <Check className="h-3 w-3 text-primary stroke-[3]" />
                                     </div>
                                     <span className="text-sm font-medium text-foreground/90">{feature}</span>
-                                </motion.li>
+                                </li>
                             ))}
                         </ul>
 
                         {/* CTA */}
                         <Button
                             className={cn(
-                                "w-full rounded-2xl py-6 text-base font-bold transition-all duration-300 shadow-lg",
+                                "w-full rounded-2xl py-6 text-base font-bold shadow-lg active:scale-[0.98] transition-transform",
                                 tier.popular
-                                    ? "bg-primary text-black hover:bg-primary/90 hover:shadow-primary/30 hover:scale-[1.02]"
-                                    : "bg-foreground text-background hover:bg-foreground/90 hover:scale-[1.02]"
+                                    ? "bg-primary text-black"
+                                    : "bg-foreground text-background"
                             )}
                         >
                             {tier.cta}
                         </Button>
-                    </motion.div>
+                    </div>
                 ))}
-            </motion.div>
+            </div>
 
             {/* Money Back Guarantee */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.8 }}
-                className="text-center mt-16 pb-8"
-            >
+            <div className="text-center mt-16 pb-8">
                 <p className="text-sm text-muted-foreground font-medium flex items-center justify-center gap-2">
                     <Zap className="w-4 h-4" />
                     ניתן לבטל את המנוי בכל עת ללא אותיות קטנות
                 </p>
-            </motion.div>
+            </div>
         </div>
     );
 }
