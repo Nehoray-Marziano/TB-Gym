@@ -14,7 +14,6 @@ export default function BookingPage() {
     const { toast } = useToast();
 
     // Using Cached Data!
-    // Using Cached Data!
     const { loading: globalLoading, refreshData, cancelBooking: globalCancel } = useGymStore();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
@@ -46,7 +45,6 @@ export default function BookingPage() {
             }
         } catch (error) {
             console.error("Error fetching sessions:", error);
-            // toast({ title: "שגיאה בטעינת אימונים", type: "error" }); // Quiet fail on background refresh
         } finally {
             setLoading(false);
         }
@@ -63,7 +61,7 @@ export default function BookingPage() {
         // Always fetch fresh data on mount
         fetchSessions();
 
-        // Refetch when page becomes visible (user returns from other tab/app)
+        // Refetch when page becomes visible
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {
                 console.log("[Sessions] Page visible, refreshing...");
@@ -111,7 +109,7 @@ export default function BookingPage() {
         const prevSessions = [...sessions];
         setSessions(curr => curr.map(s => s.id === sessionToCancel.id ? { ...s, isRegistered: false, current_bookings: Math.max(0, s.current_bookings - 1) } : s));
 
-        const result = await globalCancel(sessionToCancel.id); // Call global to update credits
+        const result = await globalCancel(sessionToCancel.id);
 
         if (result.success) {
             toast({ title: "האימון בוטל", description: "הזיכוי הוחזר לחשבונך", type: "success" });
@@ -121,6 +119,25 @@ export default function BookingPage() {
             toast({ title: "לא ניתן לבטל", description: result.message, type: "error" });
         }
         setSessionToCancel(null);
+    };
+
+    // Animation Variants
+    const containerVariants: any = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants: any = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { type: "spring", stiffness: 100, damping: 15 }
+        },
+        exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
     };
 
     return (
@@ -150,17 +167,26 @@ export default function BookingPage() {
                     ))}
                 </div>
             ) : sessions.length === 0 ? (
-                <div className="text-center py-20 px-6 bg-card/40 rounded-3xl border border-dashed border-border">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-20 px-6 bg-card/40 rounded-3xl border border-dashed border-border"
+                >
                     <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Calendar className="w-8 h-8 text-muted-foreground" />
                     </div>
                     <p className="text-lg font-bold text-foreground">אין אימונים השבוע</p>
                     <p className="text-muted-foreground text-sm mt-1">חזרי להתעדכן ביום ראשון!</p>
-                </div>
+                </motion.div>
             ) : (
-                <div className="space-y-4">
-                    <AnimatePresence>
-                        {sessions.map((session, index) => {
+                <motion.div
+                    className="space-y-4"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
+                    <AnimatePresence mode="popLayout">
+                        {sessions.map((session) => {
                             const date = formatDate(session.start_time);
                             const isFull = (session.current_bookings || 0) >= session.max_capacity;
 
@@ -174,11 +200,9 @@ export default function BookingPage() {
                                 const start = new Date(session.start_time);
                                 const end = new Date(session.end_time);
 
-                                // 1. Check if iOS
                                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 
                                 if (isIOS) {
-                                    // iOS: Download .ics file
                                     const startStr = start.toISOString().replace(/-|:|\.\d+/g, "");
                                     const endStr = end.toISOString().replace(/-|:|\.\d+/g, "");
 
@@ -201,7 +225,6 @@ END:VCALENDAR`;
                                     link.click();
                                     document.body.removeChild(link);
                                 } else {
-                                    // Android / Desktop: Open Google Calendar
                                     const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d+/g, "");
                                     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
                                     window.open(url, '_blank');
@@ -214,8 +237,10 @@ END:VCALENDAR`;
                             };
 
                             return (
-                                <div
+                                <motion.div
                                     key={session.id}
+                                    variants={itemVariants}
+                                    layout
                                     className={`relative p-5 rounded-[2rem] border transition-all overflow-hidden group
                                         ${session.isRegistered
                                             ? "bg-primary/5 border-primary/30"
@@ -249,20 +274,24 @@ END:VCALENDAR`;
                                                 </h3>
                                                 {session.isRegistered && (
                                                     <div className="flex gap-3 relative z-50 pointer-events-auto">
-                                                        <button
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.1 }}
+                                                            whileTap={{ scale: 0.9 }}
                                                             onClick={addToCalendar}
-                                                            className="w-10 h-10 rounded-full bg-black text-[#E2F163] flex items-center justify-center hover:scale-110 shadow-md transition-all cursor-pointer"
+                                                            className="w-10 h-10 rounded-full bg-black text-[#E2F163] flex items-center justify-center shadow-md cursor-pointer"
                                                             title="הוספה ליומן"
                                                         >
                                                             <CalendarPlus className="w-5 h-5" />
-                                                        </button>
-                                                        <button
+                                                        </motion.button>
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.1 }}
+                                                            whileTap={{ scale: 0.9 }}
                                                             onClick={handleCancelClick}
-                                                            className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 hover:scale-110 shadow-md transition-all cursor-pointer"
+                                                            className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shadow-md cursor-pointer"
                                                             title="ביטול הרשמה"
                                                         >
                                                             <X className="w-5 h-5" />
-                                                        </button>
+                                                        </motion.button>
                                                     </div>
                                                 )}
                                             </div>
@@ -275,16 +304,16 @@ END:VCALENDAR`;
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="w-3 h-3" />
                                                     סטודיו ראשי
-                                                    {/* Capacity Indicator for visual consistency */}
                                                     <span className="mx-1">•</span>
-                                                    <span>{session.current_bookings || 0}/{session.max_capacity} רשומים</span>
+                                                    <span>{session.current_bookings || 0}/{session.max_capacity} מוזמנים</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Action Button */}
-                                    <button
+                                    <motion.button
+                                        whileTap={{ scale: 0.98 }}
                                         onClick={() => !session.isRegistered && !isFull && handleBook(session.id)}
                                         disabled={bookingId === session.id || (isFull && !session.isRegistered) || session.isRegistered}
                                         className={`w-full mt-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
@@ -292,7 +321,7 @@ END:VCALENDAR`;
                                                 ? "bg-green-100 text-green-700 cursor-default border border-green-200"
                                                 : isFull
                                                     ? "bg-muted text-muted-foreground cursor-not-allowed border border-transparent"
-                                                    : "bg-black text-white hover:bg-primary hover:text-black hover:scale-[1.02] shadow-lg active:scale-95"
+                                                    : "bg-black text-white hover:bg-primary hover:text-black hover:scale-[1.02] shadow-lg"
                                             }`}
                                     >
                                         {session.isRegistered
@@ -302,12 +331,12 @@ END:VCALENDAR`;
                                                 : isFull
                                                     ? "האימון מלא"
                                                     : "שרייני מקום"}
-                                    </button>
-                                </div>
+                                    </motion.button>
+                                </motion.div>
                             )
                         })}
                     </AnimatePresence>
-                </div>
+                </motion.div>
             )}
 
             {/* Custom Confirmation Modal */}
@@ -322,9 +351,10 @@ END:VCALENDAR`;
                             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                         />
                         <motion.div
-                            initial={{ translateY: "100%", opacity: 0 }}
-                            animate={{ translateY: "0%", opacity: 1 }}
-                            exit={{ translateY: "100%", opacity: 0 }}
+                            initial={{ translateY: "100%", opacity: 0, scale: 0.9 }}
+                            animate={{ translateY: "0%", opacity: 1, scale: 1 }}
+                            exit={{ translateY: "100%", opacity: 0, scale: 0.9 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
                             className="relative w-full max-w-sm bg-card border border-border rounded-3xl p-6 shadow-2xl overflow-hidden"
                         >
                             <div className="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -340,18 +370,20 @@ END:VCALENDAR`;
                                 </p>
 
                                 <div className="grid grid-cols-2 gap-3 w-full mt-4">
-                                    <button
+                                    <motion.button
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => setSessionToCancel(null)}
                                         className="py-3 rounded-xl font-bold text-foreground bg-muted hover:bg-muted/80 transition-colors"
                                     >
                                         חזרה
-                                    </button>
-                                    <button
+                                    </motion.button>
+                                    <motion.button
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={confirmCancel}
-                                        className="py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all active:scale-95"
+                                        className="py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all"
                                     >
                                         כן, לבטל
-                                    </button>
+                                    </motion.button>
                                 </div>
                             </div>
                         </motion.div>

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useGymStore } from "@/providers/GymStoreProvider";
-import { Calendar, User, Home, CreditCard, Plus, ArrowRight, Activity, Zap, LogOut } from "lucide-react";
+import { Calendar, User, Home, CreditCard, Plus, ArrowRight, Activity, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import StudioLogo from "@/components/StudioLogo";
 
@@ -68,12 +68,6 @@ export default function UserDashboard({ user }: { user: any }) {
         router.prefetch('/profile');
     }, [router]);
 
-    const handleLogout = async () => {
-        const supabase = getSupabaseClient();
-        await supabase.auth.signOut();
-        router.refresh();
-    };
-
     if (loading) return (
         // Kept for initial first load, but usually this won't show on navigation
         <div className="min-h-screen flex items-center justify-center bg-background">
@@ -91,6 +85,23 @@ export default function UserDashboard({ user }: { user: any }) {
         return "ערב טוב";
     }
 
+    const containerVariants: any = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants: any = {
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1,
+            transition: { type: "spring", stiffness: 100, damping: 12 }
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-background text-foreground overflow-hidden selection:bg-primary selection:text-black font-sans transition-colors duration-300">
             {/* Background Ambient Light */}
@@ -99,14 +110,19 @@ export default function UserDashboard({ user }: { user: any }) {
 
             {/* Content Area - Fixed height, no scroll */}
             <div className="h-full overflow-hidden pb-24">
-                <div className="p-6 relative z-10 h-full">
+                <motion.div
+                    className="p-6 relative z-10 h-full"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
                     {/* Sticky Logo Header */}
                     <div className="sticky top-0 z-50 flex justify-center pb-4 pt-4 bg-gradient-to-b from-background via-background/95 to-transparent backdrop-blur-[2px] mb-2 -mx-6 -mt-6">
                         <StudioLogo className="w-16 h-16" />
                     </div>
 
                     {/* Header */}
-                    <header className="flex justify-between items-start mb-8">
+                    <motion.header variants={itemVariants} className="flex justify-between items-start mb-8">
                         <div>
                             <p className="text-muted-foreground text-sm font-medium mb-1">{greeting},</p>
                             <h1 className="text-4xl font-bold text-foreground tracking-tight">
@@ -114,42 +130,48 @@ export default function UserDashboard({ user }: { user: any }) {
                             </h1>
                         </div>
 
-                        {profile?.role === 'administrator' && (
-                            <Link href="/admin/schedule" prefetch={true}>
+                        <div className="flex items-center gap-3">
+                            {profile?.role === 'administrator' && (
+                                <Link href="/admin/schedule" prefetch={true}>
+                                    <motion.div
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black cursor-pointer"
+                                        title="ניהול המערכת"
+                                    >
+                                        <Activity className="w-6 h-6" />
+                                    </motion.div>
+                                </Link>
+                            )}
+
+                            <Link href="/profile" prefetch={true}>
                                 <motion.div
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black cursor-pointer"
-                                    title="ניהול המערכת"
+                                    className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden cursor-pointer"
                                 >
-                                    <Activity className="w-6 h-6" />
+                                    <div className="w-full h-full bg-gradient-to-br from-card to-card flex items-center justify-center text-lg font-bold text-foreground">
+                                        {firstName[0]}
+                                    </div>
                                 </motion.div>
                             </Link>
-                        )}
-
-                        <Link href="/profile" prefetch={true}>
-                            <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden cursor-pointer"
-                            >
-                                <div className="w-full h-full bg-gradient-to-br from-card to-card flex items-center justify-center text-lg font-bold text-foreground">
-                                    {firstName[0]}
-                                </div>
-                            </motion.div>
-                        </Link>
-                    </header>
+                        </div>
+                    </motion.header>
 
                     {/* Stats / Credit Card */}
-                    <div className="mb-8">
-                        <div className="bg-gradient-to-br from-[#E2F163] to-[#d4e450] dark:from-[#E2F163] dark:to-[#d4e450] rounded-[2rem] p-6 text-black shadow-[0_10px_40px_rgba(226,241,99,0.2)] relative overflow-hidden group">
+                    <motion.div variants={itemVariants} className="mb-8">
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="bg-gradient-to-br from-[#E2F163] to-[#d4e450] dark:from-[#E2F163] dark:to-[#d4e450] rounded-[2rem] p-6 text-black shadow-[0_10px_40px_rgba(226,241,99,0.2)] relative overflow-hidden group cursor-pointer"
+                        >
                             <div className="absolute right-[-20%] top-[-20%] w-40 h-40 bg-white/20 blur-3xl rounded-full" />
 
                             <div className="relative z-10 flex justify-between items-start mb-12">
                                 <div>
                                     <p className="font-bold text-black/60 text-sm mb-1 uppercase tracking-wider">היתרה שלך</p>
                                     <h2 className="text-5xl font-bold tracking-tighter counter-value">
-                                        {credits}
+                                        <CountUp end={credits || 0} />
                                     </h2>
                                 </div>
                                 <div className="bg-black/10 p-2 rounded-xl backdrop-blur-sm">
@@ -165,11 +187,11 @@ export default function UserDashboard({ user }: { user: any }) {
                                     </button>
                                 </Link>
                             </div>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
 
                     {/* Next Workout */}
-                    <div className="mb-8">
+                    <motion.div variants={itemVariants} className="mb-8">
                         <div className="flex justify-between items-end mb-4 px-1">
                             <h2 className="text-xl font-bold text-foreground">האימון הבא</h2>
                             {upcomingSession && <Link href="/book" prefetch={true} className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
@@ -185,7 +207,11 @@ export default function UserDashboard({ user }: { user: any }) {
                                 </div>
                             </div>
                         ) : upcomingSession ? (
-                            <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 relative overflow-hidden group">
+                            <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 relative overflow-hidden group cursor-pointer"
+                            >
                                 <div className="bg-muted/50 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4 relative z-10">
                                     <span className="text-primary font-bold text-xl leading-none">
                                         {new Date(upcomingSession.start_time).getDate()}
@@ -201,10 +227,14 @@ export default function UserDashboard({ user }: { user: any }) {
                                     </p>
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                            </div>
+                            </motion.div>
                         ) : (
                             <Link href="/book" className="block">
-                                <div className="bg-card/30 border border-dashed border-border rounded-[2rem] p-8 text-center transition-colors hover:bg-card/40">
+                                <motion.div
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="bg-card/30 border border-dashed border-border rounded-[2rem] p-8 text-center transition-colors hover:bg-card/40"
+                                >
                                     <div className="mx-auto w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3">
                                         <Activity className="w-6 h-6 text-muted-foreground" />
                                     </div>
@@ -212,37 +242,77 @@ export default function UserDashboard({ user }: { user: any }) {
                                     <span className="text-primary text-sm font-bold mt-2 inline-block hover:underline">
                                         זה הזמן להירשם →
                                     </span>
-                                </div>
+                                </motion.div>
                             </Link>
                         )}
-                    </div>
-
-
-                </div>
+                    </motion.div>
+                </motion.div>
             </div>
 
             {/* Floating Navigation */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
+            <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.5 }}
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50"
+            >
                 <div className="bg-card/80 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20">
                     <NavIcon href="/" icon={Home} isActive={true} />
 
                     <Link href="/book" prefetch={true}>
-                        <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/30 border-[4px] border-background cursor-pointer hover:scale-105 transition-transform relative z-10">
+                        <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/30 border-[4px] border-background cursor-pointer relative z-10"
+                        >
                             <Plus className="w-8 h-8 text-black" />
-                        </div>
+                        </motion.div>
                     </Link>
 
                     <NavIcon href="/book" icon={Calendar} />
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }
 
 function NavIcon({ href, icon: Icon, isActive }: { href: string; icon: any; isActive?: boolean }) {
     return (
-        <Link href={href} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}>
-            <Icon className="w-5 h-5" />
+        <Link href={href}>
+            <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}
+            >
+                <Icon className="w-5 h-5" />
+            </motion.div>
         </Link>
     );
+}
+
+// Simple counter component
+function CountUp({ end }: { end: number }) {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        let start = 0;
+        const duration = 1000;
+        const startTime = Date.now();
+
+        const animate = () => {
+            const now = Date.now();
+            const progress = Math.min((now - startTime) / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+
+            setCount(Math.floor(ease * end));
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        requestAnimationFrame(animate);
+    }, [end]);
+
+    return <>{count}</>;
 }
