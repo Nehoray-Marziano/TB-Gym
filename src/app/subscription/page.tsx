@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+import React from "react";
+import { motion } from "framer-motion";
 import { Check, Star, Zap, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,8 +22,6 @@ const tiers = [
         ],
         cta: "להצטרפות",
         popular: false,
-        color: "bg-zinc-100 dark:bg-zinc-900",
-        border: "border-zinc-200 dark:border-zinc-800",
         icon: Star,
     },
     {
@@ -43,8 +40,6 @@ const tiers = [
         ],
         cta: "אני רוצה את זה",
         popular: true,
-        color: "bg-black/5 dark:bg-white/5",
-        border: "border-primary",
         icon: Zap,
     },
     {
@@ -64,54 +59,54 @@ const tiers = [
         ],
         cta: "הצטרפות למועדון האקסקלוסיבי",
         popular: false,
-        color: "bg-zinc-100 dark:bg-zinc-900",
-        border: "border-zinc-200 dark:border-zinc-800",
         icon: Crown,
     },
 ];
 
-export default function SubscriptionPage() {
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    useGSAP(
-        () => {
-            const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-            tl.from(".header-animate", {
-                y: 30,
-                opacity: 0,
-                duration: 1,
-                stagger: 0.1,
-            });
-
-            tl.from(
-                ".tier-card",
-                {
-                    y: 60,
-                    opacity: 0,
-                    duration: 0.8,
-                    stagger: 0.15,
-                    scale: 0.95,
-                },
-                "-=0.6"
-            );
+const containerVariants = {
+    hidden: {},
+    visible: {
+        transition: {
+            staggerChildren: 0.1,
         },
-        { scope: containerRef }
-    );
+    },
+};
 
+const headerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const },
+    },
+};
+
+const cardVariants = {
+    hidden: { opacity: 0, y: 40, scale: 0.95 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const },
+    },
+};
+
+export default function SubscriptionPage() {
     return (
-        <div
-            ref={containerRef}
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
             className="min-h-screen w-full bg-background py-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center overflow-hidden relative"
             dir="rtl"
         >
             {/* Background Decorative Blobs */}
             <div className="absolute top-0 right-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-                <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] opacity-20 mix-blend-screen animate-pulse duration-[10s]" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/20 rounded-full blur-[100px] opacity-20 mix-blend-screen animate-pulse duration-[12s]" />
+                <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-primary/15 rounded-full blur-[80px] opacity-30" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-accent/15 rounded-full blur-[80px] opacity-30" />
             </div>
 
-            <div className="text-center max-w-3xl mx-auto mb-16 header-animate">
+            <motion.div variants={headerVariants} className="text-center max-w-3xl mx-auto mb-16">
                 <h2 className="text-primary font-bold tracking-wide uppercase text-sm mb-3">
                     מסלולי הצטרפות
                 </h2>
@@ -122,19 +117,20 @@ export default function SubscriptionPage() {
                     בין אם אתם מתחילים או מקצוענים, יש לנו את המסלול המדויק עבורכם.
                     ללא התחייבות, ניתן לשינוי בכל עת.
                 </p>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-7xl mx-auto items-stretch">
-                {tiers.map((tier) => (
-                    <div
+                {tiers.map((tier, index) => (
+                    <motion.div
                         key={tier.name}
+                        variants={cardVariants}
+                        whileHover={{ y: -8, transition: { duration: 0.2 } }}
                         className={cn(
-                            "tier-card relative flex flex-col p-8 rounded-[2rem] transition-all duration-300 group hover:-translate-y-2",
+                            "relative flex flex-col p-8 rounded-[2rem] transition-shadow duration-300 group",
                             "border backdrop-blur-xl",
-                            tier.border,
                             tier.popular
                                 ? "bg-gradient-to-b from-zinc-50/50 to-white/10 dark:from-zinc-900/50 dark:to-black/10 shadow-2xl z-10 md:scale-105 border-primary/50 ring-1 ring-primary/20"
-                                : "bg-background/40 hover:bg-background/60 border-border/50 hover:border-border/80"
+                                : "bg-background/40 border-border/50 hover:border-border/80 hover:shadow-lg"
                         )}
                     >
                         {tier.popular && (
@@ -163,7 +159,7 @@ export default function SubscriptionPage() {
                                     {tier.frequency}
                                 </span>
                             </div>
-                            <p className="mt-4 text-sm text-muted-foreground leading-relaxed h-[40px]">
+                            <p className="mt-4 text-sm text-muted-foreground leading-relaxed min-h-[40px]">
                                 {tier.description}
                             </p>
                         </div>
@@ -193,9 +189,9 @@ export default function SubscriptionPage() {
                         >
                             {tier.cta}
                         </Button>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
-        </div>
+        </motion.div>
     );
 }
