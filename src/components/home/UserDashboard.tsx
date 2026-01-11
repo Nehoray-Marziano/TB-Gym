@@ -59,6 +59,7 @@ export default function UserDashboard({ user }: { user: any }) {
         router.prefetch('/subscription');
         router.prefetch('/book');
         router.prefetch('/profile');
+        router.prefetch('/admin/schedule');
     }, [router]);
 
     if (loading) return (

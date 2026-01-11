@@ -274,36 +274,32 @@ export default function AdminSchedulePage() {
     const displayedSessions = activeTab === 'upcoming' ? upcomingSessions : pastSessions;
 
     return (
-        <div className="pb-24 font-sans text-neutral-100">
+        <div className="pb-24 font-sans text-neutral-100 min-h-screen overflow-x-hidden">
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">ניהול מערכת שעות</h1>
                     <p className="text-neutral-400 font-medium">צרי ועכני אימונים לקהילה שלך</p>
                 </div>
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                <button
                     onClick={() => setIsModalOpen(true)}
-                    className="group bg-[#E2F163] text-black px-6 py-3 rounded-2xl font-bold shadow-[0_0_30px_rgba(226,241,99,0.3)] flex items-center gap-2 hover:shadow-[0_0_40px_rgba(226,241,99,0.5)] transition-all"
+                    className="group bg-[#E2F163] text-black px-6 py-3 rounded-2xl font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-transform"
                 >
                     <div className="bg-black/10 rounded-full p-1 group-hover:bg-black/20 transition-colors">
                         <Plus className="w-5 h-5" />
                     </div>
                     <span>אימון חדש</span>
-                </motion.button>
+                </button>
             </header>
 
             {/* Tabs */}
             <div className="bg-neutral-900/40 border border-white/5 p-1.5 rounded-2xl flex relative overflow-hidden mb-8 max-w-md">
-                <motion.div
-                    initial={false}
-                    animate={{ x: activeTab === 'upcoming' ? "100%" : "0%" }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="absolute w-1/2 h-full top-0 left-0 p-1.5"
+                <div
+                    style={{ transform: activeTab === 'upcoming' ? 'translateX(100%)' : 'translateX(0%)' }}
+                    className="absolute w-1/2 h-full top-0 left-0 p-1.5 transition-transform duration-200"
                 >
                     <div className="w-full h-full bg-[#E2F163] rounded-xl shadow-lg" />
-                </motion.div>
+                </div>
 
                 <button
                     onClick={() => setActiveTab('upcoming')}
@@ -371,17 +367,9 @@ export default function AdminSchedulePage() {
                             const isFull = count >= session.max_capacity;
 
                             return (
-                                <motion.div
+                                <div
                                     key={session.id}
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{
-                                        duration: 0.2,
-                                        delay: Math.min(index * 0.03, 0.15),
-                                        ease: "easeOut"
-                                    }}
-                                    className="group relative bg-neutral-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-[2rem] overflow-hidden hover:bg-neutral-900/60 hover:border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+                                    className="group relative bg-neutral-900/40 border border-white/5 p-6 rounded-[2rem] overflow-hidden hover:bg-neutral-900/60 transition-colors"
                                 >
                                     {/* Glass reflection effect */}
                                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
@@ -418,10 +406,9 @@ export default function AdminSchedulePage() {
                                             <span className="text-neutral-600">מתוך {session.max_capacity}</span>
                                         </div>
                                         <div className="h-1.5 w-full bg-neutral-800/80 rounded-full overflow-hidden">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${fillPercent}%` }}
-                                                className={`h-full rounded-full shadow-[0_0_10px_currentColor] ${isFull ? "bg-red-500 text-red-500" : "bg-[#E2F163] text-[#E2F163]"}`}
+                                            <div
+                                                style={{ width: `${fillPercent}%` }}
+                                                className={`h-full rounded-full ${isFull ? "bg-red-500" : "bg-[#E2F163]"}`}
                                             />
                                         </div>
                                     </div>
@@ -437,7 +424,7 @@ export default function AdminSchedulePage() {
                                         <Users className="w-4 h-4 opacity-50" />
                                         ניהול נרשמות
                                     </button>
-                                </motion.div>
+                                </div>
                             )
                         })}
                     </AnimatePresence>
@@ -465,15 +452,11 @@ export default function AdminSchedulePage() {
             <AnimatePresence>
                 {isModalOpen && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        <div
                             onClick={() => setIsModalOpen(false)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+                            className="absolute inset-0 bg-black/60"
                         />
-                        <motion.div
-                            initial={{ scale: 0.95, y: 20, opacity: 0 }}
-                            animate={{ scale: 1, y: 0, opacity: 1 }}
-                            exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                        <div
                             className="bg-[#1A1C19] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl"
                         >
                             <button onClick={() => setIsModalOpen(false)} className="absolute top-6 left-6 p-2 bg-neutral-800/50 rounded-full hover:bg-neutral-700 transition-colors">
@@ -528,13 +511,12 @@ export default function AdminSchedulePage() {
                                 <div className="space-y-4">
                                     <div className="bg-neutral-900 border border-neutral-800 p-1.5 rounded-2xl flex relative overflow-hidden">
                                         {/* Toggle Background Animation */}
-                                        <motion.div
-                                            initial={false}
-                                            animate={{ x: isPrivateSession ? "0%" : "100%" }}
-                                            className="absolute w-1/2 h-full top-0 left-0 p-1.5"
+                                        <div
+                                            style={{ transform: isPrivateSession ? 'translateX(0%)' : 'translateX(100%)' }}
+                                            className="absolute w-1/2 h-full top-0 left-0 p-1.5 transition-transform duration-200"
                                         >
                                             <div className="w-full h-full bg-[#E2F163] rounded-xl shadow-lg" />
-                                        </motion.div>
+                                        </div>
 
                                         <button
                                             type="button"
@@ -618,7 +600,7 @@ export default function AdminSchedulePage() {
                                     פרסום אימון
                                 </button>
                             </form>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
             </AnimatePresence>
@@ -638,15 +620,11 @@ export default function AdminSchedulePage() {
             <AnimatePresence>
                 {viewBookingsSession && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        <div
                             onClick={() => setViewBookingsSession(null)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+                            className="absolute inset-0 bg-black/60"
                         />
-                        <motion.div
-                            initial={{ scale: 0.95, y: 20, opacity: 0 }}
-                            animate={{ scale: 1, y: 0, opacity: 1 }}
-                            exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                        <div
                             className="bg-[#1A1C19] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl max-h-[80vh] flex flex-col"
                         >
                             <div className="text-center mb-6 shrink-0">
@@ -686,7 +664,7 @@ export default function AdminSchedulePage() {
                             <button onClick={() => setViewBookingsSession(null)} className="mt-6 w-full py-3 bg-neutral-900 text-neutral-400 hover:text-white rounded-xl font-bold transition-colors">
                                 סגירה
                             </button>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
             </AnimatePresence>
@@ -695,14 +673,12 @@ export default function AdminSchedulePage() {
             <AnimatePresence>
                 {deleteConfirmation.isOpen && (
                     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        <div
                             onClick={() => setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 })}
-                            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                            className="absolute inset-0 bg-black/80"
                         />
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-[#1A1C19] border border-red-500/20 p-8 rounded-[2.5rem] w-full max-w-sm relative z-10 shadow-[0_0_50px_rgba(239,68,68,0.1)] text-center"
+                        <div
+                            className="bg-[#1A1C19] border border-red-500/20 p-8 rounded-[2.5rem] w-full max-w-sm relative z-10 shadow-lg text-center"
                         >
                             <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-pulse">⚠️</div>
                             <h2 className="text-2xl font-bold text-white mb-2">מחיקת אימון</h2>
@@ -727,7 +703,7 @@ export default function AdminSchedulePage() {
                                     ביטול
                                 </button>
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
             </AnimatePresence>
