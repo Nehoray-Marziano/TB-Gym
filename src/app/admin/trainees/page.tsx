@@ -3,7 +3,7 @@
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, User, CreditCard } from "lucide-react";
+import { Search, User, Ticket, Plus, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 type Profile = {
@@ -14,12 +14,13 @@ type Profile = {
     role: string;
 };
 
-type UserCredit = {
-    balance: number;
-};
-
 type Trainee = Profile & {
-    credits: UserCredit | null;
+    tickets: number;
+    subscription: {
+        tier_display_name: string;
+        expires_at: string;
+        is_active: boolean;
+    } | null;
 };
 
 export default function AdminTraineesPage() {
@@ -28,7 +29,7 @@ export default function AdminTraineesPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-    const [editingCredit, setEditingCredit] = useState<{ userId: string; balance: number } | null>(null);
+    const [grantingTickets, setGrantingTickets] = useState<string | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -55,43 +56,66 @@ export default function AdminTraineesPage() {
             document.body.appendChild(debugDiv);
         }
 
+        // Get profiles
         const { data: profiles, error } = await supabase
             .from("profiles")
-            .select(`
-                *,
-                credits:user_credits(balance)
-            `)
+            .select("*")
             .order("full_name", { ascending: true });
 
         if (error) {
             console.error(error);
             toast({ title: "שגיאה בטעינה", description: error.message, type: "error" });
-        } else {
-            const formatted = profiles.map((p: any) => ({
-                ...p,
-                credits: Array.isArray(p.credits) ? (p.credits[0] || { balance: 0 }) : (p.credits || { balance: 0 }),
-            }));
-            setTrainees(formatted);
+            return;
         }
+
+        // For each profile, get tickets and subscription info
+        const traineesWithData = await Promise.all(
+            profiles.map(async (p: any) => {
+                const [ticketRes, subRes] = await Promise.all([
+                    supabase.rpc("get_available_tickets", { p_user_id: p.id }),
+                    supabase.rpc("get_user_subscription", { p_user_id: p.id }),
+                ]);
+
+                return {
+                    ...p,
+                    tickets: ticketRes.data || 0,
+                    subscription: subRes.data?.is_active ? subRes.data : null,
+                };
+            })
+        );
+
+        setTrainees(traineesWithData);
         setLoading(false);
     };
 
-    const handleUpdateBalance = async (userId: string, newBalance: number) => {
+    const handleGrantTickets = async (userId: string, quantity: number = 1) => {
+        setGrantingTickets(userId);
         try {
-            const { error } = await supabase
-                .from("user_credits")
-                .upsert({ user_id: userId, balance: newBalance });
+            const { data, error } = await supabase.rpc("admin_grant_tickets", {
+                p_user_id: userId,
+                p_quantity: quantity,
+            });
 
             if (error) throw error;
 
+            // Update local state
             setTrainees(prev => prev.map(t =>
-                t.id === userId ? { ...t, credits: { balance: newBalance } } : t
+                t.id === userId ? { ...t, tickets: t.tickets + quantity } : t
             ));
-            setEditingCredit(null);
-            toast({ title: "היתרה עודכנה", type: "success" });
+            toast({ title: `${quantity} כרטיסים ניתנו בהצלחה`, type: "success" });
         } catch (err: any) {
-            toast({ title: "שגיאה בעדכון יתרה", type: "error" });
+            toast({ title: "שגיאה בהענקת כרטיסים", type: "error" });
+        } finally {
+            setGrantingTickets(null);
         }
+    };
+
+    const formatExpiryDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return new Intl.DateTimeFormat("he-IL", {
+            day: "numeric",
+            month: "short",
+        }).format(date);
     };
 
     const filteredTrainees = trainees.filter(t =>
@@ -161,34 +185,37 @@ export default function AdminTraineesPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4 bg-black/20 p-2 rounded-2xl border border-white/5">
-                                <div className="px-4 text-right">
-                                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest block mb-1">יתרה</span>
-                                    {editingCredit?.userId === trainee.id ? (
-                                        <input
-                                            type="number"
-                                            autoFocus
-                                            className="w-16 bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1 text-center text-white font-bold focus:outline-none focus:border-[#E2F163]"
-                                            value={editingCredit.balance}
-                                            onChange={(e) => setEditingCredit({ ...editingCredit, balance: parseInt(e.target.value) || 0 })}
-                                            onBlur={() => handleUpdateBalance(trainee.id, editingCredit.balance)}
-                                            onKeyDown={(e) => e.key === "Enter" && handleUpdateBalance(trainee.id, editingCredit.balance)}
-                                        />
-                                    ) : (
-                                        <span
-                                            onClick={() => setEditingCredit({ userId: trainee.id, balance: trainee.credits?.balance || 0 })}
-                                            className="text-xl font-bold text-white hover:text-[#E2F163] cursor-pointer"
-                                        >
-                                            {trainee.credits?.balance || 0}
+                            <div className="flex items-center gap-4">
+                                {/* Subscription Badge */}
+                                {trainee.subscription && (
+                                    <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-2xl border border-white/5">
+                                        <span className="text-xs font-bold text-[#E2F163]">
+                                            {trainee.subscription.tier_display_name}
                                         </span>
-                                    )}
+                                        <span className="flex items-center gap-1 text-[10px] text-neutral-500">
+                                            <Clock className="w-3 h-3" />
+                                            {formatExpiryDate(trainee.subscription.expires_at)}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Tickets Display */}
+                                <div className="flex items-center gap-4 bg-black/20 p-2 rounded-2xl border border-white/5">
+                                    <div className="px-4 text-right">
+                                        <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest block mb-1">כרטיסים</span>
+                                        <span className="text-xl font-bold text-white flex items-center gap-2">
+                                            <Ticket className="w-4 h-4 text-[#E2F163]" />
+                                            {trainee.tickets}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => handleGrantTickets(trainee.id, 1)}
+                                        disabled={grantingTickets === trainee.id}
+                                        className="w-10 h-10 bg-[#E2F163] text-black rounded-xl hover:bg-[#d4e450] flex items-center justify-center transition-colors shadow-lg shadow-[#E2F163]/20 disabled:opacity-50"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => handleUpdateBalance(trainee.id, (trainee.credits?.balance || 0) + 1)}
-                                    className="w-10 h-10 bg-[#E2F163] text-black rounded-xl hover:bg-[#d4e450] flex items-center justify-center transition-colors shadow-lg shadow-[#E2F163]/20"
-                                >
-                                    <CreditCard className="w-5 h-5" />
-                                </button>
                             </div>
                         </motion.div>
                     ))}

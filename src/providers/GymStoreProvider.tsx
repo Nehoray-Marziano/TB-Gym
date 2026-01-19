@@ -9,9 +9,19 @@ type Profile = {
     role: string;
 };
 
+type Subscription = {
+    tier_name: string;
+    tier_display_name: string;
+    sessions: number;
+    price_nis: number;
+    expires_at: string;
+    is_active: boolean;
+};
+
 type GymStoreContextType = {
     profile: Profile | null;
-    credits: number;
+    tickets: number;  // Available tickets count
+    subscription: Subscription | null;
     loading: boolean;
     refreshData: (force?: boolean, userId?: string) => Promise<void>;
     cancelBooking: (sessionId: string) => Promise<{ success: boolean; message: string }>;
@@ -19,7 +29,8 @@ type GymStoreContextType = {
 
 const GymStoreContext = createContext<GymStoreContextType>({
     profile: null,
-    credits: 0,
+    tickets: 0,
+    subscription: null,
     loading: true,
     refreshData: async () => { },
     cancelBooking: async () => ({ success: false, message: "Not implemented" }),
@@ -41,7 +52,7 @@ function isCacheFresh(timestampKey: string): boolean {
 // Helper to check if we have cached data
 function hasCachedData(): boolean {
     if (typeof window === 'undefined') return false;
-    return !!(localStorage.getItem("talia_profile") && localStorage.getItem("talia_credits"));
+    return !!(localStorage.getItem("talia_profile") && localStorage.getItem("talia_tickets"));
 }
 
 export function GymStoreProvider({ children }: { children: React.ReactNode }) {
@@ -52,10 +63,15 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         const cached = localStorage.getItem("talia_profile");
         return cached ? JSON.parse(cached) : null;
     });
-    const [credits, setCredits] = useState<number>(() => {
+    const [tickets, setTickets] = useState<number>(() => {
         if (typeof window === 'undefined') return 0;
-        const cached = localStorage.getItem("talia_credits");
+        const cached = localStorage.getItem("talia_tickets");
         return cached ? parseInt(cached) : 0;
+    });
+    const [subscription, setSubscription] = useState<Subscription | null>(() => {
+        if (typeof window === 'undefined') return null;
+        const cached = localStorage.getItem("talia_subscription");
+        return cached ? JSON.parse(cached) : null;
     });
     const fetchedRef = useRef(false);
 
@@ -67,8 +83,8 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     const cancelBooking = useCallback(async (sessionId: string) => {
         const supabase = getClient();
 
-        // Optimistically update credits (add 1)
-        setCredits(prev => prev + 1);
+        // Optimistically update tickets (add 1)
+        setTickets(prev => prev + 1);
 
         try {
             console.log("Calling RPC cancel_booking with:", sessionId);
@@ -83,7 +99,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         } catch (error: any) {
             console.error("Cancel error:", error);
             // Revert on failure
-            setCredits(prev => prev - 1);
+            setTickets(prev => prev - 1);
             return { success: false, message: error.message || "Failed to cancel" };
         }
     }, [getClient]);
@@ -118,10 +134,11 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
             console.log("[GymStore] Fetching fresh data from network for:", uid);
 
-            // PARALLEL FETCHING: Fire only essential user data requests
-            const [profileRes, creditRes] = await Promise.all([
+            // PARALLEL FETCHING: Fire essential user data requests
+            const [profileRes, ticketRes, subRes] = await Promise.all([
                 supabase.from("profiles").select("id, full_name, role").eq("id", uid).single(),
-                supabase.from("user_credits").select("balance").eq("user_id", uid).single(),
+                supabase.rpc("get_available_tickets", { p_user_id: uid }),
+                supabase.rpc("get_user_subscription", { p_user_id: uid }),
             ]);
 
             // 1. Set Profile
@@ -130,10 +147,17 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem("talia_profile", JSON.stringify(profileRes.data));
             }
 
-            // 2. Set Credits
-            if (creditRes.data) {
-                setCredits(creditRes.data.balance);
-                localStorage.setItem("talia_credits", creditRes.data.balance.toString());
+            // 2. Set Tickets (new system)
+            if (ticketRes.data !== null) {
+                setTickets(ticketRes.data);
+                localStorage.setItem("talia_tickets", ticketRes.data.toString());
+            }
+
+            // 3. Set Subscription
+            if (subRes.data) {
+                const subData = subRes.data.is_active ? subRes.data : null;
+                setSubscription(subData);
+                localStorage.setItem("talia_subscription", JSON.stringify(subData));
             }
 
             // Save cache timestamp
@@ -155,12 +179,14 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
+            const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
                 if (event === 'SIGNED_OUT') {
                     setProfile(null);
-                    setCredits(0);
+                    setTickets(0);
+                    setSubscription(null);
                     localStorage.removeItem("talia_profile");
-                    localStorage.removeItem("talia_credits");
+                    localStorage.removeItem("talia_tickets");
+                    localStorage.removeItem("talia_subscription");
                     localStorage.removeItem("talia_cache_timestamp");
                     setLoading(false);
                 } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -172,7 +198,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
             });
 
             return () => {
-                subscription.unsubscribe();
+                authSub.unsubscribe();
             };
         } catch (error) {
             console.error("[GymStore] Error in auth listener:", error);
@@ -192,8 +218,11 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         }
     }, [fetchData]);
 
+    // Backward compatibility: expose tickets as 'credits' alias
+    const credits = tickets;
+
     return (
-        <GymStoreContext.Provider value={{ profile, credits, loading, refreshData: fetchData, cancelBooking }}>
+        <GymStoreContext.Provider value={{ profile, tickets, subscription, loading, refreshData: fetchData, cancelBooking }}>
             {children}
         </GymStoreContext.Provider>
     );

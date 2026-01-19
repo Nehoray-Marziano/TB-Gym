@@ -2,16 +2,15 @@
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useGymStore } from "@/providers/GymStoreProvider";
-import { Calendar, Home, Plus, Activity, Zap } from "lucide-react";
+import { Calendar, Home, Plus, Activity, Ticket, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import StudioLogo from "@/components/StudioLogo";
 
 export default function UserDashboard({ user }: { user: any }) {
     const router = useRouter();
-    const { profile, credits, loading, refreshData } = useGymStore();
+    const { profile, tickets, subscription, loading, refreshData } = useGymStore();
     const [upcomingSession, setUpcomingSession] = useState<any | null>(null);
     const [loadingSession, setLoadingSession] = useState(true);
 
@@ -78,6 +77,14 @@ export default function UserDashboard({ user }: { user: any }) {
         return "ערב טוב";
     }
 
+    const formatExpiryDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return new Intl.DateTimeFormat("he-IL", {
+            day: "numeric",
+            month: "short",
+        }).format(date);
+    };
+
     return (
         <div className="fixed inset-0 bg-background text-foreground overflow-hidden font-sans">
             {/* Simple gradient background - no blur */}
@@ -118,24 +125,39 @@ export default function UserDashboard({ user }: { user: any }) {
                         </div>
                     </header>
 
-                    {/* Credit Card */}
+                    {/* Tickets Card */}
                     <div className="mb-8">
                         <Link href="/subscription" prefetch={true}>
                             <div className="bg-gradient-to-br from-[#E2F163] to-[#d4e450] rounded-[2rem] p-6 text-black shadow-lg active:scale-[0.98] transition-transform">
-                                <div className="flex justify-between items-start mb-12">
+                                <div className="flex justify-between items-start mb-8">
                                     <div>
-                                        <p className="font-bold text-black/60 text-sm mb-1 uppercase tracking-wider">היתרה שלך</p>
-                                        <h2 className="text-5xl font-bold tracking-tighter">{credits}</h2>
+                                        <p className="font-bold text-black/60 text-sm mb-1 uppercase tracking-wider">הכרטיסים שלך</p>
+                                        <h2 className="text-5xl font-bold tracking-tighter">{tickets}</h2>
                                     </div>
                                     <div className="bg-black/10 p-2 rounded-xl">
-                                        <Zap className="w-6 h-6 text-black" />
+                                        <Ticket className="w-6 h-6 text-black" />
                                     </div>
                                 </div>
 
                                 <div className="flex justify-between items-end">
-                                    <p className="font-medium text-sm text-black/70">שיעורים זמינים</p>
+                                    <div className="flex items-center gap-2">
+                                        {subscription?.is_active && (
+                                            <>
+                                                <span className="bg-black/20 text-black px-3 py-1 rounded-full text-xs font-bold">
+                                                    {subscription.tier_display_name}
+                                                </span>
+                                                <span className="flex items-center gap-1 text-xs text-black/70">
+                                                    <Clock className="w-3 h-3" />
+                                                    עד {formatExpiryDate(subscription.expires_at)}
+                                                </span>
+                                            </>
+                                        )}
+                                        {!subscription?.is_active && (
+                                            <span className="text-sm text-black/70 font-medium">אימונים זמינים</span>
+                                        )}
+                                    </div>
                                     <span className="bg-black text-[#E2F163] px-4 py-2 rounded-xl text-xs font-bold">
-                                        רכישה מהירה +
+                                        {subscription?.is_active ? "עוד כרטיסים +" : "רכישת מנוי +"}
                                     </span>
                                 </div>
                             </div>
