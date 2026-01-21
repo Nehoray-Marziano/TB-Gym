@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS subscription_tiers (
 INSERT INTO subscription_tiers (name, display_name, sessions, price_nis) VALUES
     ('basic', 'בסיסי', 4, 240),
     ('standard', 'סטנדרטי', 8, 450),
-    ('premium', 'פרימיום', 12, 670)
+    ('premium', 'פרימיום', 12, 650)
 ON CONFLICT (name) DO UPDATE SET
     display_name = EXCLUDED.display_name,
     sessions = EXCLUDED.sessions,

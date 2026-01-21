@@ -127,7 +127,7 @@ export async function GET() {
     const fallbackTiers = [
         { id: 1, name: 'basic', display_name: 'בסיסי', sessions: 4, price_nis: 240, price_per_session: 60 },
         { id: 2, name: 'standard', display_name: 'סטנדרטי', sessions: 8, price_nis: 450, price_per_session: 56.25 },
-        { id: 3, name: 'premium', display_name: 'פרימיום', sessions: 12, price_nis: 670, price_per_session: 55.83 },
+        { id: 3, name: 'premium', display_name: 'פרימיום', sessions: 12, price_nis: 650, price_per_session: 54.16 },
     ];
 
     try {
