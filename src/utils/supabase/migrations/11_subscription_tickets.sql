@@ -42,10 +42,12 @@ CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user ON user_subscriptions(use
 -- RLS for user_subscriptions
 ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own subscriptions" ON user_subscriptions;
 CREATE POLICY "Users can view own subscriptions"
 ON user_subscriptions FOR SELECT
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can manage subscriptions" ON user_subscriptions;
 CREATE POLICY "Admins can manage subscriptions"
 ON user_subscriptions FOR ALL
 USING (is_admin());
@@ -70,10 +72,12 @@ CREATE INDEX IF NOT EXISTS idx_user_tickets_user ON user_tickets(user_id);
 -- RLS for user_tickets
 ALTER TABLE user_tickets ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own tickets" ON user_tickets;
 CREATE POLICY "Users can view own tickets"
 ON user_tickets FOR SELECT
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can manage tickets" ON user_tickets;
 CREATE POLICY "Admins can manage tickets"
 ON user_tickets FOR ALL
 USING (is_admin());
