@@ -43,10 +43,18 @@ export default function MyBookingsPage() {
                 .order("created_at", { ascending: false });
 
             if (myBookings) {
-                // Client-side sort by start_time (since we can't easily order by joined table column in simple supabase query without rpc)
+                console.log("[MyBookings] Raw Data:", myBookings);
+
+                const now = new Date();
+                now.setHours(0, 0, 0, 0); // Start of today
+
                 const sorted = (myBookings || [])
-                    .map((b: any) => ({ ...b, session: Array.isArray(b.session) ? b.session[0] : b.session })) // Handle if join returns array
-                    .filter((b: any) => b.session && new Date(b.session.start_time) > new Date()) // Double check future
+                    .map((b: any) => ({ ...b, session: Array.isArray(b.session) ? b.session[0] : b.session }))
+                    .filter((b: any) => {
+                        if (!b.session) return false;
+                        const sessionDate = new Date(b.session.start_time);
+                        return sessionDate >= now; // Show everything from today onwards
+                    })
                     .sort((a: any, b: any) => new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime());
 
                 setBookings(sorted);
@@ -62,15 +70,16 @@ export default function MyBookingsPage() {
         if (loading || isAnimated || bookings.length === 0) return;
 
         const ctx = gsap.context(() => {
-            gsap.from(".booking-card", {
-                opacity: 0,
-                y: 10, // Subtle move (was 20)
-                duration: 0.4,
-                stagger: 0.05, // Faster stagger
-                ease: "power2.out",
-                clearProps: "opacity", // Clear opacity after to let CSS take over if needed
-                onComplete: () => setIsAnimated(true)
-            });
+            const ctx = gsap.context(() => {
+                gsap.to(".booking-card", {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.4,
+                    stagger: 0.05,
+                    ease: "power2.out",
+                    onComplete: () => setIsAnimated(true)
+                });
+            }, containerRef);
         }, containerRef);
 
         return () => ctx.revert();
@@ -104,7 +113,7 @@ export default function MyBookingsPage() {
                         return (
                             <div
                                 key={booking.id}
-                                className="booking-card opacity-0 group bg-card/60 border border-white/10 rounded-[2rem] p-5 relative overflow-hidden transition-all hover:bg-card/80 hover:border-primary/30"
+                                className={`booking-card ${!isAnimated ? 'opacity-0' : ''} group bg-card/60 border border-white/10 rounded-[2rem] p-5 relative overflow-hidden transition-all hover:bg-card/80 hover:border-primary/30`}
                             >
                                 <div className="flex items-center gap-5">
                                     {/* Date Box */}
