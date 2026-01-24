@@ -90,8 +90,8 @@ export default function BookingPage() {
                 {
                     opacity: 1,
                     y: 0,
-                    duration: 0.35,
-                    stagger: 0.05,
+                    duration: 0.25, // Faster (was 0.35)
+                    stagger: 0.04, // Faster stagger (was 0.05)
                     ease: "power2.out",
                     onComplete: () => setIsAnimated(true)
                 }

@@ -75,39 +75,40 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 onComplete: () => setIsAnimated(true)
             });
 
-            // Header slides in
+            // Header slides in (faster)
             tl.to(headerRef.current, {
                 opacity: 1,
                 y: 0,
-                duration: 0.5
+                duration: 0.3 // Was 0.5
             })
-                // Avatar pops in with glow pulse
+                // Avatar pops in (faster)
                 .to(avatarRef.current, {
                     opacity: 1,
                     scale: 1,
-                    duration: 0.6,
-                    ease: "back.out(1.7)"
-                }, "-=0.3")
-                // Stats card slides up
+                    duration: 0.4, // Was 0.6
+                    ease: "back.out(1.5)"
+                }, "-=0.2")
+                // Stats card slides up (faster)
                 .to(statsCardRef.current, {
                     opacity: 1,
                     y: 0,
-                    duration: 0.5
-                }, "-=0.3")
-                // Detail cards stagger in
+                    duration: 0.3
+                }, "-=0.2")
+                // Detail cards stagger in (faster)
                 .to(".detail-card", {
                     opacity: 1,
                     x: 0,
-                    duration: 0.4,
-                    stagger: 0.1
-                }, "-=0.2")
-                // Settings items stagger in
+                    duration: 0.3, // Was 0.4
+                    stagger: 0.05 // Was 0.1
+                }, "-=0.15")
+                // Settings items stagger in (faster)
                 .to(".settings-item", {
                     opacity: 1,
                     y: 0,
-                    duration: 0.4,
-                    stagger: 0.08
-                }, "-=0.1");
+                    duration: 0.3,
+                    stagger: 0.04
+                }, "-=0.2");
+
 
         }, containerRef);
 
