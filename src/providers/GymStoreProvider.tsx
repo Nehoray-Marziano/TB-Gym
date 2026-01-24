@@ -38,16 +38,8 @@ const GymStoreContext = createContext<GymStoreContextType>({
 
 export const useGymStore = () => useContext(GymStoreContext);
 
-// Cache freshness duration (5 minutes)
-const CACHE_FRESHNESS_MS = 5 * 60 * 1000;
-
-// Helper to check if cache is fresh
-function isCacheFresh(timestampKey: string): boolean {
-    if (typeof window === 'undefined') return false;
-    const timestamp = localStorage.getItem(timestampKey);
-    if (!timestamp) return false;
-    return Date.now() - parseInt(timestamp, 10) < CACHE_FRESHNESS_MS;
-}
+// NOTE: We do NOT cache data freshness anymore - data must always be fresh
+// LocalStorage is ONLY used for instant initial render (optimistic UI)
 
 // Helper to check if we have cached data
 function hasCachedData(): boolean {
@@ -105,12 +97,8 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     }, [getClient]);
 
     const fetchData = useCallback(async (force: boolean = false, userId?: string) => {
-        // Skip fetch if cache is fresh and not forced
-        if (!force && isCacheFresh("talia_cache_timestamp")) {
-            console.log("[GymStore] Cache is fresh, skipping network fetch");
-            setLoading(false);
-            return;
-        }
+        // ALWAYS fetch from network - data must be fresh (no caching)
+        console.log("[GymStore] Fetching fresh data from network (caching disabled)");
 
         const supabase = getClient();
         if (!supabase) {
@@ -210,12 +198,8 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         if (fetchedRef.current) return;
         fetchedRef.current = true;
 
-        // Only fetch if cache is stale or missing
-        if (!hasCachedData() || !isCacheFresh("talia_cache_timestamp")) {
-            fetchData();
-        } else {
-            setLoading(false);
-        }
+        // Always fetch fresh data on mount - don't rely on cache
+        fetchData();
     }, [fetchData]);
 
     // Backward compatibility: expose tickets as 'credits' alias

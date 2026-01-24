@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import ProfileClient from "@/components/profile/ProfileClient";
 
-// Cache keys
 const CACHE_KEYS = {
     profile: "talia_profile_full",
     health: "talia_health",
     timestamp: "talia_profile_timestamp"
 };
 
-const CACHE_FRESHNESS_MS = 24 * 60 * 60 * 1000; // 24 hours for static profile data
+// NOTE: Cache is ONLY used for instant initial render, data is always fetched fresh
 
 type UserProfile = {
     id: string;
@@ -49,11 +48,7 @@ export default function ProfilePage() {
             setHealth(JSON.parse(cachedHealth));
         }
 
-        // Check if cache is fresh
-        const timestamp = localStorage.getItem(CACHE_KEYS.timestamp);
-        const isFresh = timestamp && (Date.now() - parseInt(timestamp, 10) < CACHE_FRESHNESS_MS);
-
-        // Fetch fresh data (always fetch on first load, skip if cache is fresh on subsequent)
+        // Always fetch fresh data from network (no caching to ensure consistency)
         const fetchData = async () => {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -63,23 +58,17 @@ export default function ProfilePage() {
                     return;
                 }
 
-                // If cache is fresh and we already have data, skip network fetch
-                if (isFresh && cachedProfile) {
-                    console.log("[Profile] Using fresh cache, skipping network fetch");
-                    return;
-                }
-
                 console.log("[Profile] Fetching fresh data from network");
 
-                // Fetch all data in parallel
-                const [profileRes, creditRes, healthRes] = await Promise.all([
+                // Fetch all data in parallel - use get_available_tickets RPC for consistent ticket count
+                const [profileRes, ticketRes, healthRes] = await Promise.all([
                     supabase.from("profiles").select("*").eq("id", user.id).single(),
-                    supabase.from("user_credits").select("balance").eq("user_id", user.id).single(),
+                    supabase.rpc("get_available_tickets", { p_user_id: user.id }),
                     supabase.from("health_declarations").select("*").eq("id", user.id).single()
                 ]);
 
                 const profileData = profileRes.data;
-                const creditData = creditRes.data;
+                const ticketCount = ticketRes.data; // Returns integer directly
                 const healthData = healthRes.data;
 
                 // Construct and set profile
@@ -89,7 +78,7 @@ export default function ProfilePage() {
                         full_name: profileData.full_name,
                         email: user.email || "",
                         phone: profileData.phone,
-                        balance: creditData ? creditData.balance : 0,
+                        balance: ticketCount ?? 0, // Use ticket count from RPC
                         role: profileData.role,
                     };
                     setProfile(finalProfile);
