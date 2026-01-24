@@ -9,6 +9,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import BottomNav from "@/components/BottomNav";
+import { getRelativeTimeHebrew } from "@/lib/utils";
 
 export default function MyBookingsPage() {
     const router = useRouter();
@@ -119,8 +120,8 @@ export default function MyBookingsPage() {
                                                 {format(date, "HH:mm")}
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <MapPin className="w-3 h-3" />
-                                                סטודיו ראשי
+                                                <Calendar className="w-3 h-3" />
+                                                {getRelativeTimeHebrew(booking.session.start_time)}
                                             </div>
                                         </div>
                                     </div>

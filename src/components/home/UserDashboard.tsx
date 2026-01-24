@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import StudioLogo from "@/components/StudioLogo";
 import gsap from "gsap";
 import BottomNav from "@/components/BottomNav";
+import { getRelativeTimeHebrew } from "@/lib/utils";
 
 // Animated counter component for tickets
 function AnimatedCounter({ value, className }: { value: number; className?: string }) {
@@ -357,13 +358,13 @@ export default function UserDashboard({ user }: { user: any }) {
                                             {new Date(upcomingSession.start_time).getDate()}
                                         </span>
                                         <span className="text-muted-foreground text-xs font-medium uppercase mt-1">
-                                            {new Date(upcomingSession.start_time).toLocaleDateString('en-US', { month: 'short' })}
+                                            {new Date(upcomingSession.start_time).toLocaleDateString('he-IL', { month: 'short' })}
                                         </span>
                                     </div>
                                     <div className="py-4">
                                         <h3 className="font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{upcomingSession.title}</h3>
                                         <p className="text-muted-foreground text-sm">
-                                            {new Date(upcomingSession.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} • סטודיו ראשי
+                                            {new Date(upcomingSession.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} • {getRelativeTimeHebrew(upcomingSession.start_time)}
                                         </p>
                                     </div>
                                 </div>

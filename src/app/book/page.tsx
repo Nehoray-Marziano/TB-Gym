@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Clock, MapPin, ChevronRight, Check, CalendarPlus, X, AlertCircle, Sparkles } from "lucide-react";
+import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import gsap from "gsap";
 
@@ -320,7 +321,7 @@ END:VCALENDAR`;
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <MapPin className="w-3 h-3" />
-                                                סטודיו ראשי • {session.current_bookings || 0}/{session.max_capacity} מוזמנים
+                                                {getRelativeTimeHebrew(session.start_time)} • {session.current_bookings || 0}/{session.max_capacity} מוזמנים
                                             </div>
                                         </div>
                                     </div>
