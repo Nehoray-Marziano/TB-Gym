@@ -1,299 +1,380 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { Check, Crown, Flame, Star, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 
-// --- CONFIGURATION ---
-const DEFAULT_TIERS = [
+// --- SUBSCRIPTION TIERS ---
+const TIERS = [
     {
         id: 1,
         name: "basic",
-        display_name: "BASIC",
+        displayName: "בסיסי",
+        englishName: "BASIC",
         sessions: 4,
-        price_nis: 240,
-        price_per_session: 60,
-        gradient: "from-slate-800 to-slate-900",
-        accent: "#94a3b8",
-        icon: Star
+        price: 240,
+        pricePerSession: 60,
+        icon: Star,
+        color: "#94a3b8",
+        gradient: "from-slate-600/20 via-slate-700/10 to-slate-800/20",
+        borderGlow: "slate-500",
+        popular: false,
+        features: [
+            "4 אימונים בחודש",
+            "גישה לכל השיעורים",
+            "ביטול חינם עד 4 שעות",
+        ]
     },
     {
         id: 2,
         name: "standard",
-        display_name: "STANDARD",
+        displayName: "סטנדרטי",
+        englishName: "STANDARD",
         sessions: 8,
-        price_nis: 450,
-        price_per_session: 56.25,
-        gradient: "from-[#E2F163]/20 to-[#E2F163]/5",
-        accent: "#E2F163",
-        icon: Flame
+        price: 450,
+        pricePerSession: 56.25,
+        icon: Flame,
+        color: "#E2F163",
+        gradient: "from-[#E2F163]/30 via-[#E2F163]/10 to-[#d4e450]/20",
+        borderGlow: "[#E2F163]",
+        popular: true,
+        features: [
+            "8 אימונים בחודש",
+            "גישה לכל השיעורים",
+            "ביטול חינם עד 2 שעות",
+            "עדיפות בהרשמה",
+        ]
     },
     {
         id: 3,
         name: "premium",
-        display_name: "PREMIUM VIP",
+        displayName: "פרימיום",
+        englishName: "PREMIUM",
         sessions: 12,
-        price_nis: 650,
-        price_per_session: 54.16,
-        gradient: "from-pink-600/30 to-purple-800/20",
-        accent: "#ec4899",
-        icon: Crown
+        price: 650,
+        pricePerSession: 54.16,
+        icon: Crown,
+        color: "#ec4899",
+        gradient: "from-pink-500/30 via-purple-600/20 to-fuchsia-700/20",
+        borderGlow: "pink-500",
+        popular: false,
+        features: [
+            "12 אימונים בחודש",
+            "גישה VIP לכל השיעורים",
+            "ביטול בכל זמן",
+            "עדיפות מוחלטת בהרשמה",
+            "מפגש עם מאמן אישי",
+        ]
     }
 ];
 
 export default function SubscriptionPage() {
-    const { refreshData } = useGymStore();
+    const router = useRouter();
+    const { refreshData, subscription } = useGymStore();
     const { toast } = useToast();
-    const [activeIndex, setActiveIndex] = useState(1); // Start at Standard (middle)
-    const [direction, setDirection] = useState(0);
+    const [selectedTier, setSelectedTier] = useState<number | null>(null);
     const [purchasing, setPurchasing] = useState<number | null>(null);
+    const [isAnimated, setIsAnimated] = useState(false);
 
-    // Refs for GSAP
+    // GSAP Refs
     const containerRef = useRef<HTMLDivElement>(null);
-    const titleRef = useRef<HTMLHeadingElement>(null);
+    const headerRef = useRef<HTMLDivElement>(null);
+    const cardsRef = useRef<HTMLDivElement>(null);
 
-    // --- GSAP ENTRANCE ---
-    useEffect(() => {
+    // GSAP Entrance Animation
+    useLayoutEffect(() => {
+        if (isAnimated) return;
+
         const ctx = gsap.context(() => {
-            const tl = gsap.timeline();
+            // Set initial states
+            gsap.set(headerRef.current, { opacity: 0, y: -30 });
+            gsap.set(".tier-card", { opacity: 0, y: 60, scale: 0.9 });
+            gsap.set(".floating-orb", { scale: 0, opacity: 0 });
 
-            tl.from(titleRef.current, {
-                y: -50,
-                opacity: 0,
-                duration: 1,
-                ease: "power4.out"
+            // Master timeline
+            const tl = gsap.timeline({
+                defaults: { ease: "power3.out" },
+                onComplete: () => setIsAnimated(true)
+            });
+
+            // Floating orbs fade in
+            tl.to(".floating-orb", {
+                scale: 1,
+                opacity: 1,
+                duration: 1.5,
+                stagger: 0.2,
+                ease: "elastic.out(1, 0.5)"
             })
-                .from(".tier-card", {
-                    y: 100,
-                    opacity: 0,
-                    duration: 0.8,
-                    stagger: 0.1,
-                    ease: "back.out(1.7)"
-                }, "-=0.5");
+                // Header slides down
+                .to(headerRef.current, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6
+                }, "-=1")
+                // Cards stagger in with spring
+                .to(".tier-card", {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.7,
+                    stagger: 0.12,
+                    ease: "back.out(1.4)"
+                }, "-=0.3");
 
         }, containerRef);
 
         return () => ctx.revert();
-    }, []);
+    }, [isAnimated]);
 
-    // --- LOGIC ---
+    // Purchase handler
     const handlePurchase = async (tierId: number) => {
         setPurchasing(tierId);
-        try {
-            // Optimistic delay simulation for feel
-            await new Promise(r => setTimeout(r, 800));
+        if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
 
+        try {
             const res = await fetch("/api/payment/mock", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ type: "subscription", tierId }),
             });
             const data = await res.json();
+
             if (data.success) {
-                toast({ title: "Welcome to the Elite.", description: `You have ${data.data?.tickets_issued} sessions.`, type: "success" });
-                refreshData(true);
+                toast({
+                    title: "!ברוכה הבאה למשפחה 🎉",
+                    description: `קיבלת ${data.data?.tickets_issued} כרטיסי אימון`,
+                    type: "success"
+                });
+                await refreshData(true);
+                router.push("/dashboard");
+            } else {
+                throw new Error(data.message);
             }
-        } catch (e) {
-            toast({ title: "Error", description: "Payment failed", type: "error" });
+        } catch (e: any) {
+            toast({
+                title: "שגיאה בתשלום",
+                description: e.message || "אנא נסי שוב",
+                type: "error"
+            });
         } finally {
             setPurchasing(null);
         }
     };
 
-    const nextTier = () => {
-        if (activeIndex < DEFAULT_TIERS.length - 1) {
-            setDirection(1);
-            setActiveIndex(prev => prev + 1);
-            triggerHaptic();
-        }
-    };
-
-    const prevTier = () => {
-        if (activeIndex > 0) {
-            setDirection(-1);
-            setActiveIndex(prev => prev - 1);
-            triggerHaptic();
-        }
-    };
-
-    const handleDragEnd = (event: any, info: PanInfo) => {
-        if (info.offset.x < -50) {
-            nextTier();
-        } else if (info.offset.x > 50) {
-            prevTier();
-        }
-    };
-
-    const triggerHaptic = () => {
-        if (typeof navigator !== 'undefined' && navigator.vibrate) {
-            navigator.vibrate(10);
-        }
-    };
-
-    const activeTier = DEFAULT_TIERS[activeIndex];
-
     return (
-        <div ref={containerRef} className="h-screen w-full bg-[#050505] text-white overflow-hidden flex flex-col relative font-sans select-none" dir="ltr">
+        <div ref={containerRef} className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden relative" dir="rtl">
 
-            {/* Cinematic Background */}
-            <div className="absolute inset-0 pointer-events-none z-0">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-slate-800/20 to-transparent blur-[100px]" />
-                {/* Dynamic Accent Background based on active tier */}
-                <motion.div
-                    animate={{ backgroundColor: activeTier.accent }}
-                    transition={{ duration: 0.8 }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] blur-[150px] opacity-20 rounded-full"
+            {/* Animated Background */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                {/* Large gradient orbs */}
+                <div className="floating-orb absolute -top-32 -right-32 w-[500px] h-[500px] bg-gradient-to-br from-[#E2F163]/15 to-transparent rounded-full blur-[120px]" />
+                <div className="floating-orb absolute top-1/2 -left-48 w-[400px] h-[400px] bg-gradient-to-br from-pink-500/10 to-purple-600/10 rounded-full blur-[100px]" />
+                <div className="floating-orb absolute -bottom-32 right-1/4 w-[350px] h-[350px] bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-full blur-[80px]" />
+
+                {/* Grid pattern */}
+                <div
+                    className="absolute inset-0 opacity-[0.03]"
+                    style={{
+                        backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+                        backgroundSize: '50px 50px'
+                    }}
                 />
 
-                {/* Noise */}
-                <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+                {/* Noise texture */}
+                <div
+                    className="absolute inset-0 opacity-[0.02]"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}
+                />
             </div>
 
             {/* Header */}
-            <div className="pt-8 px-6 z-10 flex justify-between items-center">
-                <div>
-                    <h2 className="text-slate-500 text-xs font-bold tracking-[0.2em] uppercase">Choose your path</h2>
-                    <h1 ref={titleRef} className="text-4xl font-black italic tracking-tighter mt-1">
-                        UNLEASH
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">POTENTIAL</span>
+            <div ref={headerRef} className="relative z-10 pt-safe px-6 py-8">
+                {/* Back button */}
+                <button
+                    onClick={() => router.back()}
+                    className="w-10 h-10 mb-6 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-95"
+                >
+                    <ChevronRight className="w-5 h-5" />
+                </button>
+
+                <div className="text-center mb-2">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#E2F163]/10 border border-[#E2F163]/20 rounded-full mb-4">
+                        <Sparkles className="w-4 h-4 text-[#E2F163]" />
+                        <span className="text-sm font-bold text-[#E2F163]">מנויים חודשיים</span>
+                    </div>
+
+                    <h1 className="text-4xl md:text-5xl font-black mb-3 leading-tight">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/60">
+                            בחרי את המסלול
+                        </span>
+                        <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E2F163] via-[#d4e450] to-[#E2F163]">
+                            שמתאים לך
+                        </span>
                     </h1>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                    <span className="font-bold text-[#E2F163]">{activeIndex + 1}/{DEFAULT_TIERS.length}</span>
+
+                    <p className="text-white/50 text-sm max-w-xs mx-auto">
+                        כל המנויים כוללים גישה מלאה + ביטול חינם
+                    </p>
                 </div>
             </div>
 
-            {/* 3D Carousel Stage */}
-            <div className="flex-1 relative flex items-center justify-center z-10 perspective-1000">
-                <div className="relative w-full max-w-sm h-[60vh]">
-                    <AnimatePresence initial={false} custom={direction}>
-                        {DEFAULT_TIERS.map((tier, index) => {
-                            // Calculate offset from active
-                            const offset = index - activeIndex;
-                            const isActive = offset === 0;
-                            const isVisible = Math.abs(offset) <= 1; // Only show neighbors
+            {/* Pricing Cards */}
+            <div ref={cardsRef} className="relative z-10 px-4 pb-32 space-y-5">
+                {TIERS.map((tier, index) => {
+                    const Icon = tier.icon;
+                    const isPopular = tier.popular;
+                    const isSelected = selectedTier === tier.id;
+                    const isPurchasing = purchasing === tier.id;
 
-                            if (!isVisible) return null;
+                    return (
+                        <motion.div
+                            key={tier.id}
+                            className="tier-card"
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setSelectedTier(tier.id)}
+                        >
+                            <div
+                                className={cn(
+                                    "relative rounded-[2rem] p-[1px] transition-all duration-300",
+                                    isPopular && "ring-2 ring-[#E2F163]/50",
+                                    isSelected && "ring-2 ring-white/30"
+                                )}
+                                style={{
+                                    background: isSelected
+                                        ? `linear-gradient(135deg, ${tier.color}40, transparent)`
+                                        : 'linear-gradient(135deg, rgba(255,255,255,0.1), transparent)'
+                                }}
+                            >
+                                {/* Popular badge */}
+                                {isPopular && (
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                                        <div className="px-4 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-lg shadow-[#E2F163]/30">
+                                            <Zap className="w-3.5 h-3.5 text-black" />
+                                            <span className="text-xs font-black text-black tracking-wide">הכי פופולרי</span>
+                                        </div>
+                                    </div>
+                                )}
 
-                            return (
-                                <motion.div
-                                    key={tier.id}
-                                    className={cn(
-                                        "tier-card absolute inset-0 rounded-[2.5rem] border border-white/10 p-1 bg-[#111] shadow-2xl origin-bottom",
-                                        isActive ? "z-20" : "z-10"
-                                    )}
+                                {/* Card content */}
+                                <div className={cn(
+                                    "relative rounded-[1.9rem] bg-gradient-to-br overflow-hidden",
+                                    tier.gradient,
+                                    "backdrop-blur-xl bg-black/40"
+                                )}>
+                                    {/* Shine effect on hover/select */}
+                                    <div
+                                        className={cn(
+                                            "absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full transition-transform duration-700",
+                                            isSelected && "translate-x-full"
+                                        )}
+                                    />
 
-                                    // Drag Gestures
-                                    drag={isActive ? "x" : false}
-                                    dragConstraints={{ left: 0, right: 0 }}
-                                    dragElastic={0.2}
-                                    onDragEnd={handleDragEnd}
+                                    <div className="relative p-6">
+                                        {/* Header row */}
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                                                    style={{ backgroundColor: `${tier.color}20` }}
+                                                >
+                                                    <Icon className="w-6 h-6" style={{ color: tier.color }} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-black text-white">{tier.displayName}</h3>
+                                                    <p className="text-xs text-white/40 font-bold tracking-wider">{tier.englishName}</p>
+                                                </div>
+                                            </div>
 
-                                    // Animation Variants
-                                    initial={{
-                                        scale: 0.8,
-                                        opacity: 0,
-                                        x: offset * 300,
-                                        rotateY: offset * -45
-                                    }}
-                                    animate={{
-                                        scale: isActive ? 1 : 0.85,
-                                        opacity: isActive ? 1 : 0.4,
-                                        x: offset * (typeof window !== 'undefined' && window.innerWidth < 640 ? 340 : 400), // Spacing
-                                        rotateY: offset * -25,
-                                        zIndex: isActive ? 20 : 10,
-                                        transition: { type: "spring", stiffness: 300, damping: 30 }
-                                    }}
-                                    exit={{
-                                        scale: 0.8,
-                                        opacity: 0,
-                                        x: offset < 0 ? -300 : 300
-                                    }}
-                                >
-                                    <div className={cn(
-                                        "h-full w-full rounded-[2.3rem] overflow-hidden relative flex flex-col p-8 bg-gradient-to-b",
-                                        tier.gradient
-                                    )}>
-                                        {/* Tier Header */}
-                                        <div className="flex items-center justify-between mb-8">
-                                            <tier.icon className="w-8 h-8 text-white" />
-                                            {tier.name === "premium" && (
-                                                <span className="px-3 py-1 bg-[#E2F163] text-black text-[10px] font-black uppercase rounded-full tracking-wider">
-                                                    Best Value
-                                                </span>
-                                            )}
+                                            {/* Price */}
+                                            <div className="text-left">
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-4xl font-black text-white">{tier.price}</span>
+                                                    <span className="text-lg font-bold text-white/60">₪</span>
+                                                </div>
+                                                <p className="text-xs text-white/40">לחודש</p>
+                                            </div>
                                         </div>
 
-                                        <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-2">{tier.display_name}</h3>
-
-                                        <div className="flex items-baseline gap-1 mb-8">
-                                            <span className="text-6xl font-black tracking-tighter">{tier.price_nis}</span>
-                                            <span className="text-xl font-bold opacity-60">₪</span>
+                                        {/* Sessions highlight */}
+                                        <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-white/70 text-sm font-medium">כרטיסי אימון</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl font-black" style={{ color: tier.color }}>{tier.sessions}</span>
+                                                    <span className="text-white/40 text-sm">בחודש</span>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 text-xs text-white/40">
+                                                {Math.round(tier.pricePerSession)}₪ לאימון
+                                            </div>
                                         </div>
 
-                                        {/* Features List */}
-                                        <ul className="space-y-4 mb-auto">
-                                            {[
-                                                { text: `${tier.sessions} TRAININGS`, bold: true },
-                                                { text: "FULL ACCESS" },
-                                                { text: "FREE CANCELLATION" }
-                                            ].map((feat, i) => (
-                                                <li key={i} className="flex items-center gap-3 text-sm">
-                                                    <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                                                        <Check className="w-3 h-3" />
+                                        {/* Features */}
+                                        <ul className="space-y-2.5 mb-5">
+                                            {tier.features.map((feature, i) => (
+                                                <li key={i} className="flex items-center gap-3">
+                                                    <div
+                                                        className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                                                        style={{ backgroundColor: `${tier.color}20` }}
+                                                    >
+                                                        <Check className="w-3 h-3" style={{ color: tier.color }} />
                                                     </div>
-                                                    <span className={feat.bold ? "font-bold text-white" : "text-slate-300"}>{feat.text}</span>
+                                                    <span className="text-sm text-white/80">{feature}</span>
                                                 </li>
                                             ))}
                                         </ul>
 
-                                        <div className="pt-6 border-t border-white/10">
-                                            <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest opacity-60 mb-2">
-                                                <span>Price / Session</span>
-                                                <span>{Math.round(tier.price_per_session)}₪</span>
-                                            </div>
-                                        </div>
+                                        {/* CTA Button */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePurchase(tier.id);
+                                            }}
+                                            disabled={purchasing !== null}
+                                            className={cn(
+                                                "w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98]",
+                                                isPopular
+                                                    ? "bg-[#E2F163] text-black hover:bg-[#d4e450] shadow-lg shadow-[#E2F163]/20"
+                                                    : "bg-white/10 text-white hover:bg-white/15 border border-white/10"
+                                            )}
+                                        >
+                                            {isPurchasing ? (
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <span>הצטרפי עכשיו</span>
+                                                    <ArrowRight className="w-4 h-4 rotate-180" />
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
-                                </motion.div>
-                            )
-                        })}
-                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </motion.div>
+                    );
+                })}
+
+                {/* Trust badges */}
+                <div className="pt-8 flex items-center justify-center gap-6 text-white/30 text-xs">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        <span>תשלום מאובטח</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#E2F163]" />
+                        <span>ביטול בכל עת</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Footer Actions */}
-            <div className="p-6 pb-12 z-20 bg-gradient-to-t from-black via-black/80 to-transparent">
-                <div className="flex items-center justify-center gap-8 mb-6 md:hidden">
-                    <button onClick={prevTier} className="p-3 rounded-full bg-white/5 disabled:opacity-30">
-                        <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <span className="text-xs font-bold tracking-widest opacity-50">SWIPE</span>
-                    <button onClick={nextTier} className="p-3 rounded-full bg-white/5 disabled:opacity-30">
-                        <ChevronRight className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <Button
-                    onClick={() => handlePurchase(activeTier.id)}
-                    className={cn(
-                        "w-full h-16 rounded-2xl text-lg font-black uppercase tracking-widest shadow-2xl transition-all active:scale-95",
-                        "bg-[#E2F163] text-black hover:bg-[#d4e450]"
-                    )}
-                    disabled={purchasing !== null}
-                >
-                    {purchasing ? <Loader2 className="animate-spin" /> : `GET ${activeTier.name}`}
-                </Button>
-            </div>
-
-            {/* Desktop Warning (Visible only on large screens) */}
-            <div className="hidden lg:flex absolute top-4 right-4 items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-md">
-                <span className="text-xs font-bold">MOBILE MODE ACTIVE</span>
-            </div>
+            {/* Bottom safe area padding */}
+            <div className="h-safe" />
         </div>
     );
 }
