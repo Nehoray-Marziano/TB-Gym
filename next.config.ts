@@ -40,14 +40,16 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Static pages - CacheFirst for instant navigation
+        // Static pages - NetworkFirst to ensure fresh content
+        // Falls back to cache quickly (3s) if network is slow/offline
         urlPattern: /\/(subscription|book|onboarding|profile)/i,
-        handler: "CacheFirst",
+        handler: "NetworkFirst",
         options: {
-          cacheName: "static-pages",
+          cacheName: "static-pages-v2",
+          networkTimeoutSeconds: 3, // Fast fallback to cache
           expiration: {
             maxEntries: 10,
-            maxAgeSeconds: 60 * 60 * 24, // 24 hours
+            maxAgeSeconds: 60 * 60, // 1 hour (reduced from 24h)
           },
           cacheableResponse: {
             statuses: [0, 200],

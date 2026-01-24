@@ -1,18 +1,62 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import { useGymStore } from "@/providers/GymStoreProvider";
-import { Calendar, Home, Plus, Activity, Ticket, Clock } from "lucide-react";
+import { Calendar, Home, Plus, Activity, Ticket, Clock, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import StudioLogo from "@/components/StudioLogo";
+import gsap from "gsap";
+
+// Animated counter component for tickets
+function AnimatedCounter({ value, className }: { value: number; className?: string }) {
+    const counterRef = useRef<HTMLSpanElement>(null);
+    const prevValue = useRef(value);
+
+    useEffect(() => {
+        if (counterRef.current && prevValue.current !== value) {
+            // Animate from previous value to new value
+            gsap.fromTo(
+                counterRef.current,
+                { innerText: prevValue.current },
+                {
+                    innerText: value,
+                    duration: 1.2,
+                    ease: "power2.out",
+                    snap: { innerText: 1 },
+                    onUpdate: function () {
+                        if (counterRef.current) {
+                            counterRef.current.textContent = Math.round(
+                                parseFloat(counterRef.current.textContent || "0")
+                            ).toString();
+                        }
+                    }
+                }
+            );
+            prevValue.current = value;
+        } else if (counterRef.current) {
+            counterRef.current.textContent = value.toString();
+        }
+    }, [value]);
+
+    return <span ref={counterRef} className={className}>{value}</span>;
+}
 
 export default function UserDashboard({ user }: { user: any }) {
     const router = useRouter();
     const { profile, tickets, subscription, loading, refreshData } = useGymStore();
     const [upcomingSession, setUpcomingSession] = useState<any | null>(null);
     const [loadingSession, setLoadingSession] = useState(true);
+    const [isAnimated, setIsAnimated] = useState(false);
+
+    // GSAP Refs
+    const containerRef = useRef<HTMLDivElement>(null);
+    const logoRef = useRef<HTMLDivElement>(null);
+    const headerRef = useRef<HTMLElement>(null);
+    const ticketsCardRef = useRef<HTMLDivElement>(null);
+    const workoutSectionRef = useRef<HTMLDivElement>(null);
+    const navRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (user?.id) {
@@ -54,6 +98,7 @@ export default function UserDashboard({ user }: { user: any }) {
         fetchUpcoming();
     }, [user, refreshData]);
 
+    // Prefetch routes
     useEffect(() => {
         router.prefetch('/subscription');
         router.prefetch('/book');
@@ -61,11 +106,136 @@ export default function UserDashboard({ user }: { user: any }) {
         router.prefetch('/admin/schedule');
     }, [router]);
 
-    if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-    );
+    // GSAP Entrance Animations
+    useLayoutEffect(() => {
+        if (loading || isAnimated) return;
+
+        const ctx = gsap.context(() => {
+            // Set initial states
+            gsap.set([logoRef.current, headerRef.current, ticketsCardRef.current, workoutSectionRef.current], {
+                opacity: 0,
+                y: 30
+            });
+            gsap.set(navRef.current, { opacity: 0, y: 50 });
+
+            // Create master timeline
+            const tl = gsap.timeline({
+                defaults: { ease: "power3.out" },
+                onComplete: () => setIsAnimated(true)
+            });
+
+            // Logo drops in with bounce
+            tl.to(logoRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.6,
+                ease: "back.out(1.7)"
+            })
+                // Header slides in
+                .to(headerRef.current, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.5
+                }, "-=0.3")
+                // Tickets card with special effect
+                .to(ticketsCardRef.current, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6,
+                    ease: "power4.out"
+                }, "-=0.2")
+                // Add shimmer effect to tickets card
+                .fromTo(ticketsCardRef.current,
+                    { backgroundPosition: "-200% 0" },
+                    {
+                        backgroundPosition: "200% 0",
+                        duration: 1.5,
+                        ease: "power2.inOut"
+                    },
+                    "-=0.3"
+                )
+                // Workout section
+                .to(workoutSectionRef.current, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.5
+                }, "-=1")
+                // Bottom nav slides up
+                .to(navRef.current, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6,
+                    ease: "back.out(1.4)"
+                }, "-=0.3");
+
+        }, containerRef);
+
+        return () => ctx.revert();
+    }, [loading, isAnimated]);
+
+    // Loading skeleton with shimmer effect
+    if (loading) {
+        return (
+            <div className="fixed inset-0 bg-background text-foreground overflow-hidden font-sans">
+                <div className="p-6 space-y-6">
+                    {/* Logo skeleton */}
+                    <div className="flex justify-center pt-4 mb-4">
+                        <div className="w-16 h-16 rounded-2xl bg-muted/20 shimmer-skeleton" />
+                    </div>
+
+                    {/* Header skeleton */}
+                    <div className="flex justify-between items-start mb-8">
+                        <div className="space-y-2">
+                            <div className="h-4 w-20 bg-muted/20 rounded-lg shimmer-skeleton" />
+                            <div className="h-10 w-40 bg-muted/20 rounded-xl shimmer-skeleton" />
+                        </div>
+                        <div className="w-12 h-12 rounded-full bg-muted/20 shimmer-skeleton" />
+                    </div>
+
+                    {/* Tickets card skeleton */}
+                    <div className="h-44 rounded-[2rem] bg-muted/10 shimmer-skeleton" />
+
+                    {/* Workout section skeleton */}
+                    <div className="space-y-4">
+                        <div className="h-6 w-28 bg-muted/20 rounded-lg shimmer-skeleton" />
+                        <div className="h-28 rounded-[2rem] bg-muted/10 shimmer-skeleton" />
+                    </div>
+                </div>
+
+                {/* Nav skeleton */}
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm">
+                    <div className="h-16 rounded-full bg-muted/10 shimmer-skeleton" />
+                </div>
+
+                {/* Shimmer animation styles */}
+                <style jsx>{`
+                    .shimmer-skeleton {
+                        position: relative;
+                        overflow: hidden;
+                    }
+                    .shimmer-skeleton::after {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: linear-gradient(
+                            90deg,
+                            transparent,
+                            rgba(255, 255, 255, 0.05),
+                            transparent
+                        );
+                        animation: shimmer 1.5s infinite;
+                    }
+                    @keyframes shimmer {
+                        0% { transform: translateX(-100%); }
+                        100% { transform: translateX(100%); }
+                    }
+                `}</style>
+            </div>
+        );
+    }
 
     const firstName = profile?.full_name?.split(" ")[0] || "מתאמנת";
     const greeting = getGreeting();
@@ -86,37 +256,42 @@ export default function UserDashboard({ user }: { user: any }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-background text-foreground overflow-hidden font-sans">
-            {/* Simple gradient background - no blur */}
-            <div className="fixed top-0 right-0 w-[200px] h-[200px] bg-primary/5 rounded-full pointer-events-none" />
+        <div ref={containerRef} className="fixed inset-0 bg-background text-foreground overflow-hidden font-sans">
+            {/* Animated gradient background */}
+            <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full pointer-events-none blur-3xl animate-pulse" />
+            <div className="fixed bottom-1/3 left-0 w-[200px] h-[200px] bg-primary/3 rounded-full pointer-events-none blur-3xl" />
 
             <div className="h-full overflow-hidden pb-24">
                 <div className="p-6 relative z-10 h-full">
-                    {/* Logo Header */}
-                    <div className="flex justify-center pb-4 pt-4 mb-2">
-                        <StudioLogo className="w-16 h-16" />
+                    {/* Logo Header with animation */}
+                    <div ref={logoRef} className="flex justify-center pb-4 pt-4 mb-2">
+                        <div className="relative">
+                            <StudioLogo className="w-16 h-16" />
+                            {/* Subtle glow effect */}
+                            <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl -z-10 animate-pulse" />
+                        </div>
                     </div>
 
                     {/* Header */}
-                    <header className="flex justify-between items-start mb-8">
+                    <header ref={headerRef} className="flex justify-between items-start mb-8">
                         <div>
                             <p className="text-muted-foreground text-sm font-medium mb-1">{greeting},</p>
                             <h1 className="text-4xl font-bold text-foreground tracking-tight">
-                                {firstName} <span className="inline-block">👋</span>
+                                {firstName} <span className="inline-block animate-wave">👋</span>
                             </h1>
                         </div>
 
                         <div className="flex items-center gap-3">
                             {profile?.role === 'administrator' && (
                                 <Link href="/admin/schedule" prefetch={true}>
-                                    <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black active:scale-95 transition-transform">
+                                    <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black active:scale-95 transition-transform hover:shadow-primary/50 hover:shadow-xl">
                                         <Activity className="w-6 h-6" />
                                     </div>
                                 </Link>
                             )}
 
                             <Link href="/profile" prefetch={true}>
-                                <div className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform">
+                                <div className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform hover:border-primary/50">
                                     <div className="w-full h-full flex items-center justify-center text-lg font-bold text-foreground">
                                         {firstName[0]}
                                     </div>
@@ -125,21 +300,30 @@ export default function UserDashboard({ user }: { user: any }) {
                         </div>
                     </header>
 
-                    {/* Tickets Card */}
-                    <div className="mb-8">
+                    {/* Tickets Card - Premium Design */}
+                    <div ref={ticketsCardRef} className="mb-8">
                         <Link href="/subscription" prefetch={true}>
-                            <div className="bg-gradient-to-br from-[#E2F163] to-[#d4e450] rounded-[2rem] p-6 text-black shadow-lg active:scale-[0.98] transition-transform">
-                                <div className="flex justify-between items-start mb-8">
+                            <div className="group relative bg-gradient-to-br from-[#E2F163] via-[#d9e85a] to-[#c8d64a] rounded-[2rem] p-6 text-black shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-300 hover:shadow-primary/40 hover:shadow-xl overflow-hidden">
+                                {/* Animated shine effect */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+
+                                {/* Sparkle decorations */}
+                                <Sparkles className="absolute top-4 left-4 w-4 h-4 text-black/20 animate-pulse" />
+                                <Sparkles className="absolute bottom-12 right-20 w-3 h-3 text-black/15 animate-pulse delay-300" />
+
+                                <div className="flex justify-between items-start mb-8 relative z-10">
                                     <div>
                                         <p className="font-bold text-black/60 text-sm mb-1 uppercase tracking-wider">הכרטיסים שלך</p>
-                                        <h2 className="text-5xl font-bold tracking-tighter">{tickets}</h2>
+                                        <h2 className="text-5xl font-bold tracking-tighter">
+                                            <AnimatedCounter value={tickets} />
+                                        </h2>
                                     </div>
-                                    <div className="bg-black/10 p-2 rounded-xl">
+                                    <div className="bg-black/10 p-3 rounded-xl group-hover:bg-black/20 transition-colors">
                                         <Ticket className="w-6 h-6 text-black" />
                                     </div>
                                 </div>
 
-                                <div className="flex justify-between items-end">
+                                <div className="flex justify-between items-end relative z-10">
                                     <div className="flex items-center gap-2">
                                         {subscription?.is_active && (
                                             <>
@@ -156,7 +340,7 @@ export default function UserDashboard({ user }: { user: any }) {
                                             <span className="text-sm text-black/70 font-medium">אימונים זמינים</span>
                                         )}
                                     </div>
-                                    <span className="bg-black text-[#E2F163] px-4 py-2 rounded-xl text-xs font-bold">
+                                    <span className="bg-black text-[#E2F163] px-4 py-2 rounded-xl text-xs font-bold group-hover:scale-105 transition-transform">
                                         {subscription?.is_active ? "עוד כרטיסים +" : "רכישת מנוי +"}
                                     </span>
                                 </div>
@@ -165,24 +349,24 @@ export default function UserDashboard({ user }: { user: any }) {
                     </div>
 
                     {/* Next Workout */}
-                    <div className="mb-8">
+                    <div ref={workoutSectionRef} className="mb-8">
                         <div className="flex justify-between items-end mb-4 px-1">
                             <h2 className="text-xl font-bold text-foreground">האימון הבא</h2>
-                            {upcomingSession && <Link href="/book" prefetch={true} className="text-primary text-xs font-bold">לכל האימונים</Link>}
+                            {upcomingSession && <Link href="/book" prefetch={true} className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
                         </div>
 
                         {loadingSession ? (
-                            <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 h-28 animate-pulse">
-                                <div className="bg-muted/20 w-20 h-20 rounded-[1.5rem] shrink-0 ml-4" />
+                            <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 h-28">
+                                <div className="bg-muted/20 w-20 h-20 rounded-[1.5rem] shrink-0 ml-4 shimmer-skeleton" />
                                 <div className="flex-1 py-4 space-y-2">
-                                    <div className="h-6 w-3/4 bg-muted/20 rounded-lg" />
-                                    <div className="h-4 w-1/2 bg-muted/20 rounded-lg" />
+                                    <div className="h-6 w-3/4 bg-muted/20 rounded-lg shimmer-skeleton" />
+                                    <div className="h-4 w-1/2 bg-muted/20 rounded-lg shimmer-skeleton" />
                                 </div>
                             </div>
                         ) : upcomingSession ? (
                             <Link href="/book" prefetch={true}>
-                                <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 active:scale-[0.98] transition-transform">
-                                    <div className="bg-muted/50 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4">
+                                <div className="group bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 active:scale-[0.98] transition-all duration-300 hover:border-primary/30 hover:bg-card/70">
+                                    <div className="bg-gradient-to-br from-primary/20 to-primary/10 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4 group-hover:from-primary/30 group-hover:to-primary/20 transition-all">
                                         <span className="text-primary font-bold text-xl leading-none">
                                             {new Date(upcomingSession.start_time).getDate()}
                                         </span>
@@ -191,7 +375,7 @@ export default function UserDashboard({ user }: { user: any }) {
                                         </span>
                                     </div>
                                     <div className="py-4">
-                                        <h3 className="font-bold text-lg text-foreground mb-1">{upcomingSession.title}</h3>
+                                        <h3 className="font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{upcomingSession.title}</h3>
                                         <p className="text-muted-foreground text-sm">
                                             {new Date(upcomingSession.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} • סטודיו ראשי
                                         </p>
@@ -200,12 +384,12 @@ export default function UserDashboard({ user }: { user: any }) {
                             </Link>
                         ) : (
                             <Link href="/book" className="block">
-                                <div className="bg-card/30 border border-dashed border-border rounded-[2rem] p-8 text-center active:scale-[0.98] transition-transform">
-                                    <div className="mx-auto w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3">
-                                        <Activity className="w-6 h-6 text-muted-foreground" />
+                                <div className="group bg-card/30 border border-dashed border-border rounded-[2rem] p-8 text-center active:scale-[0.98] transition-all duration-300 hover:border-primary/50 hover:bg-card/40">
+                                    <div className="mx-auto w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                                        <Activity className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
                                     </div>
                                     <p className="text-muted-foreground text-sm font-medium">לא נרשמת לאימונים קרובים</p>
-                                    <span className="text-primary text-sm font-bold mt-2 inline-block">זה הזמן להירשם →</span>
+                                    <span className="text-primary text-sm font-bold mt-2 inline-block group-hover:translate-x-1 transition-transform">זה הזמן להירשם →</span>
                                 </div>
                             </Link>
                         )}
@@ -213,24 +397,61 @@ export default function UserDashboard({ user }: { user: any }) {
                 </div>
             </div>
 
-            {/* Floating Navigation - No animation */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
-                <div className="bg-card/90 border border-border rounded-full p-2 flex justify-between items-center shadow-xl">
-                    <Link href="/" className="w-12 h-12 flex items-center justify-center rounded-full text-primary bg-primary/10">
+            {/* Floating Navigation - Animated */}
+            <div ref={navRef} className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
+                <div className="bg-card/95 backdrop-blur-xl border border-border rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20">
+                    <Link href="/" className="w-12 h-12 flex items-center justify-center rounded-full text-primary bg-primary/10 hover:bg-primary/20 transition-colors">
                         <Home className="w-5 h-5" />
                     </Link>
 
                     <Link href="/book" prefetch={true}>
-                        <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg border-[4px] border-background active:scale-95 transition-transform">
+                        <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/40 border-[4px] border-background active:scale-95 transition-transform hover:shadow-primary/60 hover:shadow-xl">
                             <Plus className="w-8 h-8 text-black" />
                         </div>
                     </Link>
 
-                    <Link href="/book" className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground">
+                    <Link href="/book" className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
                         <Calendar className="w-5 h-5" />
                     </Link>
                 </div>
             </div>
+
+            {/* CSS for wave animation */}
+            <style jsx>{`
+                @keyframes wave {
+                    0%, 100% { transform: rotate(0deg); }
+                    25% { transform: rotate(20deg); }
+                    75% { transform: rotate(-10deg); }
+                }
+                .animate-wave {
+                    display: inline-block;
+                    animation: wave 2s ease-in-out infinite;
+                    transform-origin: 70% 70%;
+                }
+                .shimmer-skeleton {
+                    position: relative;
+                    overflow: hidden;
+                }
+                .shimmer-skeleton::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(
+                        90deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.05),
+                        transparent
+                    );
+                    animation: shimmer 1.5s infinite;
+                }
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                }
+            `}</style>
         </div>
     );
 }

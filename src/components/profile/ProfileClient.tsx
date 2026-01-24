@@ -1,12 +1,13 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, X, User, Moon, Sun } from "lucide-react";
+import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, X, User, Moon, Sun, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
+import gsap from "gsap";
 
 type UserProfile = {
     id: string;
@@ -32,6 +33,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     const [health, setHealth] = useState<HealthDeclaration>(initialHealth);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isAnimated, setIsAnimated] = useState(false);
 
     const { setTheme, resolvedTheme } = useTheme();
 
@@ -43,13 +45,81 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
         medical_conditions: initialHealth?.medical_conditions || ""
     });
 
+    // GSAP Refs
+    const containerRef = useRef<HTMLDivElement>(null);
+    const headerRef = useRef<HTMLElement>(null);
+    const avatarRef = useRef<HTMLDivElement>(null);
+    const statsCardRef = useRef<HTMLDivElement>(null);
+    const detailsRef = useRef<HTMLDivElement>(null);
+    const settingsRef = useRef<HTMLDivElement>(null);
+
     const router = useRouter();
     const supabase = getSupabaseClient();
     const { toast } = useToast();
 
+    // GSAP Entrance Animation
+    useLayoutEffect(() => {
+        if (isAnimated) return;
+
+        const ctx = gsap.context(() => {
+            // Set initial states
+            gsap.set(headerRef.current, { opacity: 0, y: -20 });
+            gsap.set(avatarRef.current, { opacity: 0, scale: 0.8 });
+            gsap.set(statsCardRef.current, { opacity: 0, y: 30 });
+            gsap.set(".detail-card", { opacity: 0, x: -30 });
+            gsap.set(".settings-item", { opacity: 0, y: 20 });
+
+            // Master timeline
+            const tl = gsap.timeline({
+                defaults: { ease: "power3.out" },
+                onComplete: () => setIsAnimated(true)
+            });
+
+            // Header slides in
+            tl.to(headerRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.5
+            })
+                // Avatar pops in with glow pulse
+                .to(avatarRef.current, {
+                    opacity: 1,
+                    scale: 1,
+                    duration: 0.6,
+                    ease: "back.out(1.7)"
+                }, "-=0.3")
+                // Stats card slides up
+                .to(statsCardRef.current, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.5
+                }, "-=0.3")
+                // Detail cards stagger in
+                .to(".detail-card", {
+                    opacity: 1,
+                    x: 0,
+                    duration: 0.4,
+                    stagger: 0.1
+                }, "-=0.2")
+                // Settings items stagger in
+                .to(".settings-item", {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.4,
+                    stagger: 0.08
+                }, "-=0.1");
+
+        }, containerRef);
+
+        return () => ctx.revert();
+    }, [isAnimated]);
+
     const handleSave = async () => {
         if (!profile) return;
         setLoading(true);
+
+        // Haptic feedback
+        if (navigator.vibrate) navigator.vibrate(10);
 
         try {
             // Update Profile
@@ -70,6 +140,9 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             setProfile(prev => prev ? ({ ...prev, full_name: formData.full_name, phone: formData.phone }) : null);
             setHealth({ is_healthy: formData.is_healthy, medical_conditions: formData.medical_conditions });
             setIsEditing(false);
+
+            // Success haptic
+            if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
             toast({ title: "הפרטים עודכנו! ✨", type: "success" });
 
             // Optional: Refresh server data to ensure consistency on navigation
@@ -82,22 +155,31 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     };
 
     const handleLogout = async () => {
+        if (navigator.vibrate) navigator.vibrate(10);
         await supabase.auth.signOut();
         router.push("/auth/login");
     };
 
     const toggleTheme = () => {
+        if (navigator.vibrate) navigator.vibrate(10);
         setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
     };
 
     if (!profile) return null; // Should not happen with server data, but safety check
 
     return (
-        <div className="min-h-[100dvh] bg-background text-foreground p-6 pb-20 font-sans selection:bg-primary selection:text-black">
+        <div ref={containerRef} className="min-h-[100dvh] bg-background text-foreground p-6 pb-20 font-sans selection:bg-primary selection:text-black">
+            {/* Ambient background */}
+            <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+            <div className="fixed bottom-1/3 left-0 w-[200px] h-[200px] bg-primary/3 rounded-full blur-[60px] pointer-events-none" />
+
             {/* Header */}
-            <header className="flex items-center justify-between mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-md py-4 -mx-6 px-6">
+            <header ref={headerRef} className="flex items-center justify-between mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-border/50">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => router.back()} className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted/10 transition-colors">
+                    <button
+                        onClick={() => router.back()}
+                        className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted/10 hover:border-primary/50 transition-all active:scale-95"
+                    >
                         <ChevronRight className="w-5 h-5 text-foreground" />
                     </button>
                     <h1 className="text-2xl font-bold tracking-tight">הפרופיל שלי</h1>
@@ -148,18 +230,20 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             </header>
 
             {/* Avatar & Hero */}
-            <div className="flex flex-col items-center mb-10 relative">
-                <div className="absolute top-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none" />
+            <div ref={avatarRef} className="flex flex-col items-center mb-10 relative">
+                <div className="absolute top-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none animate-pulse" />
 
-                <div className="w-28 h-28 bg-gradient-to-br from-card to-muted/20 rounded-[2rem] border-2 border-primary shadow-[0_0_30px_rgba(226,241,99,0.2)] flex items-center justify-center text-4xl font-bold mb-4 z-10 relative overflow-hidden">
+                <div className="group w-28 h-28 bg-gradient-to-br from-card to-muted/20 rounded-[2rem] border-2 border-primary shadow-[0_0_30px_rgba(226,241,99,0.2)] flex items-center justify-center text-4xl font-bold mb-4 z-10 relative overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(226,241,99,0.3)] hover:scale-105">
                     {formData.full_name?.charAt(0) || "?"}
+                    {/* Sparkle decoration */}
+                    <Sparkles className="absolute top-2 right-2 w-4 h-4 text-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
 
                 {isEditing ? (
                     <input
                         value={formData.full_name}
                         onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                        className="text-2xl font-bold mb-1 bg-transparent border-b border-border text-center w-full max-w-[200px] focus:outline-none focus:border-primary text-foreground"
+                        className="text-2xl font-bold mb-1 bg-transparent border-b-2 border-primary text-center w-full max-w-[200px] focus:outline-none text-foreground"
                         placeholder="שם מלא"
                     />
                 ) : (
@@ -168,20 +252,23 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
                 <div className="flex items-center gap-2 mt-2">
                     <span className="text-muted-foreground text-sm font-medium bg-card px-3 py-1 rounded-full border border-border">
-                        {profile?.role === 'administrator' ? '👑 מנהלת מערכת' : 'מתאמנת בטליה'}
+                        {profile?.role === 'administrator' ? '👑 מנהלת מערכת' : '💪 מתאמנת בטליה'}
                     </span>
                 </div>
             </div>
 
             {/* Stats Card */}
             {!isEditing && (
-                <div className="bg-gradient-to-br from-[#E2F163] to-[#d4e450] dark:from-[#E2F163] dark:to-[#d4e450] rounded-[2rem] p-6 text-black shadow-[0_10px_40px_rgba(226,241,99,0.15)] mb-8 relative overflow-hidden">
+                <div ref={statsCardRef} className="group bg-gradient-to-br from-[#E2F163] via-[#d9e85a] to-[#c8d64a] rounded-[2rem] p-6 text-black shadow-lg shadow-primary/20 mb-8 relative overflow-hidden transition-all hover:shadow-primary/30 hover:scale-[1.01]">
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+
                     <div className="relative z-10 flex justify-between items-center">
                         <div>
                             <p className="font-bold text-black/60 text-xs mb-1 uppercase tracking-wider">יתרה נוכחית</p>
                             <h3 className="text-4xl font-bold tracking-tighter">{profile?.balance} שיעורים</h3>
                         </div>
-                        <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center backdrop-blur-md">
+                        <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center backdrop-blur-md group-hover:bg-black/20 transition-colors">
                             <Zap className="w-6 h-6 text-black" />
                         </div>
                     </div>
@@ -189,11 +276,11 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             )}
 
             {/* Details List */}
-            <div className="space-y-4 mb-10">
+            <div ref={detailsRef} className="space-y-4 mb-10">
                 <h3 className="text-muted-foreground font-bold mb-2 px-1">פרטים אישיים</h3>
 
                 {/* Phone */}
-                <div className="bg-card/50 border border-border rounded-3xl p-1 overflow-hidden">
+                <div className="detail-card bg-card/50 border border-border rounded-3xl p-1 overflow-hidden hover:border-primary/30 transition-all">
                     <div className="flex items-center gap-4 p-4 border-b border-border last:border-0">
                         <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center shrink-0">
                             <Phone className="w-5 h-5 text-muted-foreground" />
@@ -224,13 +311,13 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                     <div className="flex gap-2 mt-2">
                                         <button
                                             onClick={() => setFormData({ ...formData, is_healthy: true })}
-                                            className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${formData.is_healthy ? "bg-green-500/20 text-green-500 border-green-500/50" : "bg-muted/10 border-border text-muted-foreground"}`}
+                                            className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${formData.is_healthy ? "bg-green-500/20 text-green-500 border-green-500/50 scale-105" : "bg-muted/10 border-border text-muted-foreground hover:border-green-500/30"}`}
                                         >
                                             תקינה
                                         </button>
                                         <button
                                             onClick={() => setFormData({ ...formData, is_healthy: false })}
-                                            className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${!formData.is_healthy ? "bg-red-500/20 text-red-500 border-red-500/50" : "bg-muted/10 border-border text-muted-foreground"}`}
+                                            className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${!formData.is_healthy ? "bg-red-500/20 text-red-500 border-red-500/50 scale-105" : "bg-muted/10 border-border text-muted-foreground hover:border-red-500/30"}`}
                                         >
                                             יש מגבלות
                                         </button>
@@ -249,7 +336,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: "auto", opacity: 1 }}
-                                    className="mt-2 pl-[3.5rem]"
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="mt-2 pl-[3.5rem] overflow-hidden"
                                 >
                                     {isEditing ? (
                                         <textarea
@@ -271,13 +359,13 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             </div>
 
             {/* Theme & Settings */}
-            <div className="space-y-3">
+            <div ref={settingsRef} className="space-y-3">
                 <button
                     onClick={toggleTheme}
-                    className="w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all"
+                    className="settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground">
+                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
                             {resolvedTheme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                         </div>
                         <span className="font-bold text-foreground">מצב תצוגה ({resolvedTheme === 'dark' ? 'חשוך' : 'בהיר'})</span>
@@ -285,24 +373,25 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     <div className={`w-12 h-6 rounded-full p-1 transition-colors ${resolvedTheme === 'dark' ? 'bg-primary justify-end' : 'bg-muted/30 justify-start'} flex`}>
                         <motion.div
                             layout
+                            transition={{ type: "spring", stiffness: 700, damping: 30 }}
                             className={`w-4 h-4 rounded-full ${resolvedTheme === 'dark' ? 'bg-black' : 'bg-white shadow-sm'}`}
                         />
                     </div>
                 </button>
 
-                <button className="w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-border/80 transition-all">
+                <button className="settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-border/80 transition-all active:scale-[0.98]">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground">
+                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:bg-muted/30 transition-all">
                             {Bell && <Bell className="w-5 h-5" />}
                         </div>
                         <span className="font-bold text-foreground">הגדרות התראות</span>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                 </button>
 
                 <button
                     onClick={handleLogout}
-                    className="w-full bg-red-500/10 border border-red-500/20 p-5 rounded-3xl flex items-center justify-center gap-2 text-red-500 font-bold hover:bg-red-500/20 transition-all mt-8"
+                    className="settings-item w-full bg-red-500/10 border border-red-500/20 p-5 rounded-3xl flex items-center justify-center gap-2 text-red-500 font-bold hover:bg-red-500/20 transition-all mt-8 active:scale-[0.98]"
                 >
                     <LogOut className="w-5 h-5" />
                     התנתקי מהמערכת

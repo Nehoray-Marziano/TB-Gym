@@ -1,12 +1,13 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, Clock, MapPin, ChevronRight, Check, CalendarPlus, X, AlertCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, ChevronRight, Check, CalendarPlus, X, AlertCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import gsap from "gsap";
 
 export default function BookingPage() {
     const supabase = getSupabaseClient();
@@ -17,6 +18,12 @@ export default function BookingPage() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [bookingId, setBookingId] = useState<string | null>(null);
+    const [isAnimated, setIsAnimated] = useState(false);
+
+    // GSAP Refs
+    const containerRef = useRef<HTMLDivElement>(null);
+    const headerRef = useRef<HTMLElement>(null);
+    const sessionsRef = useRef<HTMLDivElement>(null);
 
     const fetchSessions = async () => {
         try {
@@ -64,8 +71,53 @@ export default function BookingPage() {
         return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, []);
 
+    // GSAP Entrance Animations
+    useLayoutEffect(() => {
+        if (loading || isAnimated) return;
+
+        const ctx = gsap.context(() => {
+            // Set initial states
+            gsap.set(headerRef.current, { opacity: 0, y: -20 });
+
+            // Timeline
+            const tl = gsap.timeline({
+                defaults: { ease: "power3.out" },
+                onComplete: () => setIsAnimated(true)
+            });
+
+            // Header slides in
+            tl.to(headerRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.5
+            });
+
+            // Session cards stagger in
+            if (sessionsRef.current) {
+                const cards = sessionsRef.current.querySelectorAll('.session-card');
+                gsap.set(cards, { opacity: 0, y: 40, scale: 0.95 });
+
+                tl.to(cards, {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.5,
+                    stagger: 0.08,
+                    ease: "back.out(1.2)"
+                }, "-=0.2");
+            }
+
+        }, containerRef);
+
+        return () => ctx.revert();
+    }, [loading, isAnimated, sessions.length]);
+
     const handleBook = async (sessionId: string) => {
         setBookingId(sessionId);
+
+        // Haptic feedback
+        if (navigator.vibrate) navigator.vibrate(10);
+
         const { data, error } = await supabase.rpc("book_session", { session_id: sessionId });
 
         if (error) {
@@ -73,6 +125,8 @@ export default function BookingPage() {
         } else if (data && !data.success) {
             toast({ title: "לא ניתן להירשם", description: data.message, type: "error" });
         } else {
+            // Success animation
+            if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
             await refreshData();
             await fetchSessions();
             toast({ title: "נרשמת בהצלחה! 🎉", description: "נתראה באימון", type: "success" });
@@ -111,19 +165,32 @@ export default function BookingPage() {
     };
 
     return (
-        <div className="min-h-[100dvh] bg-background text-foreground p-6 pb-32 font-sans">
+        <div ref={containerRef} className="min-h-[100dvh] bg-background text-foreground p-6 pb-32 font-sans">
+            {/* Ambient background */}
+            <div className="fixed top-0 left-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="fixed bottom-1/4 right-0 w-[200px] h-[200px] bg-primary/3 rounded-full blur-[80px] pointer-events-none" />
+
             {/* Header */}
-            <header className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background py-4 -mx-6 px-6">
-                <button onClick={() => router.back()} className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center active:scale-95 transition-transform">
+            <header ref={headerRef} className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-border/50">
+                <button
+                    onClick={() => router.back()}
+                    className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center active:scale-95 transition-all hover:border-primary/50 hover:bg-card/80"
+                >
                     <ChevronRight className="w-5 h-5 text-foreground" />
                 </button>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">הירשמי לאימון 📅</h1>
+                <div className="flex-1">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                        הירשמי לאימון
+                        <span className="text-2xl">📅</span>
+                    </h1>
+                    <p className="text-xs text-muted-foreground font-medium">{sessions.length} אימונים זמינים</p>
+                </div>
             </header>
 
             {loading ? (
                 <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="p-5 rounded-[2rem] border border-border bg-card/40 h-40 animate-pulse flex gap-5">
+                        <div key={i} className="p-5 rounded-[2rem] border border-border bg-card/40 h-44 flex gap-5 shimmer-skeleton" style={{ animationDelay: `${i * 0.1}s` }}>
                             <div className="w-16 h-16 bg-muted/20 rounded-2xl shrink-0" />
                             <div className="flex-1 space-y-3">
                                 <div className="h-6 w-3/4 bg-muted/20 rounded-lg" />
@@ -134,21 +201,29 @@ export default function BookingPage() {
                     ))}
                 </div>
             ) : sessions.length === 0 ? (
-                <div className="text-center py-20 px-6 bg-card/40 rounded-3xl border border-dashed border-border">
-                    <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Calendar className="w-8 h-8 text-muted-foreground" />
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-20 px-6 bg-card/40 rounded-3xl border border-dashed border-border"
+                >
+                    <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="w-10 h-10 text-muted-foreground" />
                     </div>
-                    <p className="text-lg font-bold text-foreground">אין אימונים השבוע</p>
-                    <p className="text-muted-foreground text-sm mt-1">חזרי להתעדכן ביום ראשון!</p>
-                </div>
+                    <p className="text-xl font-bold text-foreground mb-2">אין אימונים השבוע</p>
+                    <p className="text-muted-foreground text-sm">חזרי להתעדכן ביום ראשון! 🌟</p>
+                </motion.div>
             ) : (
-                <div className="space-y-4">
-                    {sessions.map((session) => {
+                <div ref={sessionsRef} className="space-y-4">
+                    {sessions.map((session, index) => {
                         const date = formatDate(session.start_time);
                         const isFull = (session.current_bookings || 0) >= session.max_capacity;
+                        const spotsLeft = session.max_capacity - (session.current_bookings || 0);
+                        const isAlmostFull = spotsLeft <= 2 && spotsLeft > 0;
 
                         const addToCalendar = (e: React.MouseEvent) => {
                             e.stopPropagation();
+                            if (navigator.vibrate) navigator.vibrate(10);
+
                             const title = `אימון ${session.title} - Talia Gym`;
                             const location = "סטודיו טליה";
                             const description = session.description || "אימון בסטודיו טליה";
@@ -158,8 +233,8 @@ export default function BookingPage() {
                             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 
                             if (isIOS) {
-                                const startStr = start.toISOString().replace(/-|:|\.\d+/g, "");
-                                const endStr = end.toISOString().replace(/-|:|\.\d+/g, "");
+                                const startStr = start.toISOString().replace(/-|:|\.\\d+/g, "");
+                                const endStr = end.toISOString().replace(/-|:|\.\\d+/g, "");
                                 const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
@@ -178,7 +253,7 @@ END:VCALENDAR`;
                                 link.click();
                                 document.body.removeChild(link);
                             } else {
-                                const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d+/g, "");
+                                const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\\d+/g, "");
                                 const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
                                 window.open(url, '_blank');
                             }
@@ -186,34 +261,43 @@ END:VCALENDAR`;
 
                         const handleCancelClick = (e: React.MouseEvent) => {
                             e.stopPropagation();
+                            if (navigator.vibrate) navigator.vibrate(10);
                             setSessionToCancel(session);
                         };
 
                         return (
                             <div
                                 key={session.id}
-                                className={`relative p-5 rounded-[2rem] border transition-colors
+                                className={`session-card group relative p-5 rounded-[2rem] border transition-all duration-300
                                     ${session.isRegistered
-                                        ? "bg-primary/5 border-primary/30"
+                                        ? "bg-primary/5 border-primary/30 hover:border-primary/50"
                                         : isFull
                                             ? "bg-muted/30 border-border opacity-70"
-                                            : "bg-card/60 border-border"
+                                            : "bg-card/60 border-border hover:border-primary/30 hover:bg-card/80"
                                     }`}
                             >
+                                {/* Almost full badge */}
+                                {isAlmostFull && !session.isRegistered && (
+                                    <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg animate-pulse">
+                                        <Sparkles className="w-3 h-3" />
+                                        נשארו {spotsLeft} מקומות!
+                                    </div>
+                                )}
+
                                 <div className="flex gap-5">
-                                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl shrink-0
+                                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl shrink-0 transition-all
                                         ${session.isRegistered
-                                            ? "bg-primary text-black"
+                                            ? "bg-primary text-black shadow-lg shadow-primary/30"
                                             : isFull
                                                 ? "bg-muted text-muted-foreground"
-                                                : "bg-muted/20 text-foreground"}`}>
+                                                : "bg-muted/20 text-foreground group-hover:bg-primary/20"}`}>
                                         <span className="text-xl font-bold leading-none">{date.day}</span>
                                         <span className="text-xs font-bold uppercase opacity-80">{date.month}</span>
                                     </div>
 
                                     <div className="flex-1">
                                         <div className="flex justify-between items-start">
-                                            <h3 className="text-lg font-bold mb-1 text-foreground flex items-center gap-2">
+                                            <h3 className="text-lg font-bold mb-1 text-foreground flex items-center gap-2 group-hover:text-primary transition-colors">
                                                 {session.title}
                                                 {isFull && !session.isRegistered && (
                                                     <span className="text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
@@ -222,16 +306,16 @@ END:VCALENDAR`;
                                                 )}
                                             </h3>
                                             {session.isRegistered && (
-                                                <div className="flex gap-3">
+                                                <div className="flex gap-2">
                                                     <button
                                                         onClick={addToCalendar}
-                                                        className="w-10 h-10 rounded-full bg-black text-[#E2F163] flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                                                        className="w-10 h-10 rounded-full bg-black text-[#E2F163] flex items-center justify-center shadow-md active:scale-95 transition-transform hover:shadow-lg"
                                                     >
                                                         <CalendarPlus className="w-5 h-5" />
                                                     </button>
                                                     <button
                                                         onClick={handleCancelClick}
-                                                        className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                                                        className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shadow-md active:scale-95 transition-transform hover:bg-red-200"
                                                     >
                                                         <X className="w-5 h-5" />
                                                     </button>
@@ -255,21 +339,24 @@ END:VCALENDAR`;
                                 <button
                                     onClick={() => !session.isRegistered && !isFull && handleBook(session.id)}
                                     disabled={bookingId === session.id || (isFull && !session.isRegistered) || session.isRegistered}
-                                    className={`w-full mt-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform
+                                    className={`w-full mt-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all
                                         ${session.isRegistered
                                             ? "bg-green-100 text-green-700 border border-green-200"
                                             : isFull
                                                 ? "bg-muted text-muted-foreground cursor-not-allowed"
-                                                : "bg-black text-white shadow-lg"
+                                                : "bg-black text-white shadow-lg hover:shadow-xl hover:bg-neutral-800 active:scale-[0.98]"
                                         }`}
                                 >
                                     {session.isRegistered
                                         ? <><Check className="w-4 h-4" /> נרשמת לאימון זה</>
                                         : bookingId === session.id
-                                            ? "מבצע רישום..."
+                                            ? <span className="flex items-center gap-2">
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                מבצע רישום...
+                                            </span>
                                             : isFull
                                                 ? "האימון מלא"
-                                                : "שרייני מקום"}
+                                                : "שרייני מקום →"}
                                 </button>
                             </div>
                         )
@@ -277,7 +364,7 @@ END:VCALENDAR`;
                 </div>
             )}
 
-            {/* Confirmation Modal - Keep minimal animation */}
+            {/* Confirmation Modal */}
             <AnimatePresence>
                 {sessionToCancel && (
                     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
@@ -286,19 +373,24 @@ END:VCALENDAR`;
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setSessionToCancel(null)}
-                            className="absolute inset-0 bg-black/60"
+                            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                         />
                         <motion.div
-                            initial={{ translateY: "100%" }}
-                            animate={{ translateY: "0%" }}
-                            exit={{ translateY: "100%" }}
-                            transition={{ type: "tween", duration: 0.2 }}
+                            initial={{ translateY: "100%", opacity: 0 }}
+                            animate={{ translateY: "0%", opacity: 1 }}
+                            exit={{ translateY: "100%", opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             className="relative w-full max-w-sm bg-card border border-border rounded-3xl p-6 shadow-2xl"
                         >
                             <div className="flex flex-col items-center text-center gap-4">
-                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-2">
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", delay: 0.1 }}
+                                    className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-2"
+                                >
                                     <AlertCircle className="w-8 h-8 text-red-600" />
-                                </div>
+                                </motion.div>
                                 <h3 className="text-2xl font-bold text-foreground">ביטול אימון?</h3>
                                 <p className="text-muted-foreground text-sm leading-relaxed">
                                     האם את בטוחה שברצונך לבטל את הרישום לאימון
@@ -308,13 +400,13 @@ END:VCALENDAR`;
                                 <div className="grid grid-cols-2 gap-3 w-full mt-4">
                                     <button
                                         onClick={() => setSessionToCancel(null)}
-                                        className="py-3 rounded-xl font-bold text-foreground bg-muted active:scale-95 transition-transform"
+                                        className="py-3 rounded-xl font-bold text-foreground bg-muted active:scale-95 transition-transform hover:bg-muted/80"
                                     >
                                         חזרה
                                     </button>
                                     <button
                                         onClick={confirmCancel}
-                                        className="py-3 rounded-xl font-bold text-white bg-red-600 shadow-lg active:scale-95 transition-transform"
+                                        className="py-3 rounded-xl font-bold text-white bg-red-600 shadow-lg active:scale-95 transition-transform hover:bg-red-700"
                                     >
                                         כן, לבטל
                                     </button>
@@ -324,6 +416,33 @@ END:VCALENDAR`;
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Shimmer styles */}
+            <style jsx>{`
+                .shimmer-skeleton {
+                    position: relative;
+                    overflow: hidden;
+                }
+                .shimmer-skeleton::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(
+                        90deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.05),
+                        transparent
+                    );
+                    animation: shimmer 1.5s infinite;
+                }
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                }
+            `}</style>
         </div>
     );
 }
