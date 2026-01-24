@@ -86,7 +86,7 @@ export default function BookingPage() {
             gsap.fromTo(cards,
                 {
                     opacity: 0,
-                    y: 20
+                    y: 10
                 },
                 {
                     opacity: 1,

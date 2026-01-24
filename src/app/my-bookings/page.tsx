@@ -63,10 +63,11 @@ export default function MyBookingsPage() {
         const ctx = gsap.context(() => {
             gsap.from(".booking-card", {
                 opacity: 0,
-                y: 20,
+                y: 10, // Subtle move (was 20)
                 duration: 0.4,
-                stagger: 0.1,
+                stagger: 0.05, // Faster stagger
                 ease: "power2.out",
+                clearProps: "opacity", // Clear opacity after to let CSS take over if needed
                 onComplete: () => setIsAnimated(true)
             });
         }, containerRef);
@@ -102,7 +103,7 @@ export default function MyBookingsPage() {
                         return (
                             <div
                                 key={booking.id}
-                                className="booking-card group bg-card/60 border border-white/10 rounded-[2rem] p-5 relative overflow-hidden transition-all hover:bg-card/80 hover:border-primary/30"
+                                className="booking-card opacity-0 group bg-card/60 border border-white/10 rounded-[2rem] p-5 relative overflow-hidden transition-all hover:bg-card/80 hover:border-primary/30"
                             >
                                 <div className="flex items-center gap-5">
                                     {/* Date Box */}
