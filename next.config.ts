@@ -57,18 +57,12 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Supabase API: StaleWhileRevalidate for fast offline access
+        // Supabase API: NEVER cache data - must always be fresh
+        // Tickets, sessions, bookings etc. must reflect current state
         urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/rest\/v1\/.*/i,
-        handler: "StaleWhileRevalidate",
+        handler: "NetworkOnly",
         options: {
-          cacheName: "supabase-api-cache",
-          expiration: {
-            maxEntries: 100,
-            maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-          },
-          cacheableResponse: {
-            statuses: [0, 200],
-          },
+          cacheName: "supabase-api-no-cache",
         },
       },
       {

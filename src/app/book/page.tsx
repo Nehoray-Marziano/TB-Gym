@@ -1,7 +1,7 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
 import { AnimatePresence, motion } from "framer-motion";
@@ -22,7 +22,6 @@ export default function BookingPage() {
 
     // GSAP Refs
     const containerRef = useRef<HTMLDivElement>(null);
-    const headerRef = useRef<HTMLElement>(null);
     const sessionsRef = useRef<HTMLDivElement>(null);
 
     const fetchSessions = async () => {
@@ -71,46 +70,44 @@ export default function BookingPage() {
         return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, []);
 
-    // GSAP Entrance Animations
-    useLayoutEffect(() => {
-        if (loading || isAnimated) return;
+    // GSAP Entrance Animations - runs once after initial data load
+    useEffect(() => {
+        if (loading || isAnimated || sessions.length === 0) return;
 
-        const ctx = gsap.context(() => {
-            // Set initial states
-            gsap.set(headerRef.current, { opacity: 0, y: -20 });
+        // Use RAF to ensure DOM is painted before animating
+        const rafId = requestAnimationFrame(() => {
+            const ctx = gsap.context(() => {
+                // Session cards stagger in (no scale to prevent layout thrashing)
+                if (sessionsRef.current) {
+                    const cards = sessionsRef.current.querySelectorAll('.session-card');
 
-            // Timeline
-            const tl = gsap.timeline({
-                defaults: { ease: "power3.out" },
-                onComplete: () => setIsAnimated(true)
-            });
+                    // Only animate if we have cards and haven't animated yet
+                    if (cards.length > 0) {
+                        gsap.fromTo(cards,
+                            {
+                                opacity: 0,
+                                y: 30,
+                                willChange: 'transform, opacity'
+                            },
+                            {
+                                opacity: 1,
+                                y: 0,
+                                duration: 0.4,
+                                stagger: 0.06,
+                                ease: "power2.out",
+                                clearProps: "willChange", // Clean up after animation
+                                onComplete: () => setIsAnimated(true)
+                            }
+                        );
+                    }
+                }
+            }, containerRef);
 
-            // Header slides in
-            tl.to(headerRef.current, {
-                opacity: 1,
-                y: 0,
-                duration: 0.5
-            });
+            return () => ctx.revert();
+        });
 
-            // Session cards stagger in
-            if (sessionsRef.current) {
-                const cards = sessionsRef.current.querySelectorAll('.session-card');
-                gsap.set(cards, { opacity: 0, y: 40, scale: 0.95 });
-
-                tl.to(cards, {
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                    duration: 0.5,
-                    stagger: 0.08,
-                    ease: "back.out(1.2)"
-                }, "-=0.2");
-            }
-
-        }, containerRef);
-
-        return () => ctx.revert();
-    }, [loading, isAnimated, sessions.length]);
+        return () => cancelAnimationFrame(rafId);
+    }, [loading, isAnimated]); // Removed sessions.length to prevent re-animation
 
     const handleBook = async (sessionId: string) => {
         setBookingId(sessionId);
@@ -171,7 +168,7 @@ export default function BookingPage() {
             <div className="fixed bottom-1/4 right-0 w-[200px] h-[200px] bg-primary/3 rounded-full blur-[80px] pointer-events-none" />
 
             {/* Header */}
-            <header ref={headerRef} className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-border/50">
+            <header className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-border/50">
                 <button
                     onClick={() => router.back()}
                     className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center active:scale-95 transition-all hover:border-primary/50 hover:bg-card/80"
