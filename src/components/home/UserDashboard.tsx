@@ -4,10 +4,11 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import { useGymStore } from "@/providers/GymStoreProvider";
-import { Calendar, Home, Plus, Activity, Ticket, Clock, Sparkles } from "lucide-react";
+import { Calendar, Home, Activity, User, CalendarDays, Ticket, Clock, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import StudioLogo from "@/components/StudioLogo";
 import gsap from "gsap";
+import BottomNav from "@/components/BottomNav";
 
 // Animated counter component for tickets
 function AnimatedCounter({ value, className }: { value: number; className?: string }) {
@@ -56,7 +57,7 @@ export default function UserDashboard({ user }: { user: any }) {
     const headerRef = useRef<HTMLElement>(null);
     const ticketsCardRef = useRef<HTMLDivElement>(null);
     const workoutSectionRef = useRef<HTMLDivElement>(null);
-    const navRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
         if (user?.id) {
@@ -116,7 +117,7 @@ export default function UserDashboard({ user }: { user: any }) {
                 opacity: 0,
                 y: 30
             });
-            gsap.set(navRef.current, { opacity: 0, y: 50 });
+
 
             // Create master timeline
             const tl = gsap.timeline({
@@ -159,14 +160,7 @@ export default function UserDashboard({ user }: { user: any }) {
                     opacity: 1,
                     y: 0,
                     duration: 0.5
-                }, "-=1")
-                // Bottom nav slides up
-                .to(navRef.current, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.6,
-                    ease: "back.out(1.4)"
-                }, "-=0.3");
+                }, "-=1");
 
         }, containerRef);
 
@@ -289,14 +283,6 @@ export default function UserDashboard({ user }: { user: any }) {
                                     </div>
                                 </Link>
                             )}
-
-                            <Link href="/profile" prefetch={true}>
-                                <div className="w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center overflow-hidden active:scale-95 transition-transform hover:border-primary/50">
-                                    <div className="w-full h-full flex items-center justify-center text-lg font-bold text-foreground">
-                                        {firstName[0]}
-                                    </div>
-                                </div>
-                            </Link>
                         </div>
                     </header>
 
@@ -352,7 +338,7 @@ export default function UserDashboard({ user }: { user: any }) {
                     <div ref={workoutSectionRef} className="mb-8">
                         <div className="flex justify-between items-end mb-4 px-1">
                             <h2 className="text-xl font-bold text-foreground">האימון הבא</h2>
-                            {upcomingSession && <Link href="/book" prefetch={true} className="text-primary text-xs font-bold hover:underline">לכל האימונים</Link>}
+                            {upcomingSession && <Link href="/my-bookings" prefetch={true} className="text-primary text-xs font-bold hover:underline">לאימונים שלי</Link>}
                         </div>
 
                         {loadingSession ? (
@@ -397,24 +383,8 @@ export default function UserDashboard({ user }: { user: any }) {
                 </div>
             </div>
 
-            {/* Floating Navigation - Animated */}
-            <div ref={navRef} className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
-                <div className="bg-card/95 backdrop-blur-xl border border-border rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20">
-                    <Link href="/" className="w-12 h-12 flex items-center justify-center rounded-full text-primary bg-primary/10 hover:bg-primary/20 transition-colors">
-                        <Home className="w-5 h-5" />
-                    </Link>
-
-                    <Link href="/book" prefetch={true}>
-                        <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/40 border-[4px] border-background active:scale-95 transition-transform hover:shadow-primary/60 hover:shadow-xl">
-                            <Plus className="w-8 h-8 text-black" />
-                        </div>
-                    </Link>
-
-                    <Link href="/book" className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
-                        <Calendar className="w-5 h-5" />
-                    </Link>
-                </div>
-            </div>
+            {/* Floating Navigation */}
+            <BottomNav />
 
             {/* CSS for wave animation */}
             <style jsx>{`
