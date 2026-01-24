@@ -122,11 +122,15 @@ export default function SubscriptionPage() {
                     duration: 0.6
                 }, "-=1")
                 // Draw underline (starts slightly before header finishes)
-                .to(".underline-path", {
-                    strokeDashoffset: 0,
-                    duration: 0.8,
-                    ease: "power2.out"
-                }, "-=0.3")
+                .fromTo(".underline-path",
+                    { strokeDashoffset: 200 },
+                    {
+                        strokeDashoffset: 0,
+                        duration: 0.8,
+                        ease: "power2.out"
+                    },
+                    "-=0.3"
+                )
                 // Cards stagger in with spring
                 .to(".tier-card", {
                     opacity: 1,
