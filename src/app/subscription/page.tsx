@@ -121,6 +121,12 @@ export default function SubscriptionPage() {
                     y: 0,
                     duration: 0.6
                 }, "-=1")
+                // Draw underline (starts slightly before header finishes)
+                .to(".underline-path", {
+                    strokeDashoffset: 0,
+                    duration: 0.8,
+                    ease: "power2.out"
+                }, "-=0.3")
                 // Cards stagger in with spring
                 .to(".tier-card", {
                     opacity: 1,
@@ -231,15 +237,14 @@ export default function SubscriptionPage() {
                                         <stop offset="100%" stopColor="#ec4899" /> {/* Pink */}
                                     </linearGradient>
                                 </defs>
-                                <motion.path
-                                    d="M4 12 Q 50 22 96 12"
+                                <path
+                                    className="underline-path"
+                                    d="M4 14 C 20 24, 60 4, 96 14" // Hand-drawn S-curve
                                     fill="none"
                                     stroke="url(#underline-gradient)"
                                     strokeWidth="5"
                                     strokeLinecap="round"
-                                    initial={{ pathLength: 0, opacity: 0 }}
-                                    animate={isAnimated ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
-                                    transition={{ duration: 0.8, ease: "easeInOut", delay: 0.2 }}
+                                    style={{ strokeDasharray: 200, strokeDashoffset: 200 }} // Initial state hidden
                                 />
                             </svg>
                         </div>
