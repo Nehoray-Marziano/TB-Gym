@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2, ShieldCheck, Unlock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
@@ -268,14 +268,14 @@ export default function SubscriptionPage() {
                         >
                             <div
                                 className={cn(
-                                    "relative rounded-[2rem] p-[1px] transition-all duration-300",
-                                    isPopular && "ring-2 ring-[#E2F163]/50",
-                                    isSelected && "ring-2 ring-white/30"
+                                    "relative rounded-[2rem] p-[2px] transition-all duration-300 group",
+                                    isPopular ? "bg-gradient-to-b from-[#E2F163] via-[#E2F163]/20 to-transparent" : "bg-gradient-to-b from-white/20 via-white/5 to-transparent",
+                                    isSelected && !isPopular && "bg-gradient-to-b from-white via-white/20 to-transparent shadow-2xl"
                                 )}
                                 style={{
-                                    background: isSelected
-                                        ? `linear-gradient(135deg, ${tier.color}40, transparent)`
-                                        : 'linear-gradient(135deg, rgba(255,255,255,0.1), transparent)'
+                                    boxShadow: isSelected || isPopular
+                                        ? `0 0 40px -10px ${tier.color}50, 0 0 20px -5px ${tier.color}30`
+                                        : '0 20px 40px -20px rgba(0,0,0,0.7)'
                                 }}
                             >
                                 {/* Popular badge */}
@@ -292,7 +292,7 @@ export default function SubscriptionPage() {
                                 <div className={cn(
                                     "relative rounded-[1.9rem] bg-gradient-to-br overflow-hidden",
                                     tier.gradient,
-                                    "backdrop-blur-xl bg-black/40"
+                                    "backdrop-blur-xl bg-zinc-950/80"
                                 )}>
                                     {/* Shine effect on hover/select */}
                                     <div
@@ -314,7 +314,6 @@ export default function SubscriptionPage() {
                                                 </div>
                                                 <div>
                                                     <h3 className="text-xl font-black text-white">{tier.displayName}</h3>
-                                                    <p className="text-xs text-white/40 font-bold tracking-wider">{tier.englishName}</p>
                                                 </div>
                                             </div>
 
@@ -387,14 +386,14 @@ export default function SubscriptionPage() {
                     );
                 })}
 
-                {/* Trust badges */}
-                <div className="pt-8 flex items-center justify-center gap-6 text-white/30 text-xs">
+
+                <div className="pt-8 flex items-center justify-center gap-6 text-white/40 text-xs font-medium">
                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        <ShieldCheck className="w-4 h-4 text-green-400" />
                         <span>תשלום מאובטח</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-[#E2F163]" />
+                        <Unlock className="w-4 h-4 text-[#E2F163]" />
                         <span>ביטול בכל עת</span>
                     </div>
                 </div>
