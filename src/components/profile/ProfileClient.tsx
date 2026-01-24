@@ -175,7 +175,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             <div className="fixed bottom-1/3 left-0 w-[200px] h-[200px] bg-primary/3 rounded-full blur-[60px] pointer-events-none" />
 
             {/* Header */}
-            <header ref={headerRef} className="flex items-center justify-between mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-border/50">
+            <header ref={headerRef} className="opacity-0 flex items-center justify-between mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-border/50">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => router.back()}
@@ -231,7 +231,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             </header>
 
             {/* Avatar & Hero */}
-            <div ref={avatarRef} className="flex flex-col items-center mb-10 relative">
+            <div ref={avatarRef} className="opacity-0 flex flex-col items-center mb-10 relative">
                 <div className="absolute top-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none animate-pulse" />
 
                 <div className="group w-28 h-28 bg-gradient-to-br from-card to-muted/20 rounded-[2rem] border-2 border-primary shadow-[0_0_30px_rgba(226,241,99,0.2)] flex items-center justify-center text-4xl font-bold mb-4 z-10 relative overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(226,241,99,0.3)] hover:scale-105">
@@ -260,7 +260,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
             {/* Stats Card */}
             {!isEditing && (
-                <div ref={statsCardRef} className="group bg-gradient-to-br from-[#E2F163] via-[#d9e85a] to-[#c8d64a] rounded-[2rem] p-6 text-black shadow-lg shadow-primary/20 mb-8 relative overflow-hidden transition-all hover:shadow-primary/30 hover:scale-[1.01]">
+                <div ref={statsCardRef} className="opacity-0 group bg-gradient-to-br from-[#E2F163] via-[#d9e85a] to-[#c8d64a] rounded-[2rem] p-6 text-black shadow-lg shadow-primary/20 mb-8 relative overflow-hidden transition-all hover:shadow-primary/30 hover:scale-[1.01]">
                     {/* Shine effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
 
@@ -281,7 +281,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 <h3 className="text-muted-foreground font-bold mb-2 px-1">פרטים אישיים</h3>
 
                 {/* Phone */}
-                <div className="detail-card bg-card/50 border border-border rounded-3xl p-1 overflow-hidden hover:border-primary/30 transition-all">
+                <div className="opacity-0 detail-card bg-card/50 border border-border rounded-3xl p-1 overflow-hidden hover:border-primary/30 transition-all">
                     <div className="flex items-center gap-4 p-4 border-b border-border last:border-0">
                         <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center shrink-0">
                             <Phone className="w-5 h-5 text-muted-foreground" />
@@ -363,7 +363,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             <div ref={settingsRef} className="space-y-3">
                 <button
                     onClick={toggleTheme}
-                    className="settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]"
+                    className="opacity-0 settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]"
                 >
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
@@ -380,7 +380,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     </div>
                 </button>
 
-                <button className="settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-border/80 transition-all active:scale-[0.98]">
+                <button className="opacity-0 settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-border/80 transition-all active:scale-[0.98]">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:bg-muted/30 transition-all">
                             {Bell && <Bell className="w-5 h-5" />}
@@ -392,7 +392,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
                 <button
                     onClick={handleLogout}
-                    className="settings-item w-full bg-red-500/10 border border-red-500/20 p-5 rounded-3xl flex items-center justify-center gap-2 text-red-500 font-bold hover:bg-red-500/20 transition-all mt-8 active:scale-[0.98]"
+                    className="opacity-0 settings-item w-full bg-red-500/10 border border-red-500/20 p-5 rounded-3xl flex items-center justify-center gap-2 text-red-500 font-bold hover:bg-red-500/20 transition-all mt-8 active:scale-[0.98]"
                 >
                     <LogOut className="w-5 h-5" />
                     התנתקי מהמערכת
