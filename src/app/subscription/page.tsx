@@ -218,9 +218,31 @@ export default function SubscriptionPage() {
                             בחרי את המסלול
                         </span>
                         <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E2F163] via-[#d4e450] to-[#E2F163]">
-                            שמתאים לך
-                        </span>
+                        <div className="relative inline-block">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E2F163] via-[#d4e450] to-[#E2F163] relative z-10">
+                                שמתאים לך
+                            </span>
+                            {/* Hand-drawn Underline Animation */}
+                            <svg className="absolute -bottom-3 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="underline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stopColor="#E2F163" />
+                                        <stop offset="50%" stopColor="#22d3ee" /> {/* Cyan */}
+                                        <stop offset="100%" stopColor="#ec4899" /> {/* Pink */}
+                                    </linearGradient>
+                                </defs>
+                                <motion.path
+                                    d="M4 12 Q 50 22 96 12"
+                                    fill="none"
+                                    stroke="url(#underline-gradient)"
+                                    strokeWidth="5"
+                                    strokeLinecap="round"
+                                    initial={{ pathLength: 0, opacity: 0 }}
+                                    animate={isAnimated ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+                                    transition={{ duration: 0.8, ease: "easeInOut", delay: 0.2 }}
+                                />
+                            </svg>
+                        </div>
                     </h1>
 
                     <p className="text-white/50 text-sm max-w-xs mx-auto">
