@@ -351,24 +351,22 @@ export default function UserDashboard({ user }: { user: any }) {
                                 </div>
                             </div>
                         ) : upcomingSession ? (
-                            <Link href="/book" prefetch={true}>
-                                <div className="group bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 active:scale-[0.98] transition-all duration-300 hover:border-primary/30 hover:bg-card/70">
-                                    <div className="bg-gradient-to-br from-primary/20 to-primary/10 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4 group-hover:from-primary/30 group-hover:to-primary/20 transition-all">
-                                        <span className="text-primary font-bold text-xl leading-none">
-                                            {new Date(upcomingSession.start_time).getDate()}
-                                        </span>
-                                        <span className="text-muted-foreground text-xs font-medium uppercase mt-1">
-                                            {new Date(upcomingSession.start_time).toLocaleDateString('he-IL', { month: 'short' })}
-                                        </span>
-                                    </div>
-                                    <div className="py-4">
-                                        <h3 className="font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{upcomingSession.title}</h3>
-                                        <p className="text-muted-foreground text-sm">
-                                            {new Date(upcomingSession.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} • {getRelativeTimeHebrew(upcomingSession.start_time)}
-                                        </p>
-                                    </div>
+                            <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2">
+                                <div className="bg-gradient-to-br from-primary/20 to-primary/10 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4">
+                                    <span className="text-primary font-bold text-xl leading-none">
+                                        {new Date(upcomingSession.start_time).getDate()}
+                                    </span>
+                                    <span className="text-muted-foreground text-xs font-medium uppercase mt-1">
+                                        {new Date(upcomingSession.start_time).toLocaleDateString('he-IL', { month: 'short' })}
+                                    </span>
                                 </div>
-                            </Link>
+                                <div className="py-4">
+                                    <h3 className="font-bold text-lg text-foreground mb-1">{upcomingSession.title}</h3>
+                                    <p className="text-muted-foreground text-sm">
+                                        {new Date(upcomingSession.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} • {getRelativeTimeHebrew(upcomingSession.start_time)}
+                                    </p>
+                                </div>
+                            </div>
                         ) : (
                             <Link href="/book" className="block">
                                 <div className="group bg-card/30 border border-dashed border-border rounded-[2rem] p-8 text-center active:scale-[0.98] transition-all duration-300 hover:border-primary/50 hover:bg-card/40">
