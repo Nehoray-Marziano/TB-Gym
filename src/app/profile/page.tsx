@@ -36,19 +36,6 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Load cached data immediately
-        const cachedProfile = localStorage.getItem(CACHE_KEYS.profile);
-        const cachedHealth = localStorage.getItem(CACHE_KEYS.health);
-
-        if (cachedProfile) {
-            setProfile(JSON.parse(cachedProfile));
-            setLoading(false); // Show cached data immediately
-        }
-        if (cachedHealth) {
-            setHealth(JSON.parse(cachedHealth));
-        }
-
-        // Always fetch fresh data from network (no caching to ensure consistency)
         const fetchData = async () => {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -60,7 +47,7 @@ export default function ProfilePage() {
 
                 console.log("[Profile] Fetching fresh data from network");
 
-                // Fetch all data in parallel - use get_available_tickets RPC for consistent ticket count
+                // Fetch all data in parallel
                 const [profileRes, ticketRes, healthRes] = await Promise.all([
                     supabase.from("profiles").select("*").eq("id", user.id).single(),
                     supabase.rpc("get_available_tickets", { p_user_id: user.id }),
@@ -68,30 +55,24 @@ export default function ProfilePage() {
                 ]);
 
                 const profileData = profileRes.data;
-                const ticketCount = ticketRes.data; // Returns integer directly
+                const ticketCount = ticketRes.data;
                 const healthData = healthRes.data;
 
-                // Construct and set profile
                 if (profileData) {
-                    const finalProfile: UserProfile = {
+                    setProfile({
                         id: profileData.id,
                         full_name: profileData.full_name,
                         email: user.email || "",
                         phone: profileData.phone,
-                        balance: ticketCount ?? 0, // Use ticket count from RPC
+                        balance: ticketCount ?? 0,
                         role: profileData.role,
-                    };
-                    setProfile(finalProfile);
-                    localStorage.setItem(CACHE_KEYS.profile, JSON.stringify(finalProfile));
+                    });
+                } else if (ticketCount !== null) {
+                    // Fallback if profile fetch fails but we have tickets (shouldn't happen often)
+                    console.warn("Profile fetch failed but tickets loaded");
                 }
 
-                // Set health data
-                const finalHealth = healthData || { is_healthy: true, medical_conditions: "" };
-                setHealth(finalHealth);
-                localStorage.setItem(CACHE_KEYS.health, JSON.stringify(finalHealth));
-
-                // Update timestamp
-                localStorage.setItem(CACHE_KEYS.timestamp, Date.now().toString());
+                setHealth(healthData || { is_healthy: true, medical_conditions: "" });
 
             } catch (error) {
                 console.error("Error fetching profile data:", error);

@@ -74,40 +74,32 @@ export default function BookingPage() {
     useEffect(() => {
         if (loading || isAnimated || sessions.length === 0) return;
 
-        // Use RAF to ensure DOM is painted before animating
-        const rafId = requestAnimationFrame(() => {
-            const ctx = gsap.context(() => {
-                // Session cards stagger in (no scale to prevent layout thrashing)
-                if (sessionsRef.current) {
-                    const cards = sessionsRef.current.querySelectorAll('.session-card');
+        // Small delay to ensure DOM is fully painted and stable
+        const timeoutId = setTimeout(() => {
+            if (!sessionsRef.current) return;
 
-                    // Only animate if we have cards and haven't animated yet
-                    if (cards.length > 0) {
-                        gsap.fromTo(cards,
-                            {
-                                opacity: 0,
-                                y: 30,
-                                willChange: 'transform, opacity'
-                            },
-                            {
-                                opacity: 1,
-                                y: 0,
-                                duration: 0.4,
-                                stagger: 0.06,
-                                ease: "power2.out",
-                                clearProps: "willChange", // Clean up after animation
-                                onComplete: () => setIsAnimated(true)
-                            }
-                        );
-                    }
+            const cards = sessionsRef.current.querySelectorAll('.session-card');
+            if (cards.length === 0) return;
+
+            // Animate cards in with stagger
+            gsap.fromTo(cards,
+                {
+                    opacity: 0,
+                    y: 20
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.35,
+                    stagger: 0.05,
+                    ease: "power2.out",
+                    onComplete: () => setIsAnimated(true)
                 }
-            }, containerRef);
+            );
+        }, 100); // 100ms delay for DOM stability
 
-            return () => ctx.revert();
-        });
-
-        return () => cancelAnimationFrame(rafId);
-    }, [loading, isAnimated]); // Removed sessions.length to prevent re-animation
+        return () => clearTimeout(timeoutId);
+    }, [loading, isAnimated, sessions.length]);
 
     const handleBook = async (sessionId: string) => {
         setBookingId(sessionId);
@@ -265,6 +257,7 @@ END:VCALENDAR`;
                         return (
                             <div
                                 key={session.id}
+                                style={{ opacity: isAnimated ? 1 : 0 }}
                                 className={`session-card group relative p-5 rounded-[2rem] border transition-all duration-300
                                     ${session.isRegistered
                                         ? "bg-primary/5 border-primary/30 hover:border-primary/50"

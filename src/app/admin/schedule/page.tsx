@@ -279,7 +279,7 @@ export default function AdminSchedulePage() {
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">ניהול מערכת שעות</h1>
-                    <p className="text-neutral-400 font-medium">צרי ועכני אימונים לקהילה שלך</p>
+                    <p className="text-neutral-400 font-medium">צרי ועדכני אימונים לקהילה שלך</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}

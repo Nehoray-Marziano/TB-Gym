@@ -39,32 +39,14 @@ const GymStoreContext = createContext<GymStoreContextType>({
 export const useGymStore = () => useContext(GymStoreContext);
 
 // NOTE: We do NOT cache data freshness anymore - data must always be fresh
-// LocalStorage is ONLY used for instant initial render (optimistic UI)
-
-// Helper to check if we have cached data
-function hasCachedData(): boolean {
-    if (typeof window === 'undefined') return false;
-    return !!(localStorage.getItem("talia_profile") && localStorage.getItem("talia_tickets"));
-}
+// LocalStorage is ONLY used for instant initial render (optimistic UI) - DEPRECATED: Now we don't use it at all.
 
 export function GymStoreProvider({ children }: { children: React.ReactNode }) {
-    // Start as NOT loading if we have cached data - show UI immediately!
-    const [loading, setLoading] = useState(() => !hasCachedData());
-    const [profile, setProfile] = useState<Profile | null>(() => {
-        if (typeof window === 'undefined') return null;
-        const cached = localStorage.getItem("talia_profile");
-        return cached ? JSON.parse(cached) : null;
-    });
-    const [tickets, setTickets] = useState<number>(() => {
-        if (typeof window === 'undefined') return 0;
-        const cached = localStorage.getItem("talia_tickets");
-        return cached ? parseInt(cached) : 0;
-    });
-    const [subscription, setSubscription] = useState<Subscription | null>(() => {
-        if (typeof window === 'undefined') return null;
-        const cached = localStorage.getItem("talia_subscription");
-        return cached ? JSON.parse(cached) : null;
-    });
+    // Start as loading - no caching
+    const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [tickets, setTickets] = useState<number>(0);
+    const [subscription, setSubscription] = useState<Subscription | null>(null);
     const fetchedRef = useRef(false);
 
     // Lazy-initialize supabase client only when needed (client-side only)
@@ -132,24 +114,18 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
             // 1. Set Profile
             if (profileRes.data) {
                 setProfile(profileRes.data);
-                localStorage.setItem("talia_profile", JSON.stringify(profileRes.data));
             }
 
             // 2. Set Tickets (new system)
             if (ticketRes.data !== null) {
                 setTickets(ticketRes.data);
-                localStorage.setItem("talia_tickets", ticketRes.data.toString());
             }
 
             // 3. Set Subscription
             if (subRes.data) {
                 const subData = subRes.data.is_active ? subRes.data : null;
                 setSubscription(subData);
-                localStorage.setItem("talia_subscription", JSON.stringify(subData));
             }
-
-            // Save cache timestamp
-            localStorage.setItem("talia_cache_timestamp", Date.now().toString());
 
         } catch (error) {
             console.error("Error refreshing gym data:", error);
