@@ -38,7 +38,8 @@ export default function MyBookingsPage() {
                     session:gym_sessions(*)
                 `)
                 .eq("user_id", user.id)
-                .eq("status", "confirmed")
+
+                .in("status", ["confirmed", "pending"]) // Include pending bookings too
                 .order("created_at", { ascending: false });
 
             if (myBookings) {
@@ -132,7 +133,7 @@ export default function MyBookingsPage() {
                     })}
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center text-center mt-20 opacity-60">
+                <div className="flex flex-col items-center justify-center text-center mt-10">
                     <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4">
                         <Calendar className="w-8 h-8 opacity-50" />
                     </div>
