@@ -19,8 +19,8 @@ const withPWA = withPWAInit({
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
-    // Skip waiting to activate new service worker immediately
-    skipWaiting: true,
+    // prompt user to update
+    skipWaiting: false,
     clientsClaim: true,
     runtimeCaching: [
       {

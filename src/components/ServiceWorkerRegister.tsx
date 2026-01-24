@@ -7,13 +7,25 @@ export default function ServiceWorkerRegister() {
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
-    const handleUpdate = useCallback(() => {
-        if (registration?.waiting) {
-            // Tell the waiting service worker to skip waiting and activate
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    const handleUpdate = useCallback(async () => {
+        // 1. Clear all caches to ensure fresh content
+        if ("caches" in window) {
+            try {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(key => caches.delete(key)));
+                console.log("[SW] Caches cleared for update");
+            } catch (err) {
+                console.error("[SW] Failed to clear caches:", err);
+            }
         }
-        // Reload the page to get the new version
-        window.location.reload();
+
+        // 2. Tell waiting SW to take over
+        if (registration?.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+            // Fallback if no waiting worker (unlikely if updateAvailable is true)
+            window.location.reload();
+        }
     }, [registration]);
 
     useEffect(() => {
