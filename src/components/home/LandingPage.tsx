@@ -232,7 +232,7 @@ export default function LandingPage() {
                                     <p className="text-neutral-500 text-xs">בחרי דרך להתחיל</p>
                                 </div>
 
-                                <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                                <div className="flex flex-col gap-3 w-full md:w-auto">
                                     <button
                                         id="google-signin-button"
                                         onClick={handleGoogleLogin}
@@ -246,6 +246,44 @@ export default function LandingPage() {
                                             </>
                                         )}
                                     </button>
+
+                                    {/* Divider */}
+                                    <div className="flex items-center gap-2 px-2 opacity-50">
+                                        <div className="h-px bg-white/20 flex-1" />
+                                        <span className="text-[10px] uppercase font-bold tracking-widest">או</span>
+                                        <div className="h-px bg-white/20 flex-1" />
+                                    </div>
+
+                                    {/* Magic Link */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => {
+                                                const email = prompt("הזיני את כתובת האימייל שלך:");
+                                                if (email) {
+                                                    setIsLoading(true);
+                                                    supabase.auth.signInWithOtp({
+                                                        email,
+                                                        options: {
+                                                            emailRedirectTo: `${window.location.origin}/auth/callback`,
+                                                            shouldCreateUser: true
+                                                        }
+                                                    }).then(({ error }) => {
+                                                        setIsLoading(false);
+                                                        if (error) {
+                                                            alert("שגיאה בשליחת המייל: " + error.message);
+                                                        } else {
+                                                            alert("לינק התחברות נשלח למייל שלך! בדקי את תיבת הדואר.");
+                                                        }
+                                                    });
+                                                }
+                                            }}
+                                            disabled={isLoading}
+                                            className="flex items-center gap-3 bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all disabled:opacity-70"
+                                        >
+                                            <svg className="w-5 h-5 text-[#E2F163]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                                            התחברות במייל
+                                        </button>
+                                    </div>
                                 </div>
                             </motion.div>
                         )}

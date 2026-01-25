@@ -14,14 +14,14 @@ export default function BottomNav() {
                 {/* Home */}
                 {/* Home */}
                 <Link
-                    href="/"
-                    className={`relative flex flex-col items-center gap-1 ${pathname === "/" ? "text-primary pointer-events-none" : "text-muted-foreground hover:text-primary transition-colors"}`}
-                    aria-disabled={pathname === "/"}
+                    href="/dashboard"
+                    className={`relative flex flex-col items-center gap-1 ${(pathname === "/" || pathname === "/dashboard") ? "text-primary pointer-events-none" : "text-muted-foreground hover:text-primary transition-colors"}`}
+                    aria-disabled={pathname === "/" || pathname === "/dashboard"}
                 >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${pathname === "/" ? "bg-primary/10" : "hover:bg-primary/5"}`}>
-                        <Home className={`w-5 h-5 ${pathname === "/" ? "fill-current/20" : ""}`} />
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${(pathname === "/" || pathname === "/dashboard") ? "bg-primary/10" : "hover:bg-primary/5"}`}>
+                        <Home className={`w-5 h-5 ${(pathname === "/" || pathname === "/dashboard") ? "fill-current/20" : ""}`} />
                     </div>
-                    {pathname === "/" && (
+                    {(pathname === "/" || pathname === "/dashboard") && (
                         <motion.div
                             layoutId="nav-indicator"
                             className="absolute -bottom-2 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(226,241,99,0.8)]"
