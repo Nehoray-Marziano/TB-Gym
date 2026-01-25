@@ -88,6 +88,7 @@ export default function AdminSchedulePage() {
     // @ts-ignore
     const [selectedTrainees, setSelectedTrainees] = useState<Trainee[]>([]);
     const [showTraineeSelector, setShowTraineeSelector] = useState(false);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
     const fetchSessions = async () => {
         const { data, error } = await supabase
@@ -540,7 +541,7 @@ export default function AdminSchedulePage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">תאריך</label>
-                                        <Popover>
+                                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                             <PopoverTrigger asChild>
                                                 <Button variant={"outline"} className="w-full h-14 rounded-2xl bg-neutral-900 border-neutral-800 text-white hover:bg-neutral-800 hover:text-white justify-between px-4 text-base font-medium">
                                                     {newSession.date ? format(newSession.date, "dd/MM/yyyy") : <span className="text-neutral-500">בחרי תאריך</span>}
@@ -551,7 +552,12 @@ export default function AdminSchedulePage() {
                                                 <Calendar
                                                     mode="single"
                                                     selected={newSession.date}
-                                                    onSelect={(d) => d && setNewSession({ ...newSession, date: d })}
+                                                    onSelect={(d) => {
+                                                        if (d) {
+                                                            setNewSession({ ...newSession, date: d });
+                                                            setIsCalendarOpen(false);
+                                                        }
+                                                    }}
                                                     initialFocus
                                                     className="rounded-xl border border-neutral-800"
                                                 />
