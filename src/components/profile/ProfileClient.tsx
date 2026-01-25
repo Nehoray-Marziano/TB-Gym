@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
 import gsap from "gsap";
+import OneSignalProvider from "@/providers/OneSignalProvider";
 
 type UserProfile = {
     id: string;
@@ -170,6 +171,13 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
     return (
         <div ref={containerRef} className="min-h-[100dvh] bg-background text-foreground p-6 pb-20 font-sans selection:bg-primary selection:text-black">
+            {/* OneSignal Initialization */}
+            <OneSignalProvider
+                userId={profile?.id}
+                userRole={profile?.role}
+                userEmail={profile?.email}
+            />
+
             {/* Ambient background */}
             <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
             <div className="fixed bottom-1/3 left-0 w-[200px] h-[200px] bg-primary/3 rounded-full blur-[60px] pointer-events-none" />
