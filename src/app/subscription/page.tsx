@@ -364,16 +364,11 @@ export default function SubscriptionPage() {
                 </div>
 
                 {/* TRUST BADGES */}
-                <div className="entrance-item mt-16 px-6 grid grid-cols-2 gap-4 opacity-60">
-                    <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+                <div className="entrance-item mt-16 px-6 flex justify-center opacity-60">
+                    <div className="flex flex-col items-center gap-2 p-4 text-center">
                         <LockIcon className="w-6 h-6 text-emerald-400 mb-1" />
                         <span className="text-xs font-bold text-white/90">תשלום מאובטח</span>
                         <span className="text-[10px] text-white/40">SSL Encrypted</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
-                        <CalendarX className="w-6 h-6 text-white mb-1" />
-                        <span className="text-xs font-bold text-white/90">ביטול גמיש</span>
-                        <span className="text-[10px] text-white/40">עד 10 שעות לפני</span>
                     </div>
                 </div>
 
