@@ -320,7 +320,7 @@ export default function AdminSchedulePage() {
                         onClick={async () => {
                             if (confirm("לשלוח התראה לכל המתאמנות שהלוז מוכן?")) {
                                 try {
-                                    await fetch("/api/notifications", {
+                                    const res = await fetch("/api/notifications", {
                                         method: "POST",
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({
@@ -329,7 +329,8 @@ export default function AdminSchedulePage() {
                                             targetRole: "trainee"
                                         })
                                     });
-                                    alert("ההודעה נשלחה בהצלחה!");
+                                    const data = await res.json();
+                                    alert(`ההודעה נשלחה בהצלחה! (נמענים: ${data.recipients || 0})`);
                                 } catch (e) {
                                     alert("שגיאה בשליחה");
                                 }

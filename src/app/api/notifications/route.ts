@@ -67,7 +67,12 @@ export async function POST(request: NextRequest) {
         }
 
         console.log("Notification sent:", result);
-        return NextResponse.json({ success: true, id: result.id });
+        // Result typically contains { id: '...', recipients: N }
+        return NextResponse.json({
+            success: true,
+            id: result.id,
+            recipients: result.recipients || 0
+        });
 
     } catch (error: any) {
         console.error("Notification API error:", error);
