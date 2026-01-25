@@ -194,12 +194,10 @@ export default function AdminSchedulePage() {
                 .eq("status", "confirmed");
 
             if (bookings && bookings.length > 0) {
-                for (const booking of bookings) {
-                    const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", booking.user_id).single();
-                    if (credit) {
-                        await supabase.from("user_credits").update({ balance: credit.balance + 1 }).eq("user_id", booking.user_id);
-                    }
-                }
+                // Refund tickets for all confirmed bookings in this session
+                await supabase.from("user_tickets")
+                    .update({ used_at: null, used_for_session: null })
+                    .eq("used_for_session", deleteConfirmation.session.id);
             }
 
             // 2. Notify Users (if any)
@@ -271,10 +269,11 @@ export default function AdminSchedulePage() {
     const handleCancelBooking = async (booking: Booking & { user_id: string }) => {
         if (!confirm("האם לבטל את ההרשמה ולזכות את המנויה?")) return;
         try {
-            const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", booking.user_id).single();
-            if (credit) {
-                await supabase.from("user_credits").update({ balance: credit.balance + 1 }).eq("user_id", booking.user_id);
-            }
+            // Refund Ticket
+            await supabase.from("user_tickets")
+                .update({ used_at: null, used_for_session: null })
+                .eq("user_id", booking.user_id)
+                .eq("used_for_session", viewBookingsSession?.id);
             const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
             if (error) throw error;
 
