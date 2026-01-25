@@ -350,7 +350,7 @@ export default function LandingPage() {
                                             value={otpCode}
                                             onChange={(e) => setOtpCode(e.target.value)}
                                             className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-4 text-white text-center text-2xl tracking-[0.5em] placeholder:text-white/10 focus:outline-none focus:border-[#E2F163] transition-colors"
-                                            maxLength={6}
+                                            maxLength={10}
                                             autoFocus
                                         />
                                         <button

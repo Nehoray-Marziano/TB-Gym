@@ -21,12 +21,6 @@ export default function BottomNav() {
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${(pathname === "/" || pathname === "/dashboard") ? "bg-primary/10" : "hover:bg-primary/5"}`}>
                         <Home className={`w-5 h-5 ${(pathname === "/" || pathname === "/dashboard") ? "fill-current/20" : ""}`} />
                     </div>
-                    {(pathname === "/" || pathname === "/dashboard") && (
-                        <motion.div
-                            layoutId="nav-indicator"
-                            className="absolute -bottom-2 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(226,241,99,0.8)]"
-                        />
-                    )}
                 </Link>
 
                 {/* All Sessions (Center) */}
