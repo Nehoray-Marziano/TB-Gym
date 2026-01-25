@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import gsap from "gsap";
 
 // --- SUBSCRIPTION TIERS ---
@@ -100,9 +100,9 @@ export default function SubscriptionPage() {
             tl.to(".entrance-item", {
                 opacity: 1,
                 y: 0,
-                duration: 1.2,
-                stagger: 0.15,
-                delay: 0.2
+                duration: 0.8,
+                stagger: 0.1,
+                delay: 0.1
             });
         }, containerRef);
         return () => ctx.revert();
@@ -143,40 +143,24 @@ export default function SubscriptionPage() {
     };
 
     return (
-        <div ref={containerRef} className="min-h-screen text-white overflow-x-hidden relative transition-colors duration-1000 ease-in-out" dir="rtl">
+        <div ref={containerRef} className="min-h-screen text-white overflow-x-hidden relative" dir="rtl">
 
-            {/* --- REACTIVE BACKGROUND --- */}
+            {/* --- OPTIMIZED REACTIVE BACKGROUND (Opacity Layers) --- */}
             <div className="fixed inset-0 z-0">
-                {/* Dynamic Base Gradient */}
-                <motion.div
-                    className="absolute inset-0 transition-all duration-1000 ease-in-out"
-                    style={{ background: activeTier.bgGradient }}
-                    animate={{
-                        background: activeTier.bgGradient
-                    }}
-                />
+                {TIERS.map((tier) => (
+                    <motion.div
+                        key={tier.id}
+                        className="absolute inset-0 transition-opacity duration-700 ease-in-out will-change-[opacity]"
+                        style={{
+                            background: tier.bgGradient,
+                            opacity: selectedTierId === tier.id ? 1 : 0
+                        }}
+                        initial={false}
+                    />
+                ))}
 
-                {/* Active Colored Orb (moves based on scroll/focus conceptually, here just ambient) */}
-                <motion.div
-                    key={activeTier.id}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 0.6, scale: 1 }}
-                    transition={{ duration: 1.5, ease: "easeInOut" }}
-                    className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] rounded-full blur-[120px] mix-blend-screen"
-                    style={{ backgroundColor: activeTier.color }}
-                />
-                <motion.div
-                    animate={{
-                        x: [0, 50, 0],
-                        y: [0, 30, 0],
-                        opacity: [0.3, 0.5, 0.3]
-                    }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full blur-[100px] mix-blend-overlay opacity-30 bg-white"
-                />
-
-                {/* Noise Overlay */}
-                <div className="absolute inset-0 opacity-[0.07] bg-[url('/noise.svg')] mix-blend-overlay pointer-events-none" />
+                {/* Noise Overlay (Lighter) */}
+                <div className="absolute inset-0 opacity-[0.05] bg-[url('/noise.svg')] mix-blend-overlay pointer-events-none" />
                 <div className="absolute inset-0 bg-black/20 pointer-events-none" />
             </div>
 
@@ -210,7 +194,7 @@ export default function SubscriptionPage() {
                                 >
                                     שמתאים לך
                                 </span>
-                                {/* Hand-drawn Underline (Preserved) */}
+                                {/* Hand-drawn Underline */}
                                 <svg className="absolute -bottom-4 left-0 w-full h-[24px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
                                     <defs>
                                         <linearGradient id="underline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -238,135 +222,141 @@ export default function SubscriptionPage() {
                 </div>
 
                 {/* TIERS STACK */}
-                <div className="px-5 space-y-6">
-                    {TIERS.map((tier) => {
-                        const isSelected = selectedTierId === tier.id;
-                        const isPurchasing = purchasing === tier.id;
-                        const Icon = tier.icon;
+                <LayoutGroup>
+                    <div className="px-5 space-y-6">
+                        {TIERS.map((tier) => {
+                            const isSelected = selectedTierId === tier.id;
+                            const isPurchasing = purchasing === tier.id;
+                            const Icon = tier.icon;
 
-                        return (
-                            <motion.div
-                                key={tier.id}
-                                className="entrance-item relative"
-                                onClick={() => setSelectedTierId(tier.id)}
-                                initial={false}
-                                animate={{
-                                    scale: isSelected ? 1 : 0.96,
-                                    opacity: isSelected ? 1 : 0.7,
-                                }}
-                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                            >
-                                {/* Active Glow Behind Card */}
-                                {isSelected && (
+                            return (
+                                <motion.div
+                                    layout="position"
+                                    key={tier.id}
+                                    className="entrance-item relative"
+                                    onClick={() => setSelectedTierId(tier.id)}
+                                >
+                                    {/* Active Glow Behind Card */}
                                     <motion.div
-                                        layoutId="glow"
-                                        className="absolute -inset-1 rounded-[2.5rem] blur-xl opacity-40 transition-colors duration-500"
+                                        animate={{ opacity: isSelected ? 0.4 : 0 }}
+                                        className="absolute -inset-1 rounded-[2.5rem] blur-xl transition-colors duration-500"
                                         style={{ backgroundColor: tier.color }}
                                     />
-                                )}
 
-                                {/* Card Body */}
-                                <div
-                                    className={cn(
-                                        "relative overflow-hidden rounded-[2rem] border transition-all duration-500",
-                                        isSelected
-                                            ? "border-white/20 bg-white/5 backdrop-blur-2xl shadow-2xl"
-                                            : "border-white/5 bg-black/20 backdrop-blur-sm grayscale-[0.5]"
-                                    )}
-                                >
-                                    {/* Popular Badge */}
-                                    {tier.popular && (
-                                        <div className="absolute top-0 right-0 p-6">
-                                            <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-1.5">
-                                                <Zap className="w-3 h-3 text-[#E2F163] fill-[#E2F163]" />
-                                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">פופולרי</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="p-8">
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div>
-                                                <h3 className={cn("text-xl font-bold mb-1 transition-colors duration-300", isSelected ? "text-white" : "text-white/60")}>
-                                                    {tier.displayName}
-                                                </h3>
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className={cn("text-4xl font-black tracking-tight", isSelected ? "text-white" : "text-white/50")}>
-                                                        {tier.price}
-                                                    </span>
-                                                    <span className="text-lg text-white/40">₪</span>
-                                                    <span className="text-sm text-white/30 mr-2">/ לחודש</span>
+                                    {/* Card Body */}
+                                    <motion.div
+                                        layout
+                                        className={cn(
+                                            "relative overflow-hidden rounded-[2rem] border transition-all duration-300",
+                                            isSelected
+                                                ? "border-white/20 bg-white/5 shadow-2xl"
+                                                : "border-white/5 bg-black/20"
+                                        )}
+                                        style={{ backdropFilter: 'blur(12px)' }} // Static blur is safer
+                                    >
+                                        {/* Popular Badge */}
+                                        {tier.popular && (
+                                            <div className="absolute top-0 right-0 p-6 z-10">
+                                                <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-1.5">
+                                                    <Zap className="w-3 h-3 text-[#E2F163] fill-[#E2F163]" />
+                                                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">פופולרי</span>
                                                 </div>
                                             </div>
-                                            <div
-                                                className={cn(
-                                                    "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500",
-                                                    isSelected ? "bg-white/10 text-white scan-pulse" : "bg-white/5 text-white/20"
-                                                )}
-                                                style={{ color: isSelected ? tier.color : undefined }}
-                                            >
-                                                <Icon className="w-6 h-6" />
-                                            </div>
-                                        </div>
-
-                                        {/* Collapsible Content */}
-                                        <motion.div
-                                            initial={false}
-                                            animate={{
-                                                height: isSelected ? "auto" : 0,
-                                                opacity: isSelected ? 1 : 0
-                                            }}
-                                            transition={{ duration: 0.4, ease: "anticipate" }}
-                                            className="overflow-hidden"
-                                        >
-                                            <div className="h-px w-full bg-white/10 mb-6" />
-
-                                            <ul className="space-y-4 mb-8">
-                                                {tier.features.map((feature, i) => (
-                                                    <li key={i} className="flex items-start gap-3">
-                                                        <Check className="w-5 h-5 shrink-0" style={{ color: tier.color }} />
-                                                        <span className="text-sm text-white/80 leading-tight">{feature}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handlePurchase(tier.id);
-                                                }}
-                                                disabled={isPurchasing}
-                                                className="w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-transform"
-                                                style={{
-                                                    background: `linear-gradient(135deg, ${tier.color}, transparent)`,
-                                                    backgroundColor: 'rgba(255,255,255,0.1)'
-                                                }}
-                                            >
-                                                {isPurchasing ? (
-                                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                                ) : (
-                                                    <>
-                                                        <span className="relative z-10 text-white">אני רוצה את זה</span>
-                                                        <ArrowRight className="w-5 h-5 text-white rotate-180" />
-                                                    </>
-                                                )}
-                                                {/* Button sheen */}
-                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 translate-x-[-150%] animate-shimmer" />
-                                            </button>
-                                            <p className="text-center text-xs text-white/30 mt-4">ללא התחייבות • ביטול בכל שלב</p>
-                                        </motion.div>
-
-                                        {!isSelected && (
-                                            <div className="text-center mt-2">
-                                                <span className="text-xs font-medium text-white/30 uppercase tracking-widest">לחץ לפרטים</span>
-                                            </div>
                                         )}
-                                    </div>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </div>
+
+                                        <div className="p-8">
+                                            <div className="flex justify-between items-start mb-6">
+                                                <motion.div layout="position">
+                                                    <h3 className={cn("text-xl font-bold mb-1 transition-colors duration-300", isSelected ? "text-white" : "text-white/60")}>
+                                                        {tier.displayName}
+                                                    </h3>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className={cn("text-4xl font-black tracking-tight", isSelected ? "text-white" : "text-white/50")}>
+                                                            {tier.price}
+                                                        </span>
+                                                        <span className="text-lg text-white/40">₪</span>
+                                                        <span className="text-sm text-white/30 mr-2">/ לחודש</span>
+                                                    </div>
+                                                </motion.div>
+                                                <motion.div
+                                                    layout="position"
+                                                    className={cn(
+                                                        "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500",
+                                                        isSelected ? "bg-white/10 text-white scan-pulse" : "bg-white/5 text-white/20"
+                                                    )}
+                                                    style={{ color: isSelected ? tier.color : undefined }}
+                                                >
+                                                    <Icon className="w-6 h-6" />
+                                                </motion.div>
+                                            </div>
+
+                                            {/* Collapsible Content */}
+                                            <AnimatePresence mode="popLayout">
+                                                {isSelected && (
+                                                    <motion.div
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: "auto", opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        transition={{ duration: 0.3, ease: "easeOut" }}
+                                                        className="overflow-hidden"
+                                                    >
+                                                        <div className="h-px w-full bg-white/10 mb-6" />
+
+                                                        <ul className="space-y-4 mb-8">
+                                                            {tier.features.map((feature, i) => (
+                                                                <li key={i} className="flex items-start gap-3">
+                                                                    <Check className="w-5 h-5 shrink-0" style={{ color: tier.color }} />
+                                                                    <span className="text-sm text-white/80 leading-tight">{feature}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handlePurchase(tier.id);
+                                                            }}
+                                                            disabled={isPurchasing}
+                                                            className="w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-transform"
+                                                            style={{
+                                                                background: `linear-gradient(135deg, ${tier.color}, transparent)`,
+                                                                backgroundColor: 'rgba(255,255,255,0.1)'
+                                                            }}
+                                                        >
+                                                            {isPurchasing ? (
+                                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                            ) : (
+                                                                <>
+                                                                    <span className="relative z-10 text-white">אני רוצה את זה</span>
+                                                                    <ArrowRight className="w-5 h-5 text-white rotate-180" />
+                                                                </>
+                                                            )}
+                                                            {/* Button sheen */}
+                                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 translate-x-[-150%] animate-shimmer" />
+                                                        </button>
+                                                        <p className="text-center text-xs text-white/30 mt-4">ללא התחייבות • ביטול בכל שלב</p>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+
+                                            {!isSelected && (
+                                                <motion.div
+                                                    layout
+                                                    className="text-center mt-2"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    transition={{ delay: 0.2 }}
+                                                >
+                                                    <span className="text-xs font-medium text-white/30 uppercase tracking-widest">לחץ לפרטים</span>
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </LayoutGroup>
 
                 {/* TRUST BADGES */}
                 <div className="entrance-item mt-16 px-6 grid grid-cols-2 gap-4 opacity-60">
@@ -383,9 +373,11 @@ export default function SubscriptionPage() {
                 </div>
 
             </div>
+        </div>
+    );
+}
 
-            {/* Global Styles for custom animations */}
-            <style jsx global>{`
+<style jsx global>{`
                 @keyframes shimmer {
                     0% { transform: translateX(-150%) skewX(-12deg); }
                     100% { transform: translateX(150%) skewX(-12deg); }
@@ -394,6 +386,3 @@ export default function SubscriptionPage() {
                     animation: shimmer 2s infinite cubic-bezier(0.8, 0, 0.2, 1);
                 }
             `}</style>
-        </div>
-    );
-}
