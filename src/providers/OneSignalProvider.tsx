@@ -76,7 +76,8 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
 
                 // Add tags/email only after login
                 if (userRole) {
-                    await OneSignal.User.addTag("role", userRole);
+                    // Normalize role to lowercase for consistent targeting
+                    await OneSignal.User.addTag("role", userRole.toLowerCase());
                 }
                 if (userEmail) {
                     await OneSignal.User.addEmail(userEmail);
