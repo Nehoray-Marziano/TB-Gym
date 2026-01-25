@@ -236,13 +236,23 @@ export default function SubscriptionPage() {
                         return (
                             <motion.div
                                 key={tier.id}
-                                className="entrance-item relative"
+                                className="entrance-item relative pt-4" // Added pt-4 for badge space
                                 onClick={() => setSelectedTierId(tier.id)}
                             >
+                                {/* Popular Badge - positioned OUTSIDE the card to avoid clipping */}
+                                {tier.popular && (
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
+                                        <div className="px-4 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-lg shadow-[#E2F163]/30">
+                                            <Zap className="w-3 h-3 text-black fill-black" />
+                                            <span className="text-[10px] font-black text-black uppercase tracking-wider">פופולרי</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Active Glow Behind Card */}
                                 <div
                                     className={cn(
-                                        "absolute -inset-1 rounded-[2.5rem] blur-xl transition-all duration-500",
+                                        "absolute -inset-1 top-3 rounded-[2.5rem] blur-xl transition-all duration-500",
                                         isSelected ? "opacity-40" : "opacity-0"
                                     )}
                                     style={{ backgroundColor: tier.color }}
@@ -258,19 +268,9 @@ export default function SubscriptionPage() {
                                     )}
                                     style={{
                                         backdropFilter: 'blur(12px)',
-                                        // Slight scale up if selected, but purely visual transform
                                         transform: isSelected ? 'scale(1.02)' : 'scale(1)'
                                     }}
                                 >
-                                    {/* Popular Badge - positioned top-left to avoid title overlap */}
-                                    {tier.popular && (
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                                            <div className="px-3 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-lg shadow-[#E2F163]/30">
-                                                <Zap className="w-3 h-3 text-black fill-black" />
-                                                <span className="text-[10px] font-black text-black uppercase tracking-wider">פופולרי</span>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     <div className="p-8">
                                         <div className="flex justify-between items-start mb-6">

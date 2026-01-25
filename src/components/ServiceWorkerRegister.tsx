@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ServiceWorkerRegister() {
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+    // Track if this is a fresh page load (no existing controller when we started)
+    const wasFreshLoad = useRef<boolean>(false);
 
     const handleUpdate = useCallback(async () => {
         // 1. Clear all caches to ensure fresh content
@@ -33,6 +35,11 @@ export default function ServiceWorkerRegister() {
             return;
         }
 
+        // Check if there was an existing controller when the page loaded
+        // If not, this is a "fresh" load (app was closed/new tab)
+        wasFreshLoad.current = !navigator.serviceWorker.controller;
+        console.log("[SW] Fresh load (no existing controller):", wasFreshLoad.current);
+
         const registerSW = async () => {
             try {
                 const reg = await navigator.serviceWorker.register("/sw.js");
@@ -41,6 +48,19 @@ export default function ServiceWorkerRegister() {
 
                 // Check for updates immediately
                 reg.update();
+
+                // Helper to handle a waiting SW
+                const handleWaitingSW = (waitingWorker: ServiceWorker) => {
+                    if (wasFreshLoad.current) {
+                        // FRESH LOAD: Auto-activate immediately (user wasn't mid-session)
+                        console.log("[SW] Fresh load detected - auto-activating new version");
+                        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+                    } else {
+                        // APP WAS OPEN: Show prompt so user can finish what they're doing
+                        console.log("[SW] App was open - showing update prompt");
+                        setUpdateAvailable(true);
+                    }
+                };
 
                 // Listen for new service worker installing
                 reg.addEventListener("updatefound", () => {
@@ -52,15 +72,14 @@ export default function ServiceWorkerRegister() {
                     newWorker.addEventListener("statechange", () => {
                         // When new SW is installed and waiting
                         if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                            console.log("[SW] New version ready - showing update prompt");
-                            setUpdateAvailable(true);
+                            handleWaitingSW(newWorker);
                         }
                     });
                 });
 
-                // Also check if there's already a waiting worker
+                // Also check if there's already a waiting worker on page load
                 if (reg.waiting && navigator.serviceWorker.controller) {
-                    setUpdateAvailable(true);
+                    handleWaitingSW(reg.waiting);
                 }
 
             } catch (error) {
@@ -75,6 +94,7 @@ export default function ServiceWorkerRegister() {
         navigator.serviceWorker.addEventListener("controllerchange", () => {
             if (refreshing) return;
             refreshing = true;
+            console.log("[SW] Controller changed - reloading page");
             window.location.reload();
         });
 
