@@ -18,12 +18,23 @@ export default function NotificationPermissionModal({ onComplete }: Notification
     const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [hasChecked, setHasChecked] = useState(false);
+    const [storageKey, setStorageKey] = useState("notification_prompt_dismissed");
 
     useEffect(() => {
         // Check if we should show the modal
         const checkPermission = async () => {
-            // Don't show if already checked this session
-            const dismissed = localStorage.getItem("notification_prompt_dismissed");
+            // Detect if running as installed PWA (standalone mode)
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                || (window.navigator as any).standalone === true;
+
+            // Use different key for standalone vs browser - fresh PWA install = fresh prompt
+            const key = isStandalone
+                ? "notification_prompt_dismissed_pwa"
+                : "notification_prompt_dismissed_browser";
+            setStorageKey(key);
+
+            // Don't show if already dismissed in this context
+            const dismissed = localStorage.getItem(key);
             if (dismissed) {
                 setHasChecked(true);
                 return;
@@ -75,13 +86,13 @@ export default function NotificationPermissionModal({ onComplete }: Notification
         }
 
         setIsLoading(false);
-        localStorage.setItem("notification_prompt_dismissed", "true");
+        localStorage.setItem(storageKey, "true");
         setIsVisible(false);
         onComplete?.();
     };
 
     const handleDismiss = () => {
-        localStorage.setItem("notification_prompt_dismissed", "true");
+        localStorage.setItem(storageKey, "true");
         setIsVisible(false);
         onComplete?.();
     };
