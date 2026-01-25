@@ -436,6 +436,42 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 </button>
 
                 <button
+                    onClick={async () => {
+                        if (navigator.vibrate) navigator.vibrate(10);
+                        if (typeof window !== 'undefined' && (window as any).OneSignal) {
+                            try {
+                                const OneSignal = (window as any).OneSignal;
+                                const userId = profile?.id;
+                                const role = profile?.role || "trainee";
+
+                                if (userId) {
+                                    await OneSignal.login(userId);
+                                    await OneSignal.User.addTag("role", role.toLowerCase());
+                                    if (profile?.email) await OneSignal.User.addEmail(profile.email);
+
+                                    alert(`סנכרון בוצע בהצלחה!\nOneSignal ID: ${userId}\nTag: role=${role.toLowerCase()}`);
+                                } else {
+                                    alert("שגיאה: פרטי משתמש חסרים");
+                                }
+                            } catch (e: any) {
+                                console.error("Sync error:", e);
+                                alert("שגיאה בסנכרון: " + e.message);
+                            }
+                        } else {
+                            alert("OneSignal לא נטען. נסי לרענן את העמוד.");
+                        }
+                    }}
+                    className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]`}
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500/20 transition-all">
+                            <Zap className="w-5 h-5" />
+                        </div>
+                        <span className="font-bold text-foreground">סנכרון התראות (Debug)</span>
+                    </div>
+                </button>
+
+                <button
                     onClick={handleLogout}
                     className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-red-500/10 border border-red-500/20 p-5 rounded-3xl flex items-center justify-center gap-2 text-red-500 font-bold hover:bg-red-500/20 transition-all mt-8 active:scale-[0.98]`}
                 >
