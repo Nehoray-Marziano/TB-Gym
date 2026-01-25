@@ -18,6 +18,8 @@ interface PWAInstallState {
     canInstall: boolean;
     /** True if on iOS (needs manual install instructions) */
     isIOS: boolean;
+    /** True if user just installed the app (show success screen) */
+    justInstalled: boolean;
     /** Trigger the native install prompt (Android/Chrome) */
     promptInstall: () => Promise<boolean>;
     /** Loading state while detecting environment */
@@ -29,6 +31,7 @@ export function usePWAInstall(): PWAInstallState {
     const [isLocalhost, setIsLocalhost] = useState(false);
     const [canInstall, setCanInstall] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
+    const [justInstalled, setJustInstalled] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
@@ -63,9 +66,11 @@ export function usePWAInstall(): PWAInstallState {
         window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
         // Listen for successful installation
+        // NOTE: Do NOT set isStandalone here - the browser tab is still in browser mode
+        // User must actually open the installed app to be in standalone mode
         window.addEventListener("appinstalled", () => {
-            console.log("[PWA] App installed!");
-            setIsStandalone(true);
+            console.log("[PWA] App installed! User should now open the installed app.");
+            setJustInstalled(true);
             deferredPromptRef.current = null;
             setCanInstall(false);
         });
@@ -117,6 +122,7 @@ export function usePWAInstall(): PWAInstallState {
         canAccess,
         canInstall,
         isIOS,
+        justInstalled,
         promptInstall,
         isLoading,
     };

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Smartphone, Share, Plus, X, CheckCircle2, Zap, Bell, Rocket } from "lucide-react";
+import { Download, Smartphone, Share, Plus, X, CheckCircle2, Zap, Bell, Rocket, Home, PartyPopper } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 interface PWAInstallGateProps {
@@ -10,7 +10,7 @@ interface PWAInstallGateProps {
 }
 
 export default function PWAInstallGate({ children }: PWAInstallGateProps) {
-    const { canAccess, canInstall, isIOS, promptInstall, isLoading } = usePWAInstall();
+    const { canAccess, canInstall, isIOS, justInstalled, promptInstall, isLoading } = usePWAInstall();
     const [showIOSInstructions, setShowIOSInstructions] = useState(false);
     const [isInstalling, setIsInstalling] = useState(false);
 
@@ -26,6 +26,83 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
     // If user can access (PWA or localhost), show the app
     if (canAccess) {
         return <>{children}</>;
+    }
+
+    // Show success screen after installation
+    if (justInstalled) {
+        return (
+            <div className="min-h-[100dvh] w-full bg-[#131512] text-[#ECF0E7] overflow-x-hidden font-sans relative">
+                {/* Animated Background */}
+                <div className="fixed inset-0 pointer-events-none z-0">
+                    <div className="absolute top-[10%] left-[10%] w-[300px] h-[300px] bg-[#E2F163]/20 rounded-full blur-[80px] animate-pulse" />
+                    <div className="absolute bottom-[20%] right-[10%] w-[250px] h-[250px] bg-green-500/10 rounded-full blur-[60px]" />
+                </div>
+
+                <main className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-6 py-12">
+                    {/* Success Icon */}
+                    <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", damping: 15, stiffness: 200 }}
+                        className="mb-8"
+                    >
+                        <div className="w-28 h-28 bg-gradient-to-br from-green-400 to-[#E2F163] rounded-full flex items-center justify-center shadow-2xl shadow-green-500/30">
+                            <PartyPopper className="w-14 h-14 text-black" />
+                        </div>
+                    </motion.div>
+
+                    <motion.h1
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-3xl font-bold mb-4"
+                    >
+                        ההתקנה הושלמה! 🎉
+                    </motion.h1>
+
+                    <motion.p
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="text-neutral-400 text-lg max-w-sm mx-auto mb-10 leading-relaxed"
+                    >
+                        עכשיו פתחי את האפליקציה<br />
+                        <span className="text-white font-bold">מהמסך הבית</span> שלך
+                    </motion.p>
+
+                    {/* Visual Hint */}
+                    <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="flex flex-col items-center gap-4 p-6 bg-white/5 rounded-3xl border border-white/10 max-w-sm w-full"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-[#E2F163] to-[#9CA986] rounded-2xl flex items-center justify-center shadow-lg">
+                                <span className="text-2xl font-bold text-black">T</span>
+                            </div>
+                            <div className="text-right">
+                                <p className="font-bold text-white">Talia</p>
+                                <p className="text-xs text-neutral-500">מסך הבית</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-[#E2F163]">
+                            <Home className="w-4 h-4" />
+                            <span className="text-sm font-medium">חפשי את האייקון במסך הבית</span>
+                        </div>
+                    </motion.div>
+
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="text-neutral-600 text-xs mt-12"
+                    >
+                        © 2024 Talia Studio
+                    </motion.p>
+                </main>
+            </div>
+        );
     }
 
     // Otherwise, show the install gate
