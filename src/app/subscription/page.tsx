@@ -272,7 +272,7 @@ export default function SubscriptionPage() {
                         <motion.div
                             key={tier.id}
                             className="tier-card group relative"
-                            initial={{ opacity: 0, y: 50 }}
+                            // initial={{ opacity: 0, y: 50 }}  <-- REMOVED: Conflicts with GSAP
                             whileHover={{ y: -8, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setSelectedTier(tier.id)}
