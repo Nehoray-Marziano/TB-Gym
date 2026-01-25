@@ -163,6 +163,21 @@ export default function BookingPage() {
         if (result.success) {
             toast({ title: "האימון בוטל", description: "הזיכוי הוחזר לחשבונך", type: "success" });
             fetchSessions();
+
+            // Notify Trainer about cancellation
+            try {
+                await fetch("/api/notifications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: "ביטול אימון",
+                        message: `מתאמנת ביטלה את ההרשמה לאימון ${sessionToCancel.title}`,
+                        targetRole: "administrator"
+                    })
+                });
+            } catch (e) {
+                console.error("Cancellation notification failed", e);
+            }
         } else {
             setSessions(prevSessions);
             toast({ title: "לא ניתן לבטל", description: result.message, type: "error" });

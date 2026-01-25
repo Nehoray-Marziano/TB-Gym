@@ -7,13 +7,14 @@ interface NotificationPayload {
     title: string;
     message: string;
     targetRole?: string; // e.g., "administrator"
+    targetUserIds?: string[]; // Array of UUIDs
     url?: string;
 }
 
 export async function POST(request: NextRequest) {
     try {
         const body: NotificationPayload = await request.json();
-        const { title, message, targetRole = "administrator", url } = body;
+        const { title, message, targetRole, targetUserIds, url } = body;
 
         if (!ONESIGNAL_REST_API_KEY) {
             console.error("ONESIGNAL_REST_API_KEY not set");
@@ -24,11 +25,26 @@ export async function POST(request: NextRequest) {
             app_id: ONESIGNAL_APP_ID,
             headings: { en: title, he: title },
             contents: { en: message, he: message },
-            // Target users by tag
-            filters: [
-                { field: "tag", key: "role", relation: "=", value: targetRole }
-            ],
         };
+
+        // Determine targeting strategy
+        if (targetUserIds && targetUserIds.length > 0) {
+            // Target specific users by their External ID (which is their Supabase UUID)
+            notificationPayload.include_aliases = {
+                external_id: targetUserIds
+            };
+            notificationPayload.target_channel = "push";
+        } else if (targetRole) {
+            // Target by Role Tag
+            notificationPayload.filters = [
+                { field: "tag", key: "role", relation: "=", value: targetRole }
+            ];
+        } else {
+            // Fallback: Notify Admins if nothing specified
+            notificationPayload.filters = [
+                { field: "tag", key: "role", relation: "=", value: "administrator" }
+            ];
+        }
 
         if (url) {
             notificationPayload.url = url;

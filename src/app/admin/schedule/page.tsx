@@ -201,7 +201,25 @@ export default function AdminSchedulePage() {
                 }
             }
 
-            // 2. Delete Bookings
+            // 2. Notify Users (if any)
+            if (bookings && bookings.length > 0) {
+                const affectedUserIds = bookings.map((b: { user_id: string }) => b.user_id);
+                try {
+                    await fetch("/api/notifications", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            title: "אימון בוטל 😔",
+                            message: `האימון "${deleteConfirmation.session.title}" בוטל על ידי הסטודיו. הזיכוי הוחזר לחשבונך.`,
+                            targetUserIds: affectedUserIds
+                        })
+                    });
+                } catch (e) {
+                    console.error("Failed to notify users about session deletion", e);
+                }
+            }
+
+            // 3. Delete Bookings
             const { error: bookingsError, count: deletedCount } = await supabase
                 .from("bookings")
                 .delete({ count: 'exact' })
@@ -214,7 +232,7 @@ export default function AdminSchedulePage() {
                 throw new Error("Critical: Admin cannot delete user bookings. RLS Policy required.");
             }
 
-            // 3. Delete Session
+            // 4. Delete Session
             const { error } = await supabase.from("gym_sessions").delete().eq("id", deleteConfirmation.session.id);
             if (error) throw error;
 
@@ -258,6 +276,22 @@ export default function AdminSchedulePage() {
             }
             const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
             if (error) throw error;
+
+            // Notify User
+            try {
+                await fetch("/api/notifications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: "הוסרת מהאימון",
+                        message: `הוסרת מהאימון ${viewBookingsSession?.title || ""}. הזיכוי הוחזר לחשבונך.`,
+                        targetUserIds: [booking.user_id]
+                    })
+                });
+            } catch (e) {
+                console.error("Failed to notify user removal", e);
+            }
+
             if (viewBookingsSession) fetchBookings(viewBookingsSession.id);
             fetchSessions();
         } catch (err: any) {
@@ -281,15 +315,40 @@ export default function AdminSchedulePage() {
                     <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">ניהול מערכת שעות</h1>
                     <p className="text-neutral-400 font-medium">צרי ועדכני אימונים לקהילה שלך</p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="group bg-[#E2F163] text-black px-6 py-3 rounded-2xl font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-transform"
-                >
-                    <div className="bg-black/10 rounded-full p-1 group-hover:bg-black/20 transition-colors">
-                        <Plus className="w-5 h-5" />
-                    </div>
-                    <span>אימון חדש</span>
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={async () => {
+                            if (confirm("לשלוח התראה לכל המתאמנות שהלוז מוכן?")) {
+                                try {
+                                    await fetch("/api/notifications", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            title: "מערכת שעות חדשה! 📅",
+                                            message: "הלוז לשבוע הבא התעדכן. היכנסי לשריין מקום!",
+                                            targetRole: "trainee"
+                                        })
+                                    });
+                                    alert("ההודעה נשלחה בהצלחה!");
+                                } catch (e) {
+                                    alert("שגיאה בשליחה");
+                                }
+                            }
+                        }}
+                        className="bg-neutral-800 text-white px-4 py-3 rounded-2xl font-bold border border-neutral-700 hover:bg-neutral-700 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                        <span>🔔 עדכון לוז</span>
+                    </button>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="group bg-[#E2F163] text-black px-6 py-3 rounded-2xl font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-transform"
+                    >
+                        <div className="bg-black/10 rounded-full p-1 group-hover:bg-black/20 transition-colors">
+                            <Plus className="w-5 h-5" />
+                        </div>
+                        <span>אימון חדש</span>
+                    </button>
+                </div>
             </header>
 
             {/* Tabs */}
