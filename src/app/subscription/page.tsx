@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2, ShieldCheck, Unlock } from "lucide-react";
+import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2, Lock as LockIcon, CalendarX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
@@ -397,11 +397,11 @@ export default function SubscriptionPage() {
 
                 <div className="pt-8 flex items-center justify-center gap-6 text-white/40 text-xs font-medium">
                     <div className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-green-400" />
+                        <LockIcon className="w-4 h-4 text-green-400" />
                         <span>תשלום מאובטח</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Unlock className="w-4 h-4 text-[#E2F163]" />
+                        <CalendarX className="w-4 h-4 text-[#E2F163]" />
                         <span>ביטול בכל עת</span>
                     </div>
                 </div>
