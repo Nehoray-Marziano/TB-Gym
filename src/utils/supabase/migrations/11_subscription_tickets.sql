@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS user_tickets (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL,
     used_at TIMESTAMPTZ DEFAULT NULL,
-    used_for_session UUID REFERENCES gym_sessions(id) DEFAULT NULL
+    used_for_session UUID REFERENCES gym_sessions(id) ON DELETE SET NULL DEFAULT NULL
 );
 
 -- Indexes for fast queries

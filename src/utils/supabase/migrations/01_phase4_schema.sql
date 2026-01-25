@@ -45,7 +45,7 @@ using (auth.uid() = user_id);
 create table bookings (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references profiles(id) not null,
-  session_id uuid references gym_sessions(id) not null,
+  session_id uuid references gym_sessions(id) ON DELETE CASCADE not null,
   status text check (status in ('confirmed', 'cancelled', 'waitlist')) default 'confirmed',
   created_at timestamptz default now(),
   unique(user_id, session_id) -- Prevent double booking
