@@ -78,8 +78,8 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
                         className="flex flex-col items-center gap-4 p-6 bg-white/5 rounded-3xl border border-white/10 max-w-sm w-full"
                     >
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-gradient-to-br from-[#E2F163] to-[#9CA986] rounded-2xl flex items-center justify-center shadow-lg">
-                                <span className="text-2xl font-bold text-black">T</span>
+                            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+                                <img src="/icon.png" alt="Icon" className="w-full h-full object-cover" />
                             </div>
                             <div className="text-right">
                                 <p className="font-bold text-white">Talia</p>
@@ -137,7 +137,7 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
                     className="mb-8"
                 >
                     <div className="w-24 h-24 bg-gradient-to-br from-[#E2F163] to-[#9CA986] rounded-3xl flex items-center justify-center shadow-2xl shadow-[#E2F163]/30">
-                        <Smartphone className="w-12 h-12 text-black" />
+                        <img src="/icon.png" alt="App Icon" className="w-[102%] h-[102%] object-cover rounded-3xl" />
                     </div>
                 </motion.div>
 
