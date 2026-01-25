@@ -29,7 +29,7 @@ const TIERS = [
             "4 אימונים בחודש",
             "60₪ לאימון",
             "גישה לכל השיעורים",
-            "ביטול חינם",
+            "ביטול חינם עד 10 שעות לפני האימון",
         ]
     },
     {
@@ -50,7 +50,7 @@ const TIERS = [
             "8 אימונים בחודש",
             "56₪ לאימון — חיסכון של 6%",
             "גישה לכל השיעורים",
-            "ביטול חינם",
+            "ביטול חינם עד 10 שעות לפני האימון",
             "רכישת כרטיסים נוספים באותו מחיר",
         ]
     },
@@ -72,7 +72,7 @@ const TIERS = [
             "12 אימונים בחודש",
             "54₪ לאימון — חיסכון של 10%",
             "גישה לכל השיעורים",
-            "ביטול חינם",
+            "ביטול חינם עד 10 שעות לפני האימון",
             "רכישת כרטיסים נוספים באותו מחיר",
         ]
     }
@@ -182,24 +182,46 @@ export default function SubscriptionPage() {
 
             {/* Animated Background */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                {/* Large gradient orbs */}
-                <div className="floating-orb absolute -top-32 -right-32 w-[500px] h-[500px] bg-gradient-to-br from-[#E2F163]/15 to-transparent rounded-full blur-[120px]" />
-                <div className="floating-orb absolute top-1/2 -left-48 w-[400px] h-[400px] bg-gradient-to-br from-pink-500/10 to-purple-600/10 rounded-full blur-[100px]" />
-                <div className="floating-orb absolute -bottom-32 right-1/4 w-[350px] h-[350px] bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-full blur-[80px]" />
+                <style jsx global>{`
+                    @keyframes sheen {
+                        0% { transform: translateX(-100%) skewX(-15deg); }
+                        100% { transform: translateX(200%) skewX(-15deg); }
+                    }
+                    @keyframes border-spin {
+                        100% { transform: rotate(360deg); }
+                    }
+                    @keyframes pulse-slow {
+                        0%, 100% { opacity: 0.1; transform: scale(1); }
+                        50% { opacity: 0.3; transform: scale(1.1); }
+                    }
+                `}</style>
+                {/* Large gradient orbs with breathing animation */}
+                <div
+                    className="floating-orb absolute -top-32 -right-32 w-[500px] h-[500px] bg-gradient-to-br from-[#E2F163]/20 to-transparent rounded-full blur-[120px]"
+                    style={{ animation: 'pulse-slow 8s ease-in-out infinite' }}
+                />
+                <div
+                    className="floating-orb absolute top-1/2 -left-48 w-[400px] h-[400px] bg-gradient-to-br from-pink-500/15 to-purple-600/15 rounded-full blur-[100px]"
+                    style={{ animation: 'pulse-slow 10s ease-in-out infinite reverse' }}
+                />
+                <div
+                    className="floating-orb absolute -bottom-32 right-1/4 w-[350px] h-[350px] bg-gradient-to-br from-blue-500/15 to-cyan-500/15 rounded-full blur-[80px]"
+                    style={{ animation: 'pulse-slow 12s ease-in-out infinite 2s' }}
+                />
 
                 {/* Grid pattern */}
                 <div
-                    className="absolute inset-0 opacity-[0.03]"
+                    className="absolute inset-0 opacity-[0.05]"
                     style={{
                         backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
                         backgroundSize: '50px 50px'
                     }}
                 />
 
-                {/* Noise texture */}
+                {/* Heavier Noise texture */}
                 <div
-                    className="absolute inset-0 opacity-[0.02]"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}
+                    className="absolute inset-0 opacity-[0.04]"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}
                 />
             </div>
 
@@ -310,11 +332,33 @@ export default function SubscriptionPage() {
                                 {/* Top Gradient */}
                                 <div className={cn("absolute top-0 inset-x-0 h-32 bg-gradient-to-b opacity-20 transition-opacity", tier.gradient)} />
 
+                                {/* "Holographic" Foil Sheen */}
+                                <div
+                                    className="absolute inset-0 pointer-events-none z-10 opacity-30 mix-blend-overlay"
+                                    style={{
+                                        background: isPopular
+                                            ? `linear-gradient(105deg, transparent 40%, rgba(226, 241, 99, 0.4) 45%, rgba(255, 255, 255, 0.6) 50%, rgba(226, 241, 99, 0.4) 55%, transparent 60%)`
+                                            : `linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.1) 25%, transparent 30%)`,
+                                        animation: isPopular ? 'sheen 4s ease-in-out infinite' : 'sheen 7s ease-in-out infinite',
+                                        backgroundSize: '200% 100%'
+                                    }}
+                                />
+
+                                {/* Interactive Rotating Border for Popular card */}
+                                {isPopular && (
+                                    <div className="absolute -inset-[1px] rounded-[1.9rem] z-0 overflow-hidden">
+                                        <div
+                                            className="absolute inset-[-50%] bg-[conic-gradient(from_0deg,transparent_0_340deg,#E2F163_360deg)] opacity-60"
+                                            style={{ animation: 'border-spin 4s linear infinite' }}
+                                        />
+                                    </div>
+                                )}
+
                                 {/* Popular Badge */}
                                 {isPopular && (
                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-                                        <div className="px-5 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-[0_0_20px_rgba(226,241,99,0.4)]">
-                                            <Zap className="w-4 h-4 text-black fill-black animate-pulse" />
+                                        <div className="px-5 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-[0_0_20px_rgba(226,241,99,0.6)] animate-bounce-slow">
+                                            <Zap className="w-4 h-4 text-black fill-black" />
                                             <span className="text-xs font-black text-black tracking-widest uppercase">Best Value</span>
                                         </div>
                                     </div>
