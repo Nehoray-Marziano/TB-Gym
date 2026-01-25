@@ -22,6 +22,7 @@ const withPWA = withPWAInit({
     // prompt user to update
     skipWaiting: false,
     clientsClaim: true,
+    importScripts: ["https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js"],
     runtimeCaching: [
       {
         // CRITICAL: Auth pages - NEVER cache (session-dependent)

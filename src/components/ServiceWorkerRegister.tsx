@@ -3,11 +3,14 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Version key stored in localStorage to track actual SW updates
+const SW_VERSION_KEY = "talia_sw_version";
+
 export default function ServiceWorkerRegister() {
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
-    // Track if this is a fresh page load (no existing controller when we started)
-    const wasFreshLoad = useRef<boolean>(false);
+    // Track if we've already handled an update this session to prevent double-prompts
+    const updateHandledRef = useRef<boolean>(false);
 
     const handleUpdate = useCallback(() => {
         // Use ref to avoid stale state
@@ -25,6 +28,9 @@ export default function ServiceWorkerRegister() {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
 
+        // Update the stored version timestamp
+        localStorage.setItem(SW_VERSION_KEY, Date.now().toString());
+
         // Force reload after short delay
         setTimeout(() => {
             window.location.reload();
@@ -36,52 +42,42 @@ export default function ServiceWorkerRegister() {
             return;
         }
 
-        // Check if there was an existing controller when the page loaded
-        // If not, this is a "fresh" load (app was closed/new tab)
-        wasFreshLoad.current = !navigator.serviceWorker.controller;
-        console.log("[SW] Fresh load (no existing controller):", wasFreshLoad.current);
-
         const registerSW = async () => {
             try {
                 const reg = await navigator.serviceWorker.register("/sw.js");
                 registrationRef.current = reg;
                 console.log("[SW] Registered successfully:", reg.scope);
 
-                // Check for updates immediately
-                reg.update();
-
-                // Helper to handle a waiting SW
-                const handleWaitingSW = (waitingWorker: ServiceWorker) => {
-                    if (wasFreshLoad.current) {
-                        // FRESH LOAD: Auto-activate immediately (user wasn't mid-session)
-                        console.log("[SW] Fresh load detected - auto-activating new version");
-                        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-                    } else {
-                        // APP WAS OPEN: Show prompt so user can finish what they're doing
-                        console.log("[SW] App was open - showing update prompt");
-                        setUpdateAvailable(true);
-                    }
-                };
-
-                // Listen for new service worker installing
+                // Only listen for NEW updates (updatefound event), not existing waiting workers
+                // This prevents the banner from showing on page refresh when there's a stale waiting worker
                 reg.addEventListener("updatefound", () => {
                     const newWorker = reg.installing;
-                    if (!newWorker) return;
+                    if (!newWorker || updateHandledRef.current) return;
 
                     console.log("[SW] New version installing...");
 
                     newWorker.addEventListener("statechange", () => {
-                        // When new SW is installed and waiting
-                        if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                            handleWaitingSW(newWorker);
+                        // When new SW is installed and waiting, AND there's an existing controller
+                        // (meaning this is truly an update, not first install)
+                        if (
+                            newWorker.state === "installed" &&
+                            navigator.serviceWorker.controller &&
+                            !updateHandledRef.current
+                        ) {
+                            updateHandledRef.current = true;
+                            console.log("[SW] Update available - showing prompt");
+                            setUpdateAvailable(true);
                         }
                     });
                 });
 
-                // Also check if there's already a waiting worker on page load
-                if (reg.waiting && navigator.serviceWorker.controller) {
-                    handleWaitingSW(reg.waiting);
-                }
+                // Check for updates in background (don't show banner for stale waiting workers)
+                // Only check after 10 seconds to let the page fully load first
+                setTimeout(() => {
+                    reg.update().catch(() => {
+                        // Silently ignore update check failures
+                    });
+                }, 10000);
 
             } catch (error) {
                 console.error("[SW] Registration failed:", error);
@@ -99,10 +95,13 @@ export default function ServiceWorkerRegister() {
             window.location.reload();
         });
 
-        // Check for updates periodically (every 5 minutes)
+        // Check for updates periodically (every 30 minutes instead of 5)
+        // This reduces the chance of spurious update prompts
         const interval = setInterval(() => {
-            registrationRef.current?.update();
-        }, 5 * 60 * 1000);
+            if (!updateHandledRef.current) {
+                registrationRef.current?.update();
+            }
+        }, 30 * 60 * 1000);
 
         return () => clearInterval(interval);
     }, []);

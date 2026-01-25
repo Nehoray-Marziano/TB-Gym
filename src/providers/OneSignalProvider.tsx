@@ -37,6 +37,9 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
                     enable: false, // We'll use our own UI
                 },
                 allowLocalhostAsSecureOrigin: true, // For development
+                // CRITICAL: Use the same SW as the PWA to avoid conflicts
+                serviceWorkerParam: { scope: "/" },
+                serviceWorkerPath: "sw.js",
             });
 
             // Tag user with their role for targeted notifications
