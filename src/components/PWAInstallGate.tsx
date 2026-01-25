@@ -79,7 +79,7 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
                     >
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
-                                <img src="/icon.png" alt="Icon" className="w-full h-full object-cover" />
+                                <img src="/icon.jpg" alt="Icon" className="w-full h-full object-cover" />
                             </div>
                             <div className="text-right">
                                 <p className="font-bold text-white">Talia</p>
@@ -137,7 +137,7 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
                     className="mb-8"
                 >
                     <div className="w-24 h-24 bg-gradient-to-br from-[#E2F163] to-[#9CA986] rounded-3xl flex items-center justify-center shadow-2xl shadow-[#E2F163]/30">
-                        <img src="/icon.png" alt="App Icon" className="w-[102%] h-[102%] object-cover rounded-3xl" />
+                        <img src="/icon.jpg" alt="App Icon" className="w-[102%] h-[102%] object-cover rounded-3xl" />
                     </div>
                 </motion.div>
 
