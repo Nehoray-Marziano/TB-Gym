@@ -63,7 +63,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
         try {
             console.log("Calling RPC cancel_booking with:", sessionId);
-            const { data, error } = await supabase.rpc("cancel_booking", { session_id_param: sessionId });
+            const { data, error } = await supabase.rpc("cancel_booking", { p_session_id: sessionId });
 
             console.log("RPC Response:", { data, error });
 

@@ -141,19 +141,26 @@ $$;
 -- Drop the old function first to avoid return type conflict
 DROP FUNCTION IF EXISTS book_session(UUID);
 
-CREATE OR REPLACE FUNCTION book_session(session_id UUID)
+CREATE OR REPLACE FUNCTION book_session(p_session_id UUID)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-    ticket_id UUID;
-    session_capacity INT;
-    current_bookings INT;
-    available_tickets INT;
+    v_ticket_id UUID;
+    v_session_capacity INT;
+    v_current_bookings INT;
 BEGIN
-    -- 1. Check for available tickets
-    SELECT id INTO ticket_id
+    -- 1. Check if already registered (confirmed)
+    IF EXISTS (
+        SELECT 1 FROM bookings 
+        WHERE user_id = auth.uid() AND session_id = p_session_id AND status = 'confirmed'
+    ) THEN
+        RETURN json_build_object('success', false, 'message', 'כבר רשומה לאימון זה');
+    END IF;
+
+    -- 2. Check for available tickets
+    SELECT id INTO v_ticket_id
     FROM user_tickets
     WHERE user_id = auth.uid()
       AND used_at IS NULL
@@ -162,40 +169,38 @@ BEGIN
     LIMIT 1
     FOR UPDATE;
     
-    IF ticket_id IS NULL THEN
+    IF v_ticket_id IS NULL THEN
         RETURN json_build_object('success', false, 'message', 'אין כרטיסים זמינים');
     END IF;
 
-    -- 2. Check Session Capacity
-    SELECT max_capacity INTO session_capacity FROM gym_sessions WHERE id = session_id;
-    SELECT COUNT(*) INTO current_bookings FROM bookings 
-        WHERE bookings.session_id = book_session.session_id AND status = 'confirmed';
+    -- 3. Check Session Capacity
+    SELECT max_capacity INTO v_session_capacity FROM gym_sessions WHERE id = p_session_id;
+    SELECT COUNT(*) INTO v_current_bookings FROM bookings 
+        WHERE session_id = p_session_id AND status = 'confirmed';
 
-    IF current_bookings >= session_capacity THEN
+    IF v_current_bookings >= v_session_capacity THEN
         RETURN json_build_object('success', false, 'message', 'האימון מלא');
     END IF;
 
-    -- 3. Use the ticket
+    -- 4. Use the ticket
     UPDATE user_tickets 
-    SET used_at = NOW(), used_for_session = session_id
-    WHERE id = ticket_id;
+    SET used_at = NOW(), used_for_session = p_session_id
+    WHERE id = v_ticket_id;
 
-    -- 4. Create or update booking (UPSERT to handle cancelled records)
+    -- 5. Create or update booking (UPSERT to handle cancelled records)
     INSERT INTO bookings (user_id, session_id, status) 
-    VALUES (auth.uid(), session_id, 'confirmed')
+    VALUES (auth.uid(), p_session_id, 'confirmed')
     ON CONFLICT (user_id, session_id) 
     DO UPDATE SET status = 'confirmed', created_at = NOW();
 
     RETURN json_build_object('success', true, 'message', 'נרשמת בהצלחה!');
 
 EXCEPTION 
-    WHEN unique_violation THEN
-        -- This shouldn't happen with ON CONFLICT but we keep it for safety during migrations
-        UPDATE user_tickets SET used_at = NULL, used_for_session = NULL WHERE id = ticket_id;
-        RETURN json_build_object('success', false, 'message', 'כבר רשומה לאימון זה');
     WHEN OTHERS THEN
         -- Return the ticket on any error
-        UPDATE user_tickets SET used_at = NULL, used_for_session = NULL WHERE id = ticket_id;
+        IF v_ticket_id IS NOT NULL THEN
+            UPDATE user_tickets SET used_at = NULL, used_for_session = NULL WHERE id = v_ticket_id;
+        END IF;
         RETURN json_build_object('success', false, 'message', SQLERRM);
 END;
 $$;
@@ -205,42 +210,35 @@ $$;
 -- Drop the old function first to avoid return type conflict
 DROP FUNCTION IF EXISTS cancel_booking(UUID);
 
-CREATE OR REPLACE FUNCTION cancel_booking(session_id_param UUID)
+CREATE OR REPLACE FUNCTION cancel_booking(p_session_id UUID)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-    booking_record RECORD;
-    ticket_record RECORD;
+    v_booking_id UUID;
+    v_ticket_id UUID;
 BEGIN
-    -- Find the booking
-    SELECT * INTO booking_record
+    -- 1. Find the booking
+    SELECT id INTO v_booking_id
     FROM bookings
     WHERE user_id = auth.uid()
-      AND session_id = session_id_param
+      AND session_id = p_session_id
       AND status = 'confirmed';
     
-    IF NOT FOUND THEN
+    IF v_booking_id IS NULL THEN
         RETURN json_build_object('success', false, 'message', 'לא נמצאה הזמנה לביטול');
     END IF;
 
-    -- Find the ticket used for this booking and return it
-    SELECT * INTO ticket_record
-    FROM user_tickets
+    -- 2. Find and return the ticket
+    UPDATE user_tickets 
+    SET used_at = NULL, used_for_session = NULL
     WHERE user_id = auth.uid()
-      AND used_for_session = session_id_param
-    LIMIT 1;
-    
-    IF FOUND THEN
-        UPDATE user_tickets 
-        SET used_at = NULL, used_for_session = NULL
-        WHERE id = ticket_record.id;
-    END IF;
+      AND used_for_session = p_session_id;
 
-    -- Cancel the booking (Delete it to allow re-registration and fix counts)
+    -- 3. Delete the booking (to clear unique constraint and allow re-registration)
     DELETE FROM bookings 
-    WHERE id = booking_record.id;
+    WHERE id = v_booking_id;
 
     RETURN json_build_object('success', true, 'message', 'האימון בוטל והכרטיס הוחזר');
 END;

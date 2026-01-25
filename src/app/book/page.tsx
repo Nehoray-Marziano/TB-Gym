@@ -108,7 +108,7 @@ export default function BookingPage() {
         // Haptic feedback
         if (navigator.vibrate) navigator.vibrate(10);
 
-        const { data, error } = await supabase.rpc("book_session", { session_id: sessionId });
+        const { data, error } = await supabase.rpc("book_session", { p_session_id: sessionId });
 
         if (error) {
             toast({ title: "שגיאה", description: error.message, type: "error" });
