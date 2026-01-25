@@ -449,7 +449,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                     await OneSignal.User.addTag("role", role.toLowerCase());
                                     if (profile?.email) await OneSignal.User.addEmail(profile.email);
 
-                                    alert(`סנכרון בוצע בהצלחה!\nOneSignal ID: ${userId}\nTag: role=${role.toLowerCase()}`);
+                                    const pushSub = OneSignal.User.PushSubscription;
+                                    alert(`סנכרון בוצע!\nID: ${userId}\nTag: role=${role.toLowerCase()}\n\nPush Active: ${pushSub.optedIn}\nSub ID: ${pushSub.id}`);
                                 } else {
                                     alert("שגיאה: פרטי משתמש חסרים");
                                 }
