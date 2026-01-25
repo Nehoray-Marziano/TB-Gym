@@ -384,7 +384,7 @@ export default function SubscriptionPage() {
 
 <style jsx global>{`
                 @keyframes shimmer {
-                    0% { transform: translateX(-100%) skewX(-12deg); }
+                    0% { transform: translateX(-200%) skewX(-12deg); }
                     100% { transform: translateX(200%) skewX(-12deg); }
                 }
                 .animate-shimmer {
