@@ -153,19 +153,23 @@ export default function LandingPage() {
         if (!otpCode) return;
         setIsLoading(true);
 
-        const { error } = await supabase.auth.verifyOtp({
+        const { data, error } = await supabase.auth.verifyOtp({
             email,
             token: otpCode,
-            type: 'email'
+            type: 'magiclink'
         });
+
+        console.log("verifyOtp result:", { data, error });
 
         if (error) {
             setIsLoading(false);
-            alert("קוד שגוי או פג תוקף");
+            alert("קוד שגוי או פג תוקף: " + error.message);
+        } else if (data?.session) {
+            // Session established - redirect to dashboard
+            window.location.href = "/dashboard";
         } else {
-            // Success - session is set, redirect happens via router or auth state change listener usually
-            // But here we rely on Supabase refreshing the session.
-            window.location.reload(); // Simple reload to pick up session, or rely on auth state listener higher up
+            setIsLoading(false);
+            alert("אימות הצליח אך לא נוצרה סשן. נסי שוב.");
         }
     };
 
