@@ -18,9 +18,12 @@ interface OneSignalProviderProps {
 export default function OneSignalProvider({ userId, userRole, userEmail }: OneSignalProviderProps) {
     const initialized = useRef(false);
 
+    // Effect 1: Initialize OneSignal (Run Once)
     useEffect(() => {
         if (initialized.current) return;
         if (typeof window === "undefined") return;
+
+        initialized.current = true;
 
         // Load OneSignal SDK
         const script = document.createElement("script");
@@ -32,7 +35,6 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
         window.OneSignalDeferred.push(async function (OneSignal: any) {
             await OneSignal.init({
                 appId: "2e5776b6-3487-4a5d-bca0-04570c82d150",
-                // Safari web ID can be added here if configured
                 welcomeNotification: {
                     disable: true // We let the Dashboard handle this via Push, avoid client-side conflict
                 },
@@ -45,31 +47,47 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
                 serviceWorkerPath: "sw.js",
             });
 
-            // Tag user with their role for targeted notifications
-            if (userId) {
-                await OneSignal.login(userId);
-            }
-            if (userRole) {
-                await OneSignal.User.addTag("role", userRole);
-            }
-            if (userEmail) {
-                await OneSignal.User.addEmail(userEmail);
-            }
-
             // CRITICAL: Suppress duplicate foreground notifications
             // The Service Worker (system) handles notifications. 
             // We don't want the Page SDK to ALSO show one.
             OneSignal.Notifications.addEventListener('foregroundWillDisplay', function (event: any) {
                 console.log("[OneSignal] Foreground notification received - suppressing to avoid duplicate", event);
-                // Prevent the SDK from displaying the alert/toast
-                // The native system notification from SW should still appear (or we rely on just SW)
                 event.preventDefault();
             });
 
-            console.log("OneSignal initialized", { userId, userRole, userEmail });
+            console.log("OneSignal initialized core");
         });
+    }, []); // Empty dependency array = true singleton init
 
-        initialized.current = true;
+
+    // Effect 2: Manage User Identity (Run on change)
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        window.OneSignalDeferred.push(async function (OneSignal: any) {
+            // Only convert user if initialized
+            if (!OneSignal.User) return;
+
+            console.log("OneSignal Syncing User:", { userId, userRole, userEmail });
+
+            if (userId) {
+                await OneSignal.login(userId);
+
+                // Add tags/email only after login
+                if (userRole) {
+                    await OneSignal.User.addTag("role", userRole);
+                }
+                if (userEmail) {
+                    await OneSignal.User.addEmail(userEmail);
+                }
+            } else {
+                // If userId becomes null (logout), we might want to logout from OneSignal too
+                // OneSignal.logout(); 
+                // However, for this app, we might want to keep the device registered as guest.
+                // Leaving as is for now unless explicit logout requested.
+            }
+        });
     }, [userId, userRole, userEmail]);
 
     return null; // This component doesn't render anything
