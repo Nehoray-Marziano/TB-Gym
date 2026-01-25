@@ -11,6 +11,7 @@ import gsap from "gsap";
 import BottomNav from "@/components/BottomNav";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import OneSignalProvider from "@/providers/OneSignalProvider";
+import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 
 // Animated counter component for tickets
 function AnimatedCounter({ value, className }: { value: number; className?: string }) {
@@ -259,6 +260,9 @@ export default function UserDashboard({ user }: { user: any }) {
                 userRole={profile?.role}
                 userEmail={user?.email}
             />
+
+            {/* Notification Permission Modal - shows on first visit */}
+            <NotificationPermissionModal />
 
             {/* Animated gradient background */}
             <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full pointer-events-none blur-3xl animate-pulse" />

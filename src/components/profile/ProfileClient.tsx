@@ -380,14 +380,35 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     </div>
                 </button>
 
-                <button className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-border/80 transition-all active:scale-[0.98]`}>
+                <button
+                    onClick={async () => {
+                        if (navigator.vibrate) navigator.vibrate(10);
+                        if (typeof window !== 'undefined' && (window as any).OneSignal) {
+                            try {
+                                const permission = await (window as any).OneSignal.Notifications.permission;
+                                if (!permission) {
+                                    await (window as any).OneSignal.Notifications.requestPermission();
+                                    toast({ title: "התראות הופעלו! 🔔", type: "success" });
+                                } else {
+                                    toast({ title: "התראות כבר מופעלות ✓", description: "ניתן לשנות בהגדרות הדפדפן", type: "success" });
+                                }
+                            } catch (e) {
+                                console.error("Notification error:", e);
+                                toast({ title: "שגיאה בהפעלת התראות", type: "error" });
+                            }
+                        } else {
+                            toast({ title: "שירות ההתראות לא זמין", description: "נסי לרענן את הדף", type: "error" });
+                        }
+                    }}
+                    className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]`}
+                >
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:bg-muted/30 transition-all">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:bg-primary/20 transition-all">
                             {Bell && <Bell className="w-5 h-5" />}
                         </div>
-                        <span className="font-bold text-foreground">הגדרות התראות</span>
+                        <span className="font-bold text-foreground">הפעלת התראות</span>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                    <div className="text-xs text-muted-foreground bg-muted/20 px-3 py-1 rounded-full">לחצי להפעלה</div>
                 </button>
 
                 <button
