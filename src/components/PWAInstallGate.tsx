@@ -98,7 +98,7 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
                         transition={{ delay: 0.6 }}
                         className="text-neutral-600 text-xs mt-12"
                     >
-                        © 2024 Talia Studio
+                        © 2026 Talia Studio
                     </motion.p>
                 </main>
             </div>
@@ -217,7 +217,7 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
                     transition={{ delay: 0.6 }}
                     className="text-neutral-600 text-xs mt-12"
                 >
-                    © 2024 Talia Studio
+                    © 2026 Talia Studio
                 </motion.p>
             </main>
 

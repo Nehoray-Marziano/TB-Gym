@@ -430,7 +430,7 @@ export default function LandingPage() {
             {/* Footer */}
             <footer className="relative z-10 py-8 text-center border-t border-white/5">
                 <p className="text-neutral-600 text-xs font-medium">
-                    © 2024 Talia Studio. כל הזכויות שמורות.
+                    © 2026 Talia Studio. כל הזכויות שמורות.
                 </p>
             </footer>
         </div>
