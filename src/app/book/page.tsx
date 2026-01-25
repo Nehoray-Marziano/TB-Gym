@@ -120,6 +120,22 @@ export default function BookingPage() {
             await refreshData();
             await fetchSessions();
             toast({ title: "נרשמת בהצלחה! 🎉", description: "נתראה באימון", type: "success" });
+
+            // Notify trainer about new booking
+            try {
+                const session = sessions.find(s => s.id === sessionId);
+                await fetch("/api/notifications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: "הרשמה חדשה! 🎉",
+                        message: `מתאמנת נרשמה לאימון ${session?.title || ""}`,
+                        targetRole: "administrator"
+                    })
+                });
+            } catch (e) {
+                console.log("Notification error:", e);
+            }
         }
         setBookingId(null);
     };

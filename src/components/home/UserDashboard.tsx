@@ -10,6 +10,7 @@ import StudioLogo from "@/components/StudioLogo";
 import gsap from "gsap";
 import BottomNav from "@/components/BottomNav";
 import { getRelativeTimeHebrew } from "@/lib/utils";
+import OneSignalProvider from "@/providers/OneSignalProvider";
 
 // Animated counter component for tickets
 function AnimatedCounter({ value, className }: { value: number; className?: string }) {
@@ -252,6 +253,13 @@ export default function UserDashboard({ user }: { user: any }) {
 
     return (
         <div ref={containerRef} className="fixed inset-0 bg-background text-foreground overflow-hidden font-sans">
+            {/* OneSignal Initialization */}
+            <OneSignalProvider
+                userId={user?.id}
+                userRole={profile?.role}
+                userEmail={user?.email}
+            />
+
             {/* Animated gradient background */}
             <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full pointer-events-none blur-3xl animate-pulse" />
             <div className="fixed bottom-1/3 left-0 w-[200px] h-[200px] bg-primary/3 rounded-full pointer-events-none blur-3xl" />
