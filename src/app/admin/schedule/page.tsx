@@ -31,7 +31,8 @@ type Session = {
     start_time: string;
     end_time: string;
     max_capacity: number;
-    bookings: [{ count: number }];
+    current_bookings: number; // Use the count from our view
+    bookings: [{ count: number }]; // Keep for backward compat
 };
 
 type Booking = {
@@ -90,7 +91,7 @@ export default function AdminSchedulePage() {
 
     const fetchSessions = async () => {
         const { data, error } = await supabase
-            .from("gym_sessions")
+            .from("gym_sessions_with_counts")
             .select("*, bookings(count)")
             .order("start_time", { ascending: true });
 
@@ -165,7 +166,7 @@ export default function AdminSchedulePage() {
     };
 
     const handleDeleteClick = (session: Session) => {
-        const count = session.bookings[0]?.count || 0;
+        const count = session.current_bookings || 0;
         setDeleteConfirmation({ isOpen: true, session, userCount: count });
     };
 
@@ -422,7 +423,7 @@ export default function AdminSchedulePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <AnimatePresence mode="wait">
                         {displayedSessions.map((session, index) => {
-                            const count = session.bookings[0]?.count || 0;
+                            const count = session.current_bookings || 0;
                             const fillPercent = Math.min((count / session.max_capacity) * 100, 100);
                             const isFull = count >= session.max_capacity;
 

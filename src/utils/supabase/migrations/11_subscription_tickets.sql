@@ -180,14 +180,17 @@ BEGIN
     SET used_at = NOW(), used_for_session = session_id
     WHERE id = ticket_id;
 
-    -- 4. Create booking
-    INSERT INTO bookings (user_id, session_id) VALUES (auth.uid(), session_id);
+    -- 4. Create or update booking (UPSERT to handle cancelled records)
+    INSERT INTO bookings (user_id, session_id, status) 
+    VALUES (auth.uid(), session_id, 'confirmed')
+    ON CONFLICT (user_id, session_id) 
+    DO UPDATE SET status = 'confirmed', created_at = NOW();
 
     RETURN json_build_object('success', true, 'message', 'נרשמת בהצלחה!');
 
 EXCEPTION 
     WHEN unique_violation THEN
-        -- Return the ticket if booking failed
+        -- This shouldn't happen with ON CONFLICT but we keep it for safety during migrations
         UPDATE user_tickets SET used_at = NULL, used_for_session = NULL WHERE id = ticket_id;
         RETURN json_build_object('success', false, 'message', 'כבר רשומה לאימון זה');
     WHEN OTHERS THEN

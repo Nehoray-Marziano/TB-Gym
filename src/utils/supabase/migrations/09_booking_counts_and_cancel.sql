@@ -2,12 +2,7 @@
 -- This allows us to easily see if a session is "FULL" in the frontend
 CREATE OR REPLACE VIEW gym_sessions_with_counts AS
 SELECT
-    s.id,
-    s.title,
-    s.start_time,
-    s.end_time,
-    s.max_capacity,
-    -- Add other columns from gym_sessions if needed, e.g. location, trainer_id
+    s.*,
     COUNT(b.session_id) FILTER (WHERE b.status = 'confirmed') as current_bookings
 FROM
     gym_sessions s
