@@ -16,7 +16,8 @@ export default function ConnectedOneSignalProvider() {
     return (
         <OneSignalProvider
             userId={profile?.id}
-            userRole={profile?.role}
+            // Default to "trainee" if role is missing but user is logged in (likely standard user)
+            userRole={profile?.role || "trainee"}
             userEmail={profile?.email} // profile type doesn't have email in GymStore definition? Let's check.
         />
     );

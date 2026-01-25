@@ -72,12 +72,16 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
             console.log("OneSignal Syncing User:", { userId, userRole, userEmail });
 
             if (userId) {
+                console.log(`[OneSignal] Logging in user: ${userId}`);
                 await OneSignal.login(userId);
 
                 // Add tags/email only after login
                 if (userRole) {
+                    console.log(`[OneSignal] Setting role tag: ${userRole.toLowerCase()}`);
                     // Normalize role to lowercase for consistent targeting
                     await OneSignal.User.addTag("role", userRole.toLowerCase());
+                } else {
+                    console.log("[OneSignal] No userRole provided, skipping role tag.");
                 }
                 if (userEmail) {
                     await OneSignal.User.addEmail(userEmail);
