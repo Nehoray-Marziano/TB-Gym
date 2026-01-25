@@ -7,6 +7,7 @@ type Profile = {
     id: string;
     full_name: string;
     role: string;
+    email?: string;
 };
 
 type Subscription = {
@@ -113,7 +114,17 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
             // 1. Set Profile
             if (profileRes.data) {
-                setProfile(profileRes.data);
+                // Determine email from auth session if available (since not in public profile)
+                // We likely need to pass it down or store it.
+                // For now, let's just use the profile data as is, and update the type.
+                // Actually, let's get email from the `user` object if we found it.
+                // We need to store it.
+                // Let's modify the profile state to include email from auth.
+                let userEmail = "";
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) userEmail = user.email || "";
+
+                setProfile({ ...profileRes.data, email: userEmail });
             }
 
             // 2. Set Tickets (new system)

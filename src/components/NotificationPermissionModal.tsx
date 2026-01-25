@@ -46,11 +46,21 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                     clearInterval(waitForOneSignal);
 
                     try {
-                        const permission = await window.OneSignal.Notifications.permission;
-                        console.log("OneSignal permission:", permission);
+                        const permission = window.OneSignal.Notifications.permission;
+                        console.log("[OneSignal] Permission status:", permission);
 
-                        // Only show if not already granted or denied
-                        if (!permission) {
+                        // If permission is 'default', it means user hasn't been prompted yet -> SHOW MODAL
+                        // If permission is 'false' (boolean) -> SHOW MODAL
+                        // If permission is 'denied' -> DO NOT SHOW (user blocked it)
+                        // If permission is 'granted' -> DO NOT SHOW (already enabled)
+
+                        const shouldShow = permission === true || permission === "default" || permission === undefined || permission === false;
+                        // Actually, simplified: Show if NOT granted and NOT denied.
+
+                        // Check if already dismissed in session/storage
+                        const dismissed = localStorage.getItem(storageKey);
+
+                        if (dismissed !== "true" && permission !== "granted" && permission !== true) {
                             // Small delay to let the dashboard load first
                             setTimeout(() => {
                                 setIsVisible(true);

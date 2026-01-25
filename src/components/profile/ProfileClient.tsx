@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
 import gsap from "gsap";
-import OneSignalProvider from "@/providers/OneSignalProvider";
+
 
 type UserProfile = {
     id: string;
@@ -172,11 +172,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     return (
         <div ref={containerRef} className="min-h-[100dvh] bg-background text-foreground p-6 pb-20 font-sans selection:bg-primary selection:text-black">
             {/* OneSignal Initialization */}
-            <OneSignalProvider
-                userId={profile?.id}
-                userRole={profile?.role}
-                userEmail={profile?.email}
-            />
+            {/* OneSignal Initialization is now handled globally in RootLayout/GymStoreProvider */}
 
             {/* Ambient background */}
             <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />

@@ -10,7 +10,7 @@ import StudioLogo from "@/components/StudioLogo";
 import gsap from "gsap";
 import BottomNav from "@/components/BottomNav";
 import { getRelativeTimeHebrew } from "@/lib/utils";
-import OneSignalProvider from "@/providers/OneSignalProvider";
+import notificationPermissionModal from "@/components/NotificationPermissionModal";
 import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 
 // Animated counter component for tickets
@@ -255,11 +255,7 @@ export default function UserDashboard({ user }: { user: any }) {
     return (
         <div ref={containerRef} className="fixed inset-0 bg-background text-foreground overflow-hidden font-sans">
             {/* OneSignal Initialization */}
-            <OneSignalProvider
-                userId={user?.id}
-                userRole={profile?.role}
-                userEmail={user?.email}
-            />
+            {/* OneSignal Initialization is now handled globally in RootLayout */}
 
             {/* Notification Permission Modal - shows on first visit */}
             <NotificationPermissionModal />
