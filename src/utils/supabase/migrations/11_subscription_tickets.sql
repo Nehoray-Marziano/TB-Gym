@@ -235,9 +235,8 @@ BEGIN
         WHERE id = ticket_record.id;
     END IF;
 
-    -- Cancel the booking
-    UPDATE bookings 
-    SET status = 'cancelled'
+    -- Cancel the booking (Delete it to allow re-registration and fix counts)
+    DELETE FROM bookings 
     WHERE id = booking_record.id;
 
     RETURN json_build_object('success', true, 'message', 'האימון בוטל והכרטיס הוחזר');

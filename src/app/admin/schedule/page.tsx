@@ -330,7 +330,7 @@ export default function AdminSchedulePage() {
                                         })
                                     });
                                     const data = await res.json();
-                                    alert(`ההודעה נשלחה בהצלחה! (נמענים: ${data.recipients || 0})`);
+                                    alert("ההודעה נשלחה בהצלחה!");
                                 } catch (e) {
                                     alert("שגיאה בשליחה");
                                 }
