@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { Zap, Users, Trophy, Loader2, Sparkles } from "lucide-react";
+import { Zap, Users, Trophy, Loader2, Sparkles, Mail, ArrowLeft, ArrowRight } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { AnimatePresence, motion } from "framer-motion";
 import gsap from "gsap";
 
 export default function LandingPage() {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [loginView, setLoginView] = useState<'menu' | 'email' | 'otp'>('menu');
+    const [email, setEmail] = useState("");
+    const [otpCode, setOtpCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
     const supabase = getSupabaseClient();
 
     // GSAP Refs
@@ -106,6 +110,15 @@ export default function LandingPage() {
         return () => ctx.revert();
     }, []);
 
+    // Handlers
+    const resetLoginState = () => {
+        setIsLoginOpen(false);
+        setLoginView('menu');
+        setEmail("");
+        setOtpCode("");
+        setIsLoading(false);
+    };
+
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         const redirectUrl = `${window.location.origin}/auth/callback`;
@@ -119,16 +132,40 @@ export default function LandingPage() {
         }
     };
 
-    const handleAppleLogin = async () => {
+    const handleSendCode = async () => {
+        if (!email) return;
         setIsLoading(true);
-        const redirectUrl = `${window.location.origin}/auth/callback`;
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: "apple",
-            options: { redirectTo: redirectUrl },
+        const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: { shouldCreateUser: true }
         });
+
+        setIsLoading(false);
+
         if (error) {
-            console.error(error);
+            alert("שגיאה: " + error.message);
+        } else {
+            setLoginView('otp');
+        }
+    };
+
+    const handleVerifyCode = async () => {
+        if (!otpCode) return;
+        setIsLoading(true);
+
+        const { error } = await supabase.auth.verifyOtp({
+            email,
+            token: otpCode,
+            type: 'email'
+        });
+
+        if (error) {
             setIsLoading(false);
+            alert("קוד שגוי או פג תוקף");
+        } else {
+            // Success - session is set, redirect happens via router or auth state change listener usually
+            // But here we rely on Supabase refreshing the session.
+            window.location.reload(); // Simple reload to pick up session, or rely on auth state listener higher up
         }
     };
 
@@ -215,76 +252,128 @@ export default function LandingPage() {
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                className="w-full md:w-auto bg-neutral-900/90 backdrop-blur-xl border border-white/10 p-4 md:p-2 rounded-[2rem] shadow-2xl flex flex-col md:flex-row gap-3 items-center relative overflow-hidden"
+                                className="w-full md:w-auto bg-neutral-900/90 backdrop-blur-xl border border-white/10 p-4 md:p-2 rounded-[2rem] shadow-2xl flex flex-col md:flex-row gap-6 items-stretch relative overflow-hidden"
                             >
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setIsLoginOpen(false); }}
+                                    onClick={(e) => { e.stopPropagation(); resetLoginState(); }}
                                     className="absolute top-3 left-4 md:left-auto md:top-2 md:right-4 text-neutral-500 hover:text-white text-xs font-bold uppercase tracking-wider z-20 p-2 transition-colors"
                                 >
                                     חזרה
                                 </button>
 
-                                <div className="p-4 pt-8 md:pt-4 text-center md:text-right w-full md:w-auto">
+                                <div className="p-4 pt-8 md:pt-4 text-center md:text-right w-full md:w-auto flex flex-col justify-center min-w-[200px]">
                                     <h3 className="text-white font-bold text-lg mb-1 flex items-center justify-center md:justify-start gap-2">
                                         <Sparkles className="w-4 h-4 text-[#E2F163]" />
-                                        התחברות מהירה
+                                        {loginView === 'menu' && "התחברות מהירה"}
+                                        {loginView === 'email' && "התחברות במייל"}
+                                        {loginView === 'otp' && "אימות קוד"}
                                     </h3>
-                                    <p className="text-neutral-500 text-xs">בחרי דרך להתחיל</p>
+                                    <p className="text-neutral-500 text-xs">
+                                        {loginView === 'menu' && "בחרי דרך להתחיל"}
+                                        {loginView === 'email' && "נשלח לך קוד חד פעמי להתחברות"}
+                                        {loginView === 'otp' && "הזיני את הקוד שקיבלת במייל"}
+                                    </p>
                                 </div>
 
-                                <div className="flex flex-col gap-3 w-full md:w-auto">
-                                    <button
-                                        id="google-signin-button"
-                                        onClick={handleGoogleLogin}
-                                        disabled={isLoading}
-                                        className="flex items-center gap-3 bg-white text-black font-bold py-4 px-6 rounded-2xl w-full md:min-w-[200px] justify-center active:scale-95 transition-all hover:shadow-lg disabled:opacity-70"
-                                    >
-                                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                                            <>
-                                                <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
-                                                Google
-                                            </>
-                                        )}
-                                    </button>
-
-                                    {/* Divider */}
-                                    <div className="flex items-center gap-2 px-2 opacity-50">
-                                        <div className="h-px bg-white/20 flex-1" />
-                                        <span className="text-[10px] uppercase font-bold tracking-widest">או</span>
-                                        <div className="h-px bg-white/20 flex-1" />
-                                    </div>
-
-                                    {/* Magic Link */}
-                                    <div className="relative">
+                                {/* MENU VIEW */}
+                                {loginView === 'menu' && (
+                                    <div className="flex flex-col gap-3 w-full md:w-auto min-w-[280px]">
                                         <button
-                                            onClick={() => {
-                                                const email = prompt("הזיני את כתובת האימייל שלך:");
-                                                if (email) {
-                                                    setIsLoading(true);
-                                                    supabase.auth.signInWithOtp({
-                                                        email,
-                                                        options: {
-                                                            emailRedirectTo: `${window.location.origin}/auth/callback`,
-                                                            shouldCreateUser: true
-                                                        }
-                                                    }).then(({ error }) => {
-                                                        setIsLoading(false);
-                                                        if (error) {
-                                                            alert("שגיאה בשליחת המייל: " + error.message);
-                                                        } else {
-                                                            alert("לינק התחברות נשלח למייל שלך! בדקי את תיבת הדואר.");
-                                                        }
-                                                    });
-                                                }
-                                            }}
+                                            id="google-signin-button"
+                                            onClick={handleGoogleLogin}
                                             disabled={isLoading}
-                                            className="flex items-center gap-3 bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all disabled:opacity-70"
+                                            className="flex items-center gap-3 bg-white text-black font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all hover:shadow-lg disabled:opacity-70"
                                         >
-                                            <svg className="w-5 h-5 text-[#E2F163]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-                                            התחברות במייל
+                                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                                <>
+                                                    <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+                                                    Google
+                                                </>
+                                            )}
+                                        </button>
+
+                                        <div className="flex items-center gap-2 px-2 opacity-50">
+                                            <div className="h-px bg-white/20 flex-1" />
+                                            <span className="text-[10px] uppercase font-bold tracking-widest">או</span>
+                                            <div className="h-px bg-white/20 flex-1" />
+                                        </div>
+
+                                        <button
+                                            onClick={() => setLoginView('email')}
+                                            className="flex items-center gap-3 bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all text-sm"
+                                        >
+                                            <Mail className="w-4 h-4 text-[#E2F163]" />
+                                            התחברות באמצעות קוד במייל
                                         </button>
                                     </div>
-                                </div>
+                                )}
+
+                                {/* EMAIL INPUT VIEW */}
+                                {loginView === 'email' && (
+                                    <div className="flex flex-col gap-3 w-full md:w-auto min-w-[280px]">
+                                        <input
+                                            type="email"
+                                            placeholder="your@email.com"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-white/30 focus:outline-none focus:border-[#E2F163] transition-colors text-left dir-ltr"
+                                            dir="ltr"
+                                            autoFocus
+                                        />
+                                        <button
+                                            onClick={handleSendCode}
+                                            disabled={isLoading || !email}
+                                            className="flex items-center gap-2 bg-[#E2F163] text-black font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all disabled:opacity-50"
+                                        >
+                                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                                <>
+                                                    שלחי לי קוד
+                                                    <ArrowLeft className="w-4 h-4" />
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => setLoginView('menu')}
+                                            className="text-xs text-neutral-400 hover:text-white mt-1"
+                                        >
+                                            חזרה לאפשרויות
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* OTP INPUT VIEW */}
+                                {loginView === 'otp' && (
+                                    <div className="flex flex-col gap-3 w-full md:w-auto min-w-[280px]">
+                                        <input
+                                            type="text"
+                                            placeholder="123456"
+                                            value={otpCode}
+                                            onChange={(e) => setOtpCode(e.target.value)}
+                                            className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-4 text-white text-center text-2xl tracking-[0.5em] placeholder:text-white/10 focus:outline-none focus:border-[#E2F163] transition-colors"
+                                            maxLength={6}
+                                            autoFocus
+                                        />
+                                        <button
+                                            onClick={handleVerifyCode}
+                                            disabled={isLoading || otpCode.length < 6}
+                                            className="flex items-center gap-2 bg-[#E2F163] text-black font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all disabled:opacity-50"
+                                        >
+                                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                                <>
+                                                    אימות והתחברות
+                                                    <ArrowLeft className="w-4 h-4" />
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => setLoginView('email')}
+                                            className="text-xs text-neutral-400 hover:text-white mt-1"
+                                        >
+                                            שליחה מחדש / תיקון מייל
+                                        </button>
+                                    </div>
+                                )}
+
                             </motion.div>
                         )}
                     </AnimatePresence>
