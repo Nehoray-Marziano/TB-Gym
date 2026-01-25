@@ -1,5 +1,6 @@
 -- 1. Create a View to get sessions with their booking counts efficiently
 -- This allows us to easily see if a session is "FULL" in the frontend
+DROP VIEW IF EXISTS gym_sessions_with_counts;
 CREATE OR REPLACE VIEW gym_sessions_with_counts AS
 SELECT
     s.*,
