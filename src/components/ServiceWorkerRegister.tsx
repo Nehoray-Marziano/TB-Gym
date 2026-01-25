@@ -5,30 +5,31 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function ServiceWorkerRegister() {
     const [updateAvailable, setUpdateAvailable] = useState(false);
-    const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+    const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
     // Track if this is a fresh page load (no existing controller when we started)
     const wasFreshLoad = useRef<boolean>(false);
 
-    const handleUpdate = useCallback(async () => {
-        // 1. Clear all caches to ensure fresh content
+    const handleUpdate = useCallback(() => {
+        // Use ref to avoid stale state
+        const reg = registrationRef.current;
+
+        // Clear all caches
         if ("caches" in window) {
-            try {
-                const keys = await caches.keys();
-                await Promise.all(keys.map(key => caches.delete(key)));
-                console.log("[SW] Caches cleared for update");
-            } catch (err) {
-                console.error("[SW] Failed to clear caches:", err);
-            }
+            caches.keys().then(keys => {
+                keys.forEach(key => caches.delete(key));
+            });
         }
 
-        // 2. Tell waiting SW to take over
-        if (registration?.waiting) {
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-        } else {
-            // Fallback if no waiting worker (unlikely if updateAvailable is true)
-            window.location.reload();
+        // Tell waiting SW to take over
+        if (reg?.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
-    }, [registration]);
+
+        // Force reload after short delay
+        setTimeout(() => {
+            window.location.reload();
+        }, 300);
+    }, []);
 
     useEffect(() => {
         if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
@@ -43,7 +44,7 @@ export default function ServiceWorkerRegister() {
         const registerSW = async () => {
             try {
                 const reg = await navigator.serviceWorker.register("/sw.js");
-                setRegistration(reg);
+                registrationRef.current = reg;
                 console.log("[SW] Registered successfully:", reg.scope);
 
                 // Check for updates immediately
@@ -100,11 +101,11 @@ export default function ServiceWorkerRegister() {
 
         // Check for updates periodically (every 5 minutes)
         const interval = setInterval(() => {
-            registration?.update();
+            registrationRef.current?.update();
         }, 5 * 60 * 1000);
 
         return () => clearInterval(interval);
-    }, [registration]);
+    }, []);
 
     return (
         <AnimatePresence>
