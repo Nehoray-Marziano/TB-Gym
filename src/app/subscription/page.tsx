@@ -21,7 +21,7 @@ const TIERS = [
         pricePerSession: 60,
         icon: Star,
         color: "#94a3b8", // Slate
-        bgGradient: "radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%)",
+        bgGradient: "radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%)",
         accentGradient: "from-slate-400 to-slate-600",
         features: [
             "4 אימונים בחודש",
@@ -40,7 +40,7 @@ const TIERS = [
         pricePerSession: 56.25,
         icon: Flame,
         color: "#E2F163", // Neon
-        bgGradient: "radial-gradient(circle at 50% 50%, #3f420b 0%, #1a1c05 100%)",
+        bgGradient: "radial-gradient(circle at 50% 50%, #1a1c05 0%, #000000 100%)",
         accentGradient: "from-[#E2F163] to-[#d4e450]",
         popular: true,
         discount: 6,
@@ -62,7 +62,7 @@ const TIERS = [
         pricePerSession: 54.16,
         icon: Crown,
         color: "#db2777", // Pink
-        bgGradient: "radial-gradient(circle at 50% 50%, #500724 0%, #290514 100%)",
+        bgGradient: "radial-gradient(circle at 50% 50%, #290514 0%, #000000 100%)",
         accentGradient: "from-pink-500 to-rose-600",
         features: [
             "12 אימונים בחודש",
@@ -106,7 +106,7 @@ export default function SubscriptionPage() {
             })
                 .to(".underline-path", {
                     strokeDashoffset: 0,
-                    duration: 1.2,
+                    duration: 2.5,
                     ease: "power2.out"
                 }, "-=0.5");
         }, containerRef);
@@ -227,141 +227,141 @@ export default function SubscriptionPage() {
                 </div>
 
                 {/* TIERS STACK */}
-                <LayoutGroup>
-                    <div className="px-5 space-y-6">
-                        {TIERS.map((tier) => {
-                            const isSelected = selectedTierId === tier.id;
-                            const isPurchasing = purchasing === tier.id;
-                            const Icon = tier.icon;
+                <div className="px-5 space-y-6">
+                    {TIERS.map((tier) => {
+                        const isSelected = selectedTierId === tier.id;
+                        const isPurchasing = purchasing === tier.id;
+                        const Icon = tier.icon;
 
-                            return (
-                                <motion.div
-                                    layout="position"
-                                    key={tier.id}
-                                    className="entrance-item relative"
-                                    onClick={() => setSelectedTierId(tier.id)}
+                        return (
+                            <motion.div
+                                key={tier.id}
+                                className="entrance-item relative"
+                                onClick={() => setSelectedTierId(tier.id)}
+                            >
+                                {/* Active Glow Behind Card */}
+                                <div
+                                    className={cn(
+                                        "absolute -inset-1 rounded-[2.5rem] blur-xl transition-all duration-500",
+                                        isSelected ? "opacity-40" : "opacity-0"
+                                    )}
+                                    style={{ backgroundColor: tier.color }}
+                                />
+
+                                {/* Card Body */}
+                                <div
+                                    className={cn(
+                                        "relative overflow-hidden rounded-[2rem] border transition-all duration-300",
+                                        isSelected
+                                            ? "border-white/20 bg-white/5 shadow-2xl"
+                                            : "border-white/5 bg-black/20"
+                                    )}
+                                    style={{
+                                        backdropFilter: 'blur(12px)',
+                                        // Slight scale up if selected, but purely visual transform
+                                        transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+                                    }}
                                 >
-                                    {/* Active Glow Behind Card */}
-                                    <motion.div
-                                        animate={{ opacity: isSelected ? 0.4 : 0 }}
-                                        className="absolute -inset-1 rounded-[2.5rem] blur-xl transition-colors duration-500"
-                                        style={{ backgroundColor: tier.color }}
-                                    />
+                                    {/* Popular Badge */}
+                                    {tier.popular && (
+                                        <div className="absolute top-0 right-0 p-6 z-10">
+                                            <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-1.5">
+                                                <Zap className="w-3 h-3 text-[#E2F163] fill-[#E2F163]" />
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">פופולרי</span>
+                                            </div>
+                                        </div>
+                                    )}
 
-                                    {/* Card Body */}
-                                    <motion.div
-                                        layout
-                                        className={cn(
-                                            "relative overflow-hidden rounded-[2rem] border transition-all duration-300",
-                                            isSelected
-                                                ? "border-white/20 bg-white/5 shadow-2xl"
-                                                : "border-white/5 bg-black/20"
-                                        )}
-                                        style={{ backdropFilter: 'blur(12px)' }} // Static blur is safer
-                                    >
-                                        {/* Popular Badge */}
-                                        {tier.popular && (
-                                            <div className="absolute top-0 right-0 p-6 z-10">
-                                                <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-1.5">
-                                                    <Zap className="w-3 h-3 text-[#E2F163] fill-[#E2F163]" />
-                                                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">פופולרי</span>
+                                    <div className="p-8">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div>
+                                                <h3 className={cn("text-xl font-bold mb-1 transition-colors duration-300", isSelected ? "text-white" : "text-white/60")}>
+                                                    {tier.displayName}
+                                                </h3>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className={cn("text-4xl font-black tracking-tight", isSelected ? "text-white" : "text-white/50")}>
+                                                        {tier.price}
+                                                    </span>
+                                                    <span className="text-lg text-white/40">₪</span>
+                                                    <span className="text-sm text-white/30 mr-2">/ לחודש</span>
                                                 </div>
                                             </div>
-                                        )}
-
-                                        <div className="p-8">
-                                            <div className="flex justify-between items-start mb-6">
-                                                <motion.div layout="position">
-                                                    <h3 className={cn("text-xl font-bold mb-1 transition-colors duration-300", isSelected ? "text-white" : "text-white/60")}>
-                                                        {tier.displayName}
-                                                    </h3>
-                                                    <div className="flex items-baseline gap-1">
-                                                        <span className={cn("text-4xl font-black tracking-tight", isSelected ? "text-white" : "text-white/50")}>
-                                                            {tier.price}
-                                                        </span>
-                                                        <span className="text-lg text-white/40">₪</span>
-                                                        <span className="text-sm text-white/30 mr-2">/ לחודש</span>
-                                                    </div>
-                                                </motion.div>
-                                                <motion.div
-                                                    layout="position"
-                                                    className={cn(
-                                                        "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500",
-                                                        isSelected ? "bg-white/10 text-white scan-pulse" : "bg-white/5 text-white/20"
-                                                    )}
-                                                    style={{ color: isSelected ? tier.color : undefined }}
-                                                >
-                                                    <Icon className="w-6 h-6" />
-                                                </motion.div>
-                                            </div>
-
-                                            {/* Collapsible Content */}
-                                            <AnimatePresence mode="popLayout">
-                                                {isSelected && (
-                                                    <motion.div
-                                                        initial={{ height: 0, opacity: 0 }}
-                                                        animate={{ height: "auto", opacity: 1 }}
-                                                        exit={{ height: 0, opacity: 0 }}
-                                                        transition={{ duration: 0.3, ease: "easeOut" }}
-                                                        className="overflow-hidden"
-                                                    >
-                                                        <div className="h-px w-full bg-white/10 mb-6" />
-
-                                                        <ul className="space-y-4 mb-8">
-                                                            {tier.features.map((feature, i) => (
-                                                                <li key={i} className="flex items-start gap-3">
-                                                                    <Check className="w-5 h-5 shrink-0" style={{ color: tier.color }} />
-                                                                    <span className="text-sm text-white/80 leading-tight">{feature}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handlePurchase(tier.id);
-                                                            }}
-                                                            disabled={isPurchasing}
-                                                            className="w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-transform"
-                                                            style={{
-                                                                background: `linear-gradient(135deg, ${tier.color}, transparent)`,
-                                                                backgroundColor: 'rgba(255,255,255,0.1)'
-                                                            }}
-                                                        >
-                                                            {isPurchasing ? (
-                                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                                            ) : (
-                                                                <>
-                                                                    <span className="relative z-10 text-white">אני רוצה את זה</span>
-                                                                    <ArrowRight className="w-5 h-5 text-white rotate-180" />
-                                                                </>
-                                                            )}
-                                                            {/* Button sheen */}
-                                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 translate-x-[-150%] animate-shimmer" />
-                                                        </button>
-                                                        <p className="text-center text-xs text-white/30 mt-4">ללא התחייבות • ביטול בכל שלב</p>
-                                                    </motion.div>
+                                            <div
+                                                className={cn(
+                                                    "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500",
+                                                    isSelected ? "bg-white/10 text-white scan-pulse" : "bg-white/5 text-white/20"
                                                 )}
-                                            </AnimatePresence>
-
-                                            {!isSelected && (
-                                                <motion.div
-                                                    layout
-                                                    className="text-center mt-2"
-                                                    initial={{ opacity: 0 }}
-                                                    animate={{ opacity: 1 }}
-                                                    transition={{ delay: 0.2 }}
-                                                >
-                                                    <span className="text-xs font-medium text-white/30 uppercase tracking-widest">לחץ לפרטים</span>
-                                                </motion.div>
-                                            )}
+                                                style={{ color: isSelected ? tier.color : undefined }}
+                                            >
+                                                <Icon className="w-6 h-6" />
+                                            </div>
                                         </div>
-                                    </motion.div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                </LayoutGroup>
+
+                                        {/* Collapsible Content */}
+                                        {/* Collapsible Content - CSS Grid Transition */}
+                                        <div
+                                            className={cn(
+                                                "grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[grid-template-rows]",
+                                                isSelected ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                                            )}
+                                        >
+                                            <div className="overflow-hidden">
+                                                <div className="pt-6"> {/* Padding moved here to be part of the slide */}
+                                                    <div className="h-px w-full bg-white/10 mb-6" />
+
+                                                    <ul className="space-y-4 mb-8">
+                                                        {tier.features.map((feature, i) => (
+                                                            <li key={i} className="flex items-start gap-3">
+                                                                <Check className="w-5 h-5 shrink-0" style={{ color: tier.color }} />
+                                                                <span className="text-sm text-white/80 leading-tight">{feature}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handlePurchase(tier.id);
+                                                        }}
+                                                        disabled={isPurchasing}
+                                                        className="w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-transform"
+                                                        style={{
+                                                            background: `linear-gradient(135deg, ${tier.color}, transparent)`,
+                                                            backgroundColor: 'rgba(255,255,255,0.1)'
+                                                        }}
+                                                    >
+                                                        {isPurchasing ? (
+                                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                                        ) : (
+                                                            <>
+                                                                <span className="relative z-10 text-white">אני רוצה את זה</span>
+                                                                <ArrowRight className="w-5 h-5 text-white rotate-180" />
+                                                            </>
+                                                        )}
+                                                        {/* Button sheen */}
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 translate-x-[-150%] animate-shimmer" />
+                                                    </button>
+                                                    <p className="text-center text-xs text-white/30 mt-4">ללא התחייבות • ביטול בכל שלב</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {!isSelected && (
+                                            <motion.div
+                                                className="text-center mt-2"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: 0.2 }}
+                                            >
+                                                <span className="text-xs font-medium text-white/30 uppercase tracking-widest">לחץ לפרטים</span>
+                                            </motion.div>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
 
                 {/* TRUST BADGES */}
                 <div className="entrance-item mt-16 px-6 grid grid-cols-2 gap-4 opacity-60">
