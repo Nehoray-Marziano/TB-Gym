@@ -21,6 +21,17 @@ export default function ServiceWorkerRegister() {
         // Only check for updates after user has been using the app
         const registerAndListen = async () => {
             try {
+                // GHOST BUSTER: Find and unregister the old conflicting OneSignal worker
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const reg of registrations) {
+                    // Check if this is the "Ghost" worker
+                    if (reg.active?.scriptURL.includes("OneSignalSDKWorker.js") ||
+                        reg.waiting?.scriptURL.includes("OneSignalSDKWorker.js")) {
+                        console.log("[SW] Found ghost worker! Exorcising...", reg.scope);
+                        await reg.unregister();
+                    }
+                }
+
                 const registration = await navigator.serviceWorker.register("/sw.js");
                 console.log("[SW] Registered:", registration.scope);
 
