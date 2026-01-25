@@ -110,6 +110,28 @@ export default function UserDashboard({ user }: { user: any }) {
         router.prefetch('/admin/schedule');
     }, [router]);
 
+    // Native Notification Prompt on Dashboard Entry
+    useEffect(() => {
+        const triggerNativePrompt = async () => {
+            // Wait a moment for things to settle
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            if (typeof window !== 'undefined' && 'Notification' in window && (window as any).OneSignal) {
+                // Only ask if we haven't asked before (permission is 'default')
+                if (Notification.permission === 'default') {
+                    try {
+                        console.log("Triggering native notification prompt...");
+                        await (window as any).OneSignal.Notifications.requestPermission();
+                    } catch (e) {
+                        console.error("Error requesting native permission:", e);
+                    }
+                }
+            }
+        };
+
+        triggerNativePrompt();
+    }, []);
+
     // GSAP Entrance Animations
     useLayoutEffect(() => {
         if (loading || isAnimated) return;
@@ -257,8 +279,7 @@ export default function UserDashboard({ user }: { user: any }) {
             {/* OneSignal Initialization */}
             {/* OneSignal Initialization is now handled globally in RootLayout */}
 
-            {/* Notification Permission Modal - shows on first visit */}
-            <NotificationPermissionModal />
+
 
             {/* Animated gradient background */}
             <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full pointer-events-none blur-3xl animate-pulse" />

@@ -33,21 +33,9 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
             await OneSignal.init({
                 appId: "2e5776b6-3487-4a5d-bca0-04570c82d150",
                 // Safari web ID can be added here if configured
+                // Safari web ID can be added here if configured
                 notifyButton: {
                     enable: false, // We'll use our own UI
-                },
-                // Prevent any auto-prompting
-                promptOptions: {
-                    slidedown: {
-                        prompts: []
-                    },
-                    native: {
-                        enabled: false,
-                        autoPrompt: false
-                    }
-                },
-                welcomeNotification: {
-                    disable: true
                 },
                 allowLocalhostAsSecureOrigin: true, // For development
                 // CRITICAL: Use the same SW as the PWA to avoid conflicts
