@@ -262,12 +262,12 @@ export default function SubscriptionPage() {
                                         transform: isSelected ? 'scale(1.02)' : 'scale(1)'
                                     }}
                                 >
-                                    {/* Popular Badge */}
+                                    {/* Popular Badge - positioned top-left to avoid title overlap */}
                                     {tier.popular && (
-                                        <div className="absolute top-0 right-0 p-6 z-10">
-                                            <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-1.5">
-                                                <Zap className="w-3 h-3 text-[#E2F163] fill-[#E2F163]" />
-                                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">פופולרי</span>
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                                            <div className="px-3 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-lg shadow-[#E2F163]/30">
+                                                <Zap className="w-3 h-3 text-black fill-black" />
+                                                <span className="text-[10px] font-black text-black uppercase tracking-wider">פופולרי</span>
                                             </div>
                                         </div>
                                     )}

@@ -88,32 +88,6 @@ export default function ServiceWorkerRegister() {
 
     return (
         <AnimatePresence>
-            {/* DEBUG: Always show a tiny refresh button for now to help the user */}
-            <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="fixed bottom-4 left-4 z-[9999] bg-red-500/20 hover:bg-red-500 text-white text-[10px] px-2 py-1 rounded backdrop-blur-md"
-                onClick={async () => {
-                    if (confirm("Force clear all cache and reload?")) {
-                        // Unregister all SWs
-                        if ('serviceWorker' in navigator) {
-                            const registrations = await navigator.serviceWorker.getRegistrations();
-                            for (let registration of registrations) {
-                                await registration.unregister();
-                            }
-                        }
-                        // Clear caches
-                        if ('caches' in window) {
-                            const keys = await caches.keys();
-                            await Promise.all(keys.map(key => caches.delete(key)));
-                        }
-                        window.location.reload();
-                    }
-                }}
-            >
-                Force Reset v2
-            </motion.button>
-
             {updateAvailable && (
                 <motion.div
                     initial={{ y: 100, opacity: 0 }}
