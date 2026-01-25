@@ -103,7 +103,12 @@ export default function SubscriptionPage() {
                 duration: 0.8,
                 stagger: 0.1,
                 delay: 0.1
-            });
+            })
+                .to(".underline-path", {
+                    strokeDashoffset: 0,
+                    duration: 1.2,
+                    ease: "power2.out"
+                }, "-=0.5");
         }, containerRef);
         return () => ctx.revert();
     }, []);
@@ -210,7 +215,7 @@ export default function SubscriptionPage() {
                                         stroke="url(#underline-gradient)"
                                         strokeWidth="6"
                                         strokeLinecap="round"
-                                        style={{ strokeDasharray: 200, strokeDashoffset: 0, transition: 'all 1s ease' }}
+                                        style={{ strokeDasharray: 200, strokeDashoffset: 200 }}
                                     />
                                 </svg>
                             </div>
