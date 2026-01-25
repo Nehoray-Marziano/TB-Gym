@@ -387,21 +387,41 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 <button
                     onClick={async () => {
                         if (navigator.vibrate) navigator.vibrate(10);
+
+                        // Check if Notifications API is supported
+                        if (!("Notification" in window)) {
+                            toast({ title: "הדפדפן לא תומך בהתראות", type: "error" });
+                            return;
+                        }
+
+                        // Native Permission Check
+                        const permission = Notification.permission;
+
+                        if (permission === "granted") {
+                            toast({ title: "התראות כבר מופעלות ✓", description: "ניתן לשנות בהגדרות הדפדפן/אפליקציה", type: "success" });
+                            return;
+                        }
+
+                        if (permission === "denied") {
+                            toast({
+                                title: "התראות חסומות בהגדרות 🚫",
+                                description: "אנא היכנסי להגדרות המכשיר ואשרי התראות ידנית.",
+                                type: "error"
+                            });
+                            return;
+                        }
+
+                        // Default state - Request Permission via OneSignal logic to ensure syncing
                         if (typeof window !== 'undefined' && (window as any).OneSignal) {
                             try {
-                                const permission = await (window as any).OneSignal.Notifications.permission;
-                                if (!permission) {
-                                    await (window as any).OneSignal.Notifications.requestPermission();
-                                    toast({ title: "התראות הופעלו! 🔔", type: "success" });
-                                } else {
-                                    toast({ title: "התראות כבר מופעלות ✓", description: "ניתן לשנות בהגדרות הדפדפן", type: "success" });
-                                }
+                                await (window as any).OneSignal.Notifications.requestPermission();
+                                // We don't manually toast here because the browser prompt handles the UX, 
+                                // and OneSignal often triggers its own outcome events. 
+                                // But we can assume if they click Allow, it works.
                             } catch (e) {
                                 console.error("Notification error:", e);
-                                toast({ title: "שגיאה בהפעלת התראות", type: "error" });
+                                toast({ title: "שגיאה בבקשת אישור", type: "error" });
                             }
-                        } else {
-                            toast({ title: "שירות ההתראות לא זמין", description: "נסי לרענן את הדף", type: "error" });
                         }
                     }}
                     className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]`}

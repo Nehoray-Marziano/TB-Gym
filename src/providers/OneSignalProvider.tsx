@@ -36,6 +36,19 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
                 notifyButton: {
                     enable: false, // We'll use our own UI
                 },
+                // Prevent any auto-prompting
+                promptOptions: {
+                    slidedown: {
+                        prompts: []
+                    },
+                    native: {
+                        enabled: false,
+                        autoPrompt: false
+                    }
+                },
+                welcomeNotification: {
+                    disable: true
+                },
                 allowLocalhostAsSecureOrigin: true, // For development
                 // CRITICAL: Use the same SW as the PWA to avoid conflicts
                 serviceWorkerParam: { scope: "/" },
