@@ -9,6 +9,8 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import PWAInstallGate from "@/components/PWAInstallGate";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 
+import SplashScreen from "@/components/SplashScreen";
+
 // Only load the Hebrew font we actually use
 const varelaRound = Varela_Round({
   variable: "--font-varela-round",
@@ -26,8 +28,8 @@ export const metadata: Metadata = {
     title: "Talia Gym",
   },
   icons: {
-    icon: "/icon.jpg",
-    shortcut: "/icon.jpg",
+    icon: "/notification-icon.png",
+    shortcut: "/notification-icon.png",
     apple: "/apple-icon.jpg",
   },
 };
@@ -63,6 +65,7 @@ export default function RootLayout({
           <ToastProvider>
             <GymStoreProvider>
               <ConnectedOneSignalProvider />
+              <SplashScreen />
               <PWAInstallGate>
                 {children}
               </PWAInstallGate>
