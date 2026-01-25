@@ -10,6 +10,7 @@ import StudioLogo from "@/components/StudioLogo";
 import gsap from "gsap";
 import BottomNav from "@/components/BottomNav";
 import { getRelativeTimeHebrew } from "@/lib/utils";
+import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 
 
 // Animated counter component for tickets
@@ -256,7 +257,8 @@ export default function UserDashboard({ user }: { user: any }) {
             {/* OneSignal Initialization */}
             {/* OneSignal Initialization is now handled globally in RootLayout */}
 
-
+            {/* Notification Permission Modal - shows on first visit */}
+            <NotificationPermissionModal />
 
             {/* Animated gradient background */}
             <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full pointer-events-none blur-3xl animate-pulse" />

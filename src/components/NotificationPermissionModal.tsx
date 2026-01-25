@@ -18,7 +18,7 @@ export default function NotificationPermissionModal({ onComplete }: Notification
     const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [hasChecked, setHasChecked] = useState(false);
-    const [storageKey, setStorageKey] = useState("notification_prompt_dismissed_v2");
+    const [storageKey, setStorageKey] = useState("notification_prompt_dismissed_v3");
 
     useEffect(() => {
         // Check if we should show the modal
@@ -29,8 +29,8 @@ export default function NotificationPermissionModal({ onComplete }: Notification
 
             // Use different key for standalone vs browser - fresh PWA install = fresh prompt
             const key = isStandalone
-                ? "notification_prompt_dismissed_pwa_v2"
-                : "notification_prompt_dismissed_browser_v2";
+                ? "notification_prompt_dismissed_pwa_v3"
+                : "notification_prompt_dismissed_browser_v3";
             setStorageKey(key);
 
             // Don't show if already dismissed in this context

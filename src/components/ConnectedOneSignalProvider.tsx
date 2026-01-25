@@ -2,7 +2,6 @@
 
 import { useGymStore } from "@/providers/GymStoreProvider";
 import OneSignalProvider from "@/providers/OneSignalProvider";
-import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 import { useEffect, useState } from "react";
 
 export default function ConnectedOneSignalProvider() {
@@ -15,13 +14,10 @@ export default function ConnectedOneSignalProvider() {
     // We just pass the current user details.
 
     return (
-        <>
-            <OneSignalProvider
-                userId={profile?.id}
-                userRole={profile?.role}
-                userEmail={profile?.email} // profile type doesn't have email in GymStore definition? Let's check.
-            />
-            <NotificationPermissionModal />
-        </>
+        <OneSignalProvider
+            userId={profile?.id}
+            userRole={profile?.role}
+            userEmail={profile?.email} // profile type doesn't have email in GymStore definition? Let's check.
+        />
     );
 }
