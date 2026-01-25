@@ -3,29 +3,26 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: false, // Force enable to ensure sw.js is generated
-  // CRITICAL: Enable aggressive caching for instant navigation
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true, // Reload when back online to refresh session
-  // Disable dynamic start URL to prevent redirect loops
+  disable: false,
+  // Disable aggressive features that cause issues
+  cacheOnFrontEndNav: false, // Was causing navigation issues
+  aggressiveFrontEndNavCaching: false,
+  reloadOnOnline: false, // Was causing restarts
   dynamicStartUrl: false,
-  // dynamicStartUrlRedirect: '/dashboard',
   // Fallback for offline pages
   fallbacks: {
     document: '/~offline',
   },
-  // Exclude auth-sensitive routes from navigation fallback
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
-    // prompt user to update
+    // CRITICAL: Both false to prevent aggressive takeover
     skipWaiting: false,
-    clientsClaim: true,
+    clientsClaim: false, // Changed from true - this was causing issues!
     importScripts: ["https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js"],
     runtimeCaching: [
       {
-        // CRITICAL: Auth pages - NEVER cache (session-dependent)
+        // Auth pages - NEVER cache
         urlPattern: /\/auth\/.*/i,
         handler: "NetworkOnly",
         options: {
@@ -33,7 +30,7 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // CRITICAL: Dashboard - NEVER cache (session-dependent)
+        // Dashboard - NEVER cache  
         urlPattern: /\/dashboard/i,
         handler: "NetworkOnly",
         options: {
@@ -41,16 +38,15 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Static pages - NetworkFirst to ensure fresh content
-        // Falls back to cache quickly (3s) if network is slow/offline
+        // Static pages
         urlPattern: /\/(subscription|book|onboarding|profile)/i,
         handler: "NetworkFirst",
         options: {
           cacheName: "static-pages-v2",
-          networkTimeoutSeconds: 3, // Fast fallback to cache
+          networkTimeoutSeconds: 3,
           expiration: {
             maxEntries: 10,
-            maxAgeSeconds: 60 * 60, // 1 hour (reduced from 24h)
+            maxAgeSeconds: 60 * 60,
           },
           cacheableResponse: {
             statuses: [0, 200],
@@ -58,8 +54,7 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Supabase API: NEVER cache data - must always be fresh
-        // Tickets, sessions, bookings etc. must reflect current state
+        // Supabase API - NEVER cache
         urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/rest\/v1\/.*/i,
         handler: "NetworkOnly",
         options: {
@@ -67,24 +62,22 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Supabase Auth endpoints - NEVER cache auth (must always be fresh)
-        // This is critical for PWA session persistence
+        // Supabase Auth - NEVER cache
         urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/auth\/.*/i,
         handler: "NetworkOnly",
         options: {
-          // NetworkOnly doesn't use cache, but we can add background sync for offline
           cacheName: "supabase-auth-no-cache",
         },
       },
       {
-        // Static Images: CacheFirst
+        // Static Images
         urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
         handler: "CacheFirst",
         options: {
           cacheName: "image-cache",
           expiration: {
             maxEntries: 100,
-            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+            maxAgeSeconds: 60 * 60 * 24 * 30,
           },
         },
       },
@@ -96,7 +89,7 @@ const withPWA = withPWAInit({
           cacheName: "static-assets",
           expiration: {
             maxEntries: 32,
-            maxAgeSeconds: 60 * 60 * 24, // 24 hours
+            maxAgeSeconds: 60 * 60 * 24,
           },
         },
       },
@@ -108,7 +101,7 @@ const withPWA = withPWAInit({
           cacheName: "google-fonts",
           expiration: {
             maxEntries: 4,
-            maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+            maxAgeSeconds: 60 * 60 * 24 * 365,
           },
         },
       },
@@ -117,10 +110,8 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
-  turbopack: {}, // Silence Turbopack/Webpack conflict
-  // allowedDevOrigins only needed for local dev, Vercel handles this automatically
+  turbopack: {},
 };
 
 export default withPWA(nextConfig);

@@ -9,7 +9,11 @@ export default function manifest(): MetadataRoute.Manifest {
         scope: "/",
         id: "/",
         display: "standalone",
-        display_override: ["standalone", "minimal-ui"],
+        display_override: ["standalone"],
+        // CRITICAL: These are needed for proper PWA display
+        background_color: "#0A0A0A",
+        theme_color: "#0A0A0A", // Same as background for seamless header
+        orientation: "portrait",
         icons: [
             {
                 src: "/icon.jpg",
