@@ -53,6 +53,16 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
                 await OneSignal.User.addEmail(userEmail);
             }
 
+            // CRITICAL: Suppress duplicate foreground notifications
+            // The Service Worker (system) handles notifications. 
+            // We don't want the Page SDK to ALSO show one.
+            OneSignal.Notifications.addEventListener('foregroundWillDisplay', function (event: any) {
+                console.log("[OneSignal] Foreground notification received - suppressing to avoid duplicate", event);
+                // Prevent the SDK from displaying the alert/toast
+                // The native system notification from SW should still appear (or we rely on just SW)
+                event.preventDefault();
+            });
+
             console.log("OneSignal initialized", { userId, userRole, userEmail });
         });
 
