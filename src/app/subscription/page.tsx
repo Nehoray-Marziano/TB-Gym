@@ -334,12 +334,12 @@ export default function SubscriptionPage() {
                                                             <Loader2 className="w-5 h-5 animate-spin" />
                                                         ) : (
                                                             <>
-                                                                <span className="relative z-10 text-white">אני רוצה את זה</span>
+                                                                <span className="relative z-10 text-white">הצטרפי ב-{tier.price}₪</span>
                                                                 <ArrowRight className="w-5 h-5 text-white rotate-180" />
                                                             </>
                                                         )}
-                                                        {/* Button sheen */}
-                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 translate-x-[-150%] animate-shimmer" />
+                                                        {/* Button sheen - no conflicting tailwind classes */}
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
                                                     </button>
                                                     <p className="text-center text-xs text-white/30 mt-4">ללא התחייבות • ביטול בכל שלב</p>
                                                 </div>
@@ -384,10 +384,10 @@ export default function SubscriptionPage() {
 
 <style jsx global>{`
                 @keyframes shimmer {
-                    0% { transform: translateX(-150%) skewX(-12deg); }
-                    100% { transform: translateX(150%) skewX(-12deg); }
+                    0% { transform: translateX(-100%) skewX(-12deg); }
+                    100% { transform: translateX(200%) skewX(-12deg); }
                 }
                 .animate-shimmer {
-                    animation: shimmer 2s infinite cubic-bezier(0.8, 0, 0.2, 1);
+                    animation: shimmer 3s infinite ease-in-out;
                 }
             `}</style>
