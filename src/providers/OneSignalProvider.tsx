@@ -33,7 +33,9 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
             await OneSignal.init({
                 appId: "2e5776b6-3487-4a5d-bca0-04570c82d150",
                 // Safari web ID can be added here if configured
-                // Safari web ID can be added here if configured
+                welcomeNotification: {
+                    disable: true // We let the Dashboard handle this via Push, avoid client-side conflict
+                },
                 notifyButton: {
                     enable: false, // We'll use our own UI
                 },
