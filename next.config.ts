@@ -8,9 +8,9 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true, // Reload when back online to refresh session
-  // Enable dynamic start URL for faster app launch
-  dynamicStartUrl: true,
-  dynamicStartUrlRedirect: '/dashboard',
+  // Disable dynamic start URL to prevent redirect loops
+  dynamicStartUrl: false,
+  // dynamicStartUrlRedirect: '/dashboard',
   // Fallback for offline pages
   fallbacks: {
     document: '/~offline',

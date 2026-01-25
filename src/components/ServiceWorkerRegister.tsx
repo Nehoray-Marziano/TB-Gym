@@ -48,8 +48,7 @@ export default function ServiceWorkerRegister() {
                 registrationRef.current = reg;
                 console.log("[SW] Registered successfully:", reg.scope);
 
-                // Only listen for NEW updates (updatefound event), not existing waiting workers
-                // This prevents the banner from showing on page refresh when there's a stale waiting worker
+                // Only listen for NEW updates (updatefound event)
                 reg.addEventListener("updatefound", () => {
                     const newWorker = reg.installing;
                     if (!newWorker || updateHandledRef.current) return;
@@ -64,15 +63,19 @@ export default function ServiceWorkerRegister() {
                             navigator.serviceWorker.controller &&
                             !updateHandledRef.current
                         ) {
-                            updateHandledRef.current = true;
-                            console.log("[SW] Update available - showing prompt");
-                            setUpdateAvailable(true);
+
+                            // Double check if it's really a new version by comparing with current
+                            // This prevents some OneSignal-related false positives
+                            if (newWorker !== navigator.serviceWorker.controller) {
+                                updateHandledRef.current = true;
+                                console.log("[SW] Update available - showing prompt");
+                                setUpdateAvailable(true);
+                            }
                         }
                     });
                 });
 
                 // Check for updates in background (don't show banner for stale waiting workers)
-                // Only check after 10 seconds to let the page fully load first
                 setTimeout(() => {
                     reg.update().catch(() => {
                         // Silently ignore update check failures
@@ -86,22 +89,15 @@ export default function ServiceWorkerRegister() {
 
         registerSW();
 
-        // When a new SW takes over, reload to use the new version
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-            if (refreshing) return;
-            refreshing = true;
-            console.log("[SW] Controller changed - reloading page");
-            window.location.reload();
-        });
+        // REMOVED: potentially dangerous controllerchange auto-reload
+        // This was likely causing the "crash/restart" loop on app open
 
-        // Check for updates periodically (every 30 minutes instead of 5)
-        // This reduces the chance of spurious update prompts
+        // Check for updates periodically (every hour)
         const interval = setInterval(() => {
             if (!updateHandledRef.current) {
                 registrationRef.current?.update();
             }
-        }, 30 * 60 * 1000);
+        }, 60 * 60 * 1000);
 
         return () => clearInterval(interval);
     }, []);

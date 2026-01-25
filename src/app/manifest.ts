@@ -8,15 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
         start_url: "/dashboard",
         scope: "/",
         id: "/",
-        display: "fullscreen",
-        display_override: ["window-controls-overlay", "fullscreen", "standalone"],
-        background_color: "#0A0A0A",
-        theme_color: "#E2F163",
-        orientation: "portrait",
-        categories: ["fitness", "health", "sports"],
-        launch_handler: {
-            client_mode: ["navigate-existing", "auto"]
-        },
+        display: "standalone",
+        display_override: ["standalone", "minimal-ui"],
         icons: [
             {
                 src: "/icon.jpg",
