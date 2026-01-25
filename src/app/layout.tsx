@@ -9,8 +9,6 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import PWAInstallGate from "@/components/PWAInstallGate";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 
-import SplashScreen from "@/components/SplashScreen";
-
 // Only load the Hebrew font we actually use
 const varelaRound = Varela_Round({
   variable: "--font-varela-round",
@@ -65,7 +63,6 @@ export default function RootLayout({
           <ToastProvider>
             <GymStoreProvider>
               <ConnectedOneSignalProvider />
-              <SplashScreen />
               <PWAInstallGate>
                 {children}
               </PWAInstallGate>
