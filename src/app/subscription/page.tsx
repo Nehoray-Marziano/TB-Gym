@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2, Lock as LockIcon, CalendarX } from "lucide-react";
+import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2, Lock as LockIcon, CalendarX, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
@@ -20,11 +20,9 @@ const TIERS = [
         price: 240,
         pricePerSession: 60,
         icon: Star,
-        color: "#94a3b8",
-        gradient: "from-slate-600/20 via-slate-700/10 to-slate-800/20",
-        borderGlow: "slate-500",
-        popular: false,
-        discount: 0,
+        color: "#94a3b8", // Slate
+        bgGradient: "radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%)",
+        accentGradient: "from-slate-400 to-slate-600",
         features: [
             "4 אימונים בחודש",
             "60₪ לאימון",
@@ -41,9 +39,9 @@ const TIERS = [
         price: 450,
         pricePerSession: 56.25,
         icon: Flame,
-        color: "#E2F163",
-        gradient: "from-[#E2F163]/30 via-[#E2F163]/10 to-[#d4e450]/20",
-        borderGlow: "[#E2F163]",
+        color: "#E2F163", // Neon
+        bgGradient: "radial-gradient(circle at 50% 50%, #3f420b 0%, #1a1c05 100%)",
+        accentGradient: "from-[#E2F163] to-[#d4e450]",
         popular: true,
         discount: 6,
         features: [
@@ -63,11 +61,9 @@ const TIERS = [
         price: 650,
         pricePerSession: 54.16,
         icon: Crown,
-        color: "#ec4899",
-        gradient: "from-pink-500/30 via-purple-600/20 to-fuchsia-700/20",
-        borderGlow: "pink-500",
-        popular: false,
-        discount: 10,
+        color: "#db2777", // Pink
+        bgGradient: "radial-gradient(circle at 50% 50%, #500724 0%, #290514 100%)",
+        accentGradient: "from-pink-500 to-rose-600",
         features: [
             "12 אימונים בחודש",
             "54₪ לאימון — חיסכון של 10%",
@@ -80,69 +76,38 @@ const TIERS = [
 
 export default function SubscriptionPage() {
     const router = useRouter();
-    const { refreshData, subscription } = useGymStore();
+    const { refreshData } = useGymStore();
     const { toast } = useToast();
-    const [selectedTier, setSelectedTier] = useState<number | null>(null);
+
+    // Default to 'standard' (id=2) active so the page starts with energy
+    const [selectedTierId, setSelectedTierId] = useState<number>(2);
     const [purchasing, setPurchasing] = useState<number | null>(null);
 
-    // GSAP Refs
-    const containerRef = useRef<HTMLDivElement>(null);
-    const headerRef = useRef<HTMLDivElement>(null);
-    const cardsRef = useRef<HTMLDivElement>(null);
+    // Get active tier object
+    const activeTier = TIERS.find(t => t.id === selectedTierId) || TIERS[1];
 
-    // GSAP Entrance Animation
+    // GSAP Refs for entrance
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Entrance Animation
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
-            // Set initial states
-            gsap.set(headerRef.current, { opacity: 0, y: -30 });
-            gsap.set(".tier-card", { opacity: 0, y: 60, scale: 0.9 });
-            gsap.set(".floating-orb", { scale: 0, opacity: 0 });
+            const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-            // Master timeline
-            const tl = gsap.timeline({
-                defaults: { ease: "power3.out" },
-            });
+            // Ensure initial visibility is hidden/offset
+            gsap.set(".entrance-item", { opacity: 0, y: 50 });
 
-            // Floating orbs fade in
-            tl.to(".floating-orb", {
-                scale: 1,
+            tl.to(".entrance-item", {
                 opacity: 1,
-                duration: 2.0, // Slowed down from 1.5
-                stagger: 0.3,  // Slowed down from 0.2
-                ease: "elastic.out(1, 0.5)"
-            })
-                // Header slides down
-                .to(headerRef.current, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 1.0 // Slowed down from 0.6
-                }, "-=1.5")
-                // Draw underline (starts slightly before header finishes)
-                .fromTo(".underline-path",
-                    { strokeDashoffset: 200 },
-                    {
-                        strokeDashoffset: 0,
-                        duration: 1.5, // Slowed down from 0.8
-                        ease: "power2.out"
-                    },
-                    "-=0.5"
-                )
-                // Cards stagger in with spring
-                .to(".tier-card", {
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                    duration: 1.2, // Slowed down from 0.7
-                    stagger: 0.2,  // Slowed down from 0.12
-                    ease: "back.out(1.4)"
-                }, "-=0.5");
-
+                y: 0,
+                duration: 1.2,
+                stagger: 0.15,
+                delay: 0.2
+            });
         }, containerRef);
-
         return () => ctx.revert();
-    }, []); // Removed isAnimated dependency to prevent revert on state change
+    }, []);
 
-    // Purchase handler
     const handlePurchase = async (tierId: number) => {
         setPurchasing(tierId);
         if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
@@ -178,281 +143,257 @@ export default function SubscriptionPage() {
     };
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden relative" dir="rtl">
+        <div ref={containerRef} className="min-h-screen text-white overflow-x-hidden relative transition-colors duration-1000 ease-in-out" dir="rtl">
 
-            {/* Animated Background */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                <style jsx global>{`
-                    @keyframes sheen {
-                        0% { transform: translateX(-100%) skewX(-15deg); }
-                        100% { transform: translateX(200%) skewX(-15deg); }
-                    }
-                    @keyframes border-spin {
-                        100% { transform: rotate(360deg); }
-                    }
-                    @keyframes pulse-slow {
-                        0%, 100% { opacity: 0.1; transform: scale(1); }
-                        50% { opacity: 0.3; transform: scale(1.1); }
-                    }
-                `}</style>
-                {/* Large gradient orbs with breathing animation */}
-                <div
-                    className="floating-orb absolute -top-32 -right-32 w-[500px] h-[500px] bg-gradient-to-br from-[#E2F163]/20 to-transparent rounded-full blur-[120px]"
-                    style={{ animation: 'pulse-slow 8s ease-in-out infinite' }}
-                />
-                <div
-                    className="floating-orb absolute top-1/2 -left-48 w-[400px] h-[400px] bg-gradient-to-br from-pink-500/15 to-purple-600/15 rounded-full blur-[100px]"
-                    style={{ animation: 'pulse-slow 10s ease-in-out infinite reverse' }}
-                />
-                <div
-                    className="floating-orb absolute -bottom-32 right-1/4 w-[350px] h-[350px] bg-gradient-to-br from-blue-500/15 to-cyan-500/15 rounded-full blur-[80px]"
-                    style={{ animation: 'pulse-slow 12s ease-in-out infinite 2s' }}
-                />
-
-                {/* Grid pattern */}
-                <div
-                    className="absolute inset-0 opacity-[0.05]"
-                    style={{
-                        backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-                        backgroundSize: '50px 50px'
+            {/* --- REACTIVE BACKGROUND --- */}
+            <div className="fixed inset-0 z-0">
+                {/* Dynamic Base Gradient */}
+                <motion.div
+                    className="absolute inset-0 transition-all duration-1000 ease-in-out"
+                    style={{ background: activeTier.bgGradient }}
+                    animate={{
+                        background: activeTier.bgGradient
                     }}
                 />
 
-                {/* Heavier Noise texture */}
-                <div
-                    className="absolute inset-0 opacity-[0.04]"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}
+                {/* Active Colored Orb (moves based on scroll/focus conceptually, here just ambient) */}
+                <motion.div
+                    key={activeTier.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 0.6, scale: 1 }}
+                    transition={{ duration: 1.5, ease: "easeInOut" }}
+                    className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] rounded-full blur-[120px] mix-blend-screen"
+                    style={{ backgroundColor: activeTier.color }}
                 />
+                <motion.div
+                    animate={{
+                        x: [0, 50, 0],
+                        y: [0, 30, 0],
+                        opacity: [0.3, 0.5, 0.3]
+                    }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full blur-[100px] mix-blend-overlay opacity-30 bg-white"
+                />
+
+                {/* Noise Overlay */}
+                <div className="absolute inset-0 opacity-[0.07] bg-[url('/noise.svg')] mix-blend-overlay pointer-events-none" />
+                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
             </div>
 
-            {/* Header */}
-            <div ref={headerRef} className="relative z-10 pt-safe px-6 py-8">
-                {/* Back button */}
-                <button
-                    onClick={() => router.back()}
-                    className="w-10 h-10 mb-6 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-95"
-                >
-                    <ChevronRight className="w-5 h-5" />
-                </button>
+            {/* --- CONTENT --- */}
+            <div className="relative z-10 pb-40">
 
-                <div className="text-center mb-2">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#E2F163]/10 border border-[#E2F163]/20 rounded-full mb-4">
-                        <Sparkles className="w-4 h-4 text-[#E2F163]" />
-                        <span className="text-sm font-bold text-[#E2F163]">מנויים חודשיים</span>
-                    </div>
+                {/* HEADER */}
+                <div className="pt-8 px-6 mb-12">
+                    <button
+                        onClick={() => router.back()}
+                        className="entrance-item w-12 h-12 mb-8 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-90"
+                    >
+                        <ChevronRight className="w-6 h-6" />
+                    </button>
 
-                    <h1 className="text-4xl md:text-5xl font-black mb-3 leading-tight">
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/60">
-                            בחרי את המסלול
-                        </span>
-                        <br />
-                        <div className="relative inline-block">
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E2F163] via-[#d4e450] to-[#E2F163] relative z-10">
-                                שמתאים לך
-                            </span>
-                            {/* Hand-drawn Underline Animation */}
-                            <svg className="absolute -bottom-3 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="underline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stopColor="#E2F163" />
-                                        <stop offset="50%" stopColor="#22d3ee" /> {/* Cyan */}
-                                        <stop offset="100%" stopColor="#ec4899" /> {/* Pink */}
-                                    </linearGradient>
-                                </defs>
-                                <path
-                                    className="underline-path"
-                                    d="M4 14 C 20 24, 60 4, 96 14" // Hand-drawn S-curve
-                                    fill="none"
-                                    stroke="url(#underline-gradient)"
-                                    strokeWidth="5"
-                                    strokeLinecap="round"
-                                    style={{ strokeDasharray: 200, strokeDashoffset: 200 }} // Initial state hidden
-                                />
-                            </svg>
+                    <div className="entrance-item">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/5 backdrop-blur-md border border-white/10 rounded-full mb-6">
+                            <Sparkles className="w-4 h-4" style={{ color: activeTier.color }} />
+                            <span className="text-sm font-bold tracking-wide">תוכניות גמישות</span>
                         </div>
-                    </h1>
 
-                    <p className="text-white/50 text-sm max-w-xs mx-auto">
-                        כל המנויים כוללים גישה מלאה + ביטול חינם
-                    </p>
-                </div>
-            </div>
-
-            {/* Pricing Cards */}
-            <div ref={cardsRef} className="relative z-10 px-4 pb-32 space-y-5">
-                {TIERS.map((tier, index) => {
-                    const Icon = tier.icon;
-                    const isPopular = tier.popular;
-                    const isSelected = selectedTier === tier.id;
-                    const isPurchasing = purchasing === tier.id;
-
-                    return (
-                        <motion.div
-                            key={tier.id}
-                            className="tier-card group relative"
-                            // initial={{ opacity: 0, y: 50 }}  <-- REMOVED: Conflicts with GSAP
-                            whileHover={{ y: -8, scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setSelectedTier(tier.id)}
-                            onMouseMove={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const y = e.clientY - rect.top;
-                                e.currentTarget.style.setProperty("--x", `${x}px`);
-                                e.currentTarget.style.setProperty("--y", `${y}px`);
-                            }}
-                            style={{ perspective: 1000 } as any}
-                        >
-                            {/* Spotlight Border */}
-                            <div
-                                className="absolute inset-0 rounded-[2rem] p-[2px] transition-all duration-500 opacity-60 group-hover:opacity-100"
-                                style={{
-                                    background: `radial-gradient(800px circle at var(--x) var(--y), ${tier.color}, transparent 40%), linear-gradient(to bottom, rgba(255,255,255,0.1), transparent)`
-                                }}
-                            />
-
-                            <div
-                                className={cn(
-                                    "relative h-full rounded-[1.9rem] bg-zinc-950/90 backdrop-blur-2xl overflow-hidden transition-all duration-300",
-                                    isPopular ? "border border-[#E2F163]/30" : "border border-white/5",
-                                    isSelected && "ring-1 ring-white/20"
-                                )}
-                            >
-                                {/* Noise Texture */}
-                                <div className="absolute inset-0 opacity-[0.03] mix-blend-overlaypointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
-
-                                {/* Spotlight Glow Inner */}
-                                <div
-                                    className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none"
+                        <h1 className="text-5xl md:text-6xl font-black mb-4 leading-[1.1]">
+                            <span className="block text-white/90">בחרי את המסלול</span>
+                            <div className="relative inline-block mt-1">
+                                <span
+                                    className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r"
                                     style={{
-                                        background: `radial-gradient(600px circle at var(--x) var(--y), ${tier.color}, transparent 40%)`
+                                        backgroundImage: `linear-gradient(to right, ${activeTier.color}, #ffffff, ${activeTier.color})`,
+                                        backgroundSize: '200% auto'
                                     }}
-                                />
-
-                                {/* Top Gradient */}
-                                <div className={cn("absolute top-0 inset-x-0 h-32 bg-gradient-to-b opacity-20 transition-opacity", tier.gradient)} />
-
-                                {/* "Holographic" Foil Sheen */}
-                                <div
-                                    className="absolute inset-0 pointer-events-none z-10 opacity-30 mix-blend-overlay"
-                                    style={{
-                                        background: isPopular
-                                            ? `linear-gradient(105deg, transparent 40%, rgba(226, 241, 99, 0.4) 45%, rgba(255, 255, 255, 0.6) 50%, rgba(226, 241, 99, 0.4) 55%, transparent 60%)`
-                                            : `linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.1) 25%, transparent 30%)`,
-                                        animation: isPopular ? 'sheen 4s ease-in-out infinite' : 'sheen 7s ease-in-out infinite',
-                                        backgroundSize: '200% 100%'
-                                    }}
-                                />
-
-                                {/* Interactive Rotating Border for Popular card */}
-                                {isPopular && (
-                                    <div className="absolute -inset-[1px] rounded-[1.9rem] z-0 overflow-hidden">
-                                        <div
-                                            className="absolute inset-[-50%] bg-[conic-gradient(from_0deg,transparent_0_340deg,#E2F163_360deg)] opacity-60"
-                                            style={{ animation: 'border-spin 4s linear infinite' }}
-                                        />
-                                    </div>
-                                )}
-
-                                {/* Popular Badge */}
-                                {isPopular && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-                                        <div className="px-5 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-[0_0_20px_rgba(226,241,99,0.6)] animate-bounce-slow">
-                                            <Zap className="w-4 h-4 text-black fill-black" />
-                                            <span className="text-xs font-black text-black tracking-widest uppercase">Best Value</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="relative p-8 flex flex-col h-full">
-                                    {/* Header */}
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div className="flex items-center gap-4">
-                                            <div
-                                                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
-                                                style={{ backgroundColor: `${tier.color}20`, boxShadow: `0 0 20px ${tier.color}20` }}
-                                            >
-                                                <Icon className="w-7 h-7 transform group-hover:translate-z-10 transition-transform" style={{ color: tier.color }} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-2xl font-black text-white tracking-tight">{tier.displayName}</h3>
-                                                {/* <p className="text-xs font-bold text-white/30 tracking-widest uppercase">{tier.englishName}</p> */}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Price */}
-                                    <div className="mb-8">
-                                        <div className="flex items-baseline gap-1.5">
-                                            <span className="text-5xl font-black text-white tracking-tighter shadow-black drop-shadow-lg">{tier.price}</span>
-                                            <span className="text-xl font-bold text-white/40">₪</span>
-                                        </div>
-                                        <p className="text-sm font-medium text-white/40">לחודש • ביטול בכל עת</p>
-                                    </div>
-
-                                    {/* Divider */}
-                                    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
-
-                                    {/* Features */}
-                                    <ul className="space-y-4 mb-8 flex-1">
-                                        <li className="flex items-center justify-between">
-                                            <span className="text-white/80 font-medium text-sm">כרטיסי אימון</span>
-                                            <span className="text-xl font-black" style={{ color: tier.color }}>{tier.sessions}</span>
-                                        </li>
-                                        {tier.features.slice(1).map((feature, i) => (
-                                            <li key={i} className="flex items-start gap-3">
-                                                <div className="mt-1 w-5 h-5 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                                                    <Check className="w-3 h-3 text-white/50 group-hover:text-white transition-colors" />
-                                                </div>
-                                                <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors duration-300 left">{feature}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handlePurchase(tier.id);
-                                        }}
-                                        disabled={purchasing !== null}
-                                        className={cn(
-                                            "w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group/btn",
-                                            isPopular
-                                                ? "bg-[#E2F163] text-black hover:bg-[#d4e450] shadow-[0_0_30px_rgba(226,241,99,0.3)] hover:shadow-[0_0_50px_rgba(226,241,99,0.5)]"
-                                                : "bg-white/5 text-white hover:bg-white/10 border border-white/10 hover:border-white/30"
-                                        )}
-                                    >
-                                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700 ease-in-out" />
-                                        {isPurchasing ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            <span className="relative z-10 flex items-center gap-2">
-                                                הצטרפי עכשיו <ArrowRight className="w-4 h-4 rotate-180 group-hover/btn:-translate-x-1 transition-transform" />
-                                            </span>
-                                        )}
-                                    </button>
-                                </div>
+                                >
+                                    שמתאים לך
+                                </span>
+                                {/* Hand-drawn Underline (Preserved) */}
+                                <svg className="absolute -bottom-4 left-0 w-full h-[24px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="underline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor={activeTier.color} />
+                                            <stop offset="50%" stopColor="#ffffff" />
+                                            <stop offset="100%" stopColor={activeTier.color} />
+                                        </linearGradient>
+                                    </defs>
+                                    <path
+                                        className="underline-path"
+                                        d="M4 14 C 20 24, 60 4, 96 14"
+                                        fill="none"
+                                        stroke="url(#underline-gradient)"
+                                        strokeWidth="6"
+                                        strokeLinecap="round"
+                                        style={{ strokeDasharray: 200, strokeDashoffset: 0, transition: 'all 1s ease' }}
+                                    />
+                                </svg>
                             </div>
-                        </motion.div>
-                    );
-
-                })}
-
-
-                <div className="pt-8 flex items-center justify-center gap-6 text-white/40 text-xs font-medium">
-                    <div className="flex items-center gap-2">
-                        <LockIcon className="w-4 h-4 text-green-400" />
-                        <span>תשלום מאובטח</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <CalendarX className="w-4 h-4 text-[#E2F163]" />
-                        <span>ביטול בכל עת</span>
+                        </h1>
+                        <p className="text-white/60 text-lg max-w-sm leading-relaxed">
+                            הצטרפי לקהילה שלנו ותהני מאימונים ברמה הגבוהה ביותר
+                        </p>
                     </div>
                 </div>
+
+                {/* TIERS STACK */}
+                <div className="px-5 space-y-6">
+                    {TIERS.map((tier) => {
+                        const isSelected = selectedTierId === tier.id;
+                        const isPurchasing = purchasing === tier.id;
+                        const Icon = tier.icon;
+
+                        return (
+                            <motion.div
+                                key={tier.id}
+                                className="entrance-item relative"
+                                onClick={() => setSelectedTierId(tier.id)}
+                                initial={false}
+                                animate={{
+                                    scale: isSelected ? 1 : 0.96,
+                                    opacity: isSelected ? 1 : 0.7,
+                                }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                            >
+                                {/* Active Glow Behind Card */}
+                                {isSelected && (
+                                    <motion.div
+                                        layoutId="glow"
+                                        className="absolute -inset-1 rounded-[2.5rem] blur-xl opacity-40 transition-colors duration-500"
+                                        style={{ backgroundColor: tier.color }}
+                                    />
+                                )}
+
+                                {/* Card Body */}
+                                <div
+                                    className={cn(
+                                        "relative overflow-hidden rounded-[2rem] border transition-all duration-500",
+                                        isSelected
+                                            ? "border-white/20 bg-white/5 backdrop-blur-2xl shadow-2xl"
+                                            : "border-white/5 bg-black/20 backdrop-blur-sm grayscale-[0.5]"
+                                    )}
+                                >
+                                    {/* Popular Badge */}
+                                    {tier.popular && (
+                                        <div className="absolute top-0 right-0 p-6">
+                                            <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-1.5">
+                                                <Zap className="w-3 h-3 text-[#E2F163] fill-[#E2F163]" />
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">פופולרי</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="p-8">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div>
+                                                <h3 className={cn("text-xl font-bold mb-1 transition-colors duration-300", isSelected ? "text-white" : "text-white/60")}>
+                                                    {tier.displayName}
+                                                </h3>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className={cn("text-4xl font-black tracking-tight", isSelected ? "text-white" : "text-white/50")}>
+                                                        {tier.price}
+                                                    </span>
+                                                    <span className="text-lg text-white/40">₪</span>
+                                                    <span className="text-sm text-white/30 mr-2">/ לחודש</span>
+                                                </div>
+                                            </div>
+                                            <div
+                                                className={cn(
+                                                    "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500",
+                                                    isSelected ? "bg-white/10 text-white scan-pulse" : "bg-white/5 text-white/20"
+                                                )}
+                                                style={{ color: isSelected ? tier.color : undefined }}
+                                            >
+                                                <Icon className="w-6 h-6" />
+                                            </div>
+                                        </div>
+
+                                        {/* Collapsible Content */}
+                                        <motion.div
+                                            initial={false}
+                                            animate={{
+                                                height: isSelected ? "auto" : 0,
+                                                opacity: isSelected ? 1 : 0
+                                            }}
+                                            transition={{ duration: 0.4, ease: "anticipate" }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="h-px w-full bg-white/10 mb-6" />
+
+                                            <ul className="space-y-4 mb-8">
+                                                {tier.features.map((feature, i) => (
+                                                    <li key={i} className="flex items-start gap-3">
+                                                        <Check className="w-5 h-5 shrink-0" style={{ color: tier.color }} />
+                                                        <span className="text-sm text-white/80 leading-tight">{feature}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handlePurchase(tier.id);
+                                                }}
+                                                disabled={isPurchasing}
+                                                className="w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-transform"
+                                                style={{
+                                                    background: `linear-gradient(135deg, ${tier.color}, transparent)`,
+                                                    backgroundColor: 'rgba(255,255,255,0.1)'
+                                                }}
+                                            >
+                                                {isPurchasing ? (
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <span className="relative z-10 text-white">אני רוצה את זה</span>
+                                                        <ArrowRight className="w-5 h-5 text-white rotate-180" />
+                                                    </>
+                                                )}
+                                                {/* Button sheen */}
+                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 translate-x-[-150%] animate-shimmer" />
+                                            </button>
+                                            <p className="text-center text-xs text-white/30 mt-4">ללא התחייבות • ביטול בכל שלב</p>
+                                        </motion.div>
+
+                                        {!isSelected && (
+                                            <div className="text-center mt-2">
+                                                <span className="text-xs font-medium text-white/30 uppercase tracking-widest">לחץ לפרטים</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+
+                {/* TRUST BADGES */}
+                <div className="entrance-item mt-16 px-6 grid grid-cols-2 gap-4 opacity-60">
+                    <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+                        <LockIcon className="w-6 h-6 text-emerald-400 mb-1" />
+                        <span className="text-xs font-bold text-white/90">תשלום מאובטח</span>
+                        <span className="text-[10px] text-white/40">SSL Encrypted</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+                        <CalendarX className="w-6 h-6 text-white mb-1" />
+                        <span className="text-xs font-bold text-white/90">ביטול גמיש</span>
+                        <span className="text-[10px] text-white/40">עד 10 שעות לפני</span>
+                    </div>
+                </div>
+
             </div>
 
-            {/* Bottom safe area padding */}
-            <div className="h-safe" />
+            {/* Global Styles for custom animations */}
+            <style jsx global>{`
+                @keyframes shimmer {
+                    0% { transform: translateX(-150%) skewX(-12deg); }
+                    100% { transform: translateX(150%) skewX(-12deg); }
+                }
+                .animate-shimmer {
+                    animation: shimmer 2s infinite cubic-bezier(0.8, 0, 0.2, 1);
+                }
+            `}</style>
         </div>
     );
 }
