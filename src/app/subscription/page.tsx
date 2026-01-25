@@ -84,7 +84,6 @@ export default function SubscriptionPage() {
     const { toast } = useToast();
     const [selectedTier, setSelectedTier] = useState<number | null>(null);
     const [purchasing, setPurchasing] = useState<number | null>(null);
-    const [isAnimated, setIsAnimated] = useState(false);
 
     // GSAP Refs
     const containerRef = useRef<HTMLDivElement>(null);
@@ -93,8 +92,6 @@ export default function SubscriptionPage() {
 
     // GSAP Entrance Animation
     useLayoutEffect(() => {
-        if (isAnimated) return;
-
         const ctx = gsap.context(() => {
             // Set initial states
             gsap.set(headerRef.current, { opacity: 0, y: -30 });
@@ -104,47 +101,46 @@ export default function SubscriptionPage() {
             // Master timeline
             const tl = gsap.timeline({
                 defaults: { ease: "power3.out" },
-                onComplete: () => setIsAnimated(true)
             });
 
             // Floating orbs fade in
             tl.to(".floating-orb", {
                 scale: 1,
                 opacity: 1,
-                duration: 1.5,
-                stagger: 0.2,
+                duration: 2.0, // Slowed down from 1.5
+                stagger: 0.3,  // Slowed down from 0.2
                 ease: "elastic.out(1, 0.5)"
             })
                 // Header slides down
                 .to(headerRef.current, {
                     opacity: 1,
                     y: 0,
-                    duration: 0.6
-                }, "-=1")
+                    duration: 1.0 // Slowed down from 0.6
+                }, "-=1.5")
                 // Draw underline (starts slightly before header finishes)
                 .fromTo(".underline-path",
                     { strokeDashoffset: 200 },
                     {
                         strokeDashoffset: 0,
-                        duration: 0.8,
+                        duration: 1.5, // Slowed down from 0.8
                         ease: "power2.out"
                     },
-                    "-=0.3"
+                    "-=0.5"
                 )
                 // Cards stagger in with spring
                 .to(".tier-card", {
                     opacity: 1,
                     y: 0,
                     scale: 1,
-                    duration: 0.7,
-                    stagger: 0.12,
+                    duration: 1.2, // Slowed down from 0.7
+                    stagger: 0.2,  // Slowed down from 0.12
                     ease: "back.out(1.4)"
-                }, "-=0.3");
+                }, "-=0.5");
 
         }, containerRef);
 
         return () => ctx.revert();
-    }, [isAnimated]);
+    }, []); // Removed isAnimated dependency to prevent revert on state change
 
     // Purchase handler
     const handlePurchase = async (tierId: number) => {
