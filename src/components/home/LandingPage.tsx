@@ -119,6 +119,21 @@ export default function LandingPage() {
         }
     };
 
+    const handleAppleLogin = async () => {
+        setIsLoading(true);
+        const redirectUrl = `${window.location.origin}/auth/callback`;
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: "apple",
+            options: { redirectTo: redirectUrl },
+        });
+        if (error) {
+            console.error(error);
+            setIsLoading(false);
+        }
+    };
+
+    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+
     return (
         <div ref={containerRef} className="min-h-[100dvh] w-full bg-[#131512] text-[#ECF0E7] overflow-x-hidden font-sans relative">
 
@@ -232,14 +247,17 @@ export default function LandingPage() {
                                         )}
                                     </button>
 
-                                    <button
-                                        id="apple-signin-button"
-                                        className="flex items-center gap-3 bg-black/50 border border-neutral-700 text-white font-bold py-4 px-6 rounded-2xl w-full md:min-w-[160px] justify-center grayscale opacity-80 cursor-not-allowed"
-                                        disabled
-                                    >
-                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.8 9.9c.2-.5.3-1.1.3-1.7 0-1.2-.5-2.3-1.3-3.1-.8-.8-1.9-1.3-3.1-1.3-1.2 0-2.3.5-3.1 1.3-.8.8-1.3 1.9-1.3 3.1 0 .6.1 1.2.3 1.7L6 19.4h2.5l2.2-4.7c.4.2.9.3 1.3.3.5 0 .9-.1 1.3-.3l2.2 4.7H18l-3.6-9.5c.2-.5.3-1.1.3-1.7zm-5.8 0c0-.8.3-1.6.9-2.2.6-.6 1.3-.9 2.2-.9.8 0 1.6.3 2.2.9.6.6.9 1.3.9 2.2 0 1-.4 1.9-1 2.5l-1.4-2.9h-1.3l-1.4 2.9c-.6-.6-1-1.5-1-2.5z" /></svg>
-                                        Apple
-                                    </button>
+                                    {!isAndroid && (
+                                        <button
+                                            id="apple-signin-button"
+                                            onClick={handleAppleLogin}
+                                            disabled={isLoading}
+                                            className="flex items-center gap-3 bg-black/50 border border-neutral-700 text-white font-bold py-4 px-6 rounded-2xl w-full md:min-w-[160px] justify-center active:scale-95 transition-transform hover:bg-black/70 disabled:opacity-70"
+                                        >
+                                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.8 9.9c.2-.5.3-1.1.3-1.7 0-1.2-.5-2.3-1.3-3.1-.8-.8-1.9-1.3-3.1-1.3-1.2 0-2.3.5-3.1 1.3-.8.8-1.3 1.9-1.3 3.1 0 .6.1 1.2.3 1.7L6 19.4h2.5l2.2-4.7c.4.2.9.3 1.3.3.5 0 .9-.1 1.3-.3l2.2 4.7H18l-3.6-9.5c.2-.5.3-1.1.3-1.7zm-5.8 0c0-.8.3-1.6.9-2.2.6-.6 1.3-.9 2.2-.9.8 0 1.6.3 2.2.9.6.6.9 1.3.9 2.2 0 1-.4 1.9-1 2.5l-1.4-2.9h-1.3l-1.4 2.9c-.6-.6-1-1.5-1-2.5z" /></svg>
+                                            Apple
+                                        </button>
+                                    )}
                                 </div>
                             </motion.div>
                         )}
