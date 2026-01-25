@@ -173,19 +173,15 @@ export default function SubscriptionPage() {
             <div className="relative z-10 pb-40">
 
                 {/* HEADER */}
-                <div className="pt-8 px-6 mb-12">
+                <div className="pt-4 px-6 mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="entrance-item w-12 h-12 mb-8 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-90"
+                        className="entrance-item w-12 h-12 mb-4 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-90"
                     >
                         <ChevronRight className="w-6 h-6" />
                     </button>
 
                     <div className="entrance-item">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/5 backdrop-blur-md border border-white/10 rounded-full mb-6">
-                            <Sparkles className="w-4 h-4" style={{ color: activeTier.color }} />
-                            <span className="text-sm font-bold tracking-wide">תוכניות גמישות</span>
-                        </div>
 
                         <h1 className="text-5xl md:text-6xl font-black mb-4 leading-[1.1]">
                             <span className="block text-white/90">בחרי את המסלול</span>
