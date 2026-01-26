@@ -131,6 +131,17 @@ export default function SubscriptionPage() {
                     description: `קיבלת ${data.data?.tickets_issued} כרטיסי אימון`,
                     type: "success"
                 });
+                // Launch Confetti
+                if (typeof window !== 'undefined') {
+                    const confetti = (await import('canvas-confetti')).default;
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#E2F163', '#ffffff', '#000000']
+                    });
+                }
+
                 await refreshData(true);
                 router.push("/dashboard");
             } else {

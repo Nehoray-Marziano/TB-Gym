@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
         // Simulate payment processing delay (1-2 seconds)
         await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
 
-        // 95% success rate for mock payments
-        const isSuccessful = Math.random() < 0.95;
+        // DEMO MODE: Always succeed
+        const isSuccessful = true;
 
         if (!isSuccessful) {
             return NextResponse.json({
