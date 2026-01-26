@@ -19,11 +19,17 @@ export default function NotificationPermissionModal({ onComplete }: Notification
     const [isLoading, setIsLoading] = useState(false);
     const [hasChecked, setHasChecked] = useState(false);
     const [storageKey, setStorageKey] = useState("notification_prompt_dismissed_v3");
+    const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+    const addLog = (msg: string) => {
+        console.log(msg);
+        setDebugLogs(prev => [...prev.slice(-10), msg]); // Keep last 10 logs
+    };
 
     useEffect(() => {
         // Check if we should show the modal
         const checkPermission = async () => {
-            console.log("[NotificationModal] Starting permission check...");
+            addLog("[NotificationModal] Starting permission check...");
 
             // Detect if running as installed PWA (standalone mode)
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -34,12 +40,12 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                 ? "notification_prompt_dismissed_pwa_v3"
                 : "notification_prompt_dismissed_browser_v3";
             setStorageKey(key);
-            console.log(`[NotificationModal] IsStandalone: ${isStandalone}, Key: ${key}`);
+            addLog(`[NotificationModal] IsStandalone: ${isStandalone}, Key: ${key}`);
 
             // Don't show if already dismissed in this context
             const dismissed = localStorage.getItem(key);
             if (dismissed) {
-                console.log("[NotificationModal] Previously dismissed/handled. Exiting.");
+                addLog("[NotificationModal] Previously dismissed/handled. Exiting.");
                 setHasChecked(true);
                 return;
             }
@@ -50,39 +56,41 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                 attempt++;
                 if (window.OneSignal) {
                     clearInterval(waitForOneSignal);
-                    console.log(`[NotificationModal] OneSignal found after ${attempt} attempts!`);
+                    addLog(`[NotificationModal] OneSignal found after ${attempt} attempts!`);
 
                     try {
                         const permission = window.OneSignal.Notifications.permission;
-                        console.log("[NotificationModal] Current Permission:", permission);
+                        addLog(`[NotificationModal] Current Permission: ${permission}`);
 
                         const isGranted = permission === "granted" || permission === true;
                         const isDenied = permission === "denied";
 
-                        console.log(`[NotificationModal] isGranted: ${isGranted}, isDenied: ${isDenied}`);
+                        addLog(`[NotificationModal] isGranted: ${isGranted}, isDenied: ${isDenied}`);
 
                         if (!isGranted && !isDenied) {
-                            console.log("[NotificationModal] Showing modal in 1.5s...");
+                            addLog("[NotificationModal] Showing modal in 1.5s...");
                             setTimeout(() => {
                                 setIsVisible(true);
                             }, 1500);
                         } else {
-                            console.log("[NotificationModal] Not showing modal. Permission is resolved.");
+                            addLog("[NotificationModal] Not showing modal. Permission is resolved.");
                         }
                     } catch (e) {
-                        console.error("[NotificationModal] OneSignal check error:", e);
+                        // Safely stringify error
+                        const errMsg = e instanceof Error ? e.message : String(e);
+                        addLog(`[NotificationModal] Error: ${errMsg}`);
                     }
 
                     setHasChecked(true);
                 } else if (attempt % 5 === 0) {
-                    console.log("[NotificationModal] Still waiting for OneSignal...");
+                    addLog("[NotificationModal] Still waiting for OneSignal...");
                 }
             }, 500);
 
             // Timeout after 10 seconds
             setTimeout(() => {
                 clearInterval(waitForOneSignal);
-                console.log("[NotificationModal] Timed out waiting for OneSignal.");
+                addLog("[NotificationModal] Timed out waiting for OneSignal.");
                 setHasChecked(true);
             }, 10000);
         };
@@ -98,7 +106,8 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                 await window.OneSignal.Notifications.requestPermission();
             }
         } catch (e) {
-            console.error("Permission request error:", e);
+            const errMsg = e instanceof Error ? e.message : String(e);
+            addLog(`[NotificationModal] Request Error: ${errMsg}`);
         }
 
         setIsLoading(false);
@@ -113,11 +122,23 @@ export default function NotificationPermissionModal({ onComplete }: Notification
         onComplete?.();
     };
 
-    if (!isVisible) return null;
+    // DEBUG: Render logs even if modal is hidden (z-index extreme)
+    if (!isVisible) {
+        return (
+            <div className="fixed top-0 left-0 z-[9999] p-2 bg-black/80 text-green-400 text-[10px] font-mono pointer-events-none max-w-[200px] break-words opacity-70">
+                {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
+            </div>
+        );
+    }
 
     return (
         <AnimatePresence>
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4">
+                {/* DEBUG LOGS ON MODAL */}
+                <div className="absolute top-0 left-0 z-[201] p-2 bg-black/80 text-green-400 text-[10px] font-mono pointer-events-none max-w-[200px] break-words opacity-70">
+                    {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
+                </div>
+
                 {/* Backdrop */}
                 <motion.div
                     initial={{ opacity: 0 }}
