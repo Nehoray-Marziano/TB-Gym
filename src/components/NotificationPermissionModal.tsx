@@ -23,6 +23,8 @@ export default function NotificationPermissionModal({ onComplete }: Notification
     useEffect(() => {
         // Check if we should show the modal
         const checkPermission = async () => {
+            console.log("[NotificationModal] Starting permission check...");
+
             // Detect if running as installed PWA (standalone mode)
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                 || (window.navigator as any).standalone === true;
@@ -32,51 +34,55 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                 ? "notification_prompt_dismissed_pwa_v3"
                 : "notification_prompt_dismissed_browser_v3";
             setStorageKey(key);
+            console.log(`[NotificationModal] IsStandalone: ${isStandalone}, Key: ${key}`);
 
             // Don't show if already dismissed in this context
             const dismissed = localStorage.getItem(key);
             if (dismissed) {
+                console.log("[NotificationModal] Previously dismissed/handled. Exiting.");
                 setHasChecked(true);
                 return;
             }
 
             // Wait for OneSignal to be ready
+            let attempt = 0;
             const waitForOneSignal = setInterval(async () => {
+                attempt++;
                 if (window.OneSignal) {
                     clearInterval(waitForOneSignal);
+                    console.log(`[NotificationModal] OneSignal found after ${attempt} attempts!`);
 
                     try {
                         const permission = window.OneSignal.Notifications.permission;
-                        console.log("[OneSignal] Permission status:", permission);
-
-                        // If permission is 'default', it means user hasn't been prompted yet -> SHOW MODAL
-                        // If permission is 'false' (boolean) -> SHOW MODAL (sometimes true for denied, checking OneSignal docs)
-                        // If permission is 'denied' -> DO NOT SHOW (user blocked it)
-                        // If permission is 'granted' -> DO NOT SHOW (already enabled)
-
-                        // OneSignal v16 permission values can be 'default', 'granted', 'denied'
-                        // Or boolean if using older patterns/compat layers.
+                        console.log("[NotificationModal] Current Permission:", permission);
 
                         const isGranted = permission === "granted" || permission === true;
                         const isDenied = permission === "denied";
 
+                        console.log(`[NotificationModal] isGranted: ${isGranted}, isDenied: ${isDenied}`);
+
                         if (!isGranted && !isDenied) {
-                            // Small delay to let the dashboard load first
+                            console.log("[NotificationModal] Showing modal in 1.5s...");
                             setTimeout(() => {
                                 setIsVisible(true);
                             }, 1500);
+                        } else {
+                            console.log("[NotificationModal] Not showing modal. Permission is resolved.");
                         }
                     } catch (e) {
-                        console.log("OneSignal check error:", e);
+                        console.error("[NotificationModal] OneSignal check error:", e);
                     }
 
                     setHasChecked(true);
+                } else if (attempt % 5 === 0) {
+                    console.log("[NotificationModal] Still waiting for OneSignal...");
                 }
             }, 500);
 
             // Timeout after 10 seconds
             setTimeout(() => {
                 clearInterval(waitForOneSignal);
+                console.log("[NotificationModal] Timed out waiting for OneSignal.");
                 setHasChecked(true);
             }, 10000);
         };
