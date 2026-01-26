@@ -18,34 +18,25 @@ export default function NotificationPermissionModal({ onComplete }: Notification
     const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [hasChecked, setHasChecked] = useState(false);
-    const [storageKey, setStorageKey] = useState("notification_prompt_dismissed_v3");
-    const [debugLogs, setDebugLogs] = useState<string[]>([]);
-
-    const addLog = (msg: string) => {
-        console.log(msg);
-        setDebugLogs(prev => [...prev.slice(-10), msg]); // Keep last 10 logs
-    };
+    // BUMPED VERSION TO V4 TO FORCE PROMPT FOR USER
+    const [storageKey, setStorageKey] = useState("notification_prompt_dismissed_v4");
 
     useEffect(() => {
         // Check if we should show the modal
         const checkPermission = async () => {
-            addLog("[NotificationModal] Starting permission check...");
-
             // Detect if running as installed PWA (standalone mode)
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                 || (window.navigator as any).standalone === true;
 
             // Use different key for standalone vs browser - fresh PWA install = fresh prompt
             const key = isStandalone
-                ? "notification_prompt_dismissed_pwa_v3"
-                : "notification_prompt_dismissed_browser_v3";
+                ? "notification_prompt_dismissed_pwa_v4"
+                : "notification_prompt_dismissed_browser_v4";
             setStorageKey(key);
-            addLog(`[NotificationModal] IsStandalone: ${isStandalone}, Key: ${key}`);
 
             // Don't show if already dismissed in this context
             const dismissed = localStorage.getItem(key);
             if (dismissed) {
-                addLog("[NotificationModal] Previously dismissed/handled. Exiting.");
                 setHasChecked(true);
                 return;
             }
@@ -56,41 +47,29 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                 attempt++;
                 if (window.OneSignal) {
                     clearInterval(waitForOneSignal);
-                    addLog(`[NotificationModal] OneSignal found after ${attempt} attempts!`);
 
                     try {
                         const permission = window.OneSignal.Notifications.permission;
-                        addLog(`[NotificationModal] Current Permission: ${permission}`);
 
                         const isGranted = permission === "granted" || permission === true;
                         const isDenied = permission === "denied";
 
-                        addLog(`[NotificationModal] isGranted: ${isGranted}, isDenied: ${isDenied}`);
-
                         if (!isGranted && !isDenied) {
-                            addLog("[NotificationModal] Showing modal in 1.5s...");
                             setTimeout(() => {
                                 setIsVisible(true);
                             }, 1500);
-                        } else {
-                            addLog("[NotificationModal] Not showing modal. Permission is resolved.");
                         }
                     } catch (e) {
-                        // Safely stringify error
-                        const errMsg = e instanceof Error ? e.message : String(e);
-                        addLog(`[NotificationModal] Error: ${errMsg}`);
+                        console.error("[NotificationModal] Error:", e);
                     }
 
                     setHasChecked(true);
-                } else if (attempt % 5 === 0) {
-                    addLog("[NotificationModal] Still waiting for OneSignal...");
                 }
             }, 500);
 
             // Timeout after 10 seconds
             setTimeout(() => {
                 clearInterval(waitForOneSignal);
-                addLog("[NotificationModal] Timed out waiting for OneSignal.");
                 setHasChecked(true);
             }, 10000);
         };
@@ -106,8 +85,7 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                 await window.OneSignal.Notifications.requestPermission();
             }
         } catch (e) {
-            const errMsg = e instanceof Error ? e.message : String(e);
-            addLog(`[NotificationModal] Request Error: ${errMsg}`);
+            console.error("Permission request error:", e);
         }
 
         setIsLoading(false);
@@ -122,23 +100,11 @@ export default function NotificationPermissionModal({ onComplete }: Notification
         onComplete?.();
     };
 
-    // DEBUG: Render logs even if modal is hidden (z-index extreme)
-    if (!isVisible) {
-        return (
-            <div className="fixed top-0 left-0 z-[9999] p-2 bg-black/80 text-green-400 text-[10px] font-mono pointer-events-none max-w-[200px] break-words opacity-70">
-                {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
-            </div>
-        );
-    }
+    if (!isVisible) return null;
 
     return (
         <AnimatePresence>
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4">
-                {/* DEBUG LOGS ON MODAL */}
-                <div className="absolute top-0 left-0 z-[201] p-2 bg-black/80 text-green-400 text-[10px] font-mono pointer-events-none max-w-[200px] break-words opacity-70">
-                    {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
-                </div>
-
                 {/* Backdrop */}
                 <motion.div
                     initial={{ opacity: 0 }}
