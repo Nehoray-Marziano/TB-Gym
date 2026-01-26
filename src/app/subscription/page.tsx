@@ -8,6 +8,7 @@ import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import gsap from "gsap";
+import PaymentModal from "@/components/subscription/PaymentModal";
 
 // --- SUBSCRIPTION TIERS ---
 const TIERS = [
@@ -70,18 +71,20 @@ const TIERS = [
             "גישה לכל השיעורים",
             "ביטול חינם עד 10 שעות לפני האימון",
             "רכישת כרטיסים נוספים באותו מחיר",
+            "קדימות בהרשמה"
         ]
     }
 ];
 
 export default function SubscriptionPage() {
     const router = useRouter();
-    const { refreshData } = useGymStore();
+    const { refreshData, profile } = useGymStore();
     const { toast } = useToast();
 
     // Default to 'standard' (id=2) active so the page starts with energy
     const [selectedTierId, setSelectedTierId] = useState<number>(2);
-    const [purchasing, setPurchasing] = useState<number | null>(null);
+    const [purchasing, setPurchasing] = useState<boolean>(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     // Get active tier object
     const activeTier = TIERS.find(t => t.id === selectedTierId) || TIERS[1];
@@ -96,6 +99,7 @@ export default function SubscriptionPage() {
 
             // Ensure initial visibility is hidden/offset
             gsap.set(".entrance-item", { opacity: 0, y: 50 });
+            gsap.set(".footer-action", { y: 100 });
 
             tl.to(".entrance-item", {
                 opacity: 1,
@@ -108,20 +112,38 @@ export default function SubscriptionPage() {
                     strokeDashoffset: 0,
                     duration: 2.5,
                     ease: "power2.out"
+                }, "-=0.5")
+                .to(".footer-action", {
+                    y: 0,
+                    duration: 0.6,
+                    ease: "back.out(1.2)"
                 }, "-=0.5");
+
         }, containerRef);
         return () => ctx.revert();
     }, []);
 
-    const handlePurchase = async (tierId: number) => {
-        setPurchasing(tierId);
+    // Payment Flow:
+    // 1. User clicks "Confirm & Pay" -> Opens Bit App + Starts Mock Success Flow
+    // 2. We optimistically assume success for the demo.
+    const handleBitRedirect = async () => {
+        setIsPaymentModalOpen(false);
+        setPurchasing(true);
         if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
 
+        // 1. Redirect to Bit
+        const bitUrl = "https://www.bitpay.co.il/app/me/BE137CD7-0248-51EB-42FD-5E889D31DEB83A1E";
+        window.open(bitUrl, '_blank');
+
+        // 2. Trigger Mock Success (Demo Magic 🪄)
         try {
+            // Wait a moment to simulate "processing" while they are in Bit
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
             const res = await fetch("/api/payment/mock", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: "subscription", tierId }),
+                body: JSON.stringify({ type: "subscription", tierId: activeTier.id }),
             });
             const data = await res.json();
 
@@ -131,6 +153,7 @@ export default function SubscriptionPage() {
                     description: `קיבלת ${data.data?.tickets_issued} כרטיסי אימון`,
                     type: "success"
                 });
+
                 // Launch Confetti
                 if (typeof window !== 'undefined') {
                     const confetti = (await import('canvas-confetti')).default;
@@ -153,13 +176,22 @@ export default function SubscriptionPage() {
                 description: e.message || "אנא נסי שוב",
                 type: "error"
             });
-        } finally {
-            setPurchasing(null);
+            setPurchasing(false);
         }
     };
 
     return (
         <div ref={containerRef} className="min-h-screen text-white overflow-x-hidden relative" dir="rtl">
+
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                onConfirm={handleBitRedirect}
+                tierName={activeTier.englishName}
+                tierDisplay={activeTier.displayName}
+                amount={activeTier.price}
+                userName={profile?.full_name || "User"}
+            />
 
             {/* --- OPTIMIZED REACTIVE BACKGROUND (Opacity Layers) --- */}
             <div className="fixed inset-0 z-0">
@@ -237,7 +269,6 @@ export default function SubscriptionPage() {
                 <div className="px-5 space-y-6">
                     {TIERS.map((tier) => {
                         const isSelected = selectedTierId === tier.id;
-                        const isPurchasing = purchasing === tier.id;
                         const Icon = tier.icon;
 
                         return (
@@ -246,7 +277,7 @@ export default function SubscriptionPage() {
                                 className="entrance-item relative pt-4" // Added pt-4 for badge space
                                 onClick={() => setSelectedTierId(tier.id)}
                             >
-                                {/* Popular Badge - positioned OUTSIDE the card to avoid clipping */}
+                                {/* Popular Badge */}
                                 {tier.popular && (
                                     <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
                                         <div className="px-4 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-lg shadow-[#E2F163]/30">
@@ -280,6 +311,7 @@ export default function SubscriptionPage() {
                                 >
 
                                     <div className="p-8">
+                                        {/* Card Header Content */}
                                         <div className="flex justify-between items-start mb-6">
                                             <div>
                                                 <h3 className={cn("text-xl font-bold mb-1 transition-colors duration-300", isSelected ? "text-white" : "text-white/60")}>
@@ -304,65 +336,20 @@ export default function SubscriptionPage() {
                                             </div>
                                         </div>
 
-                                        {/* Collapsible Content */}
-                                        {/* Collapsible Content - CSS Grid Transition */}
-                                        <div
-                                            className={cn(
-                                                "grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[grid-template-rows]",
-                                                isSelected ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                                            )}
-                                        >
-                                            <div className="overflow-hidden">
-                                                <div className="pt-6"> {/* Padding moved here to be part of the slide */}
-                                                    <div className="h-px w-full bg-white/10 mb-6" />
-
-                                                    <ul className="space-y-4 mb-8">
-                                                        {tier.features.map((feature, i) => (
-                                                            <li key={i} className="flex items-start gap-3">
-                                                                <Check className="w-5 h-5 shrink-0" style={{ color: tier.color }} />
-                                                                <span className="text-sm text-white/80 leading-tight">{feature}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handlePurchase(tier.id);
-                                                        }}
-                                                        disabled={isPurchasing}
-                                                        className="w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-transform"
-                                                        style={{
-                                                            background: `linear-gradient(135deg, ${tier.color}, transparent)`,
-                                                            backgroundColor: 'rgba(255,255,255,0.1)'
-                                                        }}
-                                                    >
-                                                        {isPurchasing ? (
-                                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                                        ) : (
-                                                            <>
-                                                                <span className="relative z-10 text-white">הצטרפי ב-{tier.price}₪</span>
-                                                                <ArrowRight className="w-5 h-5 text-white rotate-180" />
-                                                            </>
-                                                        )}
-                                                        {/* Button sheen - no conflicting tailwind classes */}
-                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                                                    </button>
-                                                    <p className="text-center text-xs text-white/30 mt-4">ללא התחייבות • ביטול בכל שלב</p>
-                                                </div>
-                                            </div>
+                                        {/* Features List (Always visible but dimmed if not selected) */}
+                                        <div className={cn("transition-opacity duration-300", isSelected ? "opacity-100" : "opacity-50")}>
+                                            <div className="h-px w-full bg-white/10 mb-6" />
+                                            <ul className="space-y-4">
+                                                {tier.features.map((feature, i) => (
+                                                    <li key={i} className="flex items-start gap-3">
+                                                        <Check className="w-5 h-5 shrink-0" style={{ color: tier.color }} />
+                                                        <span className="text-sm text-white/80 leading-tight">{feature}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
 
-                                        {!isSelected && (
-                                            <motion.div
-                                                className="text-center mt-2"
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                transition={{ delay: 0.2 }}
-                                            >
-                                                <span className="text-xs font-medium text-white/30 uppercase tracking-widest">לחץ לפרטים</span>
-                                            </motion.div>
-                                        )}
+                                        {/* Removed Individual Buy Button */}
                                     </div>
                                 </div>
                             </motion.div>
@@ -370,13 +357,31 @@ export default function SubscriptionPage() {
                     })}
                 </div>
 
-                {/* TRUST BADGES */}
-                <div className="entrance-item mt-16 px-6 flex justify-center opacity-60">
-                    <div className="flex flex-col items-center gap-2 p-4 text-center">
-                        <LockIcon className="w-6 h-6 text-emerald-400 mb-1" />
-                        <span className="text-xs font-bold text-white/90">תשלום מאובטח</span>
-                        <span className="text-[10px] text-white/40">SSL Encrypted</span>
-                    </div>
+                {/* FIXED FOOTER BUTTON */}
+                <div className="footer-action fixed bottom-0 left-0 right-0 p-4 pb-8 z-40 bg-gradient-to-t from-black via-black/80 to-transparent">
+                    <button
+                        onClick={() => setIsPaymentModalOpen(true)}
+                        disabled={purchasing}
+                        className="w-full py-5 rounded-[1.5rem] font-black text-lg flex items-center justify-center gap-3 relative overflow-hidden group active:scale-95 transition-all shadow-2xl"
+                        style={{
+                            background: activeTier.color,
+                            color: activeTier.id === 1 ? 'white' : 'black', // Dark text for Neon/Pink, White for Basic
+                            boxShadow: `0 0 40px ${activeTier.color}40`
+                        }}
+                    >
+                        {purchasing ? (
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : (
+                            <>
+                                <span className="relative z-10 tracking-tight">להמשיך לתשלום • {activeTier.price}₪</span>
+                                <ArrowRight className={cn("w-6 h-6 rotate-180", activeTier.id === 1 ? "text-white" : "text-black")} />
+                            </>
+                        )}
+
+                        {/* Shimmer Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                    </button>
+                    <p className="text-center text-[10px] text-white/30 mt-3 font-medium">ללא התחייבות • 100% מאובטח</p>
                 </div>
 
             </div>
