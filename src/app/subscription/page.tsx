@@ -124,8 +124,8 @@ export default function SubscriptionPage() {
     }, []);
 
     // Payment Flow:
-    // 1. User clicks "Confirm & Pay" -> Opens Bit App + Starts Mock Success Flow
-    // 2. We optimistically assume success for the demo.
+    // 1. User clicks "Confirm & Pay" -> Opens Bit App + Redirects to Dashboard
+    // 2. Confetti listens for actual ticket grant via Realtime (TicketCelebration)
     const handleBitRedirect = async () => {
         setIsPaymentModalOpen(false);
         setPurchasing(true);
@@ -135,49 +135,17 @@ export default function SubscriptionPage() {
         const bitUrl = "https://www.bitpay.co.il/app/me/BE137CD7-0248-51EB-42FD-5E889D31DEB83A1E";
         window.open(bitUrl, '_blank');
 
-        // 2. Trigger Mock Success (Demo Magic 🪄)
-        try {
-            // Wait a moment to simulate "processing" while they are in Bit
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        // 2. Show Toast (Request Received)
+        toast({
+            title: "בקשת התשלום נפתחה 📱",
+            description: "לאחר אישור התשלום, הכרטיסים יתעדכנו בחשבונך.",
+            type: "info"
+        });
 
-            const res = await fetch("/api/payment/mock", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: "subscription", tierId: activeTier.id }),
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                toast({
-                    title: "!ברוכה הבאה למשפחה 🎉",
-                    description: `קיבלת ${data.data?.tickets_issued} כרטיסי אימון`,
-                    type: "success"
-                });
-
-                // Launch Confetti
-                if (typeof window !== 'undefined') {
-                    const confetti = (await import('canvas-confetti')).default;
-                    confetti({
-                        particleCount: 150,
-                        spread: 70,
-                        origin: { y: 0.6 },
-                        colors: ['#E2F163', '#ffffff', '#000000']
-                    });
-                }
-
-                await refreshData(true);
-                router.push("/dashboard");
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (e: any) {
-            toast({
-                title: "שגיאה בתשלום",
-                description: e.message || "אנא נסי שוב",
-                type: "error"
-            });
-            setPurchasing(false);
-        }
+        // 3. Navigate mock delay
+        setTimeout(() => {
+            router.push("/dashboard");
+        }, 1500);
     };
 
     return (

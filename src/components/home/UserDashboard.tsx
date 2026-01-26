@@ -11,6 +11,7 @@ import gsap from "gsap";
 import BottomNav from "@/components/BottomNav";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import NotificationPermissionModal from "@/components/NotificationPermissionModal";
+import { useToast } from "@/components/ui/use-toast";
 
 
 // Animated counter component for tickets
@@ -101,6 +102,41 @@ export default function UserDashboard({ user }: { user: any }) {
         };
         fetchUpcoming();
     }, [user, refreshData]);
+
+
+    // Confetti Logic: Check if tickets increased since last load
+    const { toast } = useToast();
+    useEffect(() => {
+        if (loading) return; // Wait for tickets to be loaded
+
+        const storedTickets = localStorage.getItem('talia_tickets_count');
+        const currentTicketsNr = tickets || 0;
+
+        if (storedTickets !== null) {
+            const prevTickets = parseInt(storedTickets);
+            if (currentTicketsNr > prevTickets) {
+                // Celebration!
+                toast({
+                    title: "קיבלת כרטיסים חדשים! 🎉",
+                    description: "הכרטיסים נוספו לחשבון שלך בהצלחה.",
+                    type: "success"
+                });
+
+                import('canvas-confetti').then((confettiModule) => {
+                    const confetti = confettiModule.default;
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#E2F163', '#00b0ba', '#ffffff'] // Brand colors
+                    });
+                });
+            }
+        }
+
+        // Always update to current
+        localStorage.setItem('talia_tickets_count', currentTicketsNr.toString());
+    }, [tickets, loading, toast]);
 
     // Prefetch routes
     useEffect(() => {
