@@ -18,8 +18,11 @@ export default function NotificationPermissionModal({ onComplete }: Notification
     const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [hasChecked, setHasChecked] = useState(false);
-    // BUMPED VERSION TO V4 TO FORCE PROMPT FOR USER
-    const [storageKey, setStorageKey] = useState("notification_prompt_dismissed_v4");
+
+    // Key for storing the LAST time the user dismissed or interacted with the prompt
+    // We no longer use "versioned" keys. We use a cooldown strategy.
+    const STORAGE_COOLDOWN_KEY = "talia_notification_cooldown_timestamp";
+    const COOLDOWN_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 7 Days in milliseconds
 
     useEffect(() => {
         // Check if we should show the modal
@@ -28,17 +31,20 @@ export default function NotificationPermissionModal({ onComplete }: Notification
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                 || (window.navigator as any).standalone === true;
 
-            // Use different key for standalone vs browser - fresh PWA install = fresh prompt
-            const key = isStandalone
-                ? "notification_prompt_dismissed_pwa_v4"
-                : "notification_prompt_dismissed_browser_v4";
-            setStorageKey(key);
+            // Optional: If we ONLY want to show this in standalone mode, we can enforce it here.
+            // For now, we allow it in browser too if the logic allows.
 
-            // Don't show if already dismissed in this context
-            const dismissed = localStorage.getItem(key);
-            if (dismissed) {
-                setHasChecked(true);
-                return;
+            // Check Cooldown
+            const lastInteractionStr = localStorage.getItem(STORAGE_COOLDOWN_KEY);
+            if (lastInteractionStr) {
+                const lastInteraction = parseInt(lastInteractionStr, 10);
+                const now = Date.now();
+
+                // If cooldown hasn't expired yet, skip
+                if (now - lastInteraction < COOLDOWN_PERIOD_MS) {
+                    setHasChecked(true);
+                    return; // EXIT: Cooldown active
+                }
             }
 
             // Wait for OneSignal to be ready
@@ -51,9 +57,15 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                     try {
                         const permission = window.OneSignal.Notifications.permission;
 
+                        // v16 Permission States:
+                        // true / 'granted' -> Already subscribed.
+                        // false / 'denied' -> Blocked by OS/Browser.
+                        // 'default' (or undefined/false in some older contexts) -> Can Request.
+
                         const isGranted = permission === "granted" || permission === true;
                         const isDenied = permission === "denied";
 
+                        // Only show if NOT granted and NOT denied (i.e. we have a chance to ask)
                         if (!isGranted && !isDenied) {
                             setTimeout(() => {
                                 setIsVisible(true);
@@ -82,6 +94,7 @@ export default function NotificationPermissionModal({ onComplete }: Notification
 
         try {
             if (window.OneSignal) {
+                // If they say YES, we don't need a cooldown, the OS permission state will handle "granted" logic next time.
                 await window.OneSignal.Notifications.requestPermission();
             }
         } catch (e) {
@@ -89,13 +102,23 @@ export default function NotificationPermissionModal({ onComplete }: Notification
         }
 
         setIsLoading(false);
-        localStorage.setItem(storageKey, "true");
+        // We DON'T set cooldown on Allow, because if they allow, we rely on the sub status.
+        // Actually, preventing re-prompting while invalid is handled by 'isGranted' check.
+        // But if they click Allow here but then Deny native prompt, we should probably set cooldown.
+        // For simplicity, we assume if they get to this flow, they might have clicked Allow.
+
+        // Let's set a short cooldown (1 hour) just to prevent instant re-popup if they cancel native prompt.
+        localStorage.setItem(STORAGE_COOLDOWN_KEY, Date.now().toString());
+
         setIsVisible(false);
         onComplete?.();
     };
 
     const handleDismiss = () => {
-        localStorage.setItem(storageKey, "true");
+        // User clicked "Maybe Later"
+        // Set full cooldown (7 days)
+        localStorage.setItem(STORAGE_COOLDOWN_KEY, Date.now().toString());
+
         setIsVisible(false);
         onComplete?.();
     };
