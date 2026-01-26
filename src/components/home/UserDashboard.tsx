@@ -10,6 +10,7 @@ import StudioLogo from "@/components/StudioLogo";
 import gsap from "gsap";
 import BottomNav from "@/components/BottomNav";
 import { getRelativeTimeHebrew } from "@/lib/utils";
+import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 
 
 // Animated counter component for tickets
@@ -109,35 +110,6 @@ export default function UserDashboard({ user }: { user: any }) {
         router.prefetch('/admin/schedule');
     }, [router]);
 
-    // Native Notification Prompt on Dashboard Entry (ONCE per device)
-    useEffect(() => {
-        const triggerNativePrompt = async () => {
-            // Guard: Only ask once per device to prevent duplicate subscriptions
-            const alreadyAsked = localStorage.getItem('talia_notification_asked_v1');
-            if (alreadyAsked) {
-                console.log("[Notifications] Already asked before, skipping prompt.");
-                return;
-            }
-
-            // Wait a moment for things to settle
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            if (typeof window !== 'undefined' && 'Notification' in window && (window as any).OneSignal) {
-                // Only ask if we haven't asked before (permission is 'default')
-                if (Notification.permission === 'default') {
-                    try {
-                        console.log("Triggering native notification prompt...");
-                        localStorage.setItem('talia_notification_asked_v1', 'true');
-                        await (window as any).OneSignal.Notifications.requestPermission();
-                    } catch (e) {
-                        console.error("Error requesting native permission:", e);
-                    }
-                }
-            }
-        };
-
-        triggerNativePrompt();
-    }, []);
 
     // GSAP Entrance Animations
     useLayoutEffect(() => {
@@ -420,6 +392,9 @@ export default function UserDashboard({ user }: { user: any }) {
 
             {/* Floating Navigation */}
             <BottomNav />
+
+            {/* Notification Permission Modal */}
+            <NotificationPermissionModal />
 
             {/* CSS for wave animation */}
             <style jsx>{`
