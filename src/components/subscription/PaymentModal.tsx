@@ -26,9 +26,9 @@ export default function PaymentModal({
     const [copied, setCopied] = useState(false);
 
     // Generate description: "Name - Tier - Month"
-    // Example: "Nehoray - Premium - January"
-    const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
-    const paymentDescription = `${userName} - ${tierName.toUpperCase()} - ${currentMonth}`;
+    // Example: "נהוראי - פרימיום - ינואר"
+    const currentMonth = new Date().toLocaleString('he-IL', { month: 'long' });
+    const paymentDescription = `${userName} - ${tierDisplay} - ${currentMonth}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(paymentDescription);
@@ -68,18 +68,18 @@ export default function PaymentModal({
                             <div className="bg-[#00b0ba]/10 p-8 text-center border-b border-white/5 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#00b0ba]" />
                                 <div className="mb-4 flex justify-center">
-                                    <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
+                                    <div className="w-20 h-20 flex items-center justify-center transform rotate-3">
                                         <Image
                                             src="/Bit_logo.svg"
                                             alt="Bit"
-                                            width={50}
-                                            height={50}
-                                            className="w-12 h-12"
+                                            width={60}
+                                            height={60}
+                                            className="w-16 h-16 drop-shadow-lg"
                                         />
                                     </div>
                                 </div>
-                                <h3 className="text-2xl font-bold text-white mb-1">תשלום ב-Bit</h3>
-                                <p className="text-white/60 text-sm">העברה מהירה ומאובטחת</p>
+                                <h3 className="text-2xl font-bold text-white mb-1">תשלום באמצעות ביט</h3>
+                                <p className="text-white/60 text-sm">העברה מהירה ומאובטחת לטליה</p>
                             </div>
 
                             {/* Body Section */}
@@ -88,31 +88,36 @@ export default function PaymentModal({
                                 {/* Amount Display */}
                                 <div className="bg-black/40 rounded-2xl p-4 flex justify-between items-center border border-white/5">
                                     <span className="text-white/60 font-medium">סכום לתשלום:</span>
-                                    <span className="text-3xl font-bold text-white">{amount}₪</span>
+                                    <span className="text-3xl font-bold text-white tracking-widest">{amount}₪</span>
+                                </div>
+
+                                {/* Explanation Text */}
+                                <div className="text-xs text-white/50 text-center leading-relaxed px-2">
+                                    <p>יש למלא ידנית את סכום ההעברה וסיבת התשלום באפליקציה.</p>
+                                    <p className="mt-1 text-[#E2F163]">הכרטיסים יתעדכנו באפליקציה רק לאחר אישור ההעברה ע"י טליה.</p>
                                 </div>
 
                                 {/* Description Copy Section */}
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-white/40 uppercase tracking-wider block pr-1">
-                                        תיאור להעברה (חובה להעתיק)
-                                    </label>
+                                    <div className="flex justify-between items-end px-1">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-wider">
+                                            סיבת העברה (מומלץ להעתיק)
+                                        </label>
+                                    </div>
                                     <div
                                         onClick={handleCopy}
-                                        className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-3 cursor-pointer hover:bg-white/10 transition-colors group active:scale-[0.98]"
+                                        className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-white/10 transition-colors group active:scale-[0.98]"
                                     >
-                                        <code className="text-[#E2F163] font-mono text-sm break-all font-bold tracking-wide">
+                                        <span className="text-white/90 font-medium text-sm break-all tracking-wide px-2">
                                             {paymentDescription}
-                                        </code>
+                                        </span>
                                         <div className={cn(
-                                            "p-2 rounded-lg transition-all",
+                                            "p-2 rounded-lg transition-all shrink-0",
                                             copied ? "bg-green-500/20 text-green-400" : "bg-white/10 text-white group-hover:bg-white/20"
                                         )}>
                                             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-white/40 pr-2">
-                                        * אנא הדביקי את הטקסט בשדה "הערה" באפליקציית ביט
-                                    </p>
                                 </div>
 
                                 {/* Action Buttons */}

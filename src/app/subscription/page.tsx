@@ -137,8 +137,8 @@ export default function SubscriptionPage() {
 
         // 2. Show Toast (Request Received)
         toast({
-            title: "בקשת התשלום נפתחה 📱",
-            description: "לאחר אישור התשלום, הכרטיסים יתעדכנו בחשבונך.",
+            title: "בקשת התשלום נפתחה ב-Bit 📱",
+            description: "הכרטיסים יתעדכנו באפליקציה לאחר אישור ההעברה ע״י טליה.",
             type: "info"
         });
 
@@ -341,7 +341,7 @@ export default function SubscriptionPage() {
                             <Loader2 className="w-6 h-6 animate-spin" />
                         ) : (
                             <>
-                                <span className="relative z-10 tracking-tight">להמשיך לתשלום • {activeTier.price}₪</span>
+                                <span className="relative z-10 tracking-tight">לרכישת מנוי {activeTier.displayName} • {activeTier.price}₪</span>
                                 <ArrowRight className={cn("w-6 h-6 rotate-180", activeTier.id === 1 ? "text-white" : "text-black")} />
                             </>
                         )}
