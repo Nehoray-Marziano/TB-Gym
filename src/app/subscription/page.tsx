@@ -81,13 +81,13 @@ export default function SubscriptionPage() {
     const { refreshData, profile } = useGymStore();
     const { toast } = useToast();
 
-    // Default to 'standard' (id=2) active so the page starts with energy
-    const [selectedTierId, setSelectedTierId] = useState<number>(2);
+    // Default to 'null' (no selection) so the page starts clean
+    const [selectedTierId, setSelectedTierId] = useState<number | null>(null);
     const [purchasing, setPurchasing] = useState<boolean>(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     // Get active tier object
-    const activeTier = TIERS.find(t => t.id === selectedTierId) || TIERS[1];
+    const activeTier = TIERS.find(t => t.id === selectedTierId);
 
     // GSAP Refs for entrance
     const containerRef = useRef<HTMLDivElement>(null);
@@ -155,9 +155,9 @@ export default function SubscriptionPage() {
                 isOpen={isPaymentModalOpen}
                 onClose={() => setIsPaymentModalOpen(false)}
                 onConfirm={handleBitRedirect}
-                tierName={activeTier.englishName}
-                tierDisplay={activeTier.displayName}
-                amount={activeTier.price}
+                tierName={activeTier?.englishName || ""}
+                tierDisplay={activeTier?.displayName || ""}
+                amount={activeTier?.price || 0}
                 userName={profile?.full_name || "User"}
             />
 
@@ -200,7 +200,9 @@ export default function SubscriptionPage() {
                                 <span
                                     className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r"
                                     style={{
-                                        backgroundImage: `linear-gradient(to right, ${activeTier.color}, #ffffff, ${activeTier.color})`,
+                                        backgroundImage: activeTier
+                                            ? `linear-gradient(to right, ${activeTier.color}, #ffffff, ${activeTier.color})`
+                                            : 'linear-gradient(to right, #ffffff, #aaaaaa)',
                                         backgroundSize: '200% auto'
                                     }}
                                 >
@@ -210,9 +212,9 @@ export default function SubscriptionPage() {
                                 <svg className="absolute -bottom-4 left-0 w-full h-[24px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
                                     <defs>
                                         <linearGradient id="underline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stopColor={activeTier.color} />
+                                            <stop offset="0%" stopColor={activeTier?.color || '#ffffff'} />
                                             <stop offset="50%" stopColor="#ffffff" />
-                                            <stop offset="100%" stopColor={activeTier.color} />
+                                            <stop offset="100%" stopColor={activeTier?.color || '#ffffff'} />
                                         </linearGradient>
                                     </defs>
                                     <path
@@ -326,31 +328,41 @@ export default function SubscriptionPage() {
                 </div>
 
                 {/* FIXED FOOTER BUTTON */}
-                <div className="footer-action fixed bottom-0 left-0 right-0 p-4 pb-8 z-40 bg-gradient-to-t from-black via-black/80 to-transparent">
-                    <button
-                        onClick={() => setIsPaymentModalOpen(true)}
-                        disabled={purchasing}
-                        className="w-full py-5 rounded-[1.5rem] font-black text-lg flex items-center justify-center gap-3 relative overflow-hidden group active:scale-95 transition-all shadow-2xl"
-                        style={{
-                            background: activeTier.color,
-                            color: activeTier.id === 1 ? 'white' : 'black', // Dark text for Neon/Pink, White for Basic
-                            boxShadow: `0 0 40px ${activeTier.color}40`
-                        }}
-                    >
-                        {purchasing ? (
-                            <Loader2 className="w-6 h-6 animate-spin" />
-                        ) : (
-                            <>
-                                <span className="relative z-10 tracking-tight">לרכישת מנוי {activeTier.displayName} • {activeTier.price}₪</span>
-                                <ArrowRight className={cn("w-6 h-6 rotate-180", activeTier.id === 1 ? "text-white" : "text-black")} />
-                            </>
-                        )}
+                <AnimatePresence>
+                    {selectedTierId && activeTier && (
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                            className="footer-action fixed bottom-0 left-0 right-0 p-4 pb-8 z-40 bg-gradient-to-t from-black via-black/80 to-transparent"
+                        >
+                            <button
+                                onClick={() => setIsPaymentModalOpen(true)}
+                                disabled={purchasing}
+                                className="w-full py-5 rounded-[1.5rem] font-black text-lg flex items-center justify-center gap-3 relative overflow-hidden group active:scale-95 transition-all shadow-2xl"
+                                style={{
+                                    background: activeTier.color,
+                                    color: activeTier.id === 1 ? 'white' : 'black', // Dark text for Neon/Pink, White for Basic
+                                    boxShadow: `0 0 40px ${activeTier.color}40`
+                                }}
+                            >
+                                {purchasing ? (
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                ) : (
+                                    <>
+                                        <span className="relative z-10 tracking-tight">לרכישת מנוי {activeTier.displayName} • {activeTier.price}₪</span>
+                                        <ArrowRight className={cn("w-6 h-6 rotate-180", activeTier.id === 1 ? "text-white" : "text-black")} />
+                                    </>
+                                )}
 
-                        {/* Shimmer Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                    </button>
-                    <p className="text-center text-[10px] text-white/30 mt-3 font-medium">ללא התחייבות • 100% מאובטח</p>
-                </div>
+                                {/* Shimmer Effect */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                            </button>
+                            <p className="text-center text-[10px] text-white/30 mt-3 font-medium">ללא התחייבות • 100% מאובטח</p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
             </div>
         </div>
