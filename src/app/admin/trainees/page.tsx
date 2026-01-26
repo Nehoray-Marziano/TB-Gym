@@ -3,8 +3,60 @@
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, User, Ticket, Plus, Clock } from "lucide-react";
+import { Search, User, Ticket, Plus, Clock, Minus, Save, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+
+// Ticket Counter Component for Batch Updates
+function TicketCounter({ traineeId, currentTickets, onUpdate, isUpdating }: {
+    traineeId: string,
+    currentTickets: number,
+    onUpdate: (val: number) => void,
+    isUpdating: boolean
+}) {
+    const [addAmount, setAddAmount] = useState(0);
+
+    const handleSave = () => {
+        if (addAmount !== 0) {
+            onUpdate(addAmount);
+            setAddAmount(0); // Reset after save
+        }
+    };
+
+    return (
+        <div className="flex items-center bg-neutral-900 rounded-xl p-1 border border-white/10">
+            <button
+                onClick={() => setAddAmount(prev => prev - 1)}
+                className="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-white/50 hover:text-white transition-colors"
+            >
+                <Minus className="w-4 h-4" />
+            </button>
+
+            <input
+                type="number"
+                value={addAmount}
+                onChange={(e) => setAddAmount(parseInt(e.target.value) || 0)}
+                className="w-10 bg-transparent text-center font-mono font-bold text-white focus:outline-none"
+            />
+
+            <button
+                onClick={() => setAddAmount(prev => prev + 1)}
+                className="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-white/50 hover:text-white transition-colors"
+            >
+                <Plus className="w-4 h-4" />
+            </button>
+
+            {addAmount !== 0 && (
+                <button
+                    onClick={handleSave}
+                    disabled={isUpdating}
+                    className="mr-2 px-3 h-8 bg-[#E2F163] text-black text-xs font-bold rounded-lg flex items-center gap-1 hover:bg-[#d4e450] transition-colors"
+                >
+                    {isUpdating ? <RefreshCw className="w-3 h-3 animate-spin" /> : "עדכון"}
+                </button>
+            )}
+        </div>
+    );
+}
 
 type Profile = {
     id: string;
@@ -88,9 +140,10 @@ export default function AdminTraineesPage() {
         setLoading(false);
     };
 
-    const handleGrantTickets = async (userId: string, quantity: number = 1) => {
+    const handleGrantTickets = async (userId: string, quantity: number) => {
         setGrantingTickets(userId);
         try {
+            // 1. Grant Tickets DB
             const { data, error } = await supabase.rpc("admin_grant_tickets", {
                 p_user_id: userId,
                 p_quantity: quantity,
@@ -98,13 +151,22 @@ export default function AdminTraineesPage() {
 
             if (error) throw error;
 
+            // 2. Send Notification (fire and forget)
+            fetch('/api/notifications/grant-tickets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, amount: quantity })
+            }).catch(err => console.error("Notification failed", err));
+
             // Update local state
             setTrainees(prev => prev.map(t =>
                 t.id === userId ? { ...t, tickets: t.tickets + quantity } : t
             ));
-            toast({ title: `${quantity} כרטיסים ניתנו בהצלחה`, type: "success" });
+
+            toast({ title: "הכרטיסים עודכנו בהצלחה", type: "success" });
         } catch (err: any) {
-            toast({ title: "שגיאה בהענקת כרטיסים", type: "error" });
+            console.error(err);
+            toast({ title: "שגיאה בהענקת כרטיסים", description: err.message, type: "error" });
         } finally {
             setGrantingTickets(null);
         }
@@ -208,13 +270,14 @@ export default function AdminTraineesPage() {
                                             {trainee.tickets}
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={() => handleGrantTickets(trainee.id, 1)}
-                                        disabled={grantingTickets === trainee.id}
-                                        className="w-10 h-10 bg-[#E2F163] text-black rounded-xl hover:bg-[#d4e450] flex items-center justify-center transition-colors shadow-lg shadow-[#E2F163]/20 disabled:opacity-50"
-                                    >
-                                        <Plus className="w-5 h-5" />
-                                    </button>
+
+                                    {/* Batch Update UI */}
+                                    <TicketCounter
+                                        traineeId={trainee.id}
+                                        currentTickets={trainee.tickets}
+                                        onUpdate={(quantity) => handleGrantTickets(trainee.id, quantity)}
+                                        isUpdating={grantingTickets === trainee.id}
+                                    />
                                 </div>
                             </div>
                         </motion.div>
