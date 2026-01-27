@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2, Lock as LockIcon, CalendarX, ArrowLeft } from "lucide-react";
+import { Check, Crown, Flame, Star, ChevronRight, Zap, Sparkles, ArrowRight, Loader2, Lock as LockIcon, CalendarX, ArrowLeft, Hand } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
@@ -93,6 +93,8 @@ export default function SubscriptionPage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const carouselRef = useRef<HTMLDivElement>(null);
 
+    const [showSwipeHint, setShowSwipeHint] = useState(true);
+
     // Scroll to initial central item
     useEffect(() => {
         if (carouselRef.current) {
@@ -104,10 +106,16 @@ export default function SubscriptionPage() {
                 container.scrollTo({ left: scrollLeft, behavior: "instant" });
             }
         }
+
+        // Hide hint after 4 seconds if no interaction
+        const timer = setTimeout(() => setShowSwipeHint(false), 4500);
+        return () => clearTimeout(timer);
     }, []);
 
     // Handle Scroll for Auto-Selection
     const handleScroll = () => {
+        if (showSwipeHint) setShowSwipeHint(false); // Hide hint on first scroll
+
         if (!carouselRef.current) return;
         const container = carouselRef.current;
         const center = container.scrollLeft + (container.clientWidth / 2);
@@ -133,7 +141,7 @@ export default function SubscriptionPage() {
         }
     };
 
-    // Entrance Animation
+    // Entrance Animation - Keep existing
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
             const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
@@ -273,7 +281,9 @@ export default function SubscriptionPage() {
                             layout
                             className={cn(
                                 "entrance-item snap-center shrink-0 w-[82vw] max-w-[380px] aspect-[4/5] relative transition-all duration-500 ease-out",
-                                isSelected ? "scale-100 opacity-100 z-20" : "scale-90 opacity-60 z-10 blur-[1px]"
+                                isSelected
+                                    ? "scale-100 opacity-100 z-20"
+                                    : "scale-90 opacity-70 z-10 blur-[1px] animate-pulse-glow" // Added pulse-glow
                             )}
                             onClick={() => {
                                 // Scroll to this card if clicked
@@ -342,6 +352,22 @@ export default function SubscriptionPage() {
                     );
                 })}
             </div>
+
+            {/* --- SWIPE HINT OVERLAY --- */}
+            <AnimatePresence>
+                {showSwipeHint && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 pointer-events-none z-40 flex items-center justify-center"
+                    >
+                        <div className="bg-black/40 backdrop-blur-sm p-4 rounded-full animate-swipe-hand">
+                            <Hand className="w-10 h-10 text-white/80" />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* --- FIXED FOOTER BUTTON --- */}
             {activeTier && (
