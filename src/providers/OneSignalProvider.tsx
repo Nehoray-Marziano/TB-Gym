@@ -15,8 +15,11 @@ interface OneSignalProviderProps {
     userEmail?: string;
 }
 
+import { useToast } from "@/components/ui/use-toast";
+
 export default function OneSignalProvider({ userId, userRole, userEmail }: OneSignalProviderProps) {
     const initialized = useRef(false);
+    const { toast } = useToast();
 
     // Effect 1: Initialize OneSignal (Run Once)
     useEffect(() => {
@@ -50,7 +53,26 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
             // Enable foreground notifications to appear
             OneSignal.Notifications.addEventListener('foregroundWillDisplay', function (event: any) {
                 console.log("[OneSignal] Foreground notification received", event);
-                // We do NOT preventDefault() so the notification appears visually!
+                // 1. Prevent native display to avoid double notifications (optional, but cleaner)
+                // event.preventDefault(); 
+
+                // 2. Trigger our beautiful In-App Toast
+                // We need to access the store/hook outside the component scope? 
+                // No, we are inside a React component, but inside an async callback.
+                // We should bubble this up or use a static toast method if available.
+                // Since this is a Client Component, we can dispatch a custom event or check if we can pass a callback.
+
+                // Simpler: Just rely on preventing default? No, user says it DOESN'T pop up.
+                // We will use the custom event pattern to trigger the toast from the layout or just import verify if useToast works here.
+                // Actually, since we are inside useEffect, we can't use hooks directly in the callback easily unless we capture the `toast` function from the render scope.
+
+                // We will capture `toast` from the hook in the component scope.
+                const notif = event.notification;
+                toast({
+                    title: notif.title || "New Message",
+                    description: notif.body,
+                    type: "info"
+                });
             });
 
             console.log("OneSignal initialized core");
