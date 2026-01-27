@@ -202,18 +202,7 @@ export default function AdminTraineesPage() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                {/* Subscription Badge */}
-                                {trainee.subscription && (
-                                    <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-2xl border border-white/5">
-                                        <span className="text-xs font-bold text-[#E2F163]">
-                                            {trainee.subscription.tier_display_name}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-[10px] text-neutral-500">
-                                            <Clock className="w-3 h-3" />
-                                            {formatExpiryDate(trainee.subscription.expires_at)}
-                                        </span>
-                                    </div>
-                                )}
+
 
                                 {/* Tickets Display */}
                                 <div className="flex items-center gap-4 bg-black/20 p-2 rounded-2xl border border-white/5">
