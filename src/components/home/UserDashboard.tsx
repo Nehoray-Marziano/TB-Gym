@@ -350,23 +350,23 @@ export default function UserDashboard({ user }: { user: any }) {
                     {/* Tickets Card - Premium Design */}
                     <div ref={ticketsCardRef} className="mb-8">
                         <Link href="/subscription" prefetch={true}>
-                            <div className="group relative bg-gradient-to-br from-[#E2F163] via-[#d9e85a] to-[#c8d64a] rounded-[2rem] p-6 text-black shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-300 hover:shadow-primary/40 hover:shadow-xl overflow-hidden">
+                            <div className="group relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-[2rem] p-6 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-300 hover:shadow-primary/40 hover:shadow-xl overflow-hidden">
                                 {/* Animated shine effect */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
 
                                 {/* Sparkle decorations */}
-                                <Sparkles className="absolute top-4 left-4 w-4 h-4 text-black/20 animate-pulse" />
-                                <Sparkles className="absolute bottom-12 right-20 w-3 h-3 text-black/15 animate-pulse delay-300" />
+                                <Sparkles className="absolute top-4 left-4 w-4 h-4 text-primary-foreground/20 animate-pulse" />
+                                <Sparkles className="absolute bottom-12 right-20 w-3 h-3 text-primary-foreground/15 animate-pulse delay-300" />
 
                                 <div className="flex justify-between items-start mb-8 relative z-10">
                                     <div>
-                                        <p className="font-bold text-black/60 text-sm mb-1 uppercase tracking-wider">הכרטיסים שלך</p>
+                                        <p className="font-bold text-primary-foreground/60 text-sm mb-1 uppercase tracking-wider">הכרטיסים שלך</p>
                                         <h2 className="text-5xl font-bold tracking-tighter">
                                             <AnimatedCounter value={tickets} />
                                         </h2>
                                     </div>
-                                    <div className="bg-black/10 p-3 rounded-xl group-hover:bg-black/20 transition-colors">
-                                        <Ticket className="w-6 h-6 text-black" />
+                                    <div className="bg-primary-foreground/10 p-3 rounded-xl group-hover:bg-primary-foreground/20 transition-colors">
+                                        <Ticket className="w-6 h-6 text-primary-foreground" />
                                     </div>
                                 </div>
 
@@ -374,20 +374,20 @@ export default function UserDashboard({ user }: { user: any }) {
                                     <div className="flex items-center gap-2">
                                         {subscription?.is_active && (
                                             <>
-                                                <span className="bg-black/20 text-black px-3 py-1 rounded-full text-xs font-bold">
+                                                <span className="bg-primary-foreground/20 text-primary-foreground px-3 py-1 rounded-full text-xs font-bold">
                                                     {subscription.tier_display_name}
                                                 </span>
-                                                <span className="flex items-center gap-1 text-xs text-black/70">
+                                                <span className="flex items-center gap-1 text-xs text-primary-foreground/70">
                                                     <Clock className="w-3 h-3" />
                                                     עד {formatExpiryDate(subscription.expires_at)}
                                                 </span>
                                             </>
                                         )}
                                         {!subscription?.is_active && (
-                                            <span className="text-sm text-black/70 font-medium">אימונים זמינים</span>
+                                            <span className="text-sm text-primary-foreground/70 font-medium">אימונים זמינים</span>
                                         )}
                                     </div>
-                                    <span className="bg-black text-[#E2F163] px-4 py-2 rounded-xl text-xs font-bold group-hover:scale-105 transition-transform">
+                                    <span className="bg-primary-foreground text-primary px-4 py-2 rounded-xl text-xs font-bold group-hover:scale-105 transition-transform">
                                         {subscription?.is_active ? "עוד כרטיסים +" : "רכישת מנוי +"}
                                     </span>
                                 </div>

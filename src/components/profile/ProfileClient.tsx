@@ -265,17 +265,17 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
             {/* Stats Card */}
             {!isEditing && (
-                <div ref={statsCardRef} className={`${!isAnimated ? 'opacity-0' : ''} group bg-gradient-to-br from-[#E2F163] via-[#d9e85a] to-[#c8d64a] rounded-[2rem] p-6 text-black shadow-lg shadow-primary/20 mb-8 relative overflow-hidden transition-all hover:shadow-primary/30 hover:scale-[1.01]`}>
+                <div ref={statsCardRef} className={`${!isAnimated ? 'opacity-0' : ''} group bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-[2rem] p-6 text-primary-foreground shadow-lg shadow-primary/20 mb-8 relative overflow-hidden transition-all hover:shadow-primary/30 hover:scale-[1.01]`}>
                     {/* Shine effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
 
                     <div className="relative z-10 flex justify-between items-center">
                         <div>
-                            <p className="font-bold text-black/60 text-xs mb-1 uppercase tracking-wider">יתרה נוכחית</p>
+                            <p className="font-bold text-primary-foreground/60 text-xs mb-1 uppercase tracking-wider">יתרה נוכחית</p>
                             <h3 className="text-4xl font-bold tracking-tighter">{profile?.balance} שיעורים</h3>
                         </div>
-                        <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center backdrop-blur-md group-hover:bg-black/20 transition-colors">
-                            <Zap className="w-6 h-6 text-black" />
+                        <div className="w-12 h-12 bg-primary-foreground/10 rounded-full flex items-center justify-center backdrop-blur-md group-hover:bg-primary-foreground/20 transition-colors">
+                            <Zap className="w-6 h-6 text-primary-foreground" />
                         </div>
                     </div>
                 </div>
@@ -366,24 +366,52 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
             {/* Theme & Settings */}
             <div ref={settingsRef} className="space-y-3">
-                <button
-                    onClick={toggleTheme}
-                    className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]`}
-                >
+                <div className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl space-y-4`}>
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                            {resolvedTheme === 'dark' ? <Moon className="w-5 h-5" /> : resolvedTheme === 'classic' ? <Palette className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground">
+                            <Palette className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-foreground">מצב תצוגה ({resolvedTheme === 'dark' ? 'חשוך' : resolvedTheme === 'classic' ? 'קלאסי' : 'בהיר'})</span>
+                        <span className="font-bold text-foreground">ערכת נושא</span>
                     </div>
-                    <div className={`w-12 h-6 rounded-full p-1 transition-colors ${resolvedTheme === 'dark' ? 'bg-primary justify-end' : resolvedTheme === 'classic' ? 'bg-[#8c9070] justify-center' : 'bg-muted/30 justify-start'} flex`}>
-                        <motion.div
-                            layout
-                            transition={{ type: "spring", stiffness: 700, damping: 30 }}
-                            className={`w-4 h-4 rounded-full ${resolvedTheme === 'dark' ? 'bg-black' : 'bg-white shadow-sm'}`}
-                        />
+
+                    <div className="grid grid-cols-3 gap-3">
+                        {/* Dark Theme */}
+                        <button
+                            onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('dark'); }}
+                            className={`h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden ${resolvedTheme === 'dark' ? 'border-primary ring-2 ring-primary/30 scale-[1.02]' : 'border-border opacity-70 hover:opacity-100'}`}
+                            style={{ background: '#0A0A0A' }}
+                        >
+                            <Moon className="w-5 h-5 text-white" />
+                            <span className="text-xs font-bold text-white">חשוך</span>
+                            {/* Neon Accent */}
+                            <div className="absolute bottom-0 w-full h-1 bg-[#E2F163]" />
+                        </button>
+
+                        {/* Classic Theme */}
+                        <button
+                            onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('classic'); }}
+                            className={`h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden ${resolvedTheme === 'classic' ? 'border-[#8c9070] ring-2 ring-[#8c9070]/30 scale-[1.02]' : 'border-border opacity-70 hover:opacity-100'}`}
+                            style={{ background: '#F5F5F7' }}
+                        >
+                            <Palette className="w-5 h-5 text-black" />
+                            <span className="text-xs font-bold text-black">קלאסי</span>
+                            {/* Olive Accent */}
+                            <div className="absolute bottom-0 w-full h-1 bg-[#8c9070]" />
+                        </button>
+
+                        {/* Light Theme */}
+                        <button
+                            onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('light'); }}
+                            className={`h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden ${resolvedTheme === 'light' ? 'border-[#CCDB38] ring-2 ring-[#CCDB38]/30 scale-[1.02]' : 'border-border opacity-70 hover:opacity-100'}`}
+                            style={{ background: '#ffffff' }}
+                        >
+                            <Sun className="w-5 h-5 text-black" />
+                            <span className="text-xs font-bold text-black">בהיר</span>
+                            {/* Yellow Accent */}
+                            <div className="absolute bottom-0 w-full h-1 bg-[#CCDB38]" />
+                        </button>
                     </div>
-                </button>
+                </div>
 
                 <button
                     onClick={async () => {
