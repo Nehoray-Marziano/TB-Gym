@@ -246,6 +246,7 @@ export default function SubscriptionPage() {
                                 {/* Underline */}
                                 <svg className="absolute -bottom-2 left-0 w-full h-[12px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
                                     <motion.path
+                                        key="underline-path"
                                         d="M4 14 C 20 24, 60 4, 96 14"
                                         fill="none"
                                         strokeWidth="6"
@@ -256,8 +257,8 @@ export default function SubscriptionPage() {
                                             stroke: activeTier?.color || '#ffffff'
                                         }}
                                         transition={{
-                                            pathLength: { duration: 2.5, delay: 0.8, ease: "easeOut" },
-                                            stroke: { duration: 0.5, ease: "linear" }
+                                            pathLength: { duration: 1.2, delay: 0.2, ease: "easeInOut" },
+                                            stroke: { duration: 0.3, ease: "linear" }
                                         }}
                                         style={{ willChange: "pathLength, stroke" }}
                                     />
