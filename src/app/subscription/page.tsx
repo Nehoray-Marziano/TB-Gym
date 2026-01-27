@@ -229,7 +229,7 @@ export default function SubscriptionPage() {
                     </motion.button>
 
                     <motion.div variants={itemVariants}>
-                        <h1 className="text-4xl font-black mb-6 leading-tight">
+                        <h1 className="text-4xl font-black mb-8 leading-tight">
                             <span className="block text-white/90">בחרי את המסלול</span>
                             <div className="relative inline-block mt-1">
                                 <span
@@ -259,9 +259,10 @@ export default function SubscriptionPage() {
                                         }}
                                         transition={{
                                             pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
-                                            opacity: { duration: 0.3, delay: 0.9 }
+                                            opacity: { duration: 0.4, delay: 1.05 } // Start slightly after pathLength to hide the start cap
                                         }}
                                         style={{
+                                            opacity: 0, // Hardware-enforced hidden state for SSR/Hydration
                                             willChange: "pathLength, opacity",
                                         }}
                                     />
