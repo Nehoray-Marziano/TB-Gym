@@ -93,6 +93,7 @@ export default function SubscriptionPage() {
     const carouselRef = useRef<HTMLDivElement>(null);
 
     const [showSwipeHint, setShowSwipeHint] = useState(true);
+    const [showUnderline, setShowUnderline] = useState(false);
 
     // Initial load effects
     useEffect(() => {
@@ -106,9 +107,16 @@ export default function SubscriptionPage() {
             }
         }
 
+        // Delay underline render to guarantee no FOUC/Artifacts
+        const underlineTimer = setTimeout(() => setShowUnderline(true), 1000);
+
         // Hide hint after 4.5 seconds if no interaction
-        const timer = setTimeout(() => setShowSwipeHint(false), 4500);
-        return () => clearTimeout(timer);
+        const hintTimer = setTimeout(() => setShowSwipeHint(false), 4500);
+
+        return () => {
+            clearTimeout(underlineTimer);
+            clearTimeout(hintTimer);
+        };
     }, []);
 
     // Handle Scroll for Auto-Selection
@@ -244,29 +252,30 @@ export default function SubscriptionPage() {
                                     שמתאים לך
                                 </span>
                                 {/* Underline */}
-                                <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
-                                    <motion.path
-                                        key="underline-path"
-                                        d="M4 14 C 20 24, 60 4, 96 14"
-                                        fill="none"
-                                        stroke={activeTier?.color || '#ffffff'}
-                                        strokeLinecap="round"
-                                        initial={{ pathLength: 0, opacity: 0, strokeWidth: 0 }}
-                                        animate={{
-                                            pathLength: 1,
-                                            opacity: 1,
-                                            strokeWidth: 9
-                                        }}
-                                        transition={{
-                                            pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
-                                            opacity: { duration: 0.2, delay: 1.0 },
-                                            strokeWidth: { duration: 0.2, delay: 1.0 }
-                                        }}
-                                        style={{
-                                            willChange: "pathLength, strokeWidth, opacity"
-                                        }}
-                                    />
-                                </svg>
+                                {showUnderline && (
+                                    <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
+                                        <motion.path
+                                            key="underline-path"
+                                            d="M4 14 C 20 24, 60 4, 96 14"
+                                            fill="none"
+                                            stroke={activeTier?.color || '#ffffff'}
+                                            strokeWidth="9"
+                                            strokeLinecap="round"
+                                            initial={{ pathLength: 0, opacity: 0 }}
+                                            animate={{
+                                                pathLength: 1,
+                                                opacity: 1
+                                            }}
+                                            transition={{
+                                                pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
+                                                opacity: { duration: 0.2, delay: 1.0 }
+                                            }}
+                                            style={{
+                                                willChange: "pathLength, opacity"
+                                            }}
+                                        />
+                                    </svg>
+                                )}
                             </div>
                         </h1>
                         <p className="text-white/60 text-base max-w-sm leading-relaxed">
