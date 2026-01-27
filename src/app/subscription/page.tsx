@@ -93,7 +93,6 @@ export default function SubscriptionPage() {
     const carouselRef = useRef<HTMLDivElement>(null);
 
     const [showSwipeHint, setShowSwipeHint] = useState(true);
-    const [showUnderline, setShowUnderline] = useState(false);
 
     // Initial load effects
     useEffect(() => {
@@ -107,16 +106,9 @@ export default function SubscriptionPage() {
             }
         }
 
-        // Delay underline start to hide visual glitches during entrance
-        const underlineTimer = setTimeout(() => setShowUnderline(true), 1200);
-
         // Hide hint after 4.5 seconds if no interaction
-        const hintTimer = setTimeout(() => setShowSwipeHint(false), 4500);
-
-        return () => {
-            clearTimeout(underlineTimer);
-            clearTimeout(hintTimer);
-        };
+        const timer = setTimeout(() => setShowSwipeHint(false), 4500);
+        return () => clearTimeout(timer);
     }, []);
 
     // Handle Scroll for Auto-Selection
@@ -237,7 +229,7 @@ export default function SubscriptionPage() {
                     </motion.button>
 
                     <motion.div variants={itemVariants}>
-                        <h1 className="text-4xl font-black mb-10 leading-tight">
+                        <h1 className="text-4xl font-black mb-14 leading-tight">
                             <span className="block text-white/90">בחרי את המסלול</span>
                             <div className="relative inline-block mt-1">
                                 <span
@@ -252,29 +244,30 @@ export default function SubscriptionPage() {
                                     שמתאים לך
                                 </span>
                                 {/* Underline */}
-                                {showUnderline && (
-                                    <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
-                                        <motion.path
-                                            key="underline-path"
-                                            d="M4 14 C 20 24, 60 4, 96 14"
-                                            fill="none"
-                                            strokeLinecap="round"
-                                            stroke={activeTier?.color || '#ffffff'}
-                                            initial={{ pathLength: 0, opacity: 0, strokeWidth: 9 }}
-                                            animate={{
-                                                pathLength: 1,
-                                                opacity: 1,
-                                            }}
-                                            transition={{
-                                                pathLength: { duration: 1.2, delay: 0.1, ease: "easeInOut" },
-                                                opacity: { duration: 0.3 }
-                                            }}
-                                            style={{
-                                                willChange: "pathLength, opacity",
-                                            }}
-                                        />
-                                    </svg>
-                                )}
+                                <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
+                                    <motion.path
+                                        key="underline-path"
+                                        d="M4 14 C 20 24, 60 4, 96 14"
+                                        fill="none"
+                                        stroke={activeTier?.color || '#ffffff'}
+                                        initial={{ pathLength: 0, opacity: 0, strokeLinecap: "butt" }}
+                                        animate={{
+                                            pathLength: 1,
+                                            opacity: 1,
+                                            strokeLinecap: "round"
+                                        }}
+                                        transition={{
+                                            pathLength: { duration: 1.2, delay: 1.2, ease: "easeInOut" },
+                                            opacity: { duration: 0.3, delay: 1.1 },
+                                            strokeLinecap: { delay: 1.22 }
+                                        }}
+                                        style={{
+                                            opacity: 0,
+                                            strokeWidth: 9,
+                                            willChange: "pathLength, opacity"
+                                        }}
+                                    />
+                                </svg>
                             </div>
                         </h1>
                         <p className="text-white/60 text-base max-w-sm leading-relaxed">
