@@ -244,26 +244,26 @@ export default function SubscriptionPage() {
                                     שמתאים לך
                                 </span>
                                 {/* Underline */}
-                                <svg className="absolute -bottom-2 left-0 w-full h-[12px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
+                                <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
                                     <motion.path
                                         key="underline-path"
                                         d="M4 14 C 20 24, 60 4, 96 14"
                                         fill="none"
                                         strokeWidth="9"
                                         strokeLinecap="round"
-                                        className="opacity-0" // Start hidden (SSR)
-                                        initial={{ pathLength: 0, opacity: 0, stroke: activeTier?.color || '#ffffff' }}
+                                        stroke={activeTier?.color || '#ffffff'}
+                                        initial={{ pathLength: 0, opacity: 0 }}
                                         animate={{
                                             pathLength: 1,
                                             opacity: 1,
-                                            stroke: activeTier?.color || '#ffffff'
                                         }}
                                         transition={{
                                             pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
-                                            stroke: { duration: 0.3, ease: "linear" },
-                                            opacity: { duration: 0.5, delay: 0.2 } // Fade in smoothly
+                                            opacity: { duration: 0.3, delay: 0.9 }
                                         }}
-                                        style={{ willChange: "pathLength, stroke, opacity" }}
+                                        style={{
+                                            willChange: "pathLength, opacity",
+                                        }}
                                     />
                                 </svg>
                             </div>
