@@ -258,20 +258,19 @@ export default function SubscriptionPage() {
                                             key="underline-path"
                                             d="M4 14 C 20 24, 60 4, 96 14"
                                             fill="none"
-                                            stroke={activeTier?.color || '#ffffff'}
                                             strokeWidth="9"
                                             strokeLinecap="round"
-                                            initial={{ pathLength: 0, opacity: 0 }}
+                                            initial={{ pathLength: 0, stroke: "rgba(0,0,0,0)" }}
                                             animate={{
                                                 pathLength: 1,
-                                                opacity: 1
+                                                stroke: activeTier?.color || '#ffffff'
                                             }}
                                             transition={{
-                                                pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
-                                                opacity: { duration: 0.2, delay: 1.0 }
+                                                pathLength: { duration: 1.2, ease: "easeInOut" },
+                                                stroke: { duration: 0.2, delay: 0.15 } // Color fades in ONLY after line starts moving
                                             }}
                                             style={{
-                                                willChange: "pathLength, opacity"
+                                                willChange: "pathLength, stroke"
                                             }}
                                         />
                                     </svg>
