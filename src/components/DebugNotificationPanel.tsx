@@ -65,10 +65,11 @@ export default function DebugNotificationPanel() {
         alert("To test: Go to Admin, grant tickets to YOURSELF. You should see a notification.");
     };
 
-    if (process.env.NODE_ENV !== "development") return null;
+    // Force visible for debugging
+    // if (process.env.NODE_ENV !== "development") return null;
 
     return (
-        <div className="fixed bottom-4 left-4 z-[9999]">
+        <div className="fixed bottom-20 left-4 z-[99999] md:bottom-4">
             <button
                 onClick={() => setIsVisible(!isVisible)}
                 className="bg-red-600 text-white p-2 rounded-full shadow-lg text-xs font-bold"
