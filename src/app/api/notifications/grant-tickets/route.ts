@@ -38,7 +38,6 @@ export async function POST(req: Request) {
                 // High Priority for Heads-up Notification
                 priority: 10,
                 channel_for_external_user_ids: "push",
-                android_channel_id: "e578c746-8148-4384-8255-e8d19d7d9039", // General High Importance Channel (Created via Dashboard or default)
             })
         });
 
