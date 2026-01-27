@@ -39,6 +39,11 @@ export async function POST(req: Request) {
                 priority: 10,
                 // Android: Use the URGENT channel created in OneSignal Dashboard
                 android_channel_id: "4f8844c7-685b-40b0-ae58-48aa9d7c7530",
+                // Web Push specific options
+                web_push_topic: "ticket-update",  // Groups notifications
+                ttl: 86400, // 24 hours - ensures delivery
+                // Open dashboard when clicked
+                url: "https://talia-gym.vercel.app/dashboard",
                 channel_for_external_user_ids: "push",
             })
         });
