@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, RefreshCw, Send, Trash2 } from "lucide-react";
+import { Bell, RefreshCw, Send, Trash2, Power } from "lucide-react";
 
 declare global {
     interface Window {
@@ -11,144 +11,131 @@ declare global {
 }
 
 export default function DebugNotificationPanel() {
-    const [status, setStatus] = useState<any>({
-        permission: "loading...",
-        subscriptionId: "loading...",
-        isOptedIn: "loading...",
-        userId: "loading...",
-        externalId: "finding...",
-        sdkStatus: "init..."
-    });
-    const [isVisible, setIsVisible] = useState(false);
+    const [heartbeat, setHeartbeat] = useState(0);
+    const [domStatus, setDomStatus] = useState("Init...");
 
-    const checkStatus = async () => {
+    // Split status into 'raw' (immediate) and 'sdk' (async)
+    const [sdkState, setSdkState] = useState({
+        permission: "---",
+        subId: "---",
+        optedIn: "---",
+        extId: "---"
+    });
+
+    const checkStatus = () => {
+        setHeartbeat(h => h + 1);
+
+        // 1. Immediate DOM Check
         if (typeof window === "undefined") return;
 
-        // Diagnostic 1: Check if script exists
         const scriptTag = document.querySelector('script[src*="OneSignalSDK.page.js"]');
-        const scriptStatus = scriptTag ? "Script Found" : "Script MISSING";
+        const hasWindow = !!window.OneSignal;
+        const hasDeferred = !!window.OneSignalDeferred;
 
-        // Diagnostic 2: Check object directly
-        const globalObj = window.OneSignal ? "Global Obj Found" : "Global Obj Missing";
+        const statusStr = `Script: ${scriptTag ? "YES" : "NO"} | Win: ${hasWindow ? "YES" : "NO"} | Def: ${hasDeferred ? "YES" : "NO"}`;
+        setDomStatus(statusStr);
 
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        window.OneSignalDeferred.push(async function (OneSignal: any) {
+        // 2. If Window Object exists, read directly (bypass queue for debug speed)
+        if (window.OneSignal && window.OneSignal.User) {
             try {
-                const permission = OneSignal.Notifications.permission;
-                const subId = OneSignal.User.PushSubscription.id;
-                const optedIn = OneSignal.User.PushSubscription.optedIn;
-                const externalId = OneSignal.User.externalId;
+                const p = window.OneSignal.Notifications.permission;
+                const s = window.OneSignal.User.PushSubscription.id;
+                const o = window.OneSignal.User.PushSubscription.optedIn;
+                const e = window.OneSignal.User.externalId;
 
-                const onesignalId = await OneSignal.User.getOnesignalId();
-
-                setStatus({
-                    permission: permission ? permission.toString() : "undefined",
-                    subscriptionId: subId || "null",
-                    isOptedIn: optedIn ? "true" : "false",
-                    userId: onesignalId || "null",
-                    externalId: externalId || "null",
-                    sdkStatus: `${scriptStatus} | ${globalObj} | Init OK`
+                setSdkState({
+                    permission: p ? p.toString() : "falsy",
+                    subId: s || "null",
+                    optedIn: o ? "true" : "false",
+                    extId: e || "null"
                 });
-            } catch (e: any) {
-                setStatus((prev: any) => ({ ...prev, sdkStatus: `Error: ${e.message}` }));
+            } catch (err) {
+                console.error(err);
             }
-        });
-
-        // Fallback update if OneSignal never inits
-        if (!window.OneSignal) {
-            setStatus((prev: any) => ({
-                ...prev,
-                sdkStatus: `${scriptStatus} | ${globalObj} | Waiting Init...`
-            }));
         }
     };
 
+    // Poll every 1s
     useEffect(() => {
-        const interval = setInterval(checkStatus, 2000);
-        return () => clearInterval(interval);
+        const timer = setInterval(checkStatus, 1000);
+        return () => clearInterval(timer);
     }, []);
 
-    const handleRequestPermission = async () => {
+    const handleForceInit = () => {
+        // Manual injection attempt
+        const script = document.createElement("script");
+        script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+        script.defer = true;
+        document.head.appendChild(script);
+        alert("Injected script manually. Wait 5s and check status.");
+    };
+
+    const handleReqPerm = async () => {
         if (window.OneSignal) {
             await window.OneSignal.Notifications.requestPermission();
-            checkStatus();
+        } else {
+            alert("OneSignal not ready");
         }
     };
 
-    const handleClearCooldown = () => {
-        localStorage.removeItem("talia_notification_cooldown_timestamp");
-        alert("Cooldown cleared! Refresh to see the modal again.");
-    };
-
-    const handleSelfTest = async () => {
-        // Simple client-side test if supported, or alert
-        alert("To test: Go to Admin, grant tickets to YOURSELF. You should see a notification.");
-    };
-
-    // Force visible for debugging
-    // if (process.env.NODE_ENV !== "development") return null;
-
     return (
-        <div className="fixed bottom-20 left-4 z-[99999] md:bottom-4">
-            <button
-                onClick={() => setIsVisible(!isVisible)}
-                className="bg-red-600 text-white p-2 rounded-full shadow-lg text-xs font-bold"
-            >
-                {isVisible ? "Hide Debug" : "Debug Push"}
-            </button>
+        <div className="fixed bottom-20 left-4 z-[99999] md:bottom-4 pointer-events-auto">
+            <div className="bg-black/90 text-white p-3 rounded-xl border border-white/20 shadow-2xl w-72 text-xs font-mono">
 
-            {isVisible && (
-                <div className="bg-black/90 text-white p-4 rounded-xl border border-white/20 mt-2 w-80 text-xs font-mono shadow-2xl">
-                    <h3 className="font-bold text-[#E2F163] mb-2 flex justify-between">
-                        OneSignal Debug
+                {/* Header */}
+                <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
+                    <span className="font-bold text-[#E2F163]">OneSignal Probe</span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-white/40">{heartbeat}</span>
                         <button onClick={checkStatus}><RefreshCw className="w-3 h-3" /></button>
-                    </h3>
-
-                    <div className="mb-2 p-2 bg-white/10 rounded">
-                        <div className="flex justify-between flex-col">
-                            <span className="text-white/50">SDK Status:</span>
-                            <span className={status.sdkStatus.includes("OK") ? "text-green-400" : "text-orange-400"}>
-                                {status.sdkStatus}
-                            </span>
-                        </div>
                     </div>
-
-                    <div className="space-y-1 mb-4">
-                        <div className="flex justify-between">
-                            <span className="text-white/50">Permission:</span>
-                            <span className={status.permission === 'granted' ? 'text-green-400' : 'text-red-400'}>
-                                {status.permission}
-                            </span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-white/50">Subscribed:</span>
-                            <span className={status.isOptedIn === 'true' ? 'text-green-400' : 'text-red-400'}>
-                                {status.isOptedIn}
-                            </span>
-                        </div>
-                        <div className="flex justify-between flex-col">
-                            <span className="text-white/50">Push ID:</span>
-                            <span className="text-[10px] break-all text-blue-400">{status.subscriptionId}</span>
-                        </div>
-                        <div className="flex justify-between flex-col">
-                            <span className="text-white/50">External ID (DB User ID):</span>
-                            <span className="text-[10px] break-all text-yellow-400">{status.externalId}</span>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                        <button onClick={handleRequestPermission} className="bg-white/10 hover:bg-white/20 p-2 rounded flex items-center justify-center gap-1">
-                            <Bell className="w-3 h-3" /> Req Perm
-                        </button>
-                        <button onClick={handleClearCooldown} className="bg-white/10 hover:bg-white/20 p-2 rounded flex items-center justify-center gap-1">
-                            <Trash2 className="w-3 h-3" /> Clr Cool
-                        </button>
-                    </div>
-                    <p className="mt-2 text-[10px] text-white/30 text-center">
-                        Is "External ID" matching your DB User ID?
-                    </p>
                 </div>
-            )}
+
+                {/* DOM Status (Immediate) */}
+                <div className="mb-3 bg-white/5 p-2 rounded">
+                    <div className="text-[9px] text-white/50 mb-1">DOM / GLOBAL STATUS</div>
+                    <div className="font-bold text-cyan-300 break-words leading-tight">
+                        {domStatus}
+                    </div>
+                </div>
+
+                {/* SDK Values */}
+                <div className="space-y-1">
+                    <div className="flex justify-between">
+                        <span className="text-white/50">Perm:</span>
+                        <span className={sdkState.permission === 'granted' ? "text-green-400" : "text-red-400"}>
+                            {sdkState.permission}
+                        </span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-white/50">Subscribed:</span>
+                        <span className={sdkState.optedIn === 'true' ? "text-green-400" : "text-red-400"}>
+                            {sdkState.optedIn}
+                        </span>
+                    </div>
+                    <div className="flex justify-between flex-col">
+                        <span className="text-white/50">Push ID:</span>
+                        <span className="text-[10px] text-blue-300 break-all">{sdkState.subId}</span>
+                    </div>
+                    <div className="flex justify-between flex-col bg-yellow-900/20 p-1 rounded border border-yellow-500/20 mt-1">
+                        <span className="text-yellow-500 font-bold">External ID:</span>
+                        <span className="text-[10px] text-yellow-200 break-all">
+                            {sdkState.extId}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                    <button onClick={handleReqPerm} className="bg-white/10 hover:bg-white/20 py-2 rounded flex justify-center items-center gap-1">
+                        <Bell className="w-3 h-3" /> Grant
+                    </button>
+                    <button onClick={handleForceInit} className="bg-red-500/20 hover:bg-red-500/40 text-red-300 py-2 rounded flex justify-center items-center gap-1">
+                        <Power className="w-3 h-3" /> Force Load
+                    </button>
+                </div>
+
+            </div>
         </div>
     );
 }
