@@ -28,10 +28,11 @@ export const metadata: Metadata = {
     title: "Talia Gym",
   },
   icons: {
-    icon: "/notification-icon.png",
-    shortcut: "/notification-icon.png",
+    icon: "/pwa-icon-192.png",
+    shortcut: "/pwa-icon-192.png",
     apple: "/apple-icon.jpg",
   },
+
 };
 
 export const viewport: Viewport = {
