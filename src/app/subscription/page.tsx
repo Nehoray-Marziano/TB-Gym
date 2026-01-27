@@ -223,7 +223,7 @@ export default function SubscriptionPage() {
                 </button>
 
                 <div className="entrance-item">
-                    <h1 className="text-4xl font-black mb-1 leading-tight">
+                    <h1 className="text-4xl font-black mb-2 leading-tight">
                         <span className="block text-white/90">בחרי את המסלול</span>
                         <div className="relative inline-block mt-1">
                             <span
@@ -251,6 +251,9 @@ export default function SubscriptionPage() {
                             </svg>
                         </div>
                     </h1>
+                    <p className="text-white/60 text-base max-w-sm leading-relaxed">
+                        הצטרפי לקהילה שלנו ותהני מאימונים ברמה הגבוהה ביותר
+                    </p>
                 </div>
             </div>
 
@@ -258,7 +261,7 @@ export default function SubscriptionPage() {
             <div
                 ref={carouselRef}
                 onScroll={handleScroll}
-                className="relative z-10 flex-1 flex items-center overflow-x-auto snap-x snap-mandatory px-[12.5vw] gap-6 scrollbar-hide pb-20"
+                className="relative z-10 flex-1 flex items-center overflow-x-auto snap-x snap-mandatory px-[9vw] gap-6 scrollbar-hide pb-20"
             >
                 {TIERS.map((tier) => {
                     const isSelected = selectedTierId === tier.id;
@@ -269,7 +272,7 @@ export default function SubscriptionPage() {
                             key={tier.id}
                             layout
                             className={cn(
-                                "entrance-item snap-center shrink-0 w-[75vw] max-w-[350px] aspect-[4/5] relative transition-all duration-500 ease-out",
+                                "entrance-item snap-center shrink-0 w-[82vw] max-w-[380px] aspect-[4/5] relative transition-all duration-500 ease-out",
                                 isSelected ? "scale-100 opacity-100 z-20" : "scale-90 opacity-60 z-10 blur-[1px]"
                             )}
                             onClick={() => {
