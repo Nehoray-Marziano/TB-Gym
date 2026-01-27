@@ -250,20 +250,16 @@ export default function SubscriptionPage() {
                                         d="M4 14 C 20 24, 60 4, 96 14"
                                         fill="none"
                                         stroke={activeTier?.color || '#ffffff'}
-                                        initial={{ pathLength: 0, opacity: 0, strokeLinecap: "butt" }}
-                                        animate={{
-                                            pathLength: 1,
-                                            opacity: 1,
-                                            strokeLinecap: "round"
-                                        }}
+                                        strokeWidth="9"
+                                        strokeLinecap="round"
+                                        initial={{ pathLength: 0, opacity: 0 }}
+                                        animate={{ pathLength: 1, opacity: 1 }}
                                         transition={{
-                                            pathLength: { duration: 1.2, delay: 1.2, ease: "easeInOut" },
-                                            opacity: { duration: 0.3, delay: 1.1 },
-                                            strokeLinecap: { delay: 1.22 }
+                                            pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
+                                            opacity: { duration: 0.2, delay: 1.05 } // Slight delay to hide the initial "dot"
                                         }}
                                         style={{
-                                            opacity: 0,
-                                            strokeWidth: 9,
+                                            opacity: 0, // Critical: Prevents FOUC before hydration
                                             willChange: "pathLength, opacity"
                                         }}
                                     />
