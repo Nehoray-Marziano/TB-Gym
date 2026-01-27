@@ -245,14 +245,15 @@ export default function SubscriptionPage() {
                                 </span>
                                 {/* Underline */}
                                 <svg className="absolute -bottom-2 left-0 w-full h-[12px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
-                                    <path
-                                        className="underline-path"
+                                    <motion.path
                                         d="M4 14 C 20 24, 60 4, 96 14"
                                         fill="none"
                                         stroke={activeTier?.color || '#ffffff'}
                                         strokeWidth="6"
                                         strokeLinecap="round"
-                                        style={{ strokeDasharray: 200, strokeDashoffset: 200, transition: 'stroke 0.5s ease' }}
+                                        initial={{ pathLength: 0 }}
+                                        animate={{ pathLength: 1 }}
+                                        transition={{ duration: 1.5, delay: 0.8, ease: "easeInOut" }}
                                     />
                                 </svg>
                             </div>
