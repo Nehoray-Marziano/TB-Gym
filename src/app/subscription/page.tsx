@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { motion, AnimatePresence, LayoutGroup, Variants } from "framer-motion";
+import gsap from "gsap";
 import PaymentModal from "@/components/subscription/PaymentModal";
 
 // --- SUBSCRIPTION TIERS ---
@@ -91,9 +92,9 @@ export default function SubscriptionPage() {
     // Refs
     const containerRef = useRef<HTMLDivElement>(null);
     const carouselRef = useRef<HTMLDivElement>(null);
+    const pathRef = useRef<SVGPathElement>(null);
 
     const [showSwipeHint, setShowSwipeHint] = useState(true);
-    const [showUnderline, setShowUnderline] = useState(false);
 
     // Initial load effects
     useEffect(() => {
@@ -107,17 +108,49 @@ export default function SubscriptionPage() {
             }
         }
 
-        // Delay underline render to guarantee no FOUC/Artifacts
-        const underlineTimer = setTimeout(() => setShowUnderline(true), 1000);
-
         // Hide hint after 4.5 seconds if no interaction
         const hintTimer = setTimeout(() => setShowSwipeHint(false), 4500);
 
         return () => {
-            clearTimeout(underlineTimer);
             clearTimeout(hintTimer);
         };
     }, []);
+
+    // GSAP Underline Animation
+    useEffect(() => {
+        if (!pathRef.current) return;
+
+        const path = pathRef.current;
+        const length = path.getTotalLength();
+
+        // Initial state: Invisible (transparent stroke) + fully dashed
+        gsap.set(path, {
+            strokeDasharray: length,
+            strokeDashoffset: length,
+            stroke: "rgba(0,0,0,0)",
+            strokeLinecap: "round"
+        });
+
+        const tl = gsap.timeline({ delay: 1.0, defaults: { ease: "power2.inOut" } });
+
+        tl.to(path, {
+            strokeDashoffset: 0,
+            duration: 1.2
+        })
+            .to(path, {
+                stroke: activeTier?.color || '#ffffff',
+                duration: 0.2
+            }, "<0.15") // Reveal color slightly after movement starts to hide dot
+            .then(() => {
+                // Clear inline stroke to allow React props to take over for color changes
+                gsap.set(path, { clearProps: "stroke" });
+            });
+
+        return () => {
+            tl.kill();
+        };
+    }, []); // Run once on mount
+
 
     // Handle Scroll for Auto-Selection
     const handleScroll = () => {
@@ -252,29 +285,17 @@ export default function SubscriptionPage() {
                                     שמתאים לך
                                 </span>
                                 {/* Underline */}
-                                {showUnderline && (
-                                    <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
-                                        <motion.path
-                                            key="underline-path"
-                                            d="M4 14 C 20 24, 60 4, 96 14"
-                                            fill="none"
-                                            strokeWidth="9"
-                                            strokeLinecap="round"
-                                            initial={{ pathLength: 0, stroke: "rgba(0,0,0,0)" }}
-                                            animate={{
-                                                pathLength: 1,
-                                                stroke: activeTier?.color || '#ffffff'
-                                            }}
-                                            transition={{
-                                                pathLength: { duration: 1.2, ease: "easeInOut" },
-                                                stroke: { duration: 0.2, delay: 0.15 } // Color fades in ONLY after line starts moving
-                                            }}
-                                            style={{
-                                                willChange: "pathLength, stroke"
-                                            }}
-                                        />
-                                    </svg>
-                                )}
+                                {/* Underline */}
+                                <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
+                                    <path
+                                        ref={pathRef}
+                                        d="M4 14 C 20 24, 60 4, 96 14"
+                                        fill="none"
+                                        stroke={activeTier?.color || '#ffffff'}
+                                        strokeWidth="9"
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
                             </div>
                         </h1>
                         <p className="text-white/60 text-base max-w-sm leading-relaxed">
