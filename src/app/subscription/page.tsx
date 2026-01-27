@@ -229,7 +229,7 @@ export default function SubscriptionPage() {
                     </motion.button>
 
                     <motion.div variants={itemVariants}>
-                        <h1 className="text-4xl font-black mb-2 leading-tight">
+                        <h1 className="text-4xl font-black mb-6 leading-tight">
                             <span className="block text-white/90">בחרי את המסלול</span>
                             <div className="relative inline-block mt-1">
                                 <span
@@ -251,14 +251,17 @@ export default function SubscriptionPage() {
                                         fill="none"
                                         strokeWidth="9"
                                         strokeLinecap="round"
-                                        initial={{ pathLength: 0, stroke: activeTier?.color || '#ffffff' }}
+                                        className="opacity-0" // Hide on SSR to prevent FOUC
+                                        initial={{ pathLength: 0, opacity: 1, stroke: activeTier?.color || '#ffffff' }}
                                         animate={{
                                             pathLength: 1,
+                                            opacity: 1,
                                             stroke: activeTier?.color || '#ffffff'
                                         }}
                                         transition={{
                                             pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
-                                            stroke: { duration: 0.3, ease: "linear" }
+                                            stroke: { duration: 0.3, ease: "linear" },
+                                            opacity: { duration: 0 } // Prepare instantly
                                         }}
                                         style={{ willChange: "pathLength, stroke" }}
                                     />
