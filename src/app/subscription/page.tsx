@@ -249,21 +249,21 @@ export default function SubscriptionPage() {
                                         key="underline-path"
                                         d="M4 14 C 20 24, 60 4, 96 14"
                                         fill="none"
-                                        strokeWidth="9"
                                         strokeLinecap="round"
                                         stroke={activeTier?.color || '#ffffff'}
-                                        initial={{ pathLength: 0, opacity: 0 }}
+                                        initial={{ pathLength: 0, opacity: 0, strokeWidth: 0 }}
                                         animate={{
                                             pathLength: 1,
                                             opacity: 1,
+                                            strokeWidth: 9
                                         }}
                                         transition={{
                                             pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
-                                            opacity: { duration: 0.4, delay: 1.05 } // Start slightly after pathLength to hide the start cap
+                                            opacity: { duration: 0.3, delay: 0.9 },
+                                            strokeWidth: { duration: 0.1, delay: 1.0 }
                                         }}
                                         style={{
-                                            opacity: 0, // Hardware-enforced hidden state for SSR/Hydration
-                                            willChange: "pathLength, opacity",
+                                            willChange: "pathLength, opacity, strokeWidth",
                                         }}
                                     />
                                 </svg>
