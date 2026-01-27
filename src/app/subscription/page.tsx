@@ -270,7 +270,7 @@ export default function SubscriptionPage() {
                     </motion.button>
 
                     <motion.div variants={itemVariants}>
-                        <h1 className="text-4xl font-black mb-14 leading-tight">
+                        <h1 className="text-4xl font-black mb-9 leading-tight">
                             <span className="block text-white/90">בחרי את המסלול</span>
                             <div className="relative inline-block mt-1">
                                 <span
@@ -308,7 +308,7 @@ export default function SubscriptionPage() {
                 <div
                     ref={carouselRef}
                     onScroll={handleScroll}
-                    className="relative z-10 flex-1 flex items-center overflow-x-auto snap-x snap-mandatory px-[9vw] gap-6 scrollbar-hide pb-20"
+                    className="relative z-10 flex-1 flex items-center overflow-x-auto snap-x snap-mandatory px-[9vw] gap-6 scrollbar-hide pb-28"
                 >
                     {TIERS.map((tier) => {
                         const isSelected = selectedTierId === tier.id;
