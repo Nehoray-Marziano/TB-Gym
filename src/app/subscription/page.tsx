@@ -250,17 +250,20 @@ export default function SubscriptionPage() {
                                         d="M4 14 C 20 24, 60 4, 96 14"
                                         fill="none"
                                         stroke={activeTier?.color || '#ffffff'}
-                                        strokeWidth="9"
                                         strokeLinecap="round"
-                                        initial={{ pathLength: 0, opacity: 0 }}
-                                        animate={{ pathLength: 1, opacity: 1 }}
+                                        initial={{ pathLength: 0, opacity: 0, strokeWidth: 0 }}
+                                        animate={{
+                                            pathLength: 1,
+                                            opacity: 1,
+                                            strokeWidth: 9
+                                        }}
                                         transition={{
                                             pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
-                                            opacity: { duration: 0.2, delay: 1.05 } // Slight delay to hide the initial "dot"
+                                            opacity: { duration: 0.2, delay: 1.0 },
+                                            strokeWidth: { duration: 0.2, delay: 1.0 }
                                         }}
                                         style={{
-                                            opacity: 0, // Critical: Prevents FOUC before hydration
-                                            willChange: "pathLength, opacity"
+                                            willChange: "pathLength, strokeWidth, opacity"
                                         }}
                                     />
                                 </svg>
