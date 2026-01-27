@@ -79,7 +79,7 @@ export default function DebugNotificationPanel() {
     };
 
     return (
-        <div className="fixed bottom-20 left-4 z-[99999] md:bottom-4 pointer-events-auto">
+        <div className="fixed top-24 left-4 z-[99999] pointer-events-auto">
             <div className="bg-black/90 text-white p-3 rounded-xl border border-white/20 shadow-2xl w-72 text-xs font-mono">
 
                 {/* Header */}
