@@ -104,12 +104,25 @@ export default function AdminTraineesPage() {
 
             if (error) throw error;
 
-            // 2. Send Notification (fire and forget)
-            fetch('/api/notifications/grant-tickets', {
+            // 2. Send Notification
+            const notifRes = await fetch('/api/notifications/grant-tickets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, amount: quantity })
-            }).catch(err => console.error("Notification failed", err));
+            });
+
+            const notifData = await notifRes.json();
+
+            if (!notifRes.ok) {
+                console.error("Notification API Error:", notifData);
+                toast({
+                    title: "שגיאה בשליחת התראה",
+                    description: JSON.stringify(notifData.error || "Unknown error"),
+                    type: "error" // Using 'error' variant if available, or just title
+                });
+            } else {
+                console.log("Notification sent:", notifData);
+            }
 
             // Update local state
             setTrainees(prev => prev.map(t =>
