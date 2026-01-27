@@ -37,6 +37,10 @@ export async function POST(req: Request) {
                 contents: { en: message, he: message },
                 // High Priority for Heads-up Notification
                 priority: 10,
+                // Android: Use the URGENT channel created in OneSignal Dashboard
+                android_channel_id: "4f8844c7-685b-40b0-ae58-48aa9d7c7530",
+                // iOS: Use time-sensitive for banner display
+                ios_interruption_level: "time-sensitive",
                 channel_for_external_user_ids: "push",
             })
         });
