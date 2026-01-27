@@ -44,6 +44,10 @@ export async function POST(req: Request) {
                 ttl: 86400, // 24 hours - ensures delivery
                 // Open dashboard when clicked
                 url: "https://talia-gym.vercel.app/dashboard",
+                // Force notification to persist until user interacts
+                chrome_web_require_interaction: true,
+                // Add vibration pattern (Android)
+                android_vibrate: true,
                 channel_for_external_user_ids: "push",
             })
         });
