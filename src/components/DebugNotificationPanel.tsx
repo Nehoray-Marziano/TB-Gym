@@ -6,7 +6,7 @@ import { Bell, RefreshCw, Send, Trash2 } from "lucide-react";
 declare global {
     interface Window {
         OneSignal?: any;
-        OneSignalDeferred?: any[];
+        OneSignalDeferred?: Array<(OneSignal: any) => void>;
     }
 }
 
