@@ -149,7 +149,7 @@ export default function SubscriptionPage() {
     };
 
     return (
-        <div ref={containerRef} className="min-h-screen text-white overflow-x-hidden relative" dir="rtl">
+        <div ref={containerRef} className="min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden relative" dir="rtl">
 
             <PaymentModal
                 isOpen={isPaymentModalOpen}
