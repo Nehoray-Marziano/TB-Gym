@@ -27,14 +27,13 @@ export default function NotificationPermissionModal({ onComplete }: Notification
     useEffect(() => {
         // Check if we should show the modal
         const checkPermission = async () => {
-            // Detect if running as installed PWA (standalone mode)
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-                || (window.navigator as any).standalone === true;
+            // Check if Notification API is available
+            if (!("Notification" in window)) {
+                setHasChecked(true);
+                return; // Notifications not supported
+            }
 
-            // Optional: If we ONLY want to show this in standalone mode, we can enforce it here.
-            // For now, we allow it in browser too if the logic allows.
-
-            // Check Cooldown
+            // Check Cooldown first (most common case for returning users)
             const lastInteractionStr = localStorage.getItem(STORAGE_COOLDOWN_KEY);
             if (lastInteractionStr) {
                 const lastInteraction = parseInt(lastInteractionStr, 10);
@@ -47,72 +46,55 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                 }
             }
 
-            // Wait for OneSignal to be ready
-            let attempt = 0;
-            const waitForOneSignal = setInterval(async () => {
-                attempt++;
-                if (window.OneSignal) {
-                    clearInterval(waitForOneSignal);
+            // Check native permission state FIRST (doesn't require OneSignal)
+            const nativePermission = Notification.permission;
 
-                    try {
-                        const permission = window.OneSignal.Notifications.permission;
-
-                        // v16 Permission States:
-                        // true / 'granted' -> Already subscribed.
-                        // false / 'denied' -> Blocked by OS/Browser.
-                        // 'default' (or undefined/false in some older contexts) -> Can Request.
-
-                        const isGranted = permission === "granted" || permission === true;
-                        const isDenied = permission === "denied";
-
-                        // Only show if NOT granted and NOT denied (i.e. we have a chance to ask)
-                        if (!isGranted && !isDenied) {
-                            setTimeout(() => {
-                                setIsVisible(true);
-                            }, 1500);
-                        }
-                    } catch (e) {
-                        console.error("[NotificationModal] Error:", e);
-                    }
-
-                    setHasChecked(true);
-                }
-            }, 500);
-
-            // Timeout after 10 seconds
-            setTimeout(() => {
-                clearInterval(waitForOneSignal);
+            // If already granted or denied, no need to show modal
+            if (nativePermission === "granted" || nativePermission === "denied") {
                 setHasChecked(true);
-            }, 10000);
+                return;
+            }
+
+            // Permission is "default" - we CAN show the modal
+            // But wait a moment to let the dashboard load first
+            setTimeout(() => {
+                // Double-check we're still in a valid state
+                if (Notification.permission === "default") {
+                    setIsVisible(true);
+                }
+                setHasChecked(true);
+            }, 2000); // 2 second delay for better UX
         };
 
         checkPermission();
     }, []);
 
+
     const handleAllow = async () => {
         setIsLoading(true);
 
         try {
-            if (window.OneSignal) {
-                // If they say YES, we don't need a cooldown, the OS permission state will handle "granted" logic next time.
+            if (window.OneSignal && window.OneSignal.Notifications) {
+                // Use OneSignal to request permission (preferred - handles subscription)
                 await window.OneSignal.Notifications.requestPermission();
+            } else {
+                // Fallback to native API if OneSignal hasn't loaded yet
+                console.log("[NotificationModal] OneSignal not ready, using native API");
+                await Notification.requestPermission();
             }
         } catch (e) {
             console.error("Permission request error:", e);
         }
 
         setIsLoading(false);
-        // We DON'T set cooldown on Allow, because if they allow, we rely on the sub status.
-        // Actually, preventing re-prompting while invalid is handled by 'isGranted' check.
-        // But if they click Allow here but then Deny native prompt, we should probably set cooldown.
-        // For simplicity, we assume if they get to this flow, they might have clicked Allow.
 
-        // Let's set a short cooldown (1 hour) just to prevent instant re-popup if they cancel native prompt.
+        // Set a short cooldown to prevent instant re-popup if they cancel native prompt
         localStorage.setItem(STORAGE_COOLDOWN_KEY, Date.now().toString());
 
         setIsVisible(false);
         onComplete?.();
     };
+
 
     const handleDismiss = () => {
         // User clicked "Maybe Later"

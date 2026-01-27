@@ -48,27 +48,11 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
                 // CRITICAL: Use the same SW as the PWA to avoid conflicts
                 serviceWorkerParam: { scope: "/" },
                 serviceWorkerPath: "sw.js",
-                // PROMPT OPTIONS - Ensure permission is requested
-                promptOptions: {
-                    slidedown: {
-                        prompts: [
-                            {
-                                type: "push",
-                                autoPrompt: true,
-                                text: {
-                                    actionMessage: "רוצה לקבל עדכונים על כרטיסים חדשים ותזכורות לאימונים?",
-                                    acceptButton: "כן, אני רוצה!",
-                                    cancelButton: "אולי אחר כך"
-                                },
-                                delay: {
-                                    pageViews: 1,     // Show after 1 page view
-                                    timeDelay: 3      // 3 seconds after page load
-                                }
-                            }
-                        ]
-                    }
-                }
+                // IMPORTANT: Disable ALL automatic prompts - we use our custom beautiful modal instead
+                autoResubscribe: true, // Re-subscribe returning users automatically
+                autoRegister: false,   // Don't auto-register, let us control the flow
             });
+
 
             // Enable foreground notifications to appear
             OneSignal.Notifications.addEventListener('foregroundWillDisplay', function (event: any) {
