@@ -249,7 +249,7 @@ export default function SubscriptionPage() {
                                         key="underline-path"
                                         d="M4 14 C 20 24, 60 4, 96 14"
                                         fill="none"
-                                        strokeWidth="6"
+                                        strokeWidth="9"
                                         strokeLinecap="round"
                                         initial={{ pathLength: 0, stroke: activeTier?.color || '#ffffff' }}
                                         animate={{
@@ -257,7 +257,7 @@ export default function SubscriptionPage() {
                                             stroke: activeTier?.color || '#ffffff'
                                         }}
                                         transition={{
-                                            pathLength: { duration: 1.2, delay: 0.2, ease: "easeInOut" },
+                                            pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
                                             stroke: { duration: 0.3, ease: "linear" }
                                         }}
                                         style={{ willChange: "pathLength, stroke" }}
