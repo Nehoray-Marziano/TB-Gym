@@ -16,31 +16,51 @@ export default function DebugNotificationPanel() {
         subscriptionId: "loading...",
         isOptedIn: "loading...",
         userId: "loading...",
-        externalId: "finding..."
+        externalId: "finding...",
+        sdkStatus: "init..."
     });
     const [isVisible, setIsVisible] = useState(false);
 
     const checkStatus = async () => {
         if (typeof window === "undefined") return;
 
+        // Diagnostic 1: Check if script exists
+        const scriptTag = document.querySelector('script[src*="OneSignalSDK.page.js"]');
+        const scriptStatus = scriptTag ? "Script Found" : "Script MISSING";
+
+        // Diagnostic 2: Check object directly
+        const globalObj = window.OneSignal ? "Global Obj Found" : "Global Obj Missing";
+
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window.OneSignalDeferred.push(async function (OneSignal: any) {
-            const permission = OneSignal.Notifications.permission;
-            const subId = OneSignal.User.PushSubscription.id;
-            const optedIn = OneSignal.User.PushSubscription.optedIn;
-            const externalId = OneSignal.User.externalId;
+            try {
+                const permission = OneSignal.Notifications.permission;
+                const subId = OneSignal.User.PushSubscription.id;
+                const optedIn = OneSignal.User.PushSubscription.optedIn;
+                const externalId = OneSignal.User.externalId;
 
-            // Get internal OneSignal ID if possible
-            const onesignalId = await OneSignal.User.getOnesignalId();
+                const onesignalId = await OneSignal.User.getOnesignalId();
 
-            setStatus({
-                permission: permission ? permission.toString() : "undefined",
-                subscriptionId: subId || "null",
-                isOptedIn: optedIn ? "true" : "false",
-                userId: onesignalId || "null",
-                externalId: externalId || "null"
-            });
+                setStatus({
+                    permission: permission ? permission.toString() : "undefined",
+                    subscriptionId: subId || "null",
+                    isOptedIn: optedIn ? "true" : "false",
+                    userId: onesignalId || "null",
+                    externalId: externalId || "null",
+                    sdkStatus: `${scriptStatus} | ${globalObj} | Init OK`
+                });
+            } catch (e: any) {
+                setStatus((prev: any) => ({ ...prev, sdkStatus: `Error: ${e.message}` }));
+            }
         });
+
+        // Fallback update if OneSignal never inits
+        if (!window.OneSignal) {
+            setStatus((prev: any) => ({
+                ...prev,
+                sdkStatus: `${scriptStatus} | ${globalObj} | Waiting Init...`
+            }));
+        }
     };
 
     useEffect(() => {
@@ -83,6 +103,15 @@ export default function DebugNotificationPanel() {
                         OneSignal Debug
                         <button onClick={checkStatus}><RefreshCw className="w-3 h-3" /></button>
                     </h3>
+
+                    <div className="mb-2 p-2 bg-white/10 rounded">
+                        <div className="flex justify-between flex-col">
+                            <span className="text-white/50">SDK Status:</span>
+                            <span className={status.sdkStatus.includes("OK") ? "text-green-400" : "text-orange-400"}>
+                                {status.sdkStatus}
+                            </span>
+                        </div>
+                    </div>
 
                     <div className="space-y-1 mb-4">
                         <div className="flex justify-between">
