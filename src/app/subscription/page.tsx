@@ -251,8 +251,8 @@ export default function SubscriptionPage() {
                                         fill="none"
                                         strokeWidth="9"
                                         strokeLinecap="round"
-                                        className="opacity-0" // Hide on SSR to prevent FOUC
-                                        initial={{ pathLength: 0, opacity: 1, stroke: activeTier?.color || '#ffffff' }}
+                                        className="opacity-0" // Start hidden (SSR)
+                                        initial={{ pathLength: 0, opacity: 0, stroke: activeTier?.color || '#ffffff' }}
                                         animate={{
                                             pathLength: 1,
                                             opacity: 1,
@@ -261,9 +261,9 @@ export default function SubscriptionPage() {
                                         transition={{
                                             pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
                                             stroke: { duration: 0.3, ease: "linear" },
-                                            opacity: { duration: 0 } // Prepare instantly
+                                            opacity: { duration: 0.5, delay: 0.2 } // Fade in smoothly
                                         }}
-                                        style={{ willChange: "pathLength, stroke" }}
+                                        style={{ willChange: "pathLength, stroke, opacity" }}
                                     />
                                 </svg>
                             </div>
