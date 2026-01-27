@@ -44,8 +44,11 @@ export async function POST(req: Request) {
 
         const data = await response.json();
 
+        console.log("[Notification API] OneSignal Response:", JSON.stringify(data, null, 2));
+
         if (data.errors) {
-            console.error("OneSignal Error:", data.errors);
+            console.error("[Notification API] OneSignal Error:", data.errors);
+            // If the error is "All included players are not subscribed", it means the userId is not found or unsubscribed.
             return NextResponse.json({ error: data.errors }, { status: 400 });
         }
 

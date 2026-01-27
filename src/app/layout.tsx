@@ -8,6 +8,7 @@ import { GymStoreProvider } from "@/providers/GymStoreProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import PWAInstallGate from "@/components/PWAInstallGate";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
+import DebugNotificationPanel from "@/components/DebugNotificationPanel";
 
 
 // Only load the Hebrew font we actually use
@@ -64,6 +65,7 @@ export default function RootLayout({
           <ToastProvider>
             <GymStoreProvider>
               <ConnectedOneSignalProvider />
+              <DebugNotificationPanel />
               <PWAInstallGate>
                 {children}
               </PWAInstallGate>
