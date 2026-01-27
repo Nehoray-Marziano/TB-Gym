@@ -47,12 +47,10 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
                 serviceWorkerPath: "sw.js",
             });
 
-            // CRITICAL: Suppress duplicate foreground notifications
-            // The Service Worker (system) handles notifications. 
-            // We don't want the Page SDK to ALSO show one.
+            // Enable foreground notifications to appear
             OneSignal.Notifications.addEventListener('foregroundWillDisplay', function (event: any) {
-                console.log("[OneSignal] Foreground notification received - suppressing to avoid duplicate", event);
-                event.preventDefault();
+                console.log("[OneSignal] Foreground notification received", event);
+                // We do NOT preventDefault() so the notification appears visually!
             });
 
             console.log("OneSignal initialized core");
