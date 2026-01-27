@@ -258,7 +258,7 @@ export default function SubscriptionPage() {
             <div
                 ref={carouselRef}
                 onScroll={handleScroll}
-                className="relative z-10 flex-1 flex items-center overflow-x-auto snap-x snap-mandatory px-[8vw] gap-4 scrollbar-hide pb-20"
+                className="relative z-10 flex-1 flex items-center overflow-x-auto snap-x snap-mandatory px-[12.5vw] gap-6 scrollbar-hide pb-20"
             >
                 {TIERS.map((tier) => {
                     const isSelected = selectedTierId === tier.id;
@@ -269,7 +269,7 @@ export default function SubscriptionPage() {
                             key={tier.id}
                             layout
                             className={cn(
-                                "entrance-item snap-center shrink-0 w-[80vw] max-w-[350px] aspect-[4/5] relative transition-all duration-500 ease-out",
+                                "entrance-item snap-center shrink-0 w-[75vw] max-w-[350px] aspect-[4/5] relative transition-all duration-500 ease-out",
                                 isSelected ? "scale-100 opacity-100 z-20" : "scale-90 opacity-60 z-10 blur-[1px]"
                             )}
                             onClick={() => {
@@ -341,39 +341,52 @@ export default function SubscriptionPage() {
             </div>
 
             {/* --- FIXED FOOTER BUTTON --- */}
-            <AnimatePresence mode="wait">
-                {activeTier && (
-                    <motion.div
-                        key={activeTier.id}
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: 20, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="fixed bottom-0 left-0 right-0 p-6 pt-0 pb-8 z-50 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/90 to-transparent"
+            {activeTier && (
+                <motion.div
+                    animate={{
+                        y: isPaymentModalOpen ? 200 : 0, // Slide down if modal open
+                        opacity: isPaymentModalOpen ? 0 : 1
+                    }}
+                    transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                    className="fixed bottom-0 left-0 right-0 p-6 pt-0 pb-8 z-50 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/90 to-transparent"
+                >
+                    <motion.button
+                        onClick={() => setIsPaymentModalOpen(true)}
+                        disabled={purchasing}
+                        animate={{
+                            backgroundColor: activeTier.color,
+                            color: activeTier.id === 1 ? 'white' : 'black',
+                            boxShadow: `0 0 30px ${activeTier.color}30`
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="w-full py-4 rounded-[1.2rem] font-black text-lg flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-transform"
                     >
-                        <button
-                            onClick={() => setIsPaymentModalOpen(true)}
-                            disabled={purchasing}
-                            className="w-full py-4 rounded-[1.2rem] font-black text-lg flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-all shadow-xl"
-                            style={{
-                                background: activeTier.color,
-                                color: activeTier.id === 1 ? 'white' : 'black',
-                                boxShadow: `0 0 30px ${activeTier.color}30`
-                            }}
-                        >
-                            {purchasing ? (
-                                <Loader2 className="w-6 h-6 animate-spin" />
-                            ) : (
-                                <>
-                                    <span className="relative z-10 tracking-tight">רכישת מנוי {activeTier.displayName}</span>
-                                    <ArrowRight className={cn("w-5 h-5 rotate-180", activeTier.id === 1 ? "text-white" : "text-black")} />
-                                </>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                        </button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        {purchasing ? (
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : (
+                            <div className="flex items-center gap-2 relative z-10">
+                                {/* Text Transition Container */}
+                                <div className="relative h-7 overflow-hidden flex flex-col items-center">
+                                    <AnimatePresence mode="popLayout" initial={false}>
+                                        <motion.span
+                                            key={activeTier.id}
+                                            initial={{ y: 20, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            exit={{ y: -20, opacity: 0 }}
+                                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                            className="block whitespace-nowrap tracking-tight"
+                                        >
+                                            רכישת מנוי {activeTier.displayName}
+                                        </motion.span>
+                                    </AnimatePresence>
+                                </div>
+                                <ArrowRight className={cn("w-5 h-5 rotate-180", activeTier.id === 1 ? "text-white" : "text-black")} />
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                    </motion.button>
+                </motion.div>
+            )}
         </div>
     );
 }
