@@ -81,23 +81,63 @@ export default function SubscriptionPage() {
     const { refreshData, profile } = useGymStore();
     const { toast } = useToast();
 
-    // Default to 'null' (no selection) so the page starts clean
-    const [selectedTierId, setSelectedTierId] = useState<number | null>(null);
+    // Default to '2' (Standard/Popular) so page starts populated
+    const [selectedTierId, setSelectedTierId] = useState<number>(2);
     const [purchasing, setPurchasing] = useState<boolean>(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     // Get active tier object
     const activeTier = TIERS.find(t => t.id === selectedTierId);
 
-    // GSAP Refs for entrance
+    // Refs
     const containerRef = useRef<HTMLDivElement>(null);
+    const carouselRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to initial central item
+    useEffect(() => {
+        if (carouselRef.current) {
+            const container = carouselRef.current;
+            const popularCard = container.children[1] as HTMLElement; // Index 1 is Standard (id 2)
+            if (popularCard) {
+                // Determine center position
+                const scrollLeft = popularCard.offsetLeft - (container.clientWidth / 2) + (popularCard.clientWidth / 2);
+                container.scrollTo({ left: scrollLeft, behavior: "instant" });
+            }
+        }
+    }, []);
+
+    // Handle Scroll for Auto-Selection
+    const handleScroll = () => {
+        if (!carouselRef.current) return;
+        const container = carouselRef.current;
+        const center = container.scrollLeft + (container.clientWidth / 2);
+
+        // Find closest card to center
+        let closestTierId = selectedTierId;
+        let minDistance = Infinity;
+
+        Array.from(container.children).forEach((child, index) => {
+            const card = child as HTMLElement;
+            const cardCenter = card.offsetLeft + (card.clientWidth / 2);
+            const distance = Math.abs(center - cardCenter);
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestTierId = TIERS[index].id;
+            }
+        });
+
+        if (closestTierId !== selectedTierId) {
+            if (navigator.vibrate) navigator.vibrate(5);
+            setSelectedTierId(closestTierId);
+        }
+    };
 
     // Entrance Animation
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
             const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-            // Ensure initial visibility is hidden/offset
             gsap.set(".entrance-item", { opacity: 0, y: 50 });
             gsap.set(".footer-action", { y: 100 });
 
@@ -123,33 +163,27 @@ export default function SubscriptionPage() {
         return () => ctx.revert();
     }, []);
 
-    // Payment Flow:
-    // 1. User clicks "Confirm & Pay" -> Opens Bit App + Redirects to Dashboard
-    // 2. Confetti listens for actual ticket grant via Realtime (TicketCelebration)
     const handleBitRedirect = async () => {
         setIsPaymentModalOpen(false);
         setPurchasing(true);
         if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
 
-        // 1. Redirect to Bit
         const bitUrl = "https://www.bitpay.co.il/app/me/BE137CD7-0248-51EB-42FD-5E889D31DEB83A1E";
         window.open(bitUrl, '_blank');
 
-        // 2. Show Toast (Request Received)
         toast({
             title: "בקשת התשלום נפתחה ב-Bit 📱",
             description: "הכרטיסים יתעדכנו באפליקציה לאחר אישור ההעברה ע״י טליה.",
-            type: "info"
+            type: "success"
         });
 
-        // 3. Navigate mock delay
         setTimeout(() => {
             router.push("/dashboard");
         }, 1500);
     };
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden relative" dir="rtl">
+        <div ref={containerRef} className="h-[100dvh] bg-[#0A0A0A] text-white overflow-hidden relative flex flex-col space-y-0" dir="rtl">
 
             <PaymentModal
                 isOpen={isPaymentModalOpen}
@@ -161,8 +195,8 @@ export default function SubscriptionPage() {
                 userName={profile?.full_name || "User"}
             />
 
-            {/* --- OPTIMIZED REACTIVE BACKGROUND (Opacity Layers) --- */}
-            <div className="fixed inset-0 z-0">
+            {/* --- REACTIVE BACKGROUND --- */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
                 {TIERS.map((tier) => (
                     <motion.div
                         key={tier.id}
@@ -174,197 +208,172 @@ export default function SubscriptionPage() {
                         initial={false}
                     />
                 ))}
-
-                {/* Noise Overlay (Lighter) */}
-                <div className="absolute inset-0 opacity-[0.05] bg-[url('/noise.svg')] mix-blend-overlay pointer-events-none" />
-                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                {/* Noise & Overlay */}
+                <div className="absolute inset-0 opacity-[0.05] bg-[url('/noise.svg')] mix-blend-overlay" />
+                <div className="absolute inset-0 bg-black/20" />
             </div>
 
-            {/* --- CONTENT --- */}
-            <div className="relative z-10 pb-40">
+            {/* --- HEADER (Fixed Top) --- */}
+            <div className="relative z-10 flex-none pt-4 px-6 pb-2">
+                <button
+                    onClick={() => router.back()}
+                    className="entrance-item w-10 h-10 mb-2 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-90"
+                >
+                    <ChevronRight className="w-5 h-5" />
+                </button>
 
-                {/* HEADER */}
-                <div className="pt-4 px-6 mb-8">
-                    <button
-                        onClick={() => router.back()}
-                        className="entrance-item w-12 h-12 mb-4 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-90"
-                    >
-                        <ChevronRight className="w-6 h-6" />
-                    </button>
-
-                    <div className="entrance-item">
-
-                        <h1 className="text-5xl md:text-6xl font-black mb-4 leading-[1.1]">
-                            <span className="block text-white/90">בחרי את המסלול</span>
-                            <div className="relative inline-block mt-1">
-                                <span
-                                    className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r"
-                                    style={{
-                                        backgroundImage: activeTier
-                                            ? `linear-gradient(to right, ${activeTier.color}, #ffffff, ${activeTier.color})`
-                                            : 'linear-gradient(to right, #ffffff, #aaaaaa)',
-                                        backgroundSize: '200% auto'
-                                    }}
-                                >
-                                    שמתאים לך
-                                </span>
-                                {/* Hand-drawn Underline */}
-                                <svg className="absolute -bottom-4 left-0 w-full h-[24px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="underline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stopColor={activeTier?.color || '#ffffff'} />
-                                            <stop offset="50%" stopColor="#ffffff" />
-                                            <stop offset="100%" stopColor={activeTier?.color || '#ffffff'} />
-                                        </linearGradient>
-                                    </defs>
-                                    <path
-                                        className="underline-path"
-                                        d="M4 14 C 20 24, 60 4, 96 14"
-                                        fill="none"
-                                        stroke="url(#underline-gradient)"
-                                        strokeWidth="6"
-                                        strokeLinecap="round"
-                                        style={{ strokeDasharray: 200, strokeDashoffset: 200 }}
-                                    />
-                                </svg>
-                            </div>
-                        </h1>
-                        <p className="text-white/60 text-lg max-w-sm leading-relaxed">
-                            הצטרפי לקהילה שלנו ותהני מאימונים ברמה הגבוהה ביותר
-                        </p>
-                    </div>
+                <div className="entrance-item">
+                    <h1 className="text-4xl font-black mb-1 leading-tight">
+                        <span className="block text-white/90">בחרי את המסלול</span>
+                        <div className="relative inline-block mt-1">
+                            <span
+                                className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r transition-all duration-500"
+                                style={{
+                                    backgroundImage: activeTier
+                                        ? `linear-gradient(to right, ${activeTier.color}, #ffffff, ${activeTier.color})`
+                                        : 'linear-gradient(to right, #ffffff, #aaaaaa)',
+                                    backgroundSize: '200% auto'
+                                }}
+                            >
+                                שמתאים לך
+                            </span>
+                            {/* Underline */}
+                            <svg className="absolute -bottom-2 left-0 w-full h-[12px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
+                                <path
+                                    className="underline-path"
+                                    d="M4 14 C 20 24, 60 4, 96 14"
+                                    fill="none"
+                                    stroke={activeTier?.color || '#ffffff'}
+                                    strokeWidth="6"
+                                    strokeLinecap="round"
+                                    style={{ strokeDasharray: 200, strokeDashoffset: 200, transition: 'stroke 0.5s ease' }}
+                                />
+                            </svg>
+                        </div>
+                    </h1>
                 </div>
+            </div>
 
-                {/* TIERS STACK */}
-                <div className="px-5 space-y-6">
-                    {TIERS.map((tier) => {
-                        const isSelected = selectedTierId === tier.id;
-                        const Icon = tier.icon;
+            {/* --- HORIZONTAL CAROUSEL --- */}
+            <div
+                ref={carouselRef}
+                onScroll={handleScroll}
+                className="relative z-10 flex-1 flex items-center overflow-x-auto snap-x snap-mandatory px-[8vw] gap-4 scrollbar-hide pb-20"
+            >
+                {TIERS.map((tier) => {
+                    const isSelected = selectedTierId === tier.id;
+                    const Icon = tier.icon;
 
-                        return (
-                            <motion.div
-                                key={tier.id}
-                                className="entrance-item relative pt-4" // Added pt-4 for badge space
-                                onClick={() => setSelectedTierId(tier.id)}
+                    return (
+                        <motion.div
+                            key={tier.id}
+                            layout
+                            className={cn(
+                                "entrance-item snap-center shrink-0 w-[80vw] max-w-[350px] aspect-[4/5] relative transition-all duration-500 ease-out",
+                                isSelected ? "scale-100 opacity-100 z-20" : "scale-90 opacity-60 z-10 blur-[1px]"
+                            )}
+                            onClick={() => {
+                                // Scroll to this card if clicked
+                                const card = document.getElementById(`tier-card-${tier.id}`);
+                                card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                            }}
+                            id={`tier-card-${tier.id}`}
+                        >
+                            {/* Card Content Container */}
+                            <div
+                                className={cn(
+                                    "h-full w-full rounded-[2.5rem] border overflow-hidden relative flex flex-col justify-between p-6 transition-all duration-300",
+                                    isSelected
+                                        ? "border-white/20 bg-white/5 shadow-2xl"
+                                        : "border-white/5 bg-black/20"
+                                )}
+                                style={{ backdropFilter: 'blur(20px)' }}
                             >
                                 {/* Popular Badge */}
                                 {tier.popular && (
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20">
-                                        <div className="px-4 py-1.5 bg-[#E2F163] rounded-full flex items-center gap-1.5 shadow-lg shadow-[#E2F163]/30">
+                                    <div className="absolute top-4 left-4">
+                                        <div className="px-3 py-1 bg-[#E2F163] rounded-full flex items-center gap-1 shadow-lg shadow-[#E2F163]/30">
                                             <Zap className="w-3 h-3 text-black fill-black" />
                                             <span className="text-[10px] font-black text-black uppercase tracking-wider">פופולרי</span>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Active Glow Behind Card */}
-                                <div
-                                    className={cn(
-                                        "absolute -inset-1 top-3 rounded-[2.5rem] blur-xl transition-all duration-500",
-                                        isSelected ? "opacity-40" : "opacity-0"
-                                    )}
-                                    style={{ backgroundColor: tier.color }}
-                                />
-
-                                {/* Card Body */}
-                                <div
-                                    className={cn(
-                                        "relative overflow-hidden rounded-[2rem] border transition-all duration-300",
-                                        isSelected
-                                            ? "border-white/20 bg-white/5 shadow-2xl"
-                                            : "border-white/5 bg-black/20"
-                                    )}
-                                    style={{
-                                        backdropFilter: 'blur(12px)',
-                                        transform: isSelected ? 'scale(1.02)' : 'scale(1)'
-                                    }}
-                                >
-
-                                    <div className="p-8">
-                                        {/* Card Header Content */}
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div>
-                                                <h3 className={cn("text-xl font-bold mb-1 transition-colors duration-300", isSelected ? "text-white" : "text-white/60")}>
-                                                    {tier.displayName}
-                                                </h3>
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className={cn("text-4xl font-black tracking-tight", isSelected ? "text-white" : "text-white/50")}>
-                                                        {tier.price}
-                                                    </span>
-                                                    <span className="text-lg text-white/40">₪</span>
-                                                    <span className="text-sm text-white/30 mr-2">/ לחודש</span>
-                                                </div>
-                                            </div>
-                                            <div
-                                                className={cn(
-                                                    "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500",
-                                                    isSelected ? "bg-white/10 text-white scan-pulse" : "bg-white/5 text-white/20"
-                                                )}
-                                                style={{ color: isSelected ? tier.color : undefined }}
-                                            >
-                                                <Icon className="w-6 h-6" />
-                                            </div>
-                                        </div>
-
-                                        {/* Features List (Always visible but dimmed if not selected) */}
-                                        <div className={cn("transition-opacity duration-300", isSelected ? "opacity-100" : "opacity-50")}>
-                                            <div className="h-px w-full bg-white/10 mb-6" />
-                                            <ul className="space-y-4">
-                                                {tier.features.map((feature, i) => (
-                                                    <li key={i} className="flex items-start gap-3">
-                                                        <Check className="w-5 h-5 shrink-0" style={{ color: tier.color }} />
-                                                        <span className="text-sm text-white/80 leading-tight">{feature}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        {/* Removed Individual Buy Button */}
+                                {/* Card Header */}
+                                <div className="mt-2">
+                                    <div
+                                        className={cn(
+                                            "w-14 h-14 rounded-full flex items-center justify-center mb-4 transition-all duration-300",
+                                            isSelected ? "bg-white/10 text-white" : "bg-white/5 text-white/20"
+                                        )}
+                                        style={{ color: isSelected ? tier.color : undefined }}
+                                    >
+                                        <Icon className="w-7 h-7" />
                                     </div>
+                                    <h3 className={cn("text-2xl font-bold mb-1", isSelected ? "text-white" : "text-white/60")}>
+                                        {tier.displayName}
+                                    </h3>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className={cn("text-5xl font-black tracking-tighter", isSelected ? "text-white" : "text-white/50")}>
+                                            {tier.price}
+                                        </span>
+                                        <span className="text-xl text-white/40">₪</span>
+                                    </div>
+                                    <p className="text-sm text-white/30">לחודש</p>
                                 </div>
-                            </motion.div>
-                        );
-                    })}
-                </div>
 
-                {/* FIXED FOOTER BUTTON */}
-                <AnimatePresence>
-                    {selectedTierId && activeTier && (
-                        <motion.div
-                            initial={{ y: 100, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 100, opacity: 0 }}
-                            transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                            className="footer-action fixed bottom-0 left-0 right-0 p-4 pb-8 z-40 bg-gradient-to-t from-black via-black/80 to-transparent"
-                        >
-                            <button
-                                onClick={() => setIsPaymentModalOpen(true)}
-                                disabled={purchasing}
-                                className="w-full py-5 rounded-[1.5rem] font-black text-lg flex items-center justify-center gap-3 relative overflow-hidden group active:scale-95 transition-all shadow-2xl"
-                                style={{
-                                    background: activeTier.color,
-                                    color: activeTier.id === 1 ? 'white' : 'black', // Dark text for Neon/Pink, White for Basic
-                                    boxShadow: `0 0 40px ${activeTier.color}40`
-                                }}
-                            >
-                                {purchasing ? (
-                                    <Loader2 className="w-6 h-6 animate-spin" />
-                                ) : (
-                                    <>
-                                        <span className="relative z-10 tracking-tight">לרכישת מנוי {activeTier.displayName} • {activeTier.price}₪</span>
-                                        <ArrowRight className={cn("w-6 h-6 rotate-180", activeTier.id === 1 ? "text-white" : "text-black")} />
-                                    </>
-                                )}
-
-                                {/* Shimmer Effect */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                            </button>
-                            <p className="text-center text-[10px] text-white/30 mt-3 font-medium">ללא התחייבות • 100% מאובטח</p>
+                                {/* Features */}
+                                <div className="space-y-3 mt-4 flex-1">
+                                    <div className="h-px w-full bg-white/10 mb-4" />
+                                    <ul className="space-y-3">
+                                        {tier.features.slice(0, 4).map((feature, i) => (
+                                            <li key={i} className="flex items-start gap-3">
+                                                <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: tier.color }} />
+                                                <span className="text-sm text-white/80 leading-tight">{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
                         </motion.div>
-                    )}
-                </AnimatePresence>
-
+                    );
+                })}
             </div>
+
+            {/* --- FIXED FOOTER BUTTON --- */}
+            <AnimatePresence mode="wait">
+                {activeTier && (
+                    <motion.div
+                        key={activeTier.id}
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 20, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed bottom-0 left-0 right-0 p-6 pt-0 pb-8 z-50 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/90 to-transparent"
+                    >
+                        <button
+                            onClick={() => setIsPaymentModalOpen(true)}
+                            disabled={purchasing}
+                            className="w-full py-4 rounded-[1.2rem] font-black text-lg flex items-center justify-center gap-2 relative overflow-hidden group active:scale-95 transition-all shadow-xl"
+                            style={{
+                                background: activeTier.color,
+                                color: activeTier.id === 1 ? 'white' : 'black',
+                                boxShadow: `0 0 30px ${activeTier.color}30`
+                            }}
+                        >
+                            {purchasing ? (
+                                <Loader2 className="w-6 h-6 animate-spin" />
+                            ) : (
+                                <>
+                                    <span className="relative z-10 tracking-tight">רכישת מנוי {activeTier.displayName}</span>
+                                    <ArrowRight className={cn("w-5 h-5 rotate-180", activeTier.id === 1 ? "text-white" : "text-black")} />
+                                </>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
