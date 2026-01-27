@@ -93,22 +93,30 @@ export default function SubscriptionPage() {
     const carouselRef = useRef<HTMLDivElement>(null);
 
     const [showSwipeHint, setShowSwipeHint] = useState(true);
+    const [showUnderline, setShowUnderline] = useState(false);
 
-    // Scroll to initial central item
+    // Initial load effects
     useEffect(() => {
+        // Scroll to initial central item
         if (carouselRef.current) {
             const container = carouselRef.current;
-            const popularCard = container.children[1] as HTMLElement; // Index 1 is Standard (id 2)
+            const popularCard = container.children[1] as HTMLElement;
             if (popularCard) {
-                // Determine center position
                 const scrollLeft = popularCard.offsetLeft - (container.clientWidth / 2) + (popularCard.clientWidth / 2);
                 container.scrollTo({ left: scrollLeft, behavior: "instant" });
             }
         }
 
-        // Hide hint after 4 seconds if no interaction
-        const timer = setTimeout(() => setShowSwipeHint(false), 4500);
-        return () => clearTimeout(timer);
+        // Delay underline start to hide visual glitches during entrance
+        const underlineTimer = setTimeout(() => setShowUnderline(true), 1200);
+
+        // Hide hint after 4.5 seconds if no interaction
+        const hintTimer = setTimeout(() => setShowSwipeHint(false), 4500);
+
+        return () => {
+            clearTimeout(underlineTimer);
+            clearTimeout(hintTimer);
+        };
     }, []);
 
     // Handle Scroll for Auto-Selection
@@ -229,7 +237,7 @@ export default function SubscriptionPage() {
                     </motion.button>
 
                     <motion.div variants={itemVariants}>
-                        <h1 className="text-4xl font-black mb-8 leading-tight">
+                        <h1 className="text-4xl font-black mb-10 leading-tight">
                             <span className="block text-white/90">בחרי את המסלול</span>
                             <div className="relative inline-block mt-1">
                                 <span
@@ -244,29 +252,29 @@ export default function SubscriptionPage() {
                                     שמתאים לך
                                 </span>
                                 {/* Underline */}
-                                <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
-                                    <motion.path
-                                        key="underline-path"
-                                        d="M4 14 C 20 24, 60 4, 96 14"
-                                        fill="none"
-                                        strokeLinecap="round"
-                                        stroke={activeTier?.color || '#ffffff'}
-                                        initial={{ pathLength: 0, opacity: 0, strokeWidth: 0 }}
-                                        animate={{
-                                            pathLength: 1,
-                                            opacity: 1,
-                                            strokeWidth: 9
-                                        }}
-                                        transition={{
-                                            pathLength: { duration: 1.2, delay: 1.0, ease: "easeInOut" },
-                                            opacity: { duration: 0.3, delay: 0.9 },
-                                            strokeWidth: { duration: 0.1, delay: 1.0 }
-                                        }}
-                                        style={{
-                                            willChange: "pathLength, opacity, strokeWidth",
-                                        }}
-                                    />
-                                </svg>
+                                {showUnderline && (
+                                    <svg className="absolute -bottom-4 left-0 w-full h-[20px] pointer-events-none z-0 overflow-visible" viewBox="0 0 100 20" preserveAspectRatio="none">
+                                        <motion.path
+                                            key="underline-path"
+                                            d="M4 14 C 20 24, 60 4, 96 14"
+                                            fill="none"
+                                            strokeLinecap="round"
+                                            stroke={activeTier?.color || '#ffffff'}
+                                            initial={{ pathLength: 0, opacity: 0, strokeWidth: 9 }}
+                                            animate={{
+                                                pathLength: 1,
+                                                opacity: 1,
+                                            }}
+                                            transition={{
+                                                pathLength: { duration: 1.2, delay: 0.1, ease: "easeInOut" },
+                                                opacity: { duration: 0.3 }
+                                            }}
+                                            style={{
+                                                willChange: "pathLength, opacity",
+                                            }}
+                                        />
+                                    </svg>
+                                )}
                             </div>
                         </h1>
                         <p className="text-white/60 text-base max-w-sm leading-relaxed">
