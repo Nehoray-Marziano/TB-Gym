@@ -146,7 +146,8 @@ export default function SubscriptionPage() {
         const ctx = gsap.context(() => {
             const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-            gsap.set(".entrance-item", { opacity: 0, y: 50 });
+            // Set initial state via GSAP to ensure consistency, but CSS opacity-0 prevents flash
+            gsap.set(".entrance-item", { y: 50 });
             gsap.set(".footer-action", { y: 100 });
 
             tl.to(".entrance-item", {
@@ -155,6 +156,7 @@ export default function SubscriptionPage() {
                 duration: 0.8,
                 stagger: 0.1,
                 delay: 0.1
+                // Removed clearProps to persist opacity: 1 (overriding className opacity-0)
             })
                 .to(".underline-path", {
                     strokeDashoffset: 0,
@@ -225,12 +227,12 @@ export default function SubscriptionPage() {
             <div className="relative z-10 flex-none pt-4 px-6 pb-2">
                 <button
                     onClick={() => router.back()}
-                    className="entrance-item w-10 h-10 mb-2 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-90"
+                    className="entrance-item opacity-0 w-10 h-10 mb-2 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors active:scale-90"
                 >
                     <ChevronRight className="w-5 h-5" />
                 </button>
 
-                <div className="entrance-item">
+                <div className="entrance-item opacity-0">
                     <h1 className="text-4xl font-black mb-2 leading-tight">
                         <span className="block text-white/90">בחרי את המסלול</span>
                         <div className="relative inline-block mt-1">
@@ -280,10 +282,10 @@ export default function SubscriptionPage() {
                             key={tier.id}
                             layout
                             className={cn(
-                                "entrance-item snap-center shrink-0 w-[82vw] max-w-[380px] aspect-[4/5] relative transition-all duration-500 ease-out",
+                                "entrance-item opacity-0 snap-center shrink-0 w-[82vw] max-w-[380px] aspect-[4/5] relative transition-all duration-500 ease-out rounded-[2.5rem]", // Added opacity-0 and rounded-[2.5rem]
                                 isSelected
-                                    ? "scale-100 opacity-100 z-20"
-                                    : "scale-90 opacity-70 z-10 blur-[1px] animate-pulse-glow" // Added pulse-glow
+                                    ? "scale-100 opacity-100 z-20" // opacity-100 will override opacity-0 if isSelected, BUT entrance animation will override this temporarily.
+                                    : "scale-90 opacity-70 z-10 blur-[1px] animate-pulse-glow"
                             )}
                             onClick={() => {
                                 // Scroll to this card if clicked
