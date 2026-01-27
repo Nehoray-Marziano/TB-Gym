@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, RefreshCw, Send, Trash2, Power } from "lucide-react";
+import { Bell, RefreshCw, Send, Trash2, Power, X } from "lucide-react";
 
 declare global {
     interface Window {
@@ -11,6 +11,8 @@ declare global {
 }
 
 export default function DebugNotificationPanel() {
+    const [isMounted, setIsMounted] = useState(true);
+    const [isVisible, setIsVisible] = useState(false);
     const [heartbeat, setHeartbeat] = useState(0);
     const [domStatus, setDomStatus] = useState("Init...");
 
@@ -78,64 +80,98 @@ export default function DebugNotificationPanel() {
         }
     };
 
+    if (!isMounted) return null;
+
     return (
-        <div className="fixed top-24 left-4 z-[99999] pointer-events-auto">
-            <div className="bg-black/90 text-white p-3 rounded-xl border border-white/20 shadow-2xl w-72 text-xs font-mono">
+        <div className="fixed top-32 right-4 z-[99999] pointer-events-auto flex flex-col items-end gap-2">
 
-                {/* Header */}
-                <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
-                    <span className="font-bold text-[#E2F163]">OneSignal Probe</span>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-white/40">{heartbeat}</span>
-                        <button onClick={checkStatus}><RefreshCw className="w-3 h-3" /></button>
+            {isVisible ? (
+                // Full Panel
+                <div className="bg-black/90 text-white p-3 rounded-xl border border-white/20 shadow-2xl w-72 text-xs font-mono">
+
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
+                        <span className="font-bold text-[#E2F163]">OneSignal Probe</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[9px] text-white/40">{heartbeat}</span>
+                            <button onClick={() => setIsVisible(false)} className="bg-white/10 p-1 rounded hover:bg-white/20">
+                                <X className="w-3 h-3" />
+                            </button>
+                        </div>
                     </div>
+
+                    {/* DOM Status (Immediate) */}
+                    <div className="mb-3 bg-white/5 p-2 rounded">
+                        <div className="text-[9px] text-white/50 mb-1">DOM / GLOBAL STATUS</div>
+                        <div className="font-bold text-cyan-300 break-words leading-tight">
+                            {domStatus}
+                        </div>
+                    </div>
+
+                    {/* SDK Values */}
+                    <div className="space-y-1">
+                        <div className="flex justify-between">
+                            <span className="text-white/50">Perm:</span>
+                            <span className={sdkState.permission === 'granted' ? "text-green-400" : "text-red-400"}>
+                                {sdkState.permission}
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-white/50">Subscribed:</span>
+                            <span className={sdkState.optedIn === 'true' ? "text-green-400" : "text-red-400"}>
+                                {sdkState.optedIn}
+                            </span>
+                        </div>
+                        <div className="flex justify-between flex-col">
+                            <span className="text-white/50">Push ID:</span>
+                            <span className="text-[10px] text-blue-300 break-all">{sdkState.subId}</span>
+                        </div>
+                        <div className="flex justify-between flex-col bg-yellow-900/20 p-1 rounded border border-yellow-500/20 mt-1">
+                            <span className="text-yellow-500 font-bold">External ID:</span>
+                            <span className="text-[10px] text-yellow-200 break-all">
+                                {sdkState.extId}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                        <button onClick={handleReqPerm} className="bg-white/10 hover:bg-white/20 py-2 rounded flex justify-center items-center gap-1">
+                            <Bell className="w-3 h-3" /> Grant
+                        </button>
+                        <button onClick={handleForceInit} className="bg-red-500/20 hover:bg-red-500/40 text-red-300 py-2 rounded flex justify-center items-center gap-1">
+                            <Power className="w-3 h-3" /> Force Load
+                        </button>
+                    </div>
+
+                    <div className="mt-4 pt-2 border-t border-white/10 text-center">
+                        <button
+                            onClick={() => setIsMounted(false)}
+                            className="text-[10px] text-red-400 hover:text-red-300 underline"
+                        >
+                            Remove Debug Tools from Screen
+                        </button>
+                    </div>
+
                 </div>
-
-                {/* DOM Status (Immediate) */}
-                <div className="mb-3 bg-white/5 p-2 rounded">
-                    <div className="text-[9px] text-white/50 mb-1">DOM / GLOBAL STATUS</div>
-                    <div className="font-bold text-cyan-300 break-words leading-tight">
-                        {domStatus}
-                    </div>
-                </div>
-
-                {/* SDK Values */}
-                <div className="space-y-1">
-                    <div className="flex justify-between">
-                        <span className="text-white/50">Perm:</span>
-                        <span className={sdkState.permission === 'granted' ? "text-green-400" : "text-red-400"}>
-                            {sdkState.permission}
-                        </span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-white/50">Subscribed:</span>
-                        <span className={sdkState.optedIn === 'true' ? "text-green-400" : "text-red-400"}>
-                            {sdkState.optedIn}
-                        </span>
-                    </div>
-                    <div className="flex justify-between flex-col">
-                        <span className="text-white/50">Push ID:</span>
-                        <span className="text-[10px] text-blue-300 break-all">{sdkState.subId}</span>
-                    </div>
-                    <div className="flex justify-between flex-col bg-yellow-900/20 p-1 rounded border border-yellow-500/20 mt-1">
-                        <span className="text-yellow-500 font-bold">External ID:</span>
-                        <span className="text-[10px] text-yellow-200 break-all">
-                            {sdkState.extId}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Actions */}
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                    <button onClick={handleReqPerm} className="bg-white/10 hover:bg-white/20 py-2 rounded flex justify-center items-center gap-1">
-                        <Bell className="w-3 h-3" /> Grant
+            ) : (
+                // Collapsed State
+                <div className="flex flex-col items-end gap-2">
+                    <button
+                        onClick={() => setIsMounted(false)}
+                        className="bg-black/80 text-white/50 p-1 rounded-full hover:bg-red-900 hover:text-white transition-colors"
+                        title="Remove completely"
+                    >
+                        <X className="w-3 h-3" />
                     </button>
-                    <button onClick={handleForceInit} className="bg-red-500/20 hover:bg-red-500/40 text-red-300 py-2 rounded flex justify-center items-center gap-1">
-                        <Power className="w-3 h-3" /> Force Load
+                    <button
+                        onClick={() => setIsVisible(true)}
+                        className="bg-red-600 text-white p-3 rounded-full shadow-lg shadow-red-900/40 font-bold hover:scale-105 transition-transform"
+                    >
+                        <Bell className="w-4 h-4" />
                     </button>
                 </div>
-
-            </div>
+            )}
         </div>
     );
 }
