@@ -3,7 +3,7 @@
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useState, useRef, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, X, User, Moon, Sun, Sparkles } from "lucide-react";
+import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, X, User, Moon, Sun, Sparkles, Palette } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
@@ -164,7 +164,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
     const toggleTheme = () => {
         if (navigator.vibrate) navigator.vibrate(10);
-        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+        const next = resolvedTheme === 'dark' ? 'light' : resolvedTheme === 'light' ? 'classic' : 'dark';
+        setTheme(next);
     };
 
     if (!profile) return null; // Should not happen with server data, but safety check
@@ -371,11 +372,11 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 >
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                            {resolvedTheme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                            {resolvedTheme === 'dark' ? <Moon className="w-5 h-5" /> : resolvedTheme === 'classic' ? <Palette className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                         </div>
-                        <span className="font-bold text-foreground">מצב תצוגה ({resolvedTheme === 'dark' ? 'חשוך' : 'בהיר'})</span>
+                        <span className="font-bold text-foreground">מצב תצוגה ({resolvedTheme === 'dark' ? 'חשוך' : resolvedTheme === 'classic' ? 'קלאסי' : 'בהיר'})</span>
                     </div>
-                    <div className={`w-12 h-6 rounded-full p-1 transition-colors ${resolvedTheme === 'dark' ? 'bg-primary justify-end' : 'bg-muted/30 justify-start'} flex`}>
+                    <div className={`w-12 h-6 rounded-full p-1 transition-colors ${resolvedTheme === 'dark' ? 'bg-primary justify-end' : resolvedTheme === 'classic' ? 'bg-[#8c9070] justify-center' : 'bg-muted/30 justify-start'} flex`}>
                         <motion.div
                             layout
                             transition={{ type: "spring", stiffness: 700, damping: 30 }}

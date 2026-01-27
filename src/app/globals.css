@@ -65,6 +65,38 @@
   --ring: #CCDB38;
 }
 
+/* CLASSIC MODE - User Requested #8c9070 */
+.classic {
+  --background: #F5F5F7;
+  --foreground: #000000;
+
+  --card: #FFFFFF;
+  --card-foreground: #000000;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #000000;
+
+  --primary: #8c9070;
+  /* Olive Green (Classic) */
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #E5E5EA;
+  --secondary-foreground: #000000;
+
+  --muted: #D1D1D6;
+  --muted-foreground: #636366;
+
+  --accent: #8c9070;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #D1D1D6;
+  --input: #E5E5EA;
+  --ring: #8c9070;
+}
+
 /* DARK MODE */
 .dark {
   --background: #0A0A0A;
