@@ -248,12 +248,18 @@ export default function SubscriptionPage() {
                                     <motion.path
                                         d="M4 14 C 20 24, 60 4, 96 14"
                                         fill="none"
-                                        stroke={activeTier?.color || '#ffffff'}
                                         strokeWidth="6"
                                         strokeLinecap="round"
-                                        initial={{ pathLength: 0 }}
-                                        animate={{ pathLength: 1 }}
-                                        transition={{ duration: 1.5, delay: 0.8, ease: "easeInOut" }}
+                                        initial={{ pathLength: 0, stroke: activeTier?.color || '#ffffff' }}
+                                        animate={{
+                                            pathLength: 1,
+                                            stroke: activeTier?.color || '#ffffff'
+                                        }}
+                                        transition={{
+                                            pathLength: { duration: 2.5, delay: 0.8, ease: "easeOut" },
+                                            stroke: { duration: 0.5, ease: "linear" }
+                                        }}
+                                        style={{ willChange: "pathLength, stroke" }}
                                     />
                                 </svg>
                             </div>
