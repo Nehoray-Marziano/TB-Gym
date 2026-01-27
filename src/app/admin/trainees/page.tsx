@@ -3,60 +3,12 @@
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, User, Ticket, Plus, Clock, Minus, Save, RefreshCw } from "lucide-react";
+import { Search, User, Ticket, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import TicketUpdateModal from "@/components/admin/TicketUpdateModal";
 
 // Ticket Counter Component for Batch Updates
-function TicketCounter({ traineeId, currentTickets, onUpdate, isUpdating }: {
-    traineeId: string,
-    currentTickets: number,
-    onUpdate: (val: number) => void,
-    isUpdating: boolean
-}) {
-    const [addAmount, setAddAmount] = useState(0);
 
-    const handleSave = () => {
-        if (addAmount !== 0) {
-            onUpdate(addAmount);
-            setAddAmount(0); // Reset after save
-        }
-    };
-
-    return (
-        <div className="flex items-center bg-neutral-900 rounded-xl p-1 border border-white/10">
-            <button
-                onClick={() => setAddAmount(prev => prev - 1)}
-                className="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-white/50 hover:text-white transition-colors"
-            >
-                <Minus className="w-4 h-4" />
-            </button>
-
-            <input
-                type="number"
-                value={addAmount}
-                onChange={(e) => setAddAmount(parseInt(e.target.value) || 0)}
-                className="w-10 bg-transparent text-center font-mono font-bold text-white focus:outline-none"
-            />
-
-            <button
-                onClick={() => setAddAmount(prev => prev + 1)}
-                className="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg text-white/50 hover:text-white transition-colors"
-            >
-                <Plus className="w-4 h-4" />
-            </button>
-
-            {addAmount !== 0 && (
-                <button
-                    onClick={handleSave}
-                    disabled={isUpdating}
-                    className="mr-2 px-3 h-8 bg-[#E2F163] text-black text-xs font-bold rounded-lg flex items-center gap-1 hover:bg-[#d4e450] transition-colors"
-                >
-                    {isUpdating ? <RefreshCw className="w-3 h-3 animate-spin" /> : "עדכון"}
-                </button>
-            )}
-        </div>
-    );
-}
 
 type Profile = {
     id: string;
@@ -82,6 +34,7 @@ export default function AdminTraineesPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [grantingTickets, setGrantingTickets] = useState<string | null>(null);
+    const [selectedTraineeForUpdate, setSelectedTraineeForUpdate] = useState<Trainee | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -164,6 +117,7 @@ export default function AdminTraineesPage() {
             ));
 
             toast({ title: "הכרטיסים עודכנו בהצלחה", type: "success" });
+            setSelectedTraineeForUpdate(null); // Close modal
         } catch (err: any) {
             console.error(err);
             toast({ title: "שגיאה בהענקת כרטיסים", description: err.message, type: "error" });
@@ -271,13 +225,12 @@ export default function AdminTraineesPage() {
                                         </span>
                                     </div>
 
-                                    {/* Batch Update UI */}
-                                    <TicketCounter
-                                        traineeId={trainee.id}
-                                        currentTickets={trainee.tickets}
-                                        onUpdate={(quantity) => handleGrantTickets(trainee.id, quantity)}
-                                        isUpdating={grantingTickets === trainee.id}
-                                    />
+                                    <button
+                                        onClick={() => setSelectedTraineeForUpdate(trainee)}
+                                        className="bg-[#E2F163] text-black px-3 py-2 rounded-xl text-xs font-bold hover:bg-[#d4e450] transition-colors whitespace-nowrap shadow-lg shadow-[#E2F163]/10"
+                                    >
+                                        עדכון יתרה
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>
@@ -289,6 +242,18 @@ export default function AdminTraineesPage() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* Ticket Update Modal */}
+            {selectedTraineeForUpdate && (
+                <TicketUpdateModal
+                    isOpen={!!selectedTraineeForUpdate}
+                    onClose={() => setSelectedTraineeForUpdate(null)}
+                    onConfirm={(amount) => handleGrantTickets(selectedTraineeForUpdate.id, amount)}
+                    traineeName={selectedTraineeForUpdate.full_name}
+                    currentBalance={selectedTraineeForUpdate.tickets}
+                    isUpdating={grantingTickets === selectedTraineeForUpdate.id}
+                />
             )}
         </div>
     );
