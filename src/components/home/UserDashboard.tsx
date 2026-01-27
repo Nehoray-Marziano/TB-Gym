@@ -50,10 +50,11 @@ function AnimatedCounter({ value, className }: { value: number; className?: stri
 
 export default function UserDashboard({ user }: { user: any }) {
     const router = useRouter();
-    const { profile, tickets, subscription, loading, refreshData } = useGymStore();
+    const { profile, tickets, subscription, loading, refreshData, toggleDevMode } = useGymStore();
     const [upcomingSession, setUpcomingSession] = useState<any | null>(null);
     const [loadingSession, setLoadingSession] = useState(true);
     const [isAnimated, setIsAnimated] = useState(false);
+    const [debugClicks, setDebugClicks] = useState(0);
 
     // GSAP Refs
     const containerRef = useRef<HTMLDivElement>(null);
@@ -304,7 +305,22 @@ export default function UserDashboard({ user }: { user: any }) {
                 <div className="p-6 relative z-10 h-full">
                     {/* Logo Header with animation */}
                     <div ref={logoRef} className="flex justify-center pb-4 pt-4 mb-2">
-                        <div className="relative">
+                        <div
+                            className="relative cursor-pointer active:scale-95 transition-transform"
+                            onClick={() => {
+                                const newCount = debugClicks + 1;
+                                setDebugClicks(newCount);
+                                if (newCount >= 10) {
+                                    toggleDevMode(true);
+                                    toast({
+                                        title: "👨‍💻 Developer Mode Enabled",
+                                        description: "Debug tools are now visible on the right.",
+                                        type: "success"
+                                    });
+                                    setDebugClicks(0);
+                                }
+                            }}
+                        >
                             <StudioLogo className="w-16 h-16" />
                             {/* Subtle glow effect */}
                             <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl -z-10 animate-pulse" />

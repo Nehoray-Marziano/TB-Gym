@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Bell, RefreshCw, Send, Trash2, Power, X } from "lucide-react";
+import { useGymStore } from "@/providers/GymStoreProvider";
 
 declare global {
     interface Window {
@@ -11,9 +12,10 @@ declare global {
 }
 
 export default function DebugNotificationPanel() {
-    const [isMounted, setIsMounted] = useState(true);
+    const { isDevMode, toggleDevMode } = useGymStore();
     const [isVisible, setIsVisible] = useState(false);
     const [heartbeat, setHeartbeat] = useState(0);
+
     const [domStatus, setDomStatus] = useState("Init...");
 
     // Split status into 'raw' (immediate) and 'sdk' (async)
@@ -80,7 +82,7 @@ export default function DebugNotificationPanel() {
         }
     };
 
-    if (!isMounted) return null;
+    if (!isDevMode) return null;
 
     return (
         <div className="fixed top-32 right-4 z-[99999] pointer-events-auto flex flex-col items-end gap-2">
@@ -146,7 +148,7 @@ export default function DebugNotificationPanel() {
 
                     <div className="mt-4 pt-2 border-t border-white/10 text-center">
                         <button
-                            onClick={() => setIsMounted(false)}
+                            onClick={() => toggleDevMode(false)}
                             className="text-[10px] text-red-400 hover:text-red-300 underline"
                         >
                             Remove Debug Tools from Screen
@@ -158,7 +160,7 @@ export default function DebugNotificationPanel() {
                 // Collapsed State
                 <div className="flex flex-col items-end gap-2">
                     <button
-                        onClick={() => setIsMounted(false)}
+                        onClick={() => toggleDevMode(false)}
                         className="bg-black/80 text-white/50 p-1 rounded-full hover:bg-red-900 hover:text-white transition-colors"
                         title="Remove completely"
                     >

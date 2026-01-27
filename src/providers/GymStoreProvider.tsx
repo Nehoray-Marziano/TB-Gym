@@ -26,6 +26,9 @@ type GymStoreContextType = {
     loading: boolean;
     refreshData: (force?: boolean, userId?: string) => Promise<void>;
     cancelBooking: (sessionId: string) => Promise<{ success: boolean; message: string }>;
+    // Developer Mode
+    isDevMode: boolean;
+    toggleDevMode: (force?: boolean) => void;
 };
 
 const GymStoreContext = createContext<GymStoreContextType>({
@@ -35,9 +38,12 @@ const GymStoreContext = createContext<GymStoreContextType>({
     loading: true,
     refreshData: async () => { },
     cancelBooking: async () => ({ success: false, message: "Not implemented" }),
+    isDevMode: false,
+    toggleDevMode: () => { },
 });
 
 export const useGymStore = () => useContext(GymStoreContext);
+
 
 // NOTE: We do NOT cache data freshness anymore - data must always be fresh
 // LocalStorage is ONLY used for instant initial render (optimistic UI) - DEPRECATED: Now we don't use it at all.
@@ -48,7 +54,23 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [tickets, setTickets] = useState<number>(0);
     const [subscription, setSubscription] = useState<Subscription | null>(null);
+    const [isDevMode, setIsDevMode] = useState(false);
     const fetchedRef = useRef(false);
+
+    // Dev Mode Persistence
+    useEffect(() => {
+        const stored = localStorage.getItem("talia_dev_mode");
+        if (stored === "true") setIsDevMode(true);
+    }, []);
+
+    const toggleDevMode = useCallback((force?: boolean) => {
+        setIsDevMode(prev => {
+            const next = force !== undefined ? force : !prev;
+            if (next) localStorage.setItem("talia_dev_mode", "true");
+            else localStorage.removeItem("talia_dev_mode");
+            return next;
+        });
+    }, []);
 
     // Lazy-initialize supabase client only when needed (client-side only)
     const getClient = useCallback(() => {
@@ -193,7 +215,16 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     const credits = tickets;
 
     return (
-        <GymStoreContext.Provider value={{ profile, tickets, subscription, loading, refreshData: fetchData, cancelBooking }}>
+        <GymStoreContext.Provider value={{
+            profile,
+            tickets,
+            subscription,
+            loading,
+            refreshData: fetchData,
+            cancelBooking,
+            isDevMode,
+            toggleDevMode
+        }}>
             {children}
         </GymStoreContext.Provider>
     );
