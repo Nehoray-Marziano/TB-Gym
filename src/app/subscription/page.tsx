@@ -64,21 +64,22 @@ export default function SubscriptionPage() {
         const carousel = carouselRef.current;
         const popularCard = carousel?.children[1] as HTMLElement | undefined;
         if (!carousel || !popularCard) return;
-        const scrollLeft = popularCard.offsetLeft - carousel.clientWidth / 2 + popularCard.clientWidth / 2;
-        carousel.scrollTo({ left: scrollLeft, behavior: "instant" });
+        popularCard.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
     }, []);
 
     const handleScroll = () => {
         const carousel = carouselRef.current;
         if (!carousel) return;
 
-        const center = carousel.scrollLeft + carousel.clientWidth / 2;
+        const carouselBounds = carousel.getBoundingClientRect();
+        const center = carouselBounds.left + carouselBounds.width / 2;
         let closestTierId = selectedTierId;
         let minDistance = Infinity;
 
         Array.from(carousel.children).forEach((child, index) => {
             const card = child as HTMLElement;
-            const distance = Math.abs(center - (card.offsetLeft + card.clientWidth / 2));
+            const cardBounds = card.getBoundingClientRect();
+            const distance = Math.abs(center - (cardBounds.left + cardBounds.width / 2));
             if (distance < minDistance) {
                 minDistance = distance;
                 closestTierId = TIERS[index].id;
@@ -184,7 +185,7 @@ export default function SubscriptionPage() {
                         disabled={purchasing}
                         className="flex min-h-14 min-w-0 flex-1 items-center justify-between gap-2 rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] transition-colors active:bg-[#334436] disabled:opacity-50"
                     >
-                        {purchasing ? "מעבירים אותך..." : "להמשך לתשלום"}
+                        {purchasing ? "מעבירים אותך..." : "לתשלום"}
                         <ArrowLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
                     </button>
                 </div>
