@@ -1,84 +1,57 @@
 "use client";
 
-import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useGymStore } from "@/providers/GymStoreProvider";
-import { Calendar, Home, Activity, User, CalendarDays, Ticket, Clock, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import StudioLogo from "@/components/StudioLogo";
-import gsap from "gsap";
-import BottomNav from "@/components/BottomNav";
+import type { User } from "@supabase/supabase-js";
+import { ArrowLeft, CalendarDays, Clock3, Ticket } from "lucide-react";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
+import { useGymStore } from "@/providers/GymStoreProvider";
+import StudioLogo from "@/components/StudioLogo";
+import BottomNav from "@/components/BottomNav";
 import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 import { useToast } from "@/components/ui/use-toast";
 
+type UpcomingSession = {
+    id: string;
+    title: string;
+    start_time: string;
+};
 
-// Animated counter component for tickets
-function AnimatedCounter({ value, className }: { value: number; className?: string }) {
-    const counterRef = useRef<HTMLSpanElement>(null);
-    const prevValue = useRef(value);
-
-    useEffect(() => {
-        if (counterRef.current && prevValue.current !== value) {
-            // Animate from previous value to new value
-            gsap.fromTo(
-                counterRef.current,
-                { innerText: prevValue.current },
-                {
-                    innerText: value,
-                    duration: 1.2,
-                    ease: "power2.out",
-                    snap: { innerText: 1 },
-                    onUpdate: function () {
-                        if (counterRef.current) {
-                            counterRef.current.textContent = Math.round(
-                                parseFloat(counterRef.current.textContent || "0")
-                            ).toString();
-                        }
-                    }
-                }
-            );
-            prevValue.current = value;
-        } else if (counterRef.current) {
-            counterRef.current.textContent = value.toString();
-        }
-    }, [value]);
-
-    return <span ref={counterRef} className={className}>{value}</span>;
+function greetingForHour(hour: number) {
+    if (hour < 12) return "בוקר טוב";
+    if (hour < 18) return "צהריים טובים";
+    return "ערב טוב";
 }
 
-export default function UserDashboard({ user }: { user: any }) {
+function formatDate(date: string, options: Intl.DateTimeFormatOptions) {
+    return new Intl.DateTimeFormat("he-IL", options).format(new Date(date));
+}
+
+export default function UserDashboard({ user }: { user: User }) {
     const router = useRouter();
+    const { toast } = useToast();
     const { profile, tickets, subscription, loading, refreshData, toggleDevMode } = useGymStore();
-    const [upcomingSession, setUpcomingSession] = useState<any | null>(null);
+    const [upcomingSession, setUpcomingSession] = useState<UpcomingSession | null>(null);
     const [loadingSession, setLoadingSession] = useState(true);
-    const [isAnimated, setIsAnimated] = useState(false);
     const [debugClicks, setDebugClicks] = useState(0);
 
-    // GSAP Refs
-    const containerRef = useRef<HTMLDivElement>(null);
-    const logoRef = useRef<HTMLDivElement>(null);
-    const headerRef = useRef<HTMLElement>(null);
-    const ticketsCardRef = useRef<HTMLDivElement>(null);
-    const workoutSectionRef = useRef<HTMLDivElement>(null);
-
-
     useEffect(() => {
-        if (user?.id) {
-            refreshData(false, user.id);
-        }
+        refreshData(false, user.id);
 
-        const cached = localStorage.getItem("talia_upcoming");
-        if (cached) {
-            setUpcomingSession(JSON.parse(cached));
-            setLoadingSession(false);
+        try {
+            const cached = localStorage.getItem("talia_upcoming");
+            if (cached) {
+                setUpcomingSession(JSON.parse(cached));
+                setLoadingSession(false);
+            }
+        } catch {
+            localStorage.removeItem("talia_upcoming");
         }
 
         const fetchUpcoming = async () => {
-            if (!user) return;
             const supabase = getSupabaseClient();
-
             const { data: myBookings } = await supabase
                 .from("bookings")
                 .select("session:gym_sessions(*)")
@@ -86,12 +59,11 @@ export default function UserDashboard({ user }: { user: any }) {
                 .eq("status", "confirmed")
                 .gte("session.start_time", new Date().toISOString());
 
-            if (myBookings && myBookings.length > 0) {
-                const futureBookings = myBookings
-                    .map((b: any) => b.session)
-                    .filter((s: any) => s && new Date(s.start_time) > new Date())
-                    .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-
+            if (myBookings?.length) {
+                const futureBookings = (myBookings as unknown as { session: UpcomingSession | null }[])
+                    .map((booking) => booking.session)
+                    .filter((session): session is UpcomingSession => Boolean(session && new Date(session.start_time) > new Date()))
+                    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
                 const nextSession = futureBookings[0] || null;
                 setUpcomingSession(nextSession);
                 localStorage.setItem("talia_upcoming", JSON.stringify(nextSession));
@@ -101,389 +73,155 @@ export default function UserDashboard({ user }: { user: any }) {
             }
             setLoadingSession(false);
         };
+
         fetchUpcoming();
-    }, [user, refreshData]);
+    }, [user.id, refreshData]);
 
-
-    // Confetti Logic: Check if tickets increased since last load
-    const { toast } = useToast();
     useEffect(() => {
-        if (loading) return; // Wait for tickets to be loaded
+        if (loading) return;
+        const previous = localStorage.getItem("talia_tickets_count");
+        const current = tickets || 0;
 
-        const storedTickets = localStorage.getItem('talia_tickets_count');
-        const currentTicketsNr = tickets || 0;
-
-        if (storedTickets !== null) {
-            const prevTickets = parseInt(storedTickets);
-            if (currentTicketsNr > prevTickets) {
-                // Celebration!
-                toast({
-                    title: "קיבלת כרטיסים חדשים! 🎉",
-                    description: "הכרטיסים נוספו לחשבון שלך בהצלחה.",
-                    type: "success"
-                });
-
-                import('canvas-confetti').then((confettiModule) => {
-                    const confetti = confettiModule.default;
-                    confetti({
-                        particleCount: 150,
-                        spread: 70,
-                        origin: { y: 0.6 },
-                        colors: ['#E2F163', '#00b0ba', '#ffffff'] // Brand colors
-                    });
-                });
-            }
+        if (previous !== null && current > Number(previous)) {
+            toast({
+                title: "קיבלת כרטיסים חדשים! 🎉",
+                description: "הכרטיסים נוספו לחשבון שלך בהצלחה.",
+                type: "success",
+            });
+            import("canvas-confetti").then(({ default: confetti }) => {
+                confetti({ particleCount: 90, spread: 65, origin: { y: 0.65 }, colors: ["#dce780", "#8c9070", "#ffffff"] });
+            });
         }
-
-        // Always update to current
-        localStorage.setItem('talia_tickets_count', currentTicketsNr.toString());
+        localStorage.setItem("talia_tickets_count", String(current));
     }, [tickets, loading, toast]);
 
-    // Prefetch routes
     useEffect(() => {
-        router.prefetch('/subscription');
-        router.prefetch('/book');
-        router.prefetch('/profile');
-        router.prefetch('/admin/schedule');
-    }, [router]);
+        router.prefetch("/subscription");
+        router.prefetch("/book");
+        router.prefetch("/profile");
+        if (profile?.role === "administrator") router.prefetch("/admin/schedule");
+    }, [router, profile?.role]);
 
+    const firstName = profile?.full_name?.trim().split(/\s+/)[0] || "אלופה";
+    const greeting = greetingForHour(new Date().getHours());
 
-    // GSAP Entrance Animations
-    useLayoutEffect(() => {
-        if (loading || isAnimated) return;
-
-        const ctx = gsap.context(() => {
-            // Set initial states
-            gsap.set([logoRef.current, headerRef.current, ticketsCardRef.current, workoutSectionRef.current], {
-                opacity: 0,
-                y: 30
-            });
-
-
-            // Create master timeline
-            const tl = gsap.timeline({
-                defaults: { ease: "power3.out" },
-                onComplete: () => setIsAnimated(true)
-            });
-
-            // Logo drops in with bounce
-            tl.to(logoRef.current, {
-                opacity: 1,
-                y: 0,
-                duration: 0.6,
-                ease: "back.out(1.7)"
-            })
-                // Header slides in
-                .to(headerRef.current, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.5
-                }, "-=0.3")
-                // Tickets card with special effect
-                .to(ticketsCardRef.current, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.6,
-                    ease: "power4.out"
-                }, "-=0.2")
-                // Add shimmer effect to tickets card
-                .fromTo(ticketsCardRef.current,
-                    { backgroundPosition: "-200% 0" },
-                    {
-                        backgroundPosition: "200% 0",
-                        duration: 1.5,
-                        ease: "power2.inOut"
-                    },
-                    "-=0.3"
-                )
-                // Workout section
-                .to(workoutSectionRef.current, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.5
-                }, "-=1");
-
-        }, containerRef);
-
-        return () => ctx.revert();
-    }, [loading, isAnimated]);
-
-    // Loading skeleton with shimmer effect
     if (loading) {
         return (
-            <div className="fixed inset-0 bg-background text-foreground overflow-hidden font-sans">
-                <div className="p-6 space-y-6">
-                    {/* Logo skeleton */}
-                    <div className="flex justify-center pt-4 mb-4">
-                        <div className="w-16 h-16 rounded-2xl bg-muted/20 shimmer-skeleton" />
-                    </div>
-
-                    {/* Header skeleton */}
-                    <div className="flex justify-between items-start mb-8">
-                        <div className="space-y-2">
-                            <div className="h-4 w-20 bg-muted/20 rounded-lg shimmer-skeleton" />
-                            <div className="h-10 w-40 bg-muted/20 rounded-xl shimmer-skeleton" />
-                        </div>
-                        <div className="w-12 h-12 rounded-full bg-muted/20 shimmer-skeleton" />
-                    </div>
-
-                    {/* Tickets card skeleton */}
-                    <div className="h-44 rounded-[2rem] bg-muted/10 shimmer-skeleton" />
-
-                    {/* Workout section skeleton */}
-                    <div className="space-y-4">
-                        <div className="h-6 w-28 bg-muted/20 rounded-lg shimmer-skeleton" />
-                        <div className="h-28 rounded-[2rem] bg-muted/10 shimmer-skeleton" />
-                    </div>
+            <main className="min-h-dvh bg-background px-6 pt-8" aria-busy="true">
+                <div className="mx-auto max-w-lg animate-pulse space-y-6">
+                    <div className="h-10 w-24 rounded-full bg-muted/40" />
+                    <div className="h-24 w-3/4 rounded-2xl bg-muted/40" />
+                    <div className="h-64 rounded-[2rem] bg-muted/40" />
+                    <div className="h-48 rounded-[2rem] bg-muted/40" />
                 </div>
-
-                {/* Nav skeleton */}
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm">
-                    <div className="h-16 rounded-full bg-muted/10 shimmer-skeleton" />
-                </div>
-
-                {/* Shimmer animation styles */}
-                <style jsx>{`
-                    .shimmer-skeleton {
-                        position: relative;
-                        overflow: hidden;
-                    }
-                    .shimmer-skeleton::after {
-                        content: '';
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        background: linear-gradient(
-                            90deg,
-                            transparent,
-                            rgba(255, 255, 255, 0.05),
-                            transparent
-                        );
-                        animation: shimmer 1.5s infinite;
-                    }
-                    @keyframes shimmer {
-                        0% { transform: translateX(-100%); }
-                        100% { transform: translateX(100%); }
-                    }
-                `}</style>
-            </div>
+            </main>
         );
     }
 
-    const firstName = profile?.full_name?.split(" ")[0] || "מתאמנת";
-    const greeting = getGreeting();
-
-    function getGreeting() {
-        const hour = new Date().getHours();
-        if (hour < 12) return "בוקר טוב";
-        if (hour < 18) return "צהריים טובים";
-        return "ערב טוב";
-    }
-
-    const formatExpiryDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return new Intl.DateTimeFormat("he-IL", {
-            day: "numeric",
-            month: "short",
-        }).format(date);
-    };
-
     return (
-        <div ref={containerRef} className="fixed inset-0 bg-background text-foreground overflow-hidden font-sans">
-            {/* OneSignal Initialization */}
-            {/* OneSignal Initialization is now handled globally in RootLayout */}
-
-
-
-            {/* Animated gradient background */}
-            <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full pointer-events-none blur-3xl animate-pulse" />
-            <div className="fixed bottom-1/3 left-0 w-[200px] h-[200px] bg-primary/3 rounded-full pointer-events-none blur-3xl" />
-
-            <div className="h-full overflow-hidden pb-24">
-                <div className="p-6 relative z-10 h-full">
-                    {/* Logo Header with animation */}
-                    <div ref={logoRef} className="flex justify-center pb-4 pt-4 mb-2">
-                        <div
-                            className="relative cursor-pointer active:scale-95 transition-transform"
-                            onClick={() => {
-                                const newCount = debugClicks + 1;
-                                setDebugClicks(newCount);
-                                if (newCount >= 10) {
-                                    toggleDevMode(true);
-                                    toast({
-                                        title: "👨‍💻 Developer Mode Enabled",
-                                        description: "Debug tools are now visible on the right.",
-                                        type: "success"
-                                    });
-                                    setDebugClicks(0);
-                                }
-                            }}
-                        >
-                            <StudioLogo className="w-16 h-16" />
-                            {/* Subtle glow effect */}
-                            <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl -z-10 animate-pulse" />
-                        </div>
-                    </div>
-
-                    {/* Header */}
-                    <header ref={headerRef} className="flex justify-between items-start mb-8">
-                        <div>
-                            <p className="text-muted-foreground text-sm font-medium mb-1">{greeting},</p>
-                            <h1 className="text-4xl font-bold text-foreground tracking-tight">
-                                {firstName} <span className="inline-block animate-wave">👋</span>
-                            </h1>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            {profile?.role === 'administrator' && (
-                                <Link href="/admin/schedule" prefetch={true}>
-                                    <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-black active:scale-95 transition-transform hover:shadow-primary/50 hover:shadow-xl">
-                                        <Activity className="w-6 h-6" />
-                                    </div>
-                                </Link>
-                            )}
-                        </div>
-                    </header>
-
-                    {/* Tickets Card - Premium Design */}
-                    <div ref={ticketsCardRef} className="mb-8">
-                        <Link href="/subscription" prefetch={true}>
-                            <div className="group relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-[2rem] p-6 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-300 hover:shadow-primary/40 hover:shadow-xl overflow-hidden">
-                                {/* Animated shine effect */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-
-                                {/* Sparkle decorations */}
-                                <Sparkles className="absolute top-4 left-4 w-4 h-4 text-primary-foreground/20 animate-pulse" />
-                                <Sparkles className="absolute bottom-12 right-20 w-3 h-3 text-primary-foreground/15 animate-pulse delay-300" />
-
-                                <div className="flex justify-between items-start mb-8 relative z-10">
-                                    <div>
-                                        <p className="font-bold text-primary-foreground/60 text-sm mb-1 uppercase tracking-wider">הכרטיסים שלך</p>
-                                        <h2 className="text-5xl font-bold tracking-tighter">
-                                            <AnimatedCounter value={tickets} />
-                                        </h2>
-                                    </div>
-                                    <div className="bg-primary-foreground/10 p-3 rounded-xl group-hover:bg-primary-foreground/20 transition-colors">
-                                        <Ticket className="w-6 h-6 text-primary-foreground" />
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between items-end relative z-10">
-                                    <div className="flex items-center gap-2">
-                                        {subscription?.is_active && (
-                                            <>
-                                                <span className="bg-primary-foreground/20 text-primary-foreground px-3 py-1 rounded-full text-xs font-bold">
-                                                    {subscription.tier_display_name}
-                                                </span>
-                                                <span className="flex items-center gap-1 text-xs text-primary-foreground/70">
-                                                    <Clock className="w-3 h-3" />
-                                                    עד {formatExpiryDate(subscription.expires_at)}
-                                                </span>
-                                            </>
-                                        )}
-                                        {!subscription?.is_active && (
-                                            <span className="text-sm text-primary-foreground/70 font-medium">אימונים זמינים</span>
-                                        )}
-                                    </div>
-                                    <span className="bg-primary-foreground text-primary px-4 py-2 rounded-xl text-xs font-bold group-hover:scale-105 transition-transform">
-                                        {subscription?.is_active ? "עוד כרטיסים +" : "רכישת מנוי +"}
-                                    </span>
-                                </div>
-                            </div>
+        <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
+            <main className="mx-auto max-w-lg px-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-7">
+                <div className="mb-11 flex items-center justify-between border-b border-border/70 pb-4">
+                    <button
+                        type="button"
+                        aria-label="סטודיו טליה"
+                        onClick={() => {
+                            const count = debugClicks + 1;
+                            if (count >= 10) {
+                                toggleDevMode(true);
+                                toast({ title: "מצב פיתוח הופעל", description: "כלי הבדיקה זמינים עכשיו.", type: "success" });
+                                setDebugClicks(0);
+                            } else {
+                                setDebugClicks(count);
+                            }
+                        }}
+                        className="flex min-h-11 items-center gap-2 text-start"
+                    >
+                        <StudioLogo className="h-8 w-8" />
+                        <span className="border-s border-border ps-2 text-xs font-bold leading-[1.1]">טליה<br />סטודיו</span>
+                    </button>
+                    {profile?.role === "administrator" && (
+                        <Link href="/admin/schedule" className="flex min-h-11 items-center gap-2 rounded-full border border-border px-4 text-xs font-bold transition-colors active:bg-muted/40">
+                            ניהול סטודיו <ArrowLeft aria-hidden="true" className="h-4 w-4" />
                         </Link>
-                    </div>
-
-                    {/* Next Workout */}
-                    <div ref={workoutSectionRef} className="mb-8">
-                        <div className="flex justify-between items-end mb-4 px-1">
-                            <h2 className="text-xl font-bold text-foreground">האימון הבא</h2>
-                            {upcomingSession && <Link href="/my-bookings" prefetch={true} className="text-primary text-xs font-bold hover:underline">לאימונים שלי</Link>}
-                        </div>
-
-                        {loadingSession ? (
-                            <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2 h-28">
-                                <div className="bg-muted/20 w-20 h-20 rounded-[1.5rem] shrink-0 ml-4 shimmer-skeleton" />
-                                <div className="flex-1 py-4 space-y-2">
-                                    <div className="h-6 w-3/4 bg-muted/20 rounded-lg shimmer-skeleton" />
-                                    <div className="h-4 w-1/2 bg-muted/20 rounded-lg shimmer-skeleton" />
-                                </div>
-                            </div>
-                        ) : upcomingSession ? (
-                            <div className="bg-card/50 border border-border rounded-[2rem] p-1 flex items-center pr-2">
-                                <div className="bg-gradient-to-br from-primary/20 to-primary/10 w-20 h-20 rounded-[1.5rem] flex flex-col items-center justify-center text-center shrink-0 ml-4">
-                                    <span className="text-primary font-bold text-xl leading-none">
-                                        {new Date(upcomingSession.start_time).getDate()}
-                                    </span>
-                                    <span className="text-muted-foreground text-xs font-medium uppercase mt-1">
-                                        {new Date(upcomingSession.start_time).toLocaleDateString('he-IL', { month: 'short' })}
-                                    </span>
-                                </div>
-                                <div className="py-4">
-                                    <h3 className="font-bold text-lg text-foreground mb-1">{upcomingSession.title}</h3>
-                                    <p className="text-muted-foreground text-sm">
-                                        {new Date(upcomingSession.start_time).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} • {getRelativeTimeHebrew(upcomingSession.start_time)}
-                                    </p>
-                                </div>
-                            </div>
-                        ) : (
-                            <Link href="/book" className="block">
-                                <div className="group bg-card/30 border border-dashed border-border rounded-[2rem] p-8 text-center active:scale-[0.98] transition-all duration-300 hover:border-primary/50 hover:bg-card/40">
-                                    <div className="mx-auto w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                                        <Activity className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                                    </div>
-                                    <p className="text-muted-foreground text-sm font-medium">לא נרשמת לאימונים קרובים</p>
-                                    <span className="text-primary text-sm font-bold mt-2 inline-block group-hover:translate-x-1 transition-transform">זה הזמן להירשם →</span>
-                                </div>
-                            </Link>
-                        )}
-                    </div>
+                    )}
                 </div>
-            </div>
 
-            {/* Floating Navigation */}
+                <header className="mb-9">
+                    <p className="mb-2 text-sm font-medium text-muted-foreground">{greeting}</p>
+                    <h1 className="max-w-full break-words text-[clamp(2.9rem,12vw,4.25rem)] font-bold leading-[1.02] tracking-tight">
+                        {firstName}<span className="text-primary">.</span>
+                    </h1>
+                    <p className="mt-3 max-w-[18rem] text-sm leading-relaxed text-muted-foreground">כל מה שצריך לאימון הבא שלך, במקום אחד.</p>
+                </header>
+
+                <Link href="/subscription" prefetch className="group block rounded-[2rem] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+                    <section className="relative isolate min-h-[258px] overflow-hidden rounded-[2rem] bg-[#1b251c] px-6 py-6 text-[#f6f6ed] shadow-[0_18px_44px_-30px_rgba(12,25,13,0.7)]">
+                        <div aria-hidden="true" className="pointer-events-none absolute -bottom-36 -left-28 h-72 w-72 rounded-full border-[38px] border-[#dce780]/10" />
+                        <div aria-hidden="true" className="pointer-events-none absolute -left-5 top-8 h-36 w-36 rounded-full border border-[#dce780]/20" />
+                        <div className="relative flex items-start justify-between">
+                            <div>
+                                <div className="mb-1 flex items-center gap-2 text-xs font-medium text-[#cbd4c5]">
+                                    <Ticket aria-hidden="true" className="h-4 w-4" />
+                                    יתרת האימונים שלך
+                                </div>
+                                <div className="flex items-end gap-2" aria-label={`${tickets || 0} אימונים זמינים`}>
+                                    <span className="text-[6.4rem] font-bold leading-none tracking-[-0.08em] tabular-nums">{tickets || 0}</span>
+                                    <span className="pb-3 text-sm text-[#cbd4c5]">אימונים<br />זמינים</span>
+                                </div>
+                            </div>
+                            <span className="pt-1 text-[10px] font-bold text-[#dce780]">האזור שלי / 01</span>
+                        </div>
+                        <div className="relative mt-3 flex items-end justify-between gap-3 border-t border-white/15 pt-4">
+                            <div className="min-w-0 text-xs leading-relaxed text-[#cbd4c5]">
+                                {subscription?.is_active ? (
+                                    <><span className="block font-bold text-white">{subscription.tier_display_name}</span>בתוקף עד {formatDate(subscription.expires_at, { day: "numeric", month: "short" })}</>
+                                ) : "כאן מתחיל האימון הבא שלך"}
+                            </div>
+                            <span className="flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-[#dce780] px-4 text-xs font-bold text-[#1b251c] transition-transform group-active:scale-95">
+                                {subscription?.is_active ? "עוד כרטיסים" : "בחירת מנוי"}<ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                            </span>
+                        </div>
+                    </section>
+                </Link>
+
+                <section className="mt-11" aria-labelledby="next-workout-title">
+                    <div className="mb-4 flex items-end justify-between gap-3">
+                        <div>
+                            <p className="mb-1 text-[10px] font-bold text-muted-foreground">בקרוב / 02</p>
+                            <h2 id="next-workout-title" className="text-[1.7rem] font-bold leading-tight">האימון הבא</h2>
+                        </div>
+                        {upcomingSession && <Link href="/my-bookings" className="min-h-11 py-3 text-xs font-bold text-foreground underline decoration-primary underline-offset-4">האימונים שלי</Link>}
+                    </div>
+
+                    {loadingSession ? (
+                        <div className="h-44 animate-pulse rounded-[1.75rem] bg-muted/40" aria-busy="true" />
+                    ) : upcomingSession ? (
+                        <div className="overflow-hidden rounded-[1.75rem] border border-border bg-card">
+                            <div className="flex gap-4 p-5">
+                                <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-[1.25rem] bg-primary text-primary-foreground">
+                                    <span className="text-3xl font-bold leading-none tabular-nums">{formatDate(upcomingSession.start_time, { day: "numeric" })}</span>
+                                    <span className="mt-1 text-xs font-bold">{formatDate(upcomingSession.start_time, { month: "short" })}</span>
+                                </div>
+                                <div className="min-w-0 self-center">
+                                    <h3 className="truncate text-lg font-bold">{upcomingSession.title}</h3>
+                                    <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground"><Clock3 aria-hidden="true" className="h-4 w-4" />{formatDate(upcomingSession.start_time, { hour: "2-digit", minute: "2-digit" })}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">{getRelativeTimeHebrew(upcomingSession.start_time)}</p>
+                                </div>
+                            </div>
+                            <Link href="/book" className="flex min-h-12 items-center justify-between border-t border-border px-5 text-sm font-bold transition-colors active:bg-muted/40">לכל האימונים <ArrowLeft aria-hidden="true" className="h-4 w-4" /></Link>
+                        </div>
+                    ) : (
+                        <Link href="/book" className="group block rounded-[1.75rem] border border-border bg-card p-6 transition-colors active:bg-muted/30">
+                            <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary"><CalendarDays aria-hidden="true" className="h-6 w-6" /></div>
+                            <p className="max-w-[15rem] text-xl font-bold leading-snug">עדיין אין אימון ביומן.<br />בואי נבחר אחד.</p>
+                            <span className="mt-6 flex min-h-11 items-center gap-2 text-sm font-bold text-foreground">לצפייה בלוח האימונים <ArrowLeft aria-hidden="true" className="h-4 w-4 transition-transform group-active:-translate-x-1" /></span>
+                        </Link>
+                    )}
+                </section>
+            </main>
             <BottomNav />
-
-            {/* Notification Permission Modal */}
             <NotificationPermissionModal />
-
-            {/* CSS for wave animation */}
-            <style jsx>{`
-                @keyframes wave {
-                    0%, 100% { transform: rotate(0deg); }
-                    25% { transform: rotate(20deg); }
-                    75% { transform: rotate(-10deg); }
-                }
-                .animate-wave {
-                    display: inline-block;
-                    animation: wave 2s ease-in-out infinite;
-                    transform-origin: 70% 70%;
-                }
-                .shimmer-skeleton {
-                    position: relative;
-                    overflow: hidden;
-                }
-                .shimmer-skeleton::after {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: linear-gradient(
-                        90deg,
-                        transparent,
-                        rgba(255, 255, 255, 0.05),
-                        transparent
-                    );
-                    animation: shimmer 1.5s infinite;
-                }
-                @keyframes shimmer {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
-            `}</style>
         </div>
     );
 }

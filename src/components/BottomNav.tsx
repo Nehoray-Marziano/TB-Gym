@@ -2,51 +2,39 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CalendarDays, User } from "lucide-react";
-import { motion } from "framer-motion";
+import { CalendarDays, House, UserRound } from "lucide-react";
+
+const items = [
+    { href: "/dashboard", label: "בית", icon: House },
+    { href: "/book", label: "אימונים", icon: CalendarDays },
+    { href: "/profile", label: "פרופיל", icon: UserRound },
+] as const;
 
 export default function BottomNav() {
     const pathname = usePathname();
 
     return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
-            <div className="bg-card/95 backdrop-blur-xl border border-border rounded-full p-2 flex justify-between items-center shadow-2xl shadow-black/20 px-6">
-                {/* Home */}
-                {/* Home */}
-                <Link
-                    href="/dashboard"
-                    className={`relative flex flex-col items-center gap-1 ${(pathname === "/" || pathname === "/dashboard") ? "text-primary pointer-events-none" : "text-muted-foreground hover:text-primary transition-colors"}`}
-                    aria-disabled={pathname === "/" || pathname === "/dashboard"}
-                >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${(pathname === "/" || pathname === "/dashboard") ? "bg-primary/10" : "hover:bg-primary/5"}`}>
-                        <Home className={`w-5 h-5 ${(pathname === "/" || pathname === "/dashboard") ? "fill-current/20" : ""}`} />
-                    </div>
-                </Link>
-
-                {/* All Sessions (Center) */}
-                <Link href="/book" prefetch={true}>
-                    <div className={`w-14 h-14 bg-primary rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-primary/40 border-[4px] border-background active:scale-95 transition-transform hover:shadow-primary/60 hover:shadow-xl ${pathname === "/book" ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}>
-                        <CalendarDays className="w-7 h-7 text-black" />
-                    </div>
-                </Link>
-
-                {/* Profile */}
-                {/* Profile */}
-                <Link
-                    href="/profile"
-                    className={`relative flex flex-col items-center gap-1 ${pathname === "/profile" ? "text-primary pointer-events-none" : "text-muted-foreground hover:text-primary transition-colors"}`}
-                >
-                    <div className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${pathname === "/profile" ? "bg-primary/10" : "hover:bg-primary/5"}`}>
-                        <User className={`w-5 h-5 ${pathname === "/profile" ? "fill-current/20" : ""}`} />
-                    </div>
-                    {pathname === "/profile" && (
-                        <motion.div
-                            layoutId="nav-indicator"
-                            className="absolute -bottom-2 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(226,241,99,0.8)]"
-                        />
-                    )}
-                </Link>
+        <nav
+            aria-label="ניווט ראשי"
+            className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-4 right-4 z-50 mx-auto max-w-md rounded-[1.5rem] border border-border/80 bg-card/95 p-1.5 text-card-foreground shadow-[0_16px_50px_-20px_rgba(0,0,0,0.35)] backdrop-blur-xl"
+        >
+            <div className="grid grid-cols-3 gap-1">
+                {items.map(({ href, label, icon: Icon }) => {
+                    const active = pathname === href || (href === "/dashboard" && pathname === "/");
+                    return (
+                        <Link
+                            key={href}
+                            href={href}
+                            prefetch
+                            aria-current={active ? "page" : undefined}
+                            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-[1.1rem] text-[11px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${active ? "bg-primary/15 text-foreground" : "text-muted-foreground active:bg-muted/40"}`}
+                        >
+                            <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={active ? 2.2 : 1.8} />
+                            <span>{label}</span>
+                        </Link>
+                    );
+                })}
             </div>
-        </div>
+        </nav>
     );
 }
