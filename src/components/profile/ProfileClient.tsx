@@ -1,13 +1,12 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, X, User, Moon, Sun, Sparkles, Palette } from "lucide-react";
+import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, Moon, Sun, Palette } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
-import gsap from "gsap";
 
 
 type UserProfile = {
@@ -29,12 +28,21 @@ type ProfileClientProps = {
     initialHealth: HealthDeclaration;
 };
 
+type BrowserOneSignal = {
+    Notifications: { requestPermission: () => Promise<void> };
+    login: (userId: string) => Promise<void>;
+    User: {
+        addTag: (key: string, value: string) => Promise<void>;
+        addEmail: (email: string) => Promise<void>;
+        PushSubscription: { optedIn: boolean; id: string | null };
+    };
+};
+
 export default function ProfileClient({ initialProfile, initialHealth }: ProfileClientProps) {
     const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
     const [health, setHealth] = useState<HealthDeclaration>(initialHealth);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [isAnimated, setIsAnimated] = useState(false);
 
     const { setTheme, resolvedTheme } = useTheme();
 
@@ -46,75 +54,9 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
         medical_conditions: initialHealth?.medical_conditions || ""
     });
 
-    // GSAP Refs
-    const containerRef = useRef<HTMLDivElement>(null);
-    const headerRef = useRef<HTMLElement>(null);
-    const avatarRef = useRef<HTMLDivElement>(null);
-    const statsCardRef = useRef<HTMLDivElement>(null);
-    const detailsRef = useRef<HTMLDivElement>(null);
-    const settingsRef = useRef<HTMLDivElement>(null);
-
     const router = useRouter();
     const supabase = getSupabaseClient();
     const { toast } = useToast();
-
-    // GSAP Entrance Animation
-    useLayoutEffect(() => {
-        if (isAnimated) return;
-
-        const ctx = gsap.context(() => {
-            // Set initial states
-            gsap.set(headerRef.current, { opacity: 0, y: -20 });
-            gsap.set(avatarRef.current, { opacity: 0, scale: 0.8 });
-            gsap.set(statsCardRef.current, { opacity: 0, y: 30 });
-            gsap.set(".detail-card", { opacity: 0, x: -30 });
-            gsap.set(".settings-item", { opacity: 0, y: 20 });
-
-            // Master timeline
-            const tl = gsap.timeline({
-                defaults: { ease: "power3.out" },
-                onComplete: () => setIsAnimated(true)
-            });
-
-            // Header slides in (faster)
-            tl.to(headerRef.current, {
-                opacity: 1,
-                y: 0,
-                duration: 0.3 // Was 0.5
-            })
-                // Avatar pops in (faster)
-                .to(avatarRef.current, {
-                    opacity: 1,
-                    scale: 1,
-                    duration: 0.4, // Was 0.6
-                    ease: "back.out(1.5)"
-                }, "-=0.2")
-                // Stats card slides up (faster)
-                .to(statsCardRef.current, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.3
-                }, "-=0.2")
-                // Detail cards stagger in (faster)
-                .to(".detail-card", {
-                    opacity: 1,
-                    x: 0,
-                    duration: 0.3, // Was 0.4
-                    stagger: 0.05 // Was 0.1
-                }, "-=0.15")
-                // Settings items stagger in (faster)
-                .to(".settings-item", {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.3,
-                    stagger: 0.04
-                }, "-=0.2");
-
-
-        }, containerRef);
-
-        return () => ctx.revert();
-    }, [isAnimated]);
 
     const handleSave = async () => {
         if (!profile) return;
@@ -162,134 +104,80 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
         router.push("/auth/login");
     };
 
-    const toggleTheme = () => {
-        if (navigator.vibrate) navigator.vibrate(10);
-        const next = resolvedTheme === 'dark' ? 'light' : resolvedTheme === 'light' ? 'classic' : 'dark';
-        setTheme(next);
-    };
-
     if (!profile) return null; // Should not happen with server data, but safety check
 
     return (
-        <div ref={containerRef} className="min-h-[100dvh] bg-background text-foreground p-6 pb-20 font-sans selection:bg-primary selection:text-black">
-            {/* OneSignal Initialization */}
-            {/* OneSignal Initialization is now handled globally in RootLayout/GymStoreProvider */}
-
-            {/* Ambient background */}
-            <div className="fixed top-0 right-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
-            <div className="fixed bottom-1/3 left-0 w-[200px] h-[200px] bg-primary/3 rounded-full blur-[60px] pointer-events-none" />
-
-            {/* Header */}
-            <header ref={headerRef} className={`${!isAnimated ? 'opacity-0' : ''} flex items-center justify-between mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-border/50`}>
-                <div className="flex items-center gap-4">
+        <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
+            <main className="mx-auto max-w-lg px-5 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-5 sm:px-7">
+            <header className="mb-10">
+                <div className="mb-9 flex items-center justify-between gap-3">
                     <button
+                        type="button"
                         onClick={() => router.back()}
-                        className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted/10 hover:border-primary/50 transition-all active:scale-95"
+                        aria-label="חזרה"
+                        className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-card transition-colors active:bg-muted/40"
                     >
-                        <ChevronRight className="w-5 h-5 text-foreground" />
+                        <ChevronRight aria-hidden="true" className="h-5 w-5" />
                     </button>
-                    <h1 className="text-2xl font-bold tracking-tight">הפרופיל שלי</h1>
-                </div>
 
-                <motion.button
-                    layout
-                    initial={false}
+                <button
+                    type="button"
                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                     disabled={loading}
-                    className={`h-10 rounded-full text-sm font-bold flex items-center justify-center gap-2 overflow-hidden relative transition-all border
-                        ${isEditing
-                            ? "bg-primary text-black border-primary shadow-[0_0_20px_rgba(226,241,99,0.3)]"
-                            : "bg-black text-white border-transparent hover:opacity-80 dark:bg-card dark:text-foreground dark:border-border"}
-                        ${loading ? "opacity-80 cursor-wait px-0" : "px-6"}`}
-                    animate={{
-                        width: loading ? 40 : "auto"
-                    }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className={`flex min-h-11 items-center gap-2 rounded-full px-4 text-xs font-bold transition-colors disabled:opacity-50 ${isEditing ? "bg-primary text-primary-foreground" : "border border-border bg-card text-foreground active:bg-muted/40"}`}
                 >
-                    <AnimatePresence mode="wait">
-                        {loading ? (
-                            <motion.div
-                                key="loading"
-                                initial={{ opacity: 0, scale: 0.5 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.5 }}
-                            >
-                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key={isEditing ? "save" : "edit"}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="flex items-center gap-2 whitespace-nowrap"
-                            >
-                                {isEditing ? (
-                                    <><Check className="w-4 h-4" /> שמירה</>
-                                ) : (
-                                    <><Edit2 className="w-4 h-4" /> עריכה</>
-                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.button>
+                    {loading ? <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : isEditing ? <Check aria-hidden="true" className="h-4 w-4" /> : <Edit2 aria-hidden="true" className="h-4 w-4" />}
+                    {loading ? "שומרת..." : isEditing ? "שמירה" : "עריכה"}
+                </button>
+                </div>
+                <p className="mb-2 text-xs font-bold text-primary">האזור שלי / 04</p>
+                <h1 className="text-[clamp(2.7rem,11vw,4rem)] font-bold leading-[1.08] tracking-tight">הפרופיל<br />שלי<span className="text-primary">.</span></h1>
             </header>
 
-            {/* Avatar & Hero */}
-            <div ref={avatarRef} className={`${!isAnimated ? 'opacity-0' : ''} flex flex-col items-center mb-10 relative`}>
-                <div className="absolute top-0 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none animate-pulse" />
-
-                <div className="group w-28 h-28 bg-gradient-to-br from-card to-muted/20 rounded-[2rem] border-2 border-primary shadow-[0_0_30px_rgba(226,241,99,0.2)] flex items-center justify-center text-4xl font-bold mb-4 z-10 relative overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(226,241,99,0.3)] hover:scale-105">
+            <div className="mb-7 flex items-center gap-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.4rem] bg-[#1b251c] text-[2.5rem] font-bold text-[#dce780]">
                     {formData.full_name?.charAt(0) || "?"}
-                    {/* Sparkle decoration */}
-                    <Sparkles className="absolute top-2 right-2 w-4 h-4 text-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-
+                <div className="min-w-0 flex-1">
                 {isEditing ? (
                     <input
+                        aria-label="שם מלא"
                         value={formData.full_name}
                         onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                        className="text-2xl font-bold mb-1 bg-transparent border-b-2 border-primary text-center w-full max-w-[200px] focus:outline-none text-foreground"
+                        className="w-full min-h-11 border-b border-primary bg-transparent text-xl font-bold outline-none"
                         placeholder="שם מלא"
                     />
                 ) : (
-                    <h2 className="text-2xl font-bold mb-1 text-foreground">{profile?.full_name || "אורחת"}</h2>
+                    <h2 className="break-words text-xl font-bold leading-tight">{profile?.full_name || "אורחת"}</h2>
                 )}
-
-                <div className="flex items-center gap-2 mt-2">
-                    <span className="text-muted-foreground text-sm font-medium bg-card px-3 py-1 rounded-full border border-border">
-                        {profile?.role === 'administrator' ? '👑 מנהלת מערכת' : '💪 מתאמנת בטליה'}
-                    </span>
+                <p className="mt-1 text-xs text-muted-foreground">{profile?.role === 'administrator' ? 'מנהלת הסטודיו' : 'מתאמנת בסטודיו'}</p>
                 </div>
             </div>
 
-            {/* Stats Card */}
             {!isEditing && (
-                <div ref={statsCardRef} className={`${!isAnimated ? 'opacity-0' : ''} group bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-[2rem] p-6 text-primary-foreground shadow-lg shadow-primary/20 mb-8 relative overflow-hidden transition-all hover:shadow-primary/30 hover:scale-[1.01]`}>
-                    {/* Shine effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-
-                    <div className="relative z-10 flex justify-between items-center">
+                <div className="relative mb-10 overflow-hidden rounded-[1.85rem] bg-[#1b251c] p-6 text-[#f6f6ed]">
+                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-16 h-56 w-56 rounded-full border-[30px] border-[#dce780]/10" />
+                    <div className="relative flex items-center justify-between gap-3">
                         <div>
-                            <p className="font-bold text-primary-foreground/60 text-xs mb-1 uppercase tracking-wider">יתרה נוכחית</p>
-                            <h3 className="text-4xl font-bold tracking-tighter">{profile?.balance} שיעורים</h3>
+                            <p className="mb-1 text-xs text-[#cbd4c5]">יתרת האימונים שלך</p>
+                            <h3 className="text-4xl font-bold tabular-nums">{profile?.balance} <span className="text-base font-medium text-[#cbd4c5]">אימונים</span></h3>
                         </div>
-                        <div className="w-12 h-12 bg-primary-foreground/10 rounded-full flex items-center justify-center backdrop-blur-md group-hover:bg-primary-foreground/20 transition-colors">
-                            <Zap className="w-6 h-6 text-primary-foreground" />
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#dce780]/15 text-[#dce780]">
+                            <Zap aria-hidden="true" className="h-5 w-5" />
                         </div>
                     </div>
                 </div>
             )}
 
             {/* Details List */}
-            <div ref={detailsRef} className="space-y-4 mb-10">
-                <h3 className="text-muted-foreground font-bold mb-2 px-1">פרטים אישיים</h3>
+            <section className="mb-10">
+                <h3 className="mb-4 border-b border-border pb-3 text-base font-bold">פרטים אישיים</h3>
 
                 {/* Phone */}
-                <div className={`${!isAnimated ? 'opacity-0' : ''} detail-card bg-card/50 border border-border rounded-3xl p-1 overflow-hidden hover:border-primary/30 transition-all`}>
-                    <div className="flex items-center gap-4 p-4 border-b border-border last:border-0">
-                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center shrink-0">
-                            <Phone className="w-5 h-5 text-muted-foreground" />
+                <div className="overflow-hidden rounded-[1.75rem] border border-border bg-card">
+                    <div className="flex items-center gap-4 border-b border-border p-5">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+                            <Phone aria-hidden="true" className="h-5 w-5" />
                         </div>
                         <div className="flex-1">
                             <p className="text-sm text-muted-foreground font-medium">מספר נייד</p>
@@ -297,40 +185,44 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                 <input
                                     value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    className="font-bold bg-muted/20 px-2 py-1 rounded text-foreground w-full border border-border focus:border-primary focus:outline-none"
+                                    type="tel"
+                                    aria-label="מספר נייד"
+                                    className="min-h-11 w-full rounded-xl border border-border bg-background px-3 font-bold text-foreground outline-none focus:border-primary"
                                 />
                             ) : (
-                                <p className="font-bold dir-ltr text-foreground">{profile?.phone || "-"}</p>
+                                <p className="font-bold text-foreground" dir="ltr">{profile?.phone || "לא הוזן"}</p>
                             )}
                         </div>
                     </div>
 
                     {/* Health Declaration */}
-                    <div className="flex flex-col gap-2 p-4">
+                    <div className="flex flex-col gap-2 p-5">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center shrink-0">
-                                <Shield className="w-5 h-5 text-muted-foreground" />
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+                                <Shield aria-hidden="true" className="h-5 w-5" />
                             </div>
                             <div className="flex-1">
                                 <p className="text-sm text-muted-foreground font-medium">הצהרת בריאות</p>
                                 {isEditing ? (
-                                    <div className="flex gap-2 mt-2">
+                                    <div className="mt-3 flex flex-wrap gap-2">
                                         <button
+                                            type="button"
                                             onClick={() => setFormData({ ...formData, is_healthy: true })}
-                                            className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${formData.is_healthy ? "bg-green-500/20 text-green-500 border-green-500/50 scale-105" : "bg-muted/10 border-border text-muted-foreground hover:border-green-500/30"}`}
+                                            className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${formData.is_healthy ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground"}`}
                                         >
                                             תקינה
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => setFormData({ ...formData, is_healthy: false })}
-                                            className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${!formData.is_healthy ? "bg-red-500/20 text-red-500 border-red-500/50 scale-105" : "bg-muted/10 border-border text-muted-foreground hover:border-red-500/30"}`}
+                                            className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${!formData.is_healthy ? "border-[#a53d35] bg-[#a53d35]/10 text-[#a53d35]" : "border-border text-muted-foreground"}`}
                                         >
                                             יש מגבלות
                                         </button>
                                     </div>
                                 ) : (
-                                    <p className={`font-bold ${health.is_healthy ? "text-green-500" : "text-yellow-500"}`}>
-                                        {health.is_healthy ? "תקינה ✓" : "קיימות מגבלות רפואיות"}
+                                    <p className={`font-bold ${health.is_healthy ? "text-primary" : "text-[#a53d35]"}`}>
+                                        {health.is_healthy ? "תקינה" : "קיימות מגבלות רפואיות"}
                                     </p>
                                 )}
                             </div>
@@ -343,17 +235,17 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: "auto", opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="mt-2 pl-[3.5rem] overflow-hidden"
+                                    className="mt-3 overflow-hidden"
                                 >
                                     {isEditing ? (
                                         <textarea
                                             value={formData.medical_conditions}
                                             onChange={e => setFormData({ ...formData, medical_conditions: e.target.value })}
-                                            className="w-full bg-card border border-border rounded-xl p-3 text-sm focus:border-red-400/50 focus:outline-none min-h-[80px] text-foreground"
+                                            className="min-h-24 w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground outline-none focus:border-primary"
                                             placeholder="פרטי את המגבלות..."
                                         />
                                     ) : (
-                                        <p className="text-sm text-muted-foreground bg-card p-3 rounded-xl border border-border">
+                                        <p className="rounded-xl bg-muted/40 p-3 text-sm text-muted-foreground">
                                             {health.medical_conditions}
                                         </p>
                                     )}
@@ -362,14 +254,14 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         </AnimatePresence>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            {/* Theme & Settings */}
-            <div ref={settingsRef} className="space-y-3">
-                <div className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl space-y-4`}>
+            <section className="space-y-3">
+                <h3 className="mb-4 border-b border-border pb-3 text-base font-bold">העדפות</h3>
+                <div className="space-y-4 rounded-[1.75rem] border border-border bg-card p-5">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center text-muted-foreground">
-                            <Palette className="w-5 h-5" />
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+                            <Palette aria-hidden="true" className="h-5 w-5" />
                         </div>
                         <span className="font-bold text-foreground">ערכת נושא</span>
                     </div>
@@ -377,8 +269,10 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     <div className="grid grid-cols-3 gap-3">
                         {/* Dark Theme */}
                         <button
+                            type="button"
+                            aria-pressed={resolvedTheme === 'dark'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('dark'); }}
-                            className={`h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden ${resolvedTheme === 'dark' ? 'border-primary ring-2 ring-primary/30 scale-[1.02]' : 'border-border opacity-70 hover:opacity-100'}`}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'dark' ? 'border-primary' : 'border-border'}`}
                             style={{ background: '#0A0A0A' }}
                         >
                             <Moon className="w-5 h-5 text-white" />
@@ -389,8 +283,10 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
                         {/* Classic Theme */}
                         <button
+                            type="button"
+                            aria-pressed={resolvedTheme === 'classic'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('classic'); }}
-                            className={`h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden ${resolvedTheme === 'classic' ? 'border-[#8c9070] ring-2 ring-[#8c9070]/30 scale-[1.02]' : 'border-border opacity-70 hover:opacity-100'}`}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'classic' ? 'border-[#8c9070]' : 'border-border'}`}
                             style={{ background: '#F5F5F7' }}
                         >
                             <Palette className="w-5 h-5 text-black" />
@@ -401,8 +297,10 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
                         {/* Light Theme */}
                         <button
+                            type="button"
+                            aria-pressed={resolvedTheme === 'light'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('light'); }}
-                            className={`h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden ${resolvedTheme === 'light' ? 'border-[#CCDB38] ring-2 ring-[#CCDB38]/30 scale-[1.02]' : 'border-border opacity-70 hover:opacity-100'}`}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'light' ? 'border-[#CCDB38]' : 'border-border'}`}
                             style={{ background: '#ffffff' }}
                         >
                             <Sun className="w-5 h-5 text-black" />
@@ -414,6 +312,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 </div>
 
                 <button
+                    type="button"
                     onClick={async () => {
                         if (navigator.vibrate) navigator.vibrate(10);
 
@@ -441,9 +340,10 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         }
 
                         // Default state - Request Permission via OneSignal logic to ensure syncing
-                        if (typeof window !== 'undefined' && (window as any).OneSignal) {
+                        const oneSignal = (window as Window & { OneSignal?: BrowserOneSignal }).OneSignal;
+                        if (oneSignal) {
                             try {
-                                await (window as any).OneSignal.Notifications.requestPermission();
+                                await oneSignal.Notifications.requestPermission();
                                 // We don't manually toast here because the browser prompt handles the UX, 
                                 // and OneSignal often triggers its own outcome events. 
                                 // But we can assume if they click Allow, it works.
@@ -453,66 +353,67 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             }
                         }
                     }}
-                    className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]`}
+                    className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-border bg-card p-5 text-start transition-colors active:bg-muted/40"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:bg-primary/20 transition-all">
-                            {Bell && <Bell className="w-5 h-5" />}
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                            <Bell aria-hidden="true" className="h-5 w-5" />
                         </div>
-                        <span className="font-bold text-foreground">הפעלת התראות</span>
+                        <span className="text-sm font-bold">הפעלת התראות</span>
                     </div>
-                    <div className="text-xs text-muted-foreground bg-muted/20 px-3 py-1 rounded-full">לחצי להפעלה</div>
+                    <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </button>
 
                 <button
+                    type="button"
                     onClick={async () => {
                         if (navigator.vibrate) navigator.vibrate(10);
-                        if (typeof window !== 'undefined' && (window as any).OneSignal) {
+                        const oneSignal = (window as Window & { OneSignal?: BrowserOneSignal }).OneSignal;
+                        if (oneSignal) {
                             try {
-                                const OneSignal = (window as any).OneSignal;
                                 const userId = profile?.id;
                                 const role = profile?.role || "trainee";
 
                                 if (userId) {
-                                    await OneSignal.login(userId);
-                                    await OneSignal.User.addTag("role", role.toLowerCase());
-                                    if (profile?.email) await OneSignal.User.addEmail(profile.email);
+                                    await oneSignal.login(userId);
+                                    await oneSignal.User.addTag("role", role.toLowerCase());
+                                    if (profile?.email) await oneSignal.User.addEmail(profile.email);
 
-                                    const pushSub = OneSignal.User.PushSubscription;
-                                    alert(`סנכרון בוצע!\nID: ${userId}\nTag: role=${role.toLowerCase()}\n\nPush Active: ${pushSub.optedIn}\nSub ID: ${pushSub.id}`);
+                                    const pushSub = oneSignal.User.PushSubscription;
+                                    alert(`ההתראות סונכרנו.\nמזהה משתמש: ${userId}\nתפקיד: ${role === "administrator" ? "מנהלת" : "מתאמנת"}\nהתראות פעילות: ${pushSub.optedIn ? "כן" : "לא"}\nמזהה הרשמה: ${pushSub.id}`);
                                 } else {
                                     alert("שגיאה: פרטי משתמש חסרים");
                                 }
-                            } catch (e: any) {
+                            } catch (e) {
                                 console.error("Sync error:", e);
-                                alert("שגיאה בסנכרון: " + e.message);
+                                alert("לא הצלחנו לסנכרן את ההתראות.");
                             }
                         } else {
-                            alert("OneSignal לא נטען. נסי לרענן את העמוד.");
+                            alert("שירות ההתראות לא נטען. נסי לרענן את העמוד.");
                         }
                     }}
-                    className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-card border border-border p-5 rounded-3xl flex items-center justify-between group hover:border-primary/50 transition-all active:scale-[0.98]`}
+                    className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-border bg-card p-5 text-start transition-colors active:bg-muted/40"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500/20 transition-all">
-                            <Zap className="w-5 h-5" />
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+                            <Zap aria-hidden="true" className="h-5 w-5" />
                         </div>
-                        <span className="font-bold text-foreground">סנכרון התראות (Debug)</span>
+                        <span className="text-sm font-bold">סנכרון התראות לבדיקה</span>
                     </div>
                 </button>
 
                 <button
+                    type="button"
                     onClick={handleLogout}
-                    className={`${!isAnimated ? 'opacity-0' : ''} settings-item w-full bg-red-500/10 border border-red-500/20 p-5 rounded-3xl flex items-center justify-center gap-2 text-red-500 font-bold hover:bg-red-500/20 transition-all mt-8 active:scale-[0.98]`}
+                    className="mt-7 flex min-h-14 w-full items-center justify-center gap-2 rounded-full border border-[#a53d35]/25 bg-[#a53d35]/10 px-4 text-sm font-bold text-[#a53d35] transition-colors active:bg-[#a53d35]/20"
                 >
-                    <LogOut className="w-5 h-5" />
-                    התנתקי מהמערכת
+                    <LogOut aria-hidden="true" className="h-4 w-4" />
+                    התנתקות
                 </button>
-            </div>
+            </section>
 
-            <div className="text-center mt-12 mb-6">
-                <p className="text-muted-foreground text-xs font-medium">Talia Gym App v1.0.0</p>
-            </div>
+            <p className="mt-12 text-center text-xs text-muted-foreground">סטודיו טליה</p>
+            </main>
         </div>
     );
 }
