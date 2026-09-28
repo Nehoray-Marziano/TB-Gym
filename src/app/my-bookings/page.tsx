@@ -1,22 +1,35 @@
 "use client";
 
-import { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { useRouter } from "next/navigation";
-import { getSupabaseClient } from "@/lib/supabaseClient";
-import { ChevronRight, Calendar, MapPin, Clock } from "lucide-react";
-import gsap from "gsap";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { he } from "date-fns/locale";
-import BottomNav from "@/components/BottomNav";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, CalendarDays, ChevronRight, Clock3 } from "lucide-react";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
+import BottomNav from "@/components/BottomNav";
+
+type BookedSession = {
+    id: string;
+    title: string;
+    start_time: string;
+};
+
+type BookingRow = {
+    id: string;
+    status: string;
+    session: BookedSession | BookedSession[] | null;
+};
+
+type Booking = Omit<BookingRow, "session"> & { session: BookedSession };
+
+function formatDate(date: string, options: Intl.DateTimeFormatOptions) {
+    return new Intl.DateTimeFormat("he-IL", options).format(new Date(date));
+}
 
 export default function MyBookingsPage() {
     const router = useRouter();
-    const [bookings, setBookings] = useState<any[]>([]);
+    const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [isAnimated, setIsAnimated] = useState(false);
 
     useEffect(() => {
         const fetchBookings = async () => {
@@ -28,36 +41,28 @@ export default function MyBookingsPage() {
                 return;
             }
 
-            // Fetch COMPLETED/CONFIRMED bookings that are in the future
             const { data: myBookings, error } = await supabase
                 .from("bookings")
-                .select(`
-                    id,
-                    status,
-                    created_at,
-                    session:gym_sessions(*)
-                `)
+                .select("id, status, created_at, session:gym_sessions(*)")
                 .eq("user_id", user.id)
-
-                .in("status", ["confirmed", "pending"]) // Include pending bookings too
+                .in("status", ["confirmed", "pending"])
                 .order("created_at", { ascending: false });
 
+            if (error) console.error("Could not load bookings", error);
+
             if (myBookings) {
-                console.log("[MyBookings] Raw Data:", myBookings);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-                const now = new Date();
-                now.setHours(0, 0, 0, 0); // Start of today
+                const upcoming = (myBookings as unknown as BookingRow[])
+                    .map((booking) => ({
+                        ...booking,
+                        session: Array.isArray(booking.session) ? booking.session[0] : booking.session,
+                    }))
+                    .filter((booking): booking is Booking => Boolean(booking.session && new Date(booking.session.start_time) >= today))
+                    .sort((a, b) => new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime());
 
-                const sorted = (myBookings || [])
-                    .map((b: any) => ({ ...b, session: Array.isArray(b.session) ? b.session[0] : b.session }))
-                    .filter((b: any) => {
-                        if (!b.session) return false;
-                        const sessionDate = new Date(b.session.start_time);
-                        return sessionDate >= now; // Show everything from today onwards
-                    })
-                    .sort((a: any, b: any) => new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime());
-
-                setBookings(sorted);
+                setBookings(upcoming);
             }
             setLoading(false);
         };
@@ -65,95 +70,70 @@ export default function MyBookingsPage() {
         fetchBookings();
     }, [router]);
 
-    // GSAP Animation
-    useLayoutEffect(() => {
-        if (loading || isAnimated || bookings.length === 0) return;
-
-        const ctx = gsap.context(() => {
-            const ctx = gsap.context(() => {
-                gsap.to(".booking-card", {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.4,
-                    stagger: 0.05,
-                    ease: "power2.out",
-                    onComplete: () => setIsAnimated(true)
-                });
-            }, containerRef);
-        }, containerRef);
-
-        return () => ctx.revert();
-    }, [loading, bookings.length, isAnimated]);
-
     return (
-        <div ref={containerRef} className="min-h-screen bg-background text-foreground p-6 pb-24 font-sans" dir="rtl">
+        <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
+            <main className="mx-auto max-w-lg px-5 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-5 sm:px-7">
+                <header className="mb-10">
+                    <button
+                        type="button"
+                        onClick={() => router.back()}
+                        aria-label="חזרה"
+                        className="mb-10 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-card transition-colors active:bg-muted/40"
+                    >
+                        <ChevronRight aria-hidden="true" className="h-5 w-5" />
+                    </button>
+                    <p className="mb-2 text-xs font-bold text-primary">היומן שלך / 02</p>
+                    <h1 className="text-[clamp(2.8rem,12vw,4rem)] font-bold leading-[1.08] tracking-tight">האימונים<br />שלי<span className="text-primary">.</span></h1>
+                    <p className="mt-4 max-w-[19rem] text-sm leading-relaxed text-muted-foreground">כל האימונים שנרשמת אליהם, לפי הסדר.</p>
+                </header>
 
-            {/* Header */}
-            <header className="flex items-center gap-4 mb-8 sticky top-0 z-10 bg-background/80 backdrop-blur-md py-4 -mx-6 px-6 border-b border-white/5">
-                <button
-                    onClick={() => router.back()}
-                    className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all"
-                >
-                    <ChevronRight className="w-5 h-5" />
-                </button>
-                <h1 className="text-2xl font-bold">האימונים שלי</h1>
-            </header>
-
-            {/* List */}
-            {loading ? (
-                <div className="space-y-4">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="h-28 bg-white/5 rounded-[2rem] animate-pulse" />
-                    ))}
+                <div className="mb-5 flex items-center justify-between border-b border-border pb-3">
+                    <h2 className="text-base font-bold">ביומן שלי</h2>
+                    {!loading && <span className="text-xs font-medium text-muted-foreground">{bookings.length} {bookings.length === 1 ? "אימון" : "אימונים"}</span>}
                 </div>
-            ) : bookings.length > 0 ? (
-                <div className="space-y-4">
-                    {bookings.map((booking) => {
-                        const date = new Date(booking.session.start_time);
-                        return (
-                            <div
-                                key={booking.id}
-                                className={`booking-card ${!isAnimated ? 'opacity-0' : ''} group bg-card/60 border border-white/10 rounded-[2rem] p-5 relative overflow-hidden transition-all hover:bg-card/80 hover:border-primary/30`}
-                            >
-                                <div className="flex items-center gap-5">
-                                    {/* Date Box */}
-                                    <div className="w-16 h-16 bg-primary/10 rounded-2xl flex flex-col items-center justify-center text-primary shrink-0 border border-primary/20">
-                                        <span className="text-xl font-bold leading-none">{format(date, "d")}</span>
-                                        <span className="text-xs font-bold uppercase mt-1">{format(date, "MMM", { locale: he })}</span>
-                                    </div>
 
-                                    {/* Details */}
-                                    <div className="flex-1">
-                                        <h3 className="text-lg font-bold mb-1">{booking.session.title}</h3>
-                                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                            <div className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
-                                                {format(date, "HH:mm")}
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Calendar className="w-3 h-3" />
-                                                {getRelativeTimeHebrew(booking.session.start_time)}
-                                            </div>
-                                        </div>
+                {loading ? (
+                    <div className="space-y-3" aria-busy="true">
+                        {[1, 2, 3].map((item) => <div key={item} className="h-40 animate-pulse rounded-[1.75rem] border border-border bg-card" />)}
+                    </div>
+                ) : bookings.length > 0 ? (
+                    <div className="space-y-3">
+                        {bookings.map((booking) => (
+                            <article key={booking.id} className="overflow-hidden rounded-[1.75rem] border border-border bg-card">
+                                <div className="flex gap-4 p-5">
+                                    <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-[1.1rem] bg-primary text-primary-foreground">
+                                        <span className="text-[1.85rem] font-bold leading-none tabular-nums">{formatDate(booking.session.start_time, { day: "numeric" })}</span>
+                                        <span className="mt-1 text-xs font-bold">{formatDate(booking.session.start_time, { month: "short" })}</span>
+                                    </div>
+                                    <div className="min-w-0 flex-1 self-center">
+                                        <h3 className="break-words text-lg font-bold leading-snug">{booking.session.title}</h3>
+                                        <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+                                            <Clock3 aria-hidden="true" className="h-4 w-4 shrink-0" />
+                                            {formatDate(booking.session.start_time, { weekday: "long", hour: "2-digit", minute: "2-digit" })}
+                                        </p>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center text-center mt-10">
-                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                        <Calendar className="w-8 h-8 opacity-50" />
+                                <div className="flex min-h-11 items-center justify-between border-t border-border px-5 text-xs font-bold">
+                                    <span className={booking.status === "pending" ? "text-[#90641e]" : "text-primary"}>{booking.status === "pending" ? "ממתין לאישור" : "המקום שלך שמור"}</span>
+                                    <span className="text-muted-foreground">{getRelativeTimeHebrew(booking.session.start_time)}</span>
+                                </div>
+                            </article>
+                        ))}
                     </div>
-                    <h3 className="text-xl font-bold mb-2">אין אימונים קרובים</h3>
-                    <p className="text-sm max-w-[200px]">לא נרשמת לאף אימון עדיין. זה הזמן להתחיל!</p>
-                    <Link href="/book" className="mt-6 px-6 py-3 bg-primary text-black font-bold rounded-xl hover:bg-primary/90 transition-colors">
-                        הרשמה לאימון
-                    </Link>
-                </div>
-            )}
-
+                ) : (
+                    <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-card px-6 py-8">
+                        <div aria-hidden="true" className="pointer-events-none absolute -left-10 -top-14 h-40 w-40 rounded-full border-[24px] border-primary/10" />
+                        <div className="relative mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                            <CalendarDays aria-hidden="true" className="h-7 w-7" />
+                        </div>
+                        <h3 className="relative mb-2 text-xl font-bold">עוד אין אימונים ביומן</h3>
+                        <p className="relative max-w-[17rem] text-sm leading-relaxed text-muted-foreground">כשיירשם האימון הראשון שלך, הוא יופיע כאן.</p>
+                        <Link href="/book" className="relative mt-7 flex min-h-12 items-center justify-between rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] transition-colors active:bg-[#334436]">
+                            בואי לבחור אימון <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                        </Link>
+                    </div>
+                )}
+            </main>
             <BottomNav />
         </div>
     );
