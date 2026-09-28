@@ -1,318 +1,119 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Download, Smartphone, Share, Plus, X, CheckCircle2, Zap, Bell, Rocket, Home, PartyPopper } from "lucide-react";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, Check, Download, Plus, Share2, Smartphone, X } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import StudioLogo from "@/components/StudioLogo";
 
-interface PWAInstallGateProps {
-    children: React.ReactNode;
-}
-
-export default function PWAInstallGate({ children }: PWAInstallGateProps) {
+export default function PWAInstallGate({ children }: { children: React.ReactNode }) {
     const { canAccess, canInstall, isIOS, justInstalled, promptInstall, isLoading } = usePWAInstall();
-    const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+    const [showInstructions, setShowInstructions] = useState(false);
     const [isInstalling, setIsInstalling] = useState(false);
-    const [continueInBrowser, setContinueInBrowser] = useState(false);
+    const [continueInBrowser, setContinueInBrowser] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("talia-browser-access") === "true");
 
-    useEffect(() => {
-        setContinueInBrowser(window.localStorage.getItem("talia-browser-access") === "true");
-    }, []);
-
-    // While loading, show nothing (prevents flash)
     if (isLoading) {
-        return (
-            <div className="min-h-screen bg-[#131512] flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-[#E2F163] border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
+        return <div className="flex min-h-dvh items-center justify-center bg-[#f1f0e8]"><span aria-label="טוענים" className="h-8 w-8 animate-spin rounded-full border-2 border-[#1b251c] border-t-transparent" /></div>;
     }
 
-    // If user can access (PWA or localhost), show the app
-    if (canAccess || continueInBrowser) {
-        return <>{children}</>;
-    }
+    if (canAccess || continueInBrowser) return <>{children}</>;
 
-    // Show success screen after installation
     if (justInstalled) {
         return (
-            <div className="min-h-[100dvh] w-full bg-[#131512] text-[#ECF0E7] overflow-x-hidden font-sans relative">
-                {/* Animated Background */}
-                <div className="fixed inset-0 pointer-events-none z-0">
-                    <div className="absolute top-[10%] left-[10%] w-[300px] h-[300px] bg-[#E2F163]/20 rounded-full blur-[80px] animate-pulse" />
-                    <div className="absolute bottom-[20%] right-[10%] w-[250px] h-[250px] bg-green-500/10 rounded-full blur-[60px]" />
-                </div>
-
-                <main className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-6 py-12">
-                    {/* Success Icon */}
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", damping: 15, stiffness: 200 }}
-                        className="mb-8"
-                    >
-                        <div className="w-28 h-28 bg-gradient-to-br from-green-400 to-[#E2F163] rounded-full flex items-center justify-center shadow-2xl shadow-green-500/30">
-                            <PartyPopper className="w-14 h-14 text-black" />
+            <div className="min-h-dvh bg-[#f1f0e8] text-[#1b251c]">
+                <main className="mx-auto flex min-h-dvh max-w-lg flex-col px-5 pb-10 pt-6 sm:px-7">
+                    <div className="flex items-center gap-3 border-b border-[#1b251c]/15 pb-5">
+                        <StudioLogo className="h-9 w-9 bg-[#1b251c]" />
+                        <span className="border-s border-[#1b251c]/20 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
+                    </div>
+                    <div className="mt-auto pt-12">
+                        <p className="mb-3 text-xs font-bold text-[#5d6958]">הכול מוכן / 01</p>
+                        <h1 className="text-[clamp(3.3rem,13vw,5rem)] font-bold leading-[1.04] tracking-tight">האפליקציה<br />מחכה לך<span className="text-[#829044]">.</span></h1>
+                        <p className="mt-5 max-w-[19rem] text-sm leading-relaxed text-[#5d6958]">חפשי את סטודיו טליה במסך הבית ופתחי משם את האימונים שלך.</p>
+                    </div>
+                    <div className="relative mt-10 overflow-hidden rounded-[2rem] bg-[#1b251c] p-6 text-[#f6f6ed]">
+                        <div aria-hidden="true" className="pointer-events-none absolute -left-20 -top-20 h-52 w-52 rounded-full border-[30px] border-[#dce780]/20" />
+                        <div className="relative flex items-center gap-4">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#dce780]"><StudioLogo className="h-10 w-10 bg-[#1b251c]" /></div>
+                            <div><p className="text-lg font-bold">סטודיו טליה</p><p className="mt-1 text-xs text-[#b9c6b2]">עכשיו במסך הבית שלך</p></div>
                         </div>
-                    </motion.div>
-
-                    <motion.h1
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-3xl font-bold mb-4"
-                    >
-                        ההתקנה הושלמה! 🎉
-                    </motion.h1>
-
-                    <motion.p
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                        className="text-neutral-400 text-lg max-w-sm mx-auto mb-10 leading-relaxed"
-                    >
-                        עכשיו פתחי את האפליקציה<br />
-                        <span className="text-white font-bold">מהמסך הבית</span> שלך
-                    </motion.p>
-
-                    {/* Visual Hint */}
-                    <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="flex flex-col items-center gap-4 p-6 bg-white/5 rounded-3xl border border-white/10 max-w-sm w-full"
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
-                                <img src="/notification-icon.png" alt="Icon" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="text-right">
-                                <p className="font-bold text-white">Talia</p>
-                                <p className="text-xs text-neutral-500">מסך הבית</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-[#E2F163]">
-                            <Home className="w-4 h-4" />
-                            <span className="text-sm font-medium">חפשי את האייקון במסך הבית</span>
-                        </div>
-                    </motion.div>
-
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.6 }}
-                        className="text-neutral-600 text-xs mt-12"
-                    >
-                        © 2026 Talia Studio
-                    </motion.p>
+                    </div>
+                    <p className="mt-auto pt-10 text-center text-xs text-[#5d6958]">© סטודיו טליה</p>
                 </main>
             </div>
         );
     }
 
-    // Otherwise, show the install gate
     const handleInstallClick = async () => {
-        if (isIOS) {
-            setShowIOSInstructions(true);
-        } else if (canInstall) {
-            setIsInstalling(true);
-            await promptInstall();
-            setIsInstalling(false);
-        } else {
-            // Fallback: show generic instructions
-            setShowIOSInstructions(true);
+        if (isIOS || !canInstall) {
+            setShowInstructions(true);
+            return;
         }
+        setIsInstalling(true);
+        await promptInstall();
+        setIsInstalling(false);
+    };
+
+    const handleContinueInBrowser = () => {
+        window.localStorage.setItem("talia-browser-access", "true");
+        setContinueInBrowser(true);
     };
 
     return (
-        <div className="min-h-[100dvh] w-full bg-[#131512] text-[#ECF0E7] overflow-x-hidden font-sans relative">
-            {/* Animated Background */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[10%] left-[10%] w-[300px] h-[300px] bg-[#E2F163]/10 rounded-full blur-[80px] animate-pulse" />
-                <div className="absolute bottom-[20%] right-[10%] w-[250px] h-[250px] bg-[#E2F163]/5 rounded-full blur-[60px]" />
-            </div>
+        <div className="min-h-dvh bg-[#f1f0e8] text-[#1b251c]">
+            <main className="mx-auto max-w-lg px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-6 sm:px-7">
+                <header className="flex items-center gap-3 border-b border-[#1b251c]/15 pb-5">
+                    <StudioLogo className="h-9 w-9 bg-[#1b251c]" />
+                    <span className="border-s border-[#1b251c]/20 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
+                </header>
 
-            {/* Main Content */}
-            <main className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-6 py-12">
-                {/* App Icon */}
-                <motion.div
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", damping: 20, stiffness: 200 }}
-                    className="mb-8"
-                >
-                    <div className="w-24 h-24 bg-gradient-to-br from-[#E2F163] to-[#9CA986] rounded-3xl flex items-center justify-center shadow-2xl shadow-[#E2F163]/30">
-                        <img src="/notification-icon.png" alt="App Icon" className="w-[102%] h-[102%] object-cover rounded-3xl" />
+                <div className="pt-12">
+                    <p className="mb-4 text-xs font-bold text-[#5d6958]">האימונים שלך, במסך הבית / 01</p>
+                    <h1 className="text-[clamp(3.25rem,13vw,5rem)] font-bold leading-[1.04] tracking-tight">הסטודיו<br />תמיד איתך<span className="text-[#829044]">.</span></h1>
+                    <p className="mt-5 max-w-[19rem] text-sm leading-relaxed text-[#5d6958]">הוסיפי את סטודיו טליה למסך הבית כדי להגיע ללוח האימונים בלחיצה אחת.</p>
+                </div>
+
+                <div className="relative mt-10 overflow-hidden rounded-[2rem] bg-[#1b251c] p-6 text-[#f6f6ed]">
+                    <div aria-hidden="true" className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full border-[36px] border-[#dce780]" />
+                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 -right-20 h-64 w-64 rounded-full border-[36px] border-[#dce780]/15" />
+                    <p className="relative text-[11px] font-bold text-[#dce780]">סטודיו טליה / האפליקציה</p>
+                    <div className="relative mt-16 flex items-end justify-between gap-4">
+                        <p className="text-[2rem] font-bold leading-[1.08]">בוחרות.<br />נרשמות.<br /><span className="text-[#dce780]">מגיעות.</span></p>
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#dce780]"><StudioLogo className="h-10 w-10 bg-[#1b251c]" /></div>
                     </div>
-                </motion.div>
+                </div>
 
-                {/* Title */}
-                <motion.h1
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-3xl md:text-4xl font-bold mb-4"
-                >
-                    התקיני את <span className="text-[#E2F163]">טליה</span>
-                </motion.h1>
-
-                <motion.p
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-neutral-400 text-lg max-w-sm mx-auto mb-8 leading-relaxed"
-                >
-                    לחוויה הטובה ביותר, התקיני את האפליקציה על המכשיר שלך
-                </motion.p>
-
-                {/* Benefits */}
-                <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="grid grid-cols-3 gap-4 mb-10 w-full max-w-sm"
-                >
-                    {[
-                        { icon: Rocket, label: "מהירות" },
-                        { icon: Bell, label: "התראות" },
-                        { icon: Zap, label: "גישה מלאה" },
-                    ].map((benefit, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 p-3 bg-white/5 rounded-2xl border border-white/5">
-                            <benefit.icon className="w-6 h-6 text-[#E2F163]" />
-                            <span className="text-xs text-neutral-400">{benefit.label}</span>
-                        </div>
-                    ))}
-                </motion.div>
-
-                {/* Install Button */}
-                <motion.button
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    onClick={handleInstallClick}
-                    disabled={isInstalling}
-                    className="w-full max-w-sm bg-[#E2F163] text-black font-bold text-lg py-5 px-8 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg shadow-[#E2F163]/30 disabled:opacity-70"
-                >
-                    {isInstalling ? (
-                        <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                        <>
-                            <Download className="w-6 h-6" />
-                            התקיני עכשיו
-                        </>
-                    )}
-                </motion.button>
-
-                <button
-                    type="button"
-                    onClick={() => {
-                        window.localStorage.setItem("talia-browser-access", "true");
-                        setContinueInBrowser(true);
-                    }}
-                    className="mt-5 text-sm text-neutral-300 underline underline-offset-4 hover:text-white"
-                >
-                    המשך בדפדפן ללא התקנה
+                <button type="button" onClick={handleInstallClick} disabled={isInstalling} className="mt-8 flex min-h-14 w-full items-center justify-between rounded-full bg-[#1b251c] px-6 text-sm font-bold text-[#f6f6ed] disabled:opacity-50">
+                    <span className="flex items-center gap-2"><Download aria-hidden="true" className="h-4 w-4" />{isInstalling ? "מוסיפים..." : "הוספה למסך הבית"}</span>
+                    <ArrowLeft aria-hidden="true" className="h-4 w-4" />
                 </button>
-
-                {/* iOS hint */}
-                {isIOS && (
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                        className="text-neutral-500 text-sm mt-4"
-                    >
-                        משתמשת באייפון? לחצי לקבלת הוראות
-                    </motion.p>
-                )}
-
-                {/* Footer */}
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="text-neutral-600 text-xs mt-12"
-                >
-                    © 2026 Talia Studio
-                </motion.p>
+                <button type="button" onClick={handleContinueInBrowser} className="mt-3 min-h-12 w-full text-xs font-bold text-[#5d6958] underline underline-offset-4">להמשיך בדפדפן</button>
+                <p className="mt-7 text-center text-[11px] text-[#5d6958]">אפשר לבחור מה נוח לך, גם בלי התקנה.</p>
             </main>
 
-            {/* iOS Instructions Modal */}
             <AnimatePresence>
-                {showIOSInstructions && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center p-4"
-                        onClick={() => setShowIOSInstructions(false)}
-                    >
-                        <motion.div
-                            initial={{ y: 100, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 100, opacity: 0 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full max-w-md bg-[#1a1c19] border border-white/10 rounded-t-3xl md:rounded-3xl p-6 pb-10"
-                        >
-                            {/* Close Button */}
-                            <button
-                                onClick={() => setShowIOSInstructions(false)}
-                                className="absolute top-4 left-4 p-2 text-neutral-500 hover:text-white"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-
-                            {/* Header */}
-                            <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-[#E2F163]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <Smartphone className="w-8 h-8 text-[#E2F163]" />
-                                </div>
-                                <h2 className="text-xl font-bold text-white mb-2">הוראות התקנה</h2>
-                                <p className="text-neutral-400 text-sm">בצעי את הצעדים הבאים להתקנת האפליקציה</p>
+                {showInstructions && (
+                    <div className="fixed inset-0 z-[100] flex items-end justify-center">
+                        <motion.button type="button" aria-label="סגירה" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowInstructions(false)} className="absolute inset-0 w-full bg-[#111a12]/65" />
+                        <motion.div role="dialog" aria-modal="true" aria-labelledby="install-title" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }} className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7">
+                            <button type="button" onClick={() => setShowInstructions(false)} aria-label="סגירה" className="absolute left-6 top-7 flex h-11 w-11 items-center justify-center rounded-full border border-[#1b251c]/15"><X aria-hidden="true" className="h-5 w-5" /></button>
+                            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dfe6bd]"><Smartphone aria-hidden="true" className="h-7 w-7" /></div>
+                            <h2 id="install-title" className="text-2xl font-bold">איך מוסיפים למסך הבית?</h2>
+                            <p className="mt-2 text-sm leading-relaxed text-[#5d6958]">{isIOS ? "באייפון, עושים את זה דרך תפריט השיתוף בספארי." : "פתחי את תפריט הדפדפן ובחרי הוספה למסך הבית."}</p>
+                            <div className="mt-7 divide-y divide-[#1b251c]/15 border-y border-[#1b251c]/15">
+                                {isIOS ? (
+                                    <>
+                                        <div className="flex min-h-20 items-center gap-4 py-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd]"><Share2 aria-hidden="true" className="h-5 w-5" /></span><p className="text-sm"><strong>01</strong> · לחצי על כפתור השיתוף בספארי.</p></div>
+                                        <div className="flex min-h-20 items-center gap-4 py-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd]"><Plus aria-hidden="true" className="h-5 w-5" /></span><p className="text-sm"><strong>02</strong> · בחרי ״הוסף למסך הבית״.</p></div>
+                                        <div className="flex min-h-20 items-center gap-4 py-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd]"><Check aria-hidden="true" className="h-5 w-5" /></span><p className="text-sm"><strong>03</strong> · אשרי את ההוספה.</p></div>
+                                    </>
+                                ) : (
+                                    <div className="flex min-h-20 items-center gap-4 py-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd]"><Plus aria-hidden="true" className="h-5 w-5" /></span><p className="text-sm">בחרי ״הוספה למסך הבית״ בתפריט הדפדפן ואשרי.</p></div>
+                                )}
                             </div>
-
-                            {/* Steps */}
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-2xl">
-                                    <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center shrink-0">
-                                        <Share className="w-5 h-5 text-blue-400" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-white mb-1">1. לחצי על כפתור השיתוף</h3>
-                                        <p className="text-neutral-400 text-sm">נמצא בתחתית המסך בספארי (ריבוע עם חץ למעלה)</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-2xl">
-                                    <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center shrink-0">
-                                        <Plus className="w-5 h-5 text-green-400" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-white mb-1">2. בחרי "הוסף למסך הבית"</h3>
-                                        <p className="text-neutral-400 text-sm">גללי למטה בתפריט ומצאי את האפשרות</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-2xl">
-                                    <div className="w-10 h-10 bg-[#E2F163]/20 rounded-xl flex items-center justify-center shrink-0">
-                                        <CheckCircle2 className="w-5 h-5 text-[#E2F163]" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-white mb-1">3. לחצי "הוסף"</h3>
-                                        <p className="text-neutral-400 text-sm">האפליקציה תופיע במסך הבית שלך</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Done Button */}
-                            <button
-                                onClick={() => setShowIOSInstructions(false)}
-                                className="w-full mt-6 py-4 bg-white/10 text-white font-bold rounded-2xl active:scale-95 transition-transform"
-                            >
-                                הבנתי, תודה!
-                            </button>
+                            <button type="button" onClick={() => setShowInstructions(false)} className="mt-7 min-h-12 w-full rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed]">הבנתי</button>
                         </motion.div>
-                    </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
         </div>

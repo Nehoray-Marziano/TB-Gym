@@ -1,438 +1,229 @@
 "use client";
 
-import { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { Zap, Users, Trophy, Loader2, Sparkles, Mail, ArrowLeft, ArrowRight } from "lucide-react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import gsap from "gsap";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, Mail, Ticket, X } from "lucide-react";
+import { getSupabaseClient } from "@/lib/supabaseClient";
+import StudioLogo from "@/components/StudioLogo";
+
+type LoginView = "menu" | "email" | "otp";
+
+function GoogleMark() {
+    return (
+        <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+        </svg>
+    );
+}
 
 export default function LandingPage() {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
-    const [loginView, setLoginView] = useState<'menu' | 'email' | 'otp'>('menu');
+    const [loginView, setLoginView] = useState<LoginView>("menu");
     const [email, setEmail] = useState("");
     const [otpCode, setOtpCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-
+    const [authError, setAuthError] = useState("");
     const supabase = getSupabaseClient();
 
-    // GSAP Refs
-    const containerRef = useRef<HTMLDivElement>(null);
-    const barbellRef = useRef<SVGSVGElement>(null);
-    const heroTextRef = useRef<HTMLHeadingElement>(null);
-    const subtitleRef = useRef<HTMLParagraphElement>(null);
-    const ctaRef = useRef<HTMLDivElement>(null);
-    const statsRef = useRef<HTMLDivElement>(null);
-    const featuresRef = useRef<HTMLDivElement>(null);
-
-    // GSAP Hero Animation
-    useLayoutEffect(() => {
-        const ctx = gsap.context(() => {
-            // Set initial states
-            gsap.set(barbellRef.current, { opacity: 0, scale: 0.8, y: -30 });
-            gsap.set(".hero-line-1", { opacity: 0, x: -50 });
-            gsap.set(".hero-line-2", { opacity: 0, x: 50 });
-            gsap.set(subtitleRef.current, { opacity: 0, y: 20 });
-            gsap.set(ctaRef.current, { opacity: 0, scale: 0.9 });
-            gsap.set(".stat-item", { opacity: 0, y: 30 });
-            gsap.set(".feature-card", { opacity: 0, y: 50 });
-
-            // Master timeline
-            const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-            // Barbell drops in with bounce
-            tl.to(barbellRef.current, {
-                opacity: 1,
-                scale: 1,
-                y: 0,
-                duration: 0.8,
-                ease: "back.out(1.7)"
-            })
-                // Barbell subtle rotation animation
-                .to(barbellRef.current, {
-                    rotation: 3,
-                    duration: 0.5,
-                    ease: "power2.inOut",
-                    yoyo: true,
-                    repeat: 1
-                }, "-=0.3")
-                // Hero text reveals
-                .to(".hero-line-1", {
-                    opacity: 1,
-                    x: 0,
-                    duration: 0.6
-                }, "-=0.5")
-                .to(".hero-line-2", {
-                    opacity: 1,
-                    x: 0,
-                    duration: 0.6
-                }, "-=0.4")
-                // Subtitle fades in
-                .to(subtitleRef.current, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.5
-                }, "-=0.3")
-                // CTA button pops in
-                .to(ctaRef.current, {
-                    opacity: 1,
-                    scale: 1,
-                    duration: 0.5,
-                    ease: "back.out(1.4)"
-                }, "-=0.2")
-                // Stats stagger in
-                .to(".stat-item", {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.5,
-                    stagger: 0.15
-                }, "-=0.2")
-                // Feature cards stagger in
-                .to(".feature-card", {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.6,
-                    stagger: 0.1,
-                    ease: "back.out(1.2)"
-                }, "-=0.3");
-
-            // Continuous barbell float animation
-            gsap.to(barbellRef.current, {
-                y: -5,
-                duration: 2,
-                ease: "power1.inOut",
-                yoyo: true,
-                repeat: -1,
-                delay: 2
-            });
-
-        }, containerRef);
-
-        return () => ctx.revert();
-    }, []);
-
-    // Handlers
     const resetLoginState = () => {
         setIsLoginOpen(false);
-        setLoginView('menu');
+        setLoginView("menu");
         setEmail("");
         setOtpCode("");
+        setAuthError("");
         setIsLoading(false);
     };
 
     const handleGoogleLogin = async () => {
+        setAuthError("");
         setIsLoading(true);
-        const redirectUrl = `${window.location.origin}/auth/callback`;
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
-            options: { redirectTo: redirectUrl },
+            options: { redirectTo: `${window.location.origin}/auth/callback` },
         });
         if (error) {
             console.error(error);
+            setAuthError("לא הצלחנו להתחבר עם גוגל. נסי שוב בעוד רגע.");
             setIsLoading(false);
         }
     };
 
     const handleSendCode = async () => {
         if (!email) return;
+        setAuthError("");
         setIsLoading(true);
         const { error } = await supabase.auth.signInWithOtp({
             email,
-            options: { shouldCreateUser: true }
+            options: { shouldCreateUser: true },
         });
-
         setIsLoading(false);
 
         if (error) {
-            alert("שגיאה: " + error.message);
+            console.error(error);
+            setAuthError("לא הצלחנו לשלוח קוד. בדקי את הכתובת ונסי שוב.");
         } else {
-            setLoginView('otp');
+            setLoginView("otp");
         }
     };
 
     const handleVerifyCode = async () => {
         if (!otpCode) return;
+        setAuthError("");
         setIsLoading(true);
-
         const { data, error } = await supabase.auth.verifyOtp({
             email,
             token: otpCode,
-            type: 'magiclink'
+            type: "magiclink",
         });
 
-        console.log("verifyOtp result:", { data, error });
-
         if (error) {
+            console.error(error);
+            setAuthError("הקוד לא תקין או שפג תוקפו. בדקי ונסי שוב.");
             setIsLoading(false);
-            alert("קוד שגוי או פג תוקף: " + error.message);
         } else if (data?.session) {
-            // Session established - redirect to dashboard
             window.location.href = "/dashboard";
         } else {
+            setAuthError("לא הצלחנו להשלים את הכניסה. נסי שוב.");
             setIsLoading(false);
-            alert("אימות הצליח אך לא נוצרה סשן. נסי שוב.");
         }
     };
 
-    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-
     return (
-        <div ref={containerRef} className="min-h-[100dvh] w-full bg-[#131512] text-[#ECF0E7] overflow-x-hidden font-sans relative">
+        <div className="min-h-dvh overflow-x-hidden bg-[#f1f0e8] text-[#1b251c]">
+            <main className="mx-auto max-w-lg px-5 pb-16 pt-6 sm:px-7">
+                <header className="flex items-center justify-between border-b border-[#1b251c]/15 pb-5">
+                    <div className="flex items-center gap-3">
+                        <StudioLogo className="h-9 w-9 bg-[#1b251c]" />
+                        <span className="border-s border-[#1b251c]/20 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-[#5f6c5b]">האזור שלך בסטודיו</span>
+                </header>
 
-            {/* Animated Background */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[5%] left-[10%] w-[300px] h-[300px] bg-primary/5 rounded-full blur-[60px] animate-pulse" />
-                <div className="absolute bottom-[15%] right-[5%] w-[250px] h-[250px] bg-[#E2F163]/5 rounded-full blur-[60px]" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/3 rounded-full blur-[100px]" />
-            </div>
-
-            {/* HERO SECTION */}
-            <section className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-4 pt-10">
-
-                {/* Weightlifting Illustration - Animated */}
-                <div className="mb-6 md:mb-8 opacity-90 scale-[0.85] md:scale-100 relative">
-                    <div className="absolute inset-0 bg-primary/20 blur-[30px] rounded-full animate-pulse" />
-                    <svg
-                        ref={barbellRef}
-                        width="240"
-                        height="120"
-                        viewBox="0 0 200 100"
-                        className="drop-shadow-[0_0_25px_rgba(226,241,99,0.5)] relative z-10"
+                <section className="pt-11" aria-labelledby="landing-title">
+                    <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[#5d6958]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#809143]" />לוח האימונים של טליה</p>
+                    <h1 id="landing-title" className="text-[clamp(3.7rem,15vw,5.7rem)] font-bold leading-[0.98] tracking-tight">
+                        יש לך<br /><span className="text-[#829044]">מקום</span><br />לזוז<span className="text-[#829044]">.</span>
+                    </h1>
+                    <p className="mt-6 max-w-[19rem] text-[15px] leading-relaxed text-[#5d6958]">האימונים הקרובים, המקום ששמרת והיתרה שלך. הכול כאן, לפני שיוצאים לסטודיו.</p>
+                    <button
+                        id="main-signin-button"
+                        type="button"
+                        onClick={() => setIsLoginOpen(true)}
+                        className="mt-8 flex min-h-14 w-full items-center justify-between rounded-full bg-[#1b251c] px-6 text-sm font-bold text-[#f6f6ed] transition-colors active:bg-[#334436]"
                     >
-                        <rect x="20" y="45" width="160" height="10" rx="4" fill="#5F6F52" />
-                        <g>
-                            <rect x="20" y="20" width="10" height="60" rx="2" fill="#9CA986" />
-                            <rect x="35" y="30" width="8" height="40" rx="2" fill="#ECF0E7" />
-                        </g>
-                        <g>
-                            <rect x="170" y="20" width="10" height="60" rx="2" fill="#9CA986" />
-                            <rect x="157" y="30" width="8" height="40" rx="2" fill="#ECF0E7" />
-                        </g>
-                        {/* Sparkle */}
-                        <circle cx="100" cy="30" r="2" fill="#E2F163" className="animate-ping" opacity="0.7" />
-                    </svg>
-                </div>
+                        כניסה לאזור שלי <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+                    </button>
+                </section>
 
-                {/* Typography with GSAP */}
-                <h1 ref={heroTextRef} className="relative font-bold leading-[0.9] tracking-tighter mb-6 md:mb-8 select-none">
-                    <div className="hero-line-1 text-[20vw] md:text-[11vw] text-white">
-                        כושר
+                <section aria-label="סטודיו טליה" className="relative mt-10 h-[21rem] overflow-hidden rounded-[2rem] bg-[#1b251c] p-6 text-[#f6f6ed]">
+                    <div aria-hidden="true" className="pointer-events-none absolute -left-32 -top-56 h-80 w-80 rounded-full border-[42px] border-[#dce780]" />
+                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-36 -right-28 h-72 w-72 rounded-full border-[38px] border-[#dce780]/20" />
+                    <div aria-hidden="true" className="pointer-events-none absolute bottom-0 left-[37%] top-0 w-px rotate-[25deg] bg-[#dce780]/15" />
+                    <div className="relative flex items-start justify-between">
+                        <span className="text-[11px] font-bold text-[#dce780]">טליה / הסטודיו שלך</span>
+                        <span className="text-[11px] font-bold text-[#aab7a0]">לוח האימונים מחכה לך</span>
                     </div>
-                    <div className="hero-line-2 text-[20vw] md:text-[11vw] text-transparent bg-clip-text bg-gradient-to-tr from-[#E2F163] via-primary to-[#E2F163] mt-[-3vw] md:mt-[-2vw]">
-                        מחדש
+                    <div className="relative mt-16">
+                        <p className="text-[clamp(2rem,10vw,2.65rem)] font-bold leading-[1.04] tracking-tight">לבחור אימון.<br />לשמור מקום.<br /><span className="text-[#dce780]">פשוט להגיע.</span></p>
                     </div>
-                </h1>
+                    <div className="relative mt-7 flex items-center justify-between border-t border-white/20 pt-4 text-[11px] text-[#b9c6b2]">
+                        <span>כל מה שצריך לאימון הבא</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#dce780]" />
+                    </div>
+                </section>
 
-                <p ref={subtitleRef} className="text-lg md:text-2xl text-neutral-400 max-w-sm md:max-w-2xl mx-auto leading-relaxed mb-10 md:mb-12 font-bold px-4">
-                    לא עוד מכון רגיל. <span className="text-[#E2F163]">טליה</span> הוא המקום שבו הכוח שלך מתפרץ.
-                    <br className="hidden md:block" />
-                    קהילה, עוצמה, ותוצאות שאפשר לראות.
-                </p>
-
-                {/* LOGIN REVEAL */}
-                <div ref={ctaRef} className="min-h-[100px] flex items-center justify-center relative z-50 w-full px-4">
-                    <AnimatePresence mode="wait">
-                        {!isLoginOpen ? (
-                            <motion.button
-                                id="main-signin-button"
-                                key="join-btn"
-                                onClick={() => setIsLoginOpen(true)}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="group relative w-full md:w-auto px-12 py-6 bg-[#E2F163] text-black font-bold text-2xl rounded-full overflow-hidden shadow-2xl shadow-primary/30"
-                            >
-                                {/* Shine effect */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                                <span className="relative z-10 flex items-center justify-center gap-3">
-                                    הצטרפי למהפכה <Zap className="w-6 h-6 fill-black" />
-                                </span>
-                            </motion.button>
-                        ) : (
-                            <motion.div
-                                key="login-options"
-                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                className="w-full md:w-auto bg-neutral-900/90 backdrop-blur-xl border border-white/10 p-4 md:p-2 rounded-[2rem] shadow-2xl flex flex-col md:flex-row gap-6 items-stretch relative overflow-hidden"
-                            >
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); resetLoginState(); }}
-                                    className="absolute top-3 left-4 md:left-auto md:top-2 md:right-4 text-neutral-500 hover:text-white text-xs font-bold uppercase tracking-wider z-20 p-2 transition-colors"
-                                >
-                                    חזרה
-                                </button>
-
-                                <div className="p-4 pt-8 md:pt-4 text-center md:text-right w-full md:w-auto flex flex-col justify-center min-w-[200px]">
-                                    <h3 className="text-white font-bold text-lg mb-1 flex items-center justify-center md:justify-start gap-2">
-                                        <Sparkles className="w-4 h-4 text-[#E2F163]" />
-                                        {loginView === 'menu' && "התחברות מהירה"}
-                                        {loginView === 'email' && "התחברות במייל"}
-                                        {loginView === 'otp' && "אימות קוד"}
-                                    </h3>
-                                    <p className="text-neutral-500 text-xs">
-                                        {loginView === 'menu' && "בחרי דרך להתחיל"}
-                                        {loginView === 'email' && "נשלח לך קוד חד פעמי להתחברות"}
-                                        {loginView === 'otp' && "הזיני את הקוד שקיבלת במייל"}
-                                    </p>
-                                </div>
-
-                                {/* MENU VIEW */}
-                                {loginView === 'menu' && (
-                                    <div className="flex flex-col gap-3 w-full md:w-auto min-w-[280px]">
-                                        <button
-                                            id="google-signin-button"
-                                            onClick={handleGoogleLogin}
-                                            disabled={isLoading}
-                                            className="flex items-center gap-3 bg-white text-black font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all hover:shadow-lg disabled:opacity-70"
-                                        >
-                                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                                                <>
-                                                    <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
-                                                    Google
-                                                </>
-                                            )}
-                                        </button>
-
-                                        <div className="flex items-center gap-2 px-2 opacity-50">
-                                            <div className="h-px bg-white/20 flex-1" />
-                                            <span className="text-[10px] uppercase font-bold tracking-widest">או</span>
-                                            <div className="h-px bg-white/20 flex-1" />
-                                        </div>
-
-                                        <button
-                                            onClick={() => setLoginView('email')}
-                                            className="flex items-center gap-3 bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all text-sm"
-                                        >
-                                            <Mail className="w-4 h-4 text-[#E2F163]" />
-                                            התחברות באמצעות קוד במייל
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* EMAIL INPUT VIEW */}
-                                {loginView === 'email' && (
-                                    <div className="flex flex-col gap-3 w-full md:w-auto min-w-[280px]">
-                                        <input
-                                            type="email"
-                                            placeholder="your@email.com"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-white/30 focus:outline-none focus:border-[#E2F163] transition-colors text-left dir-ltr"
-                                            dir="ltr"
-                                            autoFocus
-                                        />
-                                        <button
-                                            onClick={handleSendCode}
-                                            disabled={isLoading || !email}
-                                            className="flex items-center gap-2 bg-[#E2F163] text-black font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all disabled:opacity-50"
-                                        >
-                                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                                                <>
-                                                    שלחי לי קוד
-                                                    <ArrowLeft className="w-4 h-4" />
-                                                </>
-                                            )}
-                                        </button>
-                                        <button
-                                            onClick={() => setLoginView('menu')}
-                                            className="text-xs text-neutral-400 hover:text-white mt-1"
-                                        >
-                                            חזרה לאפשרויות
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* OTP INPUT VIEW */}
-                                {loginView === 'otp' && (
-                                    <div className="flex flex-col gap-3 w-full md:w-auto min-w-[280px]">
-                                        <input
-                                            type="text"
-                                            placeholder="123456"
-                                            value={otpCode}
-                                            onChange={(e) => setOtpCode(e.target.value)}
-                                            className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-4 text-white text-center text-2xl tracking-[0.5em] placeholder:text-white/10 focus:outline-none focus:border-[#E2F163] transition-colors"
-                                            maxLength={10}
-                                            autoFocus
-                                        />
-                                        <button
-                                            onClick={handleVerifyCode}
-                                            disabled={isLoading || otpCode.length < 6}
-                                            className="flex items-center gap-2 bg-[#E2F163] text-black font-bold py-4 px-6 rounded-2xl w-full justify-center active:scale-95 transition-all disabled:opacity-50"
-                                        >
-                                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                                                <>
-                                                    אימות והתחברות
-                                                    <ArrowLeft className="w-4 h-4" />
-                                                </>
-                                            )}
-                                        </button>
-                                        <button
-                                            onClick={() => setLoginView('email')}
-                                            className="text-xs text-neutral-400 hover:text-white mt-1"
-                                        >
-                                            שליחה מחדש / תיקון מייל
-                                        </button>
-                                    </div>
-                                )}
-
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-
-                {/* Live Stats */}
-                <div ref={statsRef} className="mt-24 md:mt-32 w-full max-w-2xl mx-auto px-4 grid grid-cols-2 gap-8 md:flex md:justify-center md:gap-16 text-center">
-                    <div className="stat-item">
-                        <div className="text-4xl md:text-6xl font-bold text-white mb-2 flex items-center justify-center gap-1">
-                            <span>1,234</span><span className="text-[#E2F163]">+</span>
+                <section className="mt-14" aria-labelledby="what-is-here">
+                    <div className="mb-4 flex items-end justify-between border-b border-[#1b251c]/15 pb-3">
+                        <h2 id="what-is-here" className="text-lg font-bold">מה מחכה לך כאן</h2>
+                    </div>
+                    <div className="divide-y divide-[#1b251c]/15">
+                        <div className="flex min-h-24 items-center gap-4 py-4">
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd] text-[#1b251c]"><CalendarDays aria-hidden="true" className="h-5 w-5" /></span>
+                            <div><h3 className="font-bold">לוח האימונים</h3><p className="mt-1 text-xs text-[#5d6958]">רואות מה קרוב ובוחרות מתי להגיע.</p></div>
                         </div>
-                        <div className="text-xs md:text-sm font-bold text-neutral-500 uppercase tracking-widest">מתאמנות פעילות</div>
-                    </div>
-
-                    <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-neutral-700 to-transparent" />
-
-                    <div className="stat-item">
-                        <div className="text-4xl md:text-6xl font-bold text-white mb-2">
-                            24/7
+                        <div className="flex min-h-24 items-center gap-4 py-4">
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd] text-[#1b251c]"><Check aria-hidden="true" className="h-5 w-5" /></span>
+                            <div><h3 className="font-bold">המקום שלך</h3><p className="mt-1 text-xs text-[#5d6958]">ההרשמה והאימון הבא תמיד מולך.</p></div>
                         </div>
-                        <div className="text-xs md:text-sm font-bold text-neutral-500 uppercase tracking-widest">זמינות בסטודיו</div>
+                        <div className="flex min-h-24 items-center gap-4 py-4">
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd] text-[#1b251c]"><Ticket aria-hidden="true" className="h-5 w-5" /></span>
+                            <div><h3 className="font-bold">יתרת האימונים</h3><p className="mt-1 text-xs text-[#5d6958]">היתרה שלך תמיד מול העיניים.</p></div>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-            </section>
+                <footer className="mt-14 border-t border-[#1b251c]/15 pt-5 text-xs text-[#6f795f]">© סטודיו טליה</footer>
+            </main>
 
-            {/* Feature Cards */}
-            <section ref={featuresRef} className="relative z-10 py-20 md:py-32 px-4 md:px-6 max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                    {[
-                        { icon: Trophy, title: "אלופה", desc: "תחרויות ואתגרים חודשיים שיוציאו ממך את המקסימום.", gradient: "from-amber-500/20 to-amber-600/5" },
-                        { icon: Users, title: "ביחד", desc: "אימונים בקבוצות קטנות שמרגישים בדיוק כמו משפחה.", gradient: "from-blue-500/20 to-blue-600/5" },
-                        { icon: Zap, title: "אנרגיה", desc: "מוזיקה, תאורה ואווירה שגורמים לך לשכוח מהכל ולהתמקד.", gradient: "from-[#E2F163]/20 to-[#E2F163]/5" }
-                    ].map((feature, i) => (
-                        <div
-                            key={i}
-                            className={`feature-card group p-8 md:p-10 rounded-[2rem] bg-gradient-to-br ${feature.gradient} border border-white/5 active:scale-[0.98] transition-all duration-300 hover:border-white/10 hover:shadow-xl`}
+            <AnimatePresence>
+                {isLoginOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-end justify-center">
+                        <motion.button
+                            type="button"
+                            aria-label="סגירה"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={resetLoginState}
+                            className="absolute inset-0 w-full bg-[#111a12]/65"
+                        />
+                        <motion.div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="login-title"
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                            className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[#1b251c]"
                         >
-                            <div className="w-14 h-14 md:w-16 md:h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/5 group-hover:scale-110 group-hover:bg-white/15 transition-all">
-                                <feature.icon className="w-7 h-7 md:w-8 md:h-8 text-[#E2F163]" />
-                            </div>
+                            <button type="button" onClick={resetLoginState} aria-label="סגירה" className="absolute left-6 top-7 flex h-11 w-11 items-center justify-center rounded-full border border-[#1b251c]/15"><X aria-hidden="true" className="h-5 w-5" /></button>
+                            <p className="mb-2 text-xs font-bold text-[#5c6d2e]">סטודיו טליה</p>
+                            <h2 id="login-title" className="max-w-[15rem] text-[2rem] font-bold leading-tight">
+                                {loginView === "menu" ? "איך נוח לך להיכנס?" : loginView === "email" ? "נשלח לך קוד למייל" : "הקוד בדרך אלייך"}
+                            </h2>
+                            <p className="mb-7 mt-3 max-w-[18rem] text-sm leading-relaxed text-[#5d6958]">
+                                {loginView === "menu" ? "בחרי את הדרך שמתאימה לך." : loginView === "email" ? "כתבי את הכתובת שלך ונשלח קוד חד־פעמי." : "הזיני את הקוד שקיבלת במייל כדי להיכנס."}
+                            </p>
 
-                            <h3 className="text-xl md:text-2xl font-bold mb-3 text-white group-hover:text-[#E2F163] transition-colors">{feature.title}</h3>
-                            <p className="text-neutral-400 font-medium leading-relaxed text-sm md:text-base">{feature.desc}</p>
-                        </div>
-                    ))}
-                </div>
-            </section>
+                            {loginView === "menu" && (
+                                <div className="space-y-3">
+                                    <button id="google-signin-button" type="button" onClick={handleGoogleLogin} disabled={isLoading} className="flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] disabled:opacity-50">
+                                        {isLoading ? <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <GoogleMark />}
+                                        המשך עם גוגל
+                                    </button>
+                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); }} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full border border-[#1b251c]/20 bg-white px-5 text-sm font-bold">
+                                        <Mail aria-hidden="true" className="h-4 w-4" /> כניסה עם קוד במייל
+                                    </button>
+                                </div>
+                            )}
 
-            {/* Footer */}
-            <footer className="relative z-10 py-8 text-center border-t border-white/5">
-                <p className="text-neutral-600 text-xs font-medium">
-                    © 2026 Talia Studio. כל הזכויות שמורות.
-                </p>
-            </footer>
+                            {loginView === "email" && (
+                                <form onSubmit={(event) => { event.preventDefault(); handleSendCode(); }} className="space-y-3">
+                                    <label htmlFor="login-email" className="block text-xs font-bold">כתובת המייל שלך</label>
+                                    <input id="login-email" type="email" inputMode="email" autoComplete="email" required dir="ltr" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="כתובת המייל שלך" className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-sm outline-none focus:border-[#829044]" />
+                                    <button type="submit" disabled={isLoading || !email} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] disabled:opacity-50">{isLoading ? "שולחים..." : "שלחי לי קוד"}<ArrowLeft aria-hidden="true" className="h-4 w-4" /></button>
+                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("menu"); }} className="flex min-h-11 items-center gap-2 text-xs font-bold text-[#5d6958]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה לאפשרויות</button>
+                                </form>
+                            )}
+
+                            {loginView === "otp" && (
+                                <form onSubmit={(event) => { event.preventDefault(); handleVerifyCode(); }} className="space-y-3">
+                                    <label htmlFor="login-code" className="block text-xs font-bold">הקוד שקיבלת</label>
+                                    <input id="login-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={10} required dir="ltr" value={otpCode} onChange={(event) => setOtpCode(event.target.value)} placeholder="••••••" className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-center text-xl tracking-[0.35em] outline-none focus:border-[#829044]" />
+                                    <button type="submit" disabled={isLoading || otpCode.length < 6} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] disabled:opacity-50">{isLoading ? "בודקים..." : "אימות וכניסה"}<ArrowLeft aria-hidden="true" className="h-4 w-4" /></button>
+                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); }} className="flex min-h-11 items-center gap-2 text-xs font-bold text-[#5d6958]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה לכתובת המייל</button>
+                                </form>
+                            )}
+
+                            {authError && <p role="alert" className="mt-4 rounded-2xl bg-[#a53d35]/10 p-3 text-sm text-[#a53d35]">{authError}</p>}
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
