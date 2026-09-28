@@ -103,6 +103,7 @@ export default function AdminTraineesPage() {
             });
 
             if (error) throw error;
+            if (!data?.success) throw new Error(data?.message || "Ticket update failed");
 
             // 2. Send Notification
             const notifRes = await fetch('/api/notifications/grant-tickets', {

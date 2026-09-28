@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
 
 const ONESIGNAL_APP_ID = "2e5776b6-3487-4a5d-bca0-04570c82d150";
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
@@ -13,8 +14,29 @@ interface NotificationPayload {
 
 export async function POST(request: NextRequest) {
     try {
+        const supabase = await createClient();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const body: NotificationPayload = await request.json();
         const { title, message, targetRole, targetUserIds, url } = body;
+        if (typeof title !== "string" || !title.trim() || title.length > 120 ||
+            typeof message !== "string" || !message.trim() || message.length > 1000 ||
+            (targetRole && !["administrator", "trainee"].includes(targetRole)) ||
+            (targetUserIds && (!Array.isArray(targetUserIds) || targetUserIds.length > 100 ||
+                targetUserIds.some(id => typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id)))) ||
+            (url && (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//")))) {
+            return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
+        }
+
+        if (targetUserIds?.length || targetRole === "trainee") {
+            const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+            if (profile?.role !== "administrator") {
+                return NextResponse.json({ error: "Administrator access required" }, { status: 403 });
+            }
+        }
 
         if (!ONESIGNAL_REST_API_KEY) {
             console.error("ONESIGNAL_REST_API_KEY not set");
@@ -47,7 +69,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (url) {
-            notificationPayload.url = url;
+            notificationPayload.url = new URL(url, request.url).toString();
         }
 
         const response = await fetch("https://onesignal.com/api/v1/notifications", {

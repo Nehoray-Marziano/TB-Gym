@@ -1,12 +1,20 @@
 
 import { NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function POST(req: Request) {
     try {
+        const supabase = await createClient();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        if (profile?.role !== 'administrator') return NextResponse.json({ error: 'Administrator access required' }, { status: 403 });
+
         const { userId, amount } = await req.json();
 
-        if (!userId || !amount) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        if (typeof userId !== 'string' || !/^[0-9a-f-]{36}$/i.test(userId) ||
+            !Number.isInteger(amount) || amount === 0 || Math.abs(amount) > 100) {
+            return NextResponse.json({ error: 'Invalid ticket notification' }, { status: 400 });
         }
 
         const apiKey = process.env.ONESIGNAL_REST_API_KEY;
@@ -43,7 +51,7 @@ export async function POST(req: Request) {
                 web_push_topic: "ticket-update",  // Groups notifications
                 ttl: 86400, // 24 hours - ensures delivery
                 // Open dashboard when clicked
-                url: "https://talia-gym.vercel.app/dashboard",
+                url: "https://tb-gym.vercel.app/dashboard",
                 // Force notification to persist until user interacts
                 chrome_web_require_interaction: true,
                 // Add vibration pattern (Android)

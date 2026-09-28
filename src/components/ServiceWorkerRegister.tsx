@@ -13,6 +13,7 @@ export default function ServiceWorkerRegister() {
     const hasShownBanner = useRef(false);
 
     useEffect(() => {
+        if (process.env.NODE_ENV === "development") return;
         if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
             return;
         }

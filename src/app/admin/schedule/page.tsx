@@ -67,6 +67,7 @@ export default function AdminSchedulePage() {
         userCount: number;
     }>({ isOpen: false, session: null, userCount: 0 });
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
     // Form State
     const [newSession, setNewSession] = useState<{
@@ -110,50 +111,25 @@ export default function AdminSchedulePage() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Validation handled by button state, but redundant check is safe
-        if (!newSession.title || !newSession.date) return;
+        if (isCreating || !newSession.title.trim() || !newSession.date) return;
 
+        setIsCreating(true);
         try {
             const [hours, minutes] = newSession.time.split(":").map(Number);
             const start = new Date(newSession.date);
             start.setHours(hours, minutes, 0, 0);
             const end = new Date(start.getTime() + 60 * 60 * 1000);
 
-            // Determine capacity: if private, capacity equals invited count
             const finalCapacity = isPrivateSession ? selectedTrainees.length : newSession.max_capacity;
-
-            // 1. Create Session
-            const { data: sessionData, error } = await supabase.from("gym_sessions").insert({
-                title: newSession.title,
-                description: newSession.description,
-                start_time: start.toISOString(),
-                end_time: end.toISOString(),
-                max_capacity: finalCapacity
-            }).select("id").single();
-
+            const { error } = await supabase.rpc("admin_create_session", {
+                p_title: newSession.title,
+                p_description: newSession.description,
+                p_start_time: start.toISOString(),
+                p_end_time: end.toISOString(),
+                p_max_capacity: finalCapacity,
+                p_user_ids: isPrivateSession ? selectedTrainees.map(t => t.id) : [],
+            });
             if (error) throw error;
-            const newSessionId = sessionData.id;
-
-            // 2. If Private, Invite Trainees
-            if (isPrivateSession && selectedTrainees.length > 0) {
-                const bookingsToInsert = selectedTrainees.map(t => ({
-                    session_id: newSessionId,
-                    user_id: t.id,
-                    status: 'confirmed'
-                }));
-
-                console.log("DEBUG: Inserting bookings:", bookingsToInsert);
-                const { data: insertedBookings, error: bookingError } = await supabase.from("bookings").insert(bookingsToInsert).select();
-                console.log("DEBUG: Insert result:", { insertedBookings, bookingError });
-                if (bookingError) throw bookingError;
-
-                for (const t of selectedTrainees) {
-                    const { data: credit } = await supabase.from("user_credits").select("balance").eq("user_id", t.id).single();
-                    if (credit && credit.balance > 0) {
-                        await supabase.from("user_credits").update({ balance: credit.balance - 1 }).eq("user_id", t.id);
-                    }
-                }
-            }
 
             setIsModalOpen(false);
             setNewSession({ title: "", description: "", date: undefined, time: "08:00", max_capacity: 10 });
@@ -163,6 +139,8 @@ export default function AdminSchedulePage() {
         } catch (err: any) {
             console.error(err);
             alert("שגיאה בשמירה: " + err.message);
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -175,35 +153,13 @@ export default function AdminSchedulePage() {
         if (!deleteConfirmation.session) return;
         setIsDeleting(true);
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-            if (profile?.role !== 'administrator') {
-                alert(`שגיאה: למשתמש זה (${profile?.role}) אין הרשאות מחיקה. נדרש 'administrator'.`);
-                setIsDeleting(false);
-                setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 });
-                return;
-            }
-        }
-
         try {
-            // 1. Refund Loop
-            const { data: bookings } = await supabase
-                .from("bookings")
-                .select("user_id")
-                .eq("session_id", deleteConfirmation.session.id)
-                .eq("status", "confirmed");
+            const { data, error } = await supabase.rpc("admin_delete_session", {
+                p_session_id: deleteConfirmation.session.id,
+            });
+            if (error) throw error;
 
-            if (bookings && bookings.length > 0) {
-                // Refund tickets for all confirmed bookings in this session
-                await supabase.from("user_tickets")
-                    .update({ used_at: null, used_for_session: null })
-                    .eq("used_for_session", deleteConfirmation.session.id);
-            }
-
-            // 2. Notify Users (if any)
-            if (bookings && bookings.length > 0) {
-                const affectedUserIds = bookings.map((b: { user_id: string }) => b.user_id);
+            if (data?.user_ids?.length > 0) {
                 try {
                     await fetch("/api/notifications", {
                         method: "POST",
@@ -211,7 +167,7 @@ export default function AdminSchedulePage() {
                         body: JSON.stringify({
                             title: "אימון בוטל 😔",
                             message: `האימון "${deleteConfirmation.session.title}" בוטל על ידי הסטודיו. הזיכוי הוחזר לחשבונך.`,
-                            targetUserIds: affectedUserIds
+                            targetUserIds: data.user_ids
                         })
                     });
                 } catch (e) {
@@ -219,24 +175,6 @@ export default function AdminSchedulePage() {
                 }
             }
 
-            // 3. Delete Bookings
-            const { error: bookingsError, count: deletedCount } = await supabase
-                .from("bookings")
-                .delete({ count: 'exact' })
-                .eq("session_id", deleteConfirmation.session.id);
-
-            if (bookingsError) throw new Error("Booking delete failed: " + bookingsError.message);
-
-            const expectedToDelete = bookings?.length || 0;
-            if (expectedToDelete > 0 && (deletedCount === null || deletedCount === 0)) {
-                throw new Error("Critical: Admin cannot delete user bookings. RLS Policy required.");
-            }
-
-            // 4. Delete Session
-            const { error } = await supabase.from("gym_sessions").delete().eq("id", deleteConfirmation.session.id);
-            if (error) throw error;
-
-            // Success feedback
             fetchSessions();
         } catch (err: any) {
             console.error("Delete error:", err);
@@ -270,12 +208,7 @@ export default function AdminSchedulePage() {
     const handleCancelBooking = async (booking: Booking & { user_id: string }) => {
         if (!confirm("האם לבטל את ההרשמה ולזכות את המנויה?")) return;
         try {
-            // Refund Ticket
-            await supabase.from("user_tickets")
-                .update({ used_at: null, used_for_session: null })
-                .eq("user_id", booking.user_id)
-                .eq("used_for_session", viewBookingsSession?.id);
-            const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
+            const { error } = await supabase.rpc("admin_cancel_booking", { p_booking_id: booking.id });
             if (error) throw error;
 
             // Notify User
@@ -660,7 +593,7 @@ export default function AdminSchedulePage() {
                                 </div>
 
                                 <button
-                                    disabled={!newSession.title || !newSession.date || (isPrivateSession && selectedTrainees.length === 0)}
+                                    disabled={isCreating || !newSession.title || !newSession.date || (isPrivateSession && selectedTrainees.length === 0)}
                                     className="w-full py-4 rounded-2xl font-bold bg-[#E2F163] text-black text-lg hover:shadow-[0_0_30px_rgba(226,241,99,0.4)] hover:scale-[1.02] transition-all active:scale-95 mt-4 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                                 >
                                     פרסום אימון

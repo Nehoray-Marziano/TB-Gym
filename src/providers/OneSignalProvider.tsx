@@ -23,6 +23,7 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
 
     // Effect 1: Initialize OneSignal (Run Once)
     useEffect(() => {
+        if (process.env.NODE_ENV === "development") return;
         if (initialized.current) return;
         if (typeof window === "undefined") return;
 
@@ -86,6 +87,7 @@ export default function OneSignalProvider({ userId, userRole, userEmail }: OneSi
 
     // Effect 2: Manage User Identity (Run on change)
     useEffect(() => {
+        if (process.env.NODE_ENV === "development") return;
         if (typeof window === "undefined") return;
 
         window.OneSignalDeferred = window.OneSignalDeferred || [];

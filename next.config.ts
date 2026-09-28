@@ -55,7 +55,7 @@ const withPWA = withPWAInit({
       },
       {
         // Supabase API - NEVER cache
-        urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/rest\/v1\/.*/i,
+        urlPattern: /^https:\/\/[^/]+\.supabase\.co\/rest\/v1\/.*/i,
         handler: "NetworkOnly",
         options: {
           cacheName: "supabase-api-no-cache",
@@ -63,7 +63,7 @@ const withPWA = withPWAInit({
       },
       {
         // Supabase Auth - NEVER cache
-        urlPattern: /^https:\/\/asoqaeujdduqqjfayht\.supabase\.co\/auth\/.*/i,
+        urlPattern: /^https:\/\/[^/]+\.supabase\.co\/auth\/.*/i,
         handler: "NetworkOnly",
         options: {
           cacheName: "supabase-auth-no-cache",
