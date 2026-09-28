@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { Calendar, Users, Settings, ArrowRight, LogOut } from "lucide-react";
 
 export default function AdminLayout({
@@ -10,6 +12,34 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const [authorized, setAuthorized] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+        const checkAdmin = async () => {
+            const supabase = getSupabaseClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!active) return;
+            if (!user) {
+                router.replace("/");
+                return;
+            }
+            const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+            if (!active) return;
+            if (profile?.role !== "administrator") {
+                router.replace("/dashboard");
+                return;
+            }
+            setAuthorized(true);
+        };
+        checkAdmin();
+        return () => { active = false; };
+    }, [router]);
+
+    if (!authorized) {
+        return <div className="min-h-screen bg-[#0A0A0A]" />;
+    }
 
     return (
         <div className="min-h-screen bg-[#0A0A0A] text-foreground font-sans relative overflow-x-hidden selection:bg-[#E2F163] selection:text-black">
