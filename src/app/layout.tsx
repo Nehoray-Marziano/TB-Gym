@@ -20,12 +20,12 @@ const varelaRound = Varela_Round({
 });
 
 export const metadata: Metadata = {
-  title: "Talia Gym | Premium Fitness",
-  description: "Experience the next level of fitness with Talia.",
+  title: "סטודיו טליה | האימונים שלך",
+  description: "האימונים, ההרשמות והיתרה שלך במקום אחד.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Talia Gym",
+    title: "סטודיו טליה",
   },
   icons: {
     icon: "/pwa-icon-192.png",

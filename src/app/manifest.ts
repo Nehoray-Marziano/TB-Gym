@@ -2,9 +2,9 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: "Talia Gym App",
-        short_name: "Talia",
-        description: "אפליקציית הכושר של טליה - הזמנת אימונים, מעקב קרדיטים וניהול פרופיל",
+        name: "סטודיו טליה",
+        short_name: "טליה",
+        description: "האימונים, ההרשמות והיתרה שלך במקום אחד.",
         start_url: "/dashboard",
         scope: "/",
         id: "/",

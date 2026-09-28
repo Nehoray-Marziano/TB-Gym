@@ -1,14 +1,26 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, Clock, MapPin, ChevronRight, Check, CalendarPlus, X, AlertCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, ChevronRight, CalendarPlus, X, AlertCircle } from "lucide-react";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
-import gsap from "gsap";
+
+function bookingMessage(message: string | undefined) {
+    const translations: Record<string, string> = {
+        "Authentication required": "כדי להירשם, צריך להתחבר מחדש.",
+        "Session not found": "האימון כבר לא זמין.",
+        "Session has already started": "האימון כבר התחיל.",
+        "Too late to cancel": "אפשר לבטל עד 10 שעות לפני האימון.",
+        "Booking not found": "לא מצאנו הרשמה פעילה לאימון הזה.",
+    };
+    if (message && translations[message]) return translations[message];
+    if (message && /^[\u0590-\u05FF\s!?.]+$/.test(message)) return message;
+    return "משהו השתבש. נסי שוב בעוד רגע.";
+}
 
 export default function BookingPage() {
     const supabase = getSupabaseClient();
@@ -19,13 +31,8 @@ export default function BookingPage() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [bookingId, setBookingId] = useState<string | null>(null);
-    const [isAnimated, setIsAnimated] = useState(false);
 
-    // GSAP Refs
-    const containerRef = useRef<HTMLDivElement>(null);
-    const sessionsRef = useRef<HTMLDivElement>(null);
-
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
@@ -40,7 +47,7 @@ export default function BookingPage() {
 
             if (sessionData) {
                 const registeredIds = new Set(myBookings?.map((b: { session_id: string }) => b.session_id));
-                const sessionsWithStatus = sessionData.map((session: any) => ({
+                const sessionsWithStatus = sessionData.map((session: Session) => ({
                     ...session,
                     isRegistered: registeredIds.has(session.id),
                 }));
@@ -52,7 +59,7 @@ export default function BookingPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [supabase]);
 
     useEffect(() => {
         const cached = localStorage.getItem("talia_sessions");
@@ -69,38 +76,8 @@ export default function BookingPage() {
         };
         document.addEventListener('visibilitychange', handleVisibility);
         return () => document.removeEventListener('visibilitychange', handleVisibility);
-    }, []);
+    }, [fetchSessions]);
 
-    // GSAP Entrance Animations - runs once after initial data load
-    useEffect(() => {
-        if (loading || isAnimated || sessions.length === 0) return;
-
-        // Small delay to ensure DOM is fully painted and stable
-        const timeoutId = setTimeout(() => {
-            if (!sessionsRef.current) return;
-
-            const cards = sessionsRef.current.querySelectorAll('.session-card');
-            if (cards.length === 0) return;
-
-            // Animate cards in with stagger
-            gsap.fromTo(cards,
-                {
-                    opacity: 0,
-                    y: 10
-                },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.25, // Faster (was 0.35)
-                    stagger: 0.04, // Faster stagger (was 0.05)
-                    ease: "power2.out",
-                    onComplete: () => setIsAnimated(true)
-                }
-            );
-        }, 100); // 100ms delay for DOM stability
-
-        return () => clearTimeout(timeoutId);
-    }, [loading, isAnimated, sessions.length]);
 
     const handleBook = async (sessionId: string) => {
         setBookingId(sessionId);
@@ -111,9 +88,9 @@ export default function BookingPage() {
         const { data, error } = await supabase.rpc("book_session", { p_session_id: sessionId });
 
         if (error) {
-            toast({ title: "שגיאה", description: error.message, type: "error" });
+            toast({ title: "לא הצלחנו לרשום אותך", description: bookingMessage(error.message), type: "error" });
         } else if (data && !data.success) {
-            toast({ title: "לא ניתן להירשם", description: data.message, type: "error" });
+            toast({ title: "לא ניתן להירשם", description: bookingMessage(data.message), type: "error" });
         } else {
             // Success animation
             if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
@@ -180,62 +157,55 @@ export default function BookingPage() {
             }
         } else {
             setSessions(prevSessions);
-            toast({ title: "לא ניתן לבטל", description: result.message, type: "error" });
+            toast({ title: "לא ניתן לבטל", description: bookingMessage(result.message), type: "error" });
         }
         setSessionToCancel(null);
     };
 
     return (
-        <div ref={containerRef} className="min-h-[100dvh] bg-background text-foreground p-6 pb-32 font-sans">
-            {/* Ambient background */}
-            <div className="fixed top-0 left-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-            <div className="fixed bottom-1/4 right-0 w-[200px] h-[200px] bg-primary/3 rounded-full blur-[80px] pointer-events-none" />
+        <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
+            <div className="mx-auto max-w-lg px-5 pb-[calc(3rem+env(safe-area-inset-bottom))] pt-5 sm:px-7">
+                <header className="mb-10">
+                    <button
+                        type="button"
+                        onClick={() => router.back()}
+                        aria-label="חזרה"
+                        className="mb-10 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-card transition-colors active:bg-muted/40"
+                    >
+                        <ChevronRight aria-hidden="true" className="h-5 w-5" />
+                    </button>
+                    <p className="mb-2 text-xs font-bold text-primary">האימונים בסטודיו / 01</p>
+                    <h1 className="max-w-[17rem] text-[clamp(2.7rem,11vw,4rem)] font-bold leading-[1.08] tracking-tight">איזה אימון<br />מתאים לך<span className="text-primary">?</span></h1>
+                    <p className="mt-4 max-w-[19rem] text-sm leading-relaxed text-muted-foreground">בחרי את האימון שמתאים לך, ונדאג לשמור לך מקום.</p>
+                </header>
 
-            {/* Header */}
-            <header className="flex items-center gap-4 mb-8 sticky top-0 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-border/50">
-                <button
-                    onClick={() => router.back()}
-                    className="w-10 h-10 bg-card border border-border rounded-full flex items-center justify-center active:scale-95 transition-all hover:border-primary/50 hover:bg-card/80"
-                >
-                    <ChevronRight className="w-5 h-5 text-foreground" />
-                </button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                        הירשמי לאימון
-                        <span className="text-2xl">📅</span>
-                    </h1>
-                    <p className="text-xs text-muted-foreground font-medium">{sessions.length} אימונים זמינים</p>
+                <div className="mb-5 flex items-center justify-between border-b border-border pb-3">
+                    <h2 className="text-base font-bold">האימונים הקרובים</h2>
+                    {!loading && <span className="text-xs font-medium text-muted-foreground">{sessions.length} {sessions.length === 1 ? "אימון" : "אימונים"}</span>}
                 </div>
-            </header>
 
-            {loading ? (
-                <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="p-5 rounded-[2rem] border border-border bg-card/40 h-44 flex gap-5 shimmer-skeleton" style={{ animationDelay: `${i * 0.1}s` }}>
-                            <div className="w-16 h-16 bg-muted/20 rounded-2xl shrink-0" />
-                            <div className="flex-1 space-y-3">
-                                <div className="h-6 w-3/4 bg-muted/20 rounded-lg" />
-                                <div className="h-4 w-1/2 bg-muted/20 rounded-lg" />
-                                <div className="h-10 w-full bg-muted/20 rounded-xl mt-4" />
+                {loading ? (
+                    <div className="space-y-3" aria-busy="true">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-52 animate-pulse rounded-[1.75rem] border border-border bg-card p-5">
+                                <div className="mb-5 h-5 w-24 rounded-full bg-muted/40" />
+                                <div className="mb-3 h-7 w-2/3 rounded-lg bg-muted/40" />
+                                <div className="h-4 w-1/2 rounded-lg bg-muted/40" />
                             </div>
-                        </div>
-                    ))}
-                </div>
-            ) : sessions.length === 0 ? (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-20 px-6 bg-card/40 rounded-3xl border border-dashed border-border"
-                >
-                    <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Calendar className="w-10 h-10 text-muted-foreground" />
+                        ))}
                     </div>
-                    <p className="text-xl font-bold text-foreground mb-2">אין אימונים השבוע</p>
-                    <p className="text-muted-foreground text-sm">חזרי להתעדכן ביום ראשון! 🌟</p>
-                </motion.div>
-            ) : (
-                <div ref={sessionsRef} className="space-y-4">
-                    {sessions.map((session, index) => {
+                ) : sessions.length === 0 ? (
+                    <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-card px-6 py-8">
+                        <div aria-hidden="true" className="pointer-events-none absolute -left-10 -top-14 h-40 w-40 rounded-full border-[24px] border-primary/10" />
+                        <div className="relative mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                            <CalendarDays aria-hidden="true" className="h-7 w-7" />
+                        </div>
+                        <h3 className="relative mb-2 text-xl font-bold">אין כרגע אימונים קרובים</h3>
+                        <p className="relative max-w-[17rem] text-sm leading-relaxed text-muted-foreground">כשהלו״ז יתעדכן, תוכלי לבחור כאן את האימון הבא שלך.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                    {sessions.map((session) => {
                         const date = formatDate(session.start_time);
                         const isFull = (session.current_bookings || 0) >= session.max_capacity;
                         const spotsLeft = session.max_capacity - (session.current_bookings || 0);
@@ -245,13 +215,13 @@ export default function BookingPage() {
                             e.stopPropagation();
                             if (navigator.vibrate) navigator.vibrate(10);
 
-                            const title = `אימון ${session.title} - Talia Gym`;
+                            const title = `אימון ${session.title} - סטודיו טליה`;
                             const location = "סטודיו טליה";
                             const description = session.description || "אימון בסטודיו טליה";
                             const start = new Date(session.start_time);
                             const end = new Date(session.end_time);
 
-                            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+                            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
 
                             if (isIOS) {
                                 const startStr = start.toISOString().replace(/-|:|\.\\d+/g, "");
@@ -269,7 +239,7 @@ END:VCALENDAR`;
                                 const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
                                 const link = document.createElement('a');
                                 link.href = window.URL.createObjectURL(blob);
-                                link.setAttribute('download', 'workout.ics');
+                                link.setAttribute('download', 'אימון-בסטודיו.ics');
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
@@ -287,184 +257,87 @@ END:VCALENDAR`;
                         };
 
                         return (
-                            <div
-                                key={session.id}
-                                style={{ opacity: isAnimated ? 1 : 0 }}
-                                className={`session-card group relative p-5 rounded-[2rem] border transition-all duration-300
-                                    ${session.isRegistered
-                                        ? "bg-primary/5 border-primary/30 hover:border-primary/50"
-                                        : isFull
-                                            ? "bg-muted/30 border-border opacity-70"
-                                            : "bg-card/60 border-border hover:border-primary/30 hover:bg-card/80"
-                                    }`}
-                            >
-                                {/* Almost full badge */}
-                                {isAlmostFull && !session.isRegistered && (
-                                    <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg animate-pulse">
-                                        <Sparkles className="w-3 h-3" />
-                                        נשארו {spotsLeft} מקומות!
-                                    </div>
-                                )}
-
-                                <div className="flex gap-5">
-                                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl shrink-0 transition-all
-                                        ${session.isRegistered
-                                            ? "bg-primary text-black shadow-lg shadow-primary/30"
-                                            : isFull
-                                                ? "bg-muted text-muted-foreground"
-                                                : "bg-muted/20 text-foreground group-hover:bg-primary/20"}`}>
-                                        <span className="text-xl font-bold leading-none">{date.day}</span>
-                                        <span className="text-xs font-bold uppercase opacity-80">{date.month}</span>
-                                    </div>
-
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="text-lg font-bold mb-1 text-foreground flex items-center gap-2 group-hover:text-primary transition-colors">
-                                                {session.title}
-                                                {isFull && !session.isRegistered && (
-                                                    <span className="text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
-                                                        מלא
-                                                    </span>
-                                                )}
-                                            </h3>
-                                            {session.isRegistered && (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={addToCalendar}
-                                                        className="w-10 h-10 rounded-full bg-black text-[#E2F163] flex items-center justify-center shadow-md active:scale-95 transition-transform hover:shadow-lg"
-                                                    >
-                                                        <CalendarPlus className="w-5 h-5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={handleCancelClick}
-                                                        className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shadow-md active:scale-95 transition-transform hover:bg-red-200"
-                                                    >
-                                                        <X className="w-5 h-5" />
-                                                    </button>
-                                                </div>
-                                            )}
+                            <article key={session.id} className={`overflow-hidden rounded-[1.75rem] border bg-card ${session.isRegistered ? "border-primary/50" : "border-border"}`}>
+                                <div className="p-5">
+                                    <div className="mb-5 flex items-start justify-between gap-3">
+                                        <div className={`flex h-[4.5rem] w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-[1.1rem] ${session.isRegistered ? "bg-primary text-primary-foreground" : "bg-[#1b251c] text-[#f6f6ed]"}`}>
+                                            <span className="text-[1.85rem] font-bold leading-none tabular-nums">{date.day}</span>
+                                            <span className="mt-1 text-xs font-bold">{date.month}</span>
                                         </div>
-
-                                        <div className="flex flex-col gap-1 text-sm text-muted-foreground font-medium my-2">
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="w-3 h-3" />
-                                                {date.weekday}, {date.time}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="w-3 h-3" />
-                                                {getRelativeTimeHebrew(session.start_time)} • {session.current_bookings || 0}/{session.max_capacity} מוזמנים
-                                            </div>
-                                        </div>
+                                        <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${session.isRegistered ? "bg-primary/15 text-primary" : isFull ? "bg-muted text-muted-foreground" : isAlmostFull ? "bg-[#f4e6cd] text-[#754d16]" : "bg-muted/50 text-foreground"}`}>
+                                            {session.isRegistered ? "המקום שלך שמור" : isFull ? "האימון מלא" : isAlmostFull ? `נשארו ${spotsLeft} מקומות` : "אפשר להירשם"}
+                                        </span>
                                     </div>
+
+                                    <h3 className="mb-2 break-words text-[1.45rem] font-bold leading-snug">{session.title}</h3>
+                                    <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                        <Clock3 aria-hidden="true" className="h-4 w-4 shrink-0" />
+                                        {date.weekday} · {date.time}
+                                    </p>
+                                    <p className="mt-2 text-xs text-muted-foreground">{getRelativeTimeHebrew(session.start_time)} · {session.current_bookings || 0} מתוך {session.max_capacity} מקומות תפוסים</p>
                                 </div>
 
-                                <button
-                                    onClick={() => !session.isRegistered && !isFull && handleBook(session.id)}
-                                    disabled={bookingId === session.id || (isFull && !session.isRegistered) || session.isRegistered}
-                                    className={`w-full mt-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all
-                                        ${session.isRegistered
-                                            ? "bg-green-100 text-green-700 border border-green-200"
-                                            : isFull
-                                                ? "bg-muted text-muted-foreground cursor-not-allowed"
-                                                : "bg-black text-white shadow-lg hover:shadow-xl hover:bg-neutral-800 active:scale-[0.98]"
-                                        }`}
-                                >
-                                    {session.isRegistered
-                                        ? <><Check className="w-4 h-4" /> נרשמת לאימון זה</>
-                                        : bookingId === session.id
-                                            ? <span className="flex items-center gap-2">
-                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                מבצע רישום...
-                                            </span>
-                                            : isFull
-                                                ? "האימון מלא"
-                                                : "שרייני מקום →"}
-                                </button>
-                            </div>
+                                {session.isRegistered ? (
+                                    <div className="flex border-t border-border">
+                                        <button type="button" onClick={addToCalendar} className="flex min-h-12 flex-1 items-center justify-center gap-2 px-2 text-xs font-bold transition-colors active:bg-muted/40">
+                                            <CalendarPlus aria-hidden="true" className="h-4 w-4" /> הוספה ליומן
+                                        </button>
+                                        <div className="w-px bg-border" />
+                                        <button type="button" onClick={handleCancelClick} className="flex min-h-12 flex-1 items-center justify-center gap-2 px-2 text-xs font-bold text-[#a53d35] transition-colors active:bg-muted/40">
+                                            <X aria-hidden="true" className="h-4 w-4" /> ביטול הרשמה
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => !isFull && handleBook(session.id)}
+                                        disabled={bookingId === session.id || isFull}
+                                        className={`flex min-h-14 w-full items-center justify-between border-t px-5 text-sm font-bold transition-colors ${isFull ? "border-border bg-muted/30 text-muted-foreground" : "border-[#1b251c] bg-[#1b251c] text-[#f6f6ed] active:bg-[#334436]"}`}
+                                    >
+                                        {bookingId === session.id ? "רושמים אותך..." : isFull ? "האימון מלא" : "שמרי לי מקום"}
+                                        {!isFull && (bookingId === session.id ? <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <ArrowLeft aria-hidden="true" className="h-4 w-4" />)}
+                                    </button>
+                                )}
+                            </article>
                         )
                     })}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
 
-            {/* Confirmation Modal */}
             <AnimatePresence>
                 {sessionToCancel && (
-                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[100] flex items-end justify-center">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setSessionToCancel(null)}
-                            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                            className="absolute inset-0 bg-[#111a12]/65"
                         />
                         <motion.div
                             initial={{ translateY: "100%", opacity: 0 }}
                             animate={{ translateY: "0%", opacity: 1 }}
                             exit={{ translateY: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="relative w-full max-w-sm bg-card border border-border rounded-3xl p-6 shadow-2xl"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="cancel-booking-title"
+                            className="relative w-full max-w-lg rounded-t-[2rem] border border-border bg-card px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 shadow-2xl"
                         >
-                            <div className="flex flex-col items-center text-center gap-4">
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: "spring", delay: 0.1 }}
-                                    className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-2"
-                                >
-                                    <AlertCircle className="w-8 h-8 text-red-600" />
-                                </motion.div>
-                                <h3 className="text-2xl font-bold text-foreground">ביטול אימון?</h3>
-                                <p className="text-muted-foreground text-sm leading-relaxed">
-                                    האם את בטוחה שברצונך לבטל את הרישום לאימון
-                                    <span className="font-bold text-foreground block mt-1">"{sessionToCancel.title}"?</span>
-                                </p>
-
-                                <div className="grid grid-cols-2 gap-3 w-full mt-4">
-                                    <button
-                                        onClick={() => setSessionToCancel(null)}
-                                        className="py-3 rounded-xl font-bold text-foreground bg-muted active:scale-95 transition-transform hover:bg-muted/80"
-                                    >
-                                        חזרה
-                                    </button>
-                                    <button
-                                        onClick={confirmCancel}
-                                        className="py-3 rounded-xl font-bold text-white bg-red-600 shadow-lg active:scale-95 transition-transform hover:bg-red-700"
-                                    >
-                                        כן, לבטל
-                                    </button>
-                                </div>
+                            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f8e8e5] text-[#a53d35]">
+                                <AlertCircle aria-hidden="true" className="h-6 w-6" />
+                            </div>
+                            <h3 id="cancel-booking-title" className="text-2xl font-bold">לבטל את ההרשמה?</h3>
+                            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">המקום שלך באימון <strong className="text-foreground">{sessionToCancel.title}</strong> יתפנה, והאימון יוחזר ליתרה שלך.</p>
+                            <div className="mt-7 grid grid-cols-2 gap-3">
+                                <button type="button" onClick={() => setSessionToCancel(null)} className="min-h-12 rounded-full bg-muted px-3 text-sm font-bold transition-colors active:bg-muted/70">להישאר רשומה</button>
+                                <button type="button" onClick={confirmCancel} className="min-h-12 rounded-full bg-[#a53d35] px-3 text-sm font-bold text-white transition-colors active:bg-[#862e28]">כן, לבטל</button>
                             </div>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
-
-            {/* Shimmer styles */}
-            <style jsx>{`
-                .shimmer-skeleton {
-                    position: relative;
-                    overflow: hidden;
-                }
-                .shimmer-skeleton::after {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: linear-gradient(
-                        90deg,
-                        transparent,
-                        rgba(255, 255, 255, 0.05),
-                        transparent
-                    );
-                    animation: shimmer 1.5s infinite;
-                }
-                @keyframes shimmer {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
-            `}</style>
         </div>
     );
 }
