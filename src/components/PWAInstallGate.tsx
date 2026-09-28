@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Smartphone, Share, Plus, X, CheckCircle2, Zap, Bell, Rocket, Home, PartyPopper } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
@@ -13,6 +13,11 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
     const { canAccess, canInstall, isIOS, justInstalled, promptInstall, isLoading } = usePWAInstall();
     const [showIOSInstructions, setShowIOSInstructions] = useState(false);
     const [isInstalling, setIsInstalling] = useState(false);
+    const [continueInBrowser, setContinueInBrowser] = useState(false);
+
+    useEffect(() => {
+        setContinueInBrowser(window.localStorage.getItem("talia-browser-access") === "true");
+    }, []);
 
     // While loading, show nothing (prevents flash)
     if (isLoading) {
@@ -24,7 +29,7 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
     }
 
     // If user can access (PWA or localhost), show the app
-    if (canAccess) {
+    if (canAccess || continueInBrowser) {
         return <>{children}</>;
     }
 
@@ -197,6 +202,17 @@ export default function PWAInstallGate({ children }: PWAInstallGateProps) {
                         </>
                     )}
                 </motion.button>
+
+                <button
+                    type="button"
+                    onClick={() => {
+                        window.localStorage.setItem("talia-browser-access", "true");
+                        setContinueInBrowser(true);
+                    }}
+                    className="mt-5 text-sm text-neutral-300 underline underline-offset-4 hover:text-white"
+                >
+                    המשך בדפדפן ללא התקנה
+                </button>
 
                 {/* iOS hint */}
                 {isIOS && (
