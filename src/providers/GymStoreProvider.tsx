@@ -93,8 +93,11 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
             if (error) throw error;
 
-            // Safeguard against null data
-            return data || { success: false, message: "No response from server" };
+            if (!data?.success) {
+                setTickets(prev => prev - 1);
+                return data || { success: false, message: "No response from server" };
+            }
+            return data;
         } catch (error) {
             console.error("Cancel error:", error);
             // Revert on failure
