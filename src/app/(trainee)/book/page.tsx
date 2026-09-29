@@ -96,6 +96,7 @@ export default function BookingPage() {
         } else {
             // Success animation
             if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+            sessionStorage.removeItem(`talia_upcoming_${userId}`);
             toast({ title: "נרשמת בהצלחה! 🎉", description: "נתראה באימון", type: "success" });
             setSessions(current => current.map(session => session.id === sessionId ? { ...session, isRegistered: true, current_bookings: session.current_bookings + 1 } : session));
             void Promise.all([refreshData(), fetchSessions()]);
@@ -135,6 +136,7 @@ export default function BookingPage() {
         const result = await globalCancel(sessionToCancel.id);
 
         if (result.success) {
+            sessionStorage.removeItem(`talia_upcoming_${userId}`);
             toast({ title: "האימון בוטל", description: "הזיכוי הוחזר לחשבונך", type: "success" });
             fetchSessions();
 
