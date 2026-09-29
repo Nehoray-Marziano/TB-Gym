@@ -189,6 +189,22 @@ a,
   to { transform: translate3d(12px, -14px, 0); }
 }
 
+.studio-hand-underline {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: studio-draw-underline 1s 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes studio-draw-underline {
+  0% { stroke-dashoffset: 100; opacity: 0; }
+  8% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-hand-underline { stroke-dashoffset: 0; opacity: 1; animation: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
