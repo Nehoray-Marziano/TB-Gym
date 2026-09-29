@@ -6,7 +6,7 @@ import { ToastProvider } from "@/components/ui/use-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GymStoreProvider } from "@/providers/GymStoreProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
-import PWAInstallGate from "@/components/PWAInstallGate";
+import { PWAInstallProvider } from "@/components/PWAInstallProvider";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 import DebugNotificationPanel from "@/components/DebugNotificationPanel";
 import MotionProvider from "@/components/MotionProvider";
@@ -70,9 +70,9 @@ export default function RootLayout({
               <GymStoreProvider>
                 <ConnectedOneSignalProvider />
                 <DebugNotificationPanel />
-                <PWAInstallGate>
+                <PWAInstallProvider>
                   {children}
-                </PWAInstallGate>
+                </PWAInstallProvider>
               </GymStoreProvider>
             </ToastProvider>
           </MotionProvider>

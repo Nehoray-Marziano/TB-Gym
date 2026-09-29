@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
 import StudioLogo from "@/components/StudioLogo";
 import { useGymStore } from "@/providers/GymStoreProvider";
+import InstallAppButton from "@/components/profile/InstallAppButton";
 
 
 type UserProfile = {
@@ -261,6 +262,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
             <section className="space-y-3">
                 <h3 className="mb-3 mt-7 text-[1.35rem] font-bold">העדפות</h3>
+                <InstallAppButton />
                 <div className="space-y-4 rounded-[1.75rem] border border-[#162218]/10 bg-[var(--studio-card)] p-5">
                     <div className="flex items-center gap-4">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
