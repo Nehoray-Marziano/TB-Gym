@@ -8,7 +8,7 @@ import { ArrowLeft, ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
-import StudioLogo from "@/components/StudioLogo";
+import StudioBotanical from "@/components/StudioBotanical";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import InstallAppButton from "@/components/profile/InstallAppButton";
 
@@ -163,8 +163,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             </div>
 
             {!isEditing && (
-                <Link href="/subscription" className="relative mb-4 mt-6 flex min-h-32 items-center gap-4 overflow-hidden rounded-[1.5rem] bg-[var(--studio-deep)] p-5 text-[var(--studio-deep-contrast)]">
-                    <StudioLogo className="pointer-events-none absolute -bottom-14 -left-10 h-44 w-44 bg-[var(--studio-accent-bg)]/10" />
+                <Link href="/subscription" className="relative mb-4 mt-6 flex min-h-32 items-center gap-4 overflow-hidden rounded-[2rem_1.1rem_2rem_1.1rem] bg-[var(--studio-deep)] p-5 text-[var(--studio-deep-contrast)]">
+                    <StudioBotanical sun={false} className="studio-botanical-drift pointer-events-none absolute -bottom-16 -left-20 h-44 w-72 text-[var(--studio-accent-text)]/20" />
                     <div className="relative flex-1">
                         <p className="text-xs font-bold text-[var(--studio-accent-text)]">יתרת האימונים</p>
                         <p className="mt-2 text-xs">{subscription?.is_active ? subscription.tier_display_name : "בחירת מנוי"} <ArrowLeft aria-hidden="true" className="inline h-3.5 w-3.5" /></p>
@@ -277,13 +277,12 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             type="button"
                             aria-pressed={theme === 'dark'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('dark'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'dark' ? 'border-[#d1e78d]' : 'border-[#162218]/15'}`}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'dark' ? 'border-[#8b8e6f]' : 'border-[#162218]/15'}`}
                             style={{ background: '#101a18' }}
                         >
                             <Moon className="w-5 h-5 text-white" />
                             <span className="text-xs font-bold text-white">כהה</span>
-                            {/* Neon Accent */}
-                            <div className="absolute bottom-0 w-full h-1 bg-[#d1e78d]" />
+                            <div className="absolute bottom-0 w-full h-1 bg-[#8b8e6f]" />
                         </button>
 
                         {/* Classic Theme */}
@@ -291,13 +290,12 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             type="button"
                             aria-pressed={theme === 'classic'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('classic'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'classic' ? 'border-[#8c9070]' : 'border-[#162218]/15'}`}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'classic' ? 'border-[#8b8e6f]' : 'border-[#162218]/15'}`}
                             style={{ background: '#e9eadc' }}
                         >
                             <Palette className="w-5 h-5 text-black" />
                             <span className="text-xs font-bold text-black">קלאסי</span>
-                            {/* Olive Accent */}
-                            <div className="absolute bottom-0 w-full h-1 bg-[#dce780]" />
+                            <div className="absolute bottom-0 w-full h-1 bg-[#8b8e6f]" />
                         </button>
 
                         {/* Light Theme */}
@@ -305,13 +303,12 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             type="button"
                             aria-pressed={theme === 'light'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('light'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'light' ? 'border-[#b7e8dc]' : 'border-[#162218]/15'}`}
-                            style={{ background: '#f6f7f5' }}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'light' ? 'border-[#8b8e6f]' : 'border-[#162218]/15'}`}
+                            style={{ background: '#faf9f2' }}
                         >
                             <Sun className="w-5 h-5 text-black" />
                             <span className="text-xs font-bold text-black">בהיר</span>
-                            {/* Yellow Accent */}
-                            <div className="absolute bottom-0 w-full h-1 bg-[#b7e8dc]" />
+                            <div className="absolute bottom-0 w-full h-1 bg-[#8b8e6f]" />
                         </button>
                     </div>
                 </div>
