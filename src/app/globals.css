@@ -32,64 +32,66 @@
 
 /* LIGHT MODE (Default) */
 :root {
-  --studio-canvas: #f6f7f5;
-  --studio-deep: #203447;
-  --studio-deep-contrast: #f7faf8;
-  --studio-ink: #203447;
-  --studio-card: #ffffff;
-  --studio-sheet: #ffffff;
-  --studio-accent-bg: #b7e8dc;
-  --studio-accent-text: #c8f1e8;
-  --studio-coral-bg: #f7a48b;
-  --studio-coral-text: #f7a48b;
+  --studio-brand: #8b8e6f;
+  --studio-canvas: #faf9f2;
+  --studio-deep: #243128;
+  --studio-deep-contrast: #f7f5eb;
+  --studio-ink: #243128;
+  --studio-card: #fffef9;
+  --studio-sheet: #fffef9;
+  --studio-accent-bg: #8b8e6f;
+  --studio-accent-text: #cbd3aa;
+  --studio-coral-bg: #c37a61;
+  --studio-coral-text: #e5a38b;
   --studio-coral-ink: #50362f;
-  --studio-muted: #52646c;
-  --studio-subtle: #52666a;
-  --studio-neutral-bg: #e9f0ed;
+  --studio-muted: #5c6755;
+  --studio-subtle: #5a6a50;
+  --studio-neutral-bg: #e6e8da;
   --studio-warning-bg: #f6e8d8;
   --studio-warning-ink: #754d16;
   --studio-danger: #b8403b;
-  --background: #f6f7f5;
-  --foreground: #203447;
+  --background: #faf9f2;
+  --foreground: #243128;
 
-  --card: #FFFFFF;
-  --card-foreground: #203447;
+  --card: #fffef9;
+  --card-foreground: #243128;
 
-  --popover: #FFFFFF;
-  --popover-foreground: #203447;
+  --popover: #fffef9;
+  --popover-foreground: #243128;
 
-  --primary: #b7e8dc;
-  --primary-foreground: #203447;
+  --primary: #8b8e6f;
+  --primary-foreground: #243128;
 
-  --secondary: #e9f0ed;
-  --secondary-foreground: #203447;
+  --secondary: #e6e8da;
+  --secondary-foreground: #243128;
 
-  --muted: #dae8e4;
-  --muted-foreground: #52666a;
+  --muted: #e0e4d3;
+  --muted-foreground: #5c6755;
 
-  --accent: #b7e8dc;
-  --accent-foreground: #203447;
+  --accent: #8b8e6f;
+  --accent-foreground: #243128;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #cddad5;
-  --input: #e9f0ed;
-  --ring: #488780;
+  --border: #ced4bd;
+  --input: #e6e8da;
+  --ring: #8b8e6f;
 }
 
 /* CLASSIC MODE - User Requested #8c9070 */
 .classic {
+  --studio-brand: #8b8e6f;
   --studio-canvas: #e9eadc;
   --studio-deep: #162218;
   --studio-deep-contrast: #f6f6ed;
   --studio-ink: #162218;
   --studio-card: #f6f6ed;
   --studio-sheet: #f1f0e8;
-  --studio-accent-bg: #dce780;
-  --studio-accent-text: #dce780;
-  --studio-coral-bg: #f28c69;
-  --studio-coral-text: #f28c69;
+  --studio-accent-bg: #8b8e6f;
+  --studio-accent-text: #cbd3aa;
+  --studio-coral-bg: #c37a61;
+  --studio-coral-text: #e5a38b;
   --studio-coral-ink: #513329;
   --studio-muted: #5d6958;
   --studio-subtle: #68794f;
@@ -106,7 +108,7 @@
   --popover: #f6f6ed;
   --popover-foreground: #162218;
 
-  --primary: #dce780;
+  --primary: #8b8e6f;
   --primary-foreground: #162218;
 
   --secondary: #dde2cc;
@@ -115,7 +117,7 @@
   --muted: #d5dac8;
   --muted-foreground: #5d6958;
 
-  --accent: #dce780;
+  --accent: #8b8e6f;
   --accent-foreground: #162218;
 
   --destructive: #ef4444;
@@ -123,22 +125,23 @@
 
   --border: #b9c5ad;
   --input: #f6f6ed;
-  --ring: #829044;
+  --ring: #8b8e6f;
 }
 
 /* DARK MODE */
 .dark {
   color-scheme: dark;
+  --studio-brand: #8b8e6f;
   --studio-canvas: #101a18;
   --studio-deep: #1a2a25;
   --studio-deep-contrast: #f2f4ec;
   --studio-ink: #f2f4ec;
   --studio-card: #26352d;
   --studio-sheet: #27382f;
-  --studio-accent-bg: #3e603c;
-  --studio-accent-text: #d1e78d;
-  --studio-coral-bg: #884d3a;
-  --studio-coral-text: #f6a285;
+  --studio-accent-bg: #4c5a42;
+  --studio-accent-text: #d4dcaf;
+  --studio-coral-bg: #885946;
+  --studio-coral-text: #e5a38b;
   --studio-coral-ink: #f9dfd4;
   --studio-muted: #c0cabc;
   --studio-subtle: #bdd39b;
@@ -155,7 +158,7 @@
   --popover: #26352d;
   --popover-foreground: #f2f4ec;
 
-  --primary: #d1e78d;
+  --primary: #8b8e6f;
   --primary-foreground: #101a18;
 
   --secondary: #304239;
@@ -164,7 +167,7 @@
   --muted: #304239;
   --muted-foreground: #c0cabc;
 
-  --accent: #d1e78d;
+  --accent: #8b8e6f;
   --accent-foreground: #101a18;
 
   --destructive: #7f1d1d;
@@ -172,7 +175,7 @@
 
   --border: #405348;
   --input: #304239;
-  --ring: #d1e78d;
+  --ring: #a9b58b;
 }
 
 /* ===== PWA NATIVE FEEL ===== */
