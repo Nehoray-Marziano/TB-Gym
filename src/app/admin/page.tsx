@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarDays, UsersRound } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import StudioLogo from "@/components/StudioLogo";
+import StudioBotanical from "@/components/StudioBotanical";
 
 type Overview = { today: number; upcoming: number; trainees: number };
 
@@ -48,8 +49,8 @@ export default function AdminDashboardPage() {
             </header>
 
             <section aria-label="הפעילות בסטודיו" className="mt-6">
-                <div className="relative isolate overflow-hidden rounded-[1.65rem] bg-[var(--studio-accent-bg)] p-5 text-[var(--studio-ink)]">
-                    <StudioLogo className="pointer-events-none absolute -bottom-14 -left-10 h-52 w-52 bg-[var(--studio-deep)]/10" />
+                <div className="relative isolate overflow-hidden rounded-[2rem_1.1rem_2rem_1.1rem] bg-[var(--studio-accent-bg)] p-5 text-[var(--studio-ink)]">
+                    <StudioBotanical className="studio-botanical-drift pointer-events-none absolute -bottom-12 -left-20 h-44 w-72 text-[var(--studio-deep)]/20" />
                     <div className="relative flex items-start justify-between gap-3">
                         <div>
                             <p className="text-xs font-bold">אימונים היום</p>
