@@ -1,14 +1,10 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Search, User, Ticket, Clock } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Search, User, Ticket } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import TicketUpdateModal from "@/components/admin/TicketUpdateModal";
-
-// Ticket Counter Component for Batch Updates
-
 
 type Profile = {
     id: string;
@@ -32,33 +28,15 @@ export default function AdminTraineesPage() {
     const [trainees, setTrainees] = useState<Trainee[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [grantingTickets, setGrantingTickets] = useState<string | null>(null);
     const [selectedTraineeForUpdate, setSelectedTraineeForUpdate] = useState<Trainee | null>(null);
     const { toast } = useToast();
 
-    useEffect(() => {
-        fetchTrainees();
-    }, []);
-
-    const fetchTrainees = async () => {
+    const fetchTrainees = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            alert("No user logged in");
+            alert("צריך להיכנס לחשבון כדי לראות את המתאמנות.");
             return;
-        }
-
-        setCurrentUserId(user.id);
-
-        // Debug: Check my own role
-        const { data: myProfile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-        console.log("My Role:", myProfile?.role);
-        if (myProfile?.role !== 'administrator') {
-            // Show visible warning
-            const debugDiv = document.createElement('div');
-            debugDiv.style.cssText = "position:fixed;top:100px;left:20px;background:red;color:white;padding:20px;z-index:9999;font-weight:bold;font-size:20px;";
-            debugDiv.innerText = "WARNING: YOU ARE NOT DETECTED AS 'administrator'. Your role is: " + (myProfile?.role || 'null');
-            document.body.appendChild(debugDiv);
         }
 
         // Get profiles
@@ -69,13 +47,14 @@ export default function AdminTraineesPage() {
 
         if (error) {
             console.error(error);
-            toast({ title: "שגיאה בטעינה", description: error.message, type: "error" });
+            toast({ title: "לא הצלחנו לטעון את המתאמנות", description: "כדאי לנסות שוב בעוד רגע.", type: "error" });
             return;
         }
 
         // For each profile, get tickets and subscription info
+        const traineeProfiles = (profiles as Profile[]).filter((profile) => profile.role !== "administrator");
         const traineesWithData = await Promise.all(
-            profiles.map(async (p: any) => {
+            traineeProfiles.map(async (p) => {
                 const [ticketRes, subRes] = await Promise.all([
                     supabase.rpc("get_available_tickets", { p_user_id: p.id }),
                     supabase.rpc("get_user_subscription", { p_user_id: p.id }),
@@ -91,7 +70,11 @@ export default function AdminTraineesPage() {
 
         setTrainees(traineesWithData);
         setLoading(false);
-    };
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        fetchTrainees();
+    }, [fetchTrainees]);
 
     const handleGrantTickets = async (userId: string, quantity: number) => {
         setGrantingTickets(userId);
@@ -132,20 +115,12 @@ export default function AdminTraineesPage() {
 
             toast({ title: "הכרטיסים עודכנו בהצלחה", type: "success" });
             setSelectedTraineeForUpdate(null); // Close modal
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            toast({ title: "שגיאה בהענקת כרטיסים", description: err.message, type: "error" });
+            toast({ title: "שגיאה בהענקת כרטיסים", description: err instanceof Error ? err.message : "כדאי לנסות שוב בעוד רגע.", type: "error" });
         } finally {
             setGrantingTickets(null);
         }
-    };
-
-    const formatExpiryDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return new Intl.DateTimeFormat("he-IL", {
-            day: "numeric",
-            month: "short",
-        }).format(date);
     };
 
     const filteredTrainees = trainees.filter(t =>
@@ -155,93 +130,70 @@ export default function AdminTraineesPage() {
     );
 
     return (
-        <div className="pb-20 font-sans text-neutral-100">
+        <div className="space-y-7 text-[#f6f6ed]">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-                <div>
-                    <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">ניהול מתאמנות</h1>
-                    <p className="text-neutral-400 font-medium">{trainees.length} מתאמנות רשומות במערכת</p>
+            <header className="border-b border-white/15 pb-7">
+                <div className="mb-8 flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#dce780]" />ניהול הסטודיו</span>
+                    <span className="text-xs text-[#aebbad]">מתאמנות</span>
                 </div>
+                <h1 className="text-[clamp(2.7rem,11vw,4.1rem)] font-bold leading-[1.02] tracking-tight">המתאמנות<br /><span className="text-[#dce780]">שלך.</span></h1>
+                <p className="mt-4 text-sm leading-relaxed text-[#aebbad]">{loading ? "טוענים מתאמנות..." : trainees.length === 1 ? "מתאמנת אחת בסטודיו" : `${trainees.length} מתאמנות בסטודיו`}</p>
 
-                {/* Glass Search Bar */}
-                <div className="relative w-full md:w-96 group">
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-neutral-500 group-focus-within:text-[#E2F163] transition-colors" />
-                    </div>
+                <div className="relative mt-7">
+                    <Search aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#aebbad]" />
                     <input
                         type="text"
-                        placeholder="חיפוש לפי שם, אימייל או טלפון..."
+                        aria-label="חיפוש מתאמנת"
+                        placeholder="חיפוש לפי שם, מייל או טלפון"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-neutral-900/50 backdrop-blur-md border border-neutral-800 rounded-2xl py-4 pr-12 pl-4 text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#E2F163]/50 focus:bg-neutral-900 transition-all shadow-sm"
+                        className="min-h-14 w-full rounded-2xl border border-white/15 bg-[#202c21] py-3 pr-12 pl-4 text-sm text-[#f6f6ed] outline-none placeholder:text-[#aebbad] focus:border-[#dce780]"
                     />
                 </div>
-            </div>
+            </header>
 
             {loading ? (
-                <div className="flex justify-center mt-20">
-                    <div className="w-10 h-10 border-4 border-[#E2F163] border-t-transparent rounded-full animate-spin" />
+                <div aria-label="טוענים מתאמנות" className="space-y-3">
+                    {Array.from({ length: 2 }).map((_, index) => <div key={index} className="h-44 animate-pulse rounded-[1.75rem] bg-[#202c21]" />)}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4">
-                    {filteredTrainees.map((trainee, i) => (
-                        <motion.div
+                <div className="space-y-3">
+                    {filteredTrainees.map((trainee) => (
+                        <article
                             key={trainee.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                            className="bg-neutral-900/40 border border-white/5 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-neutral-900/60 hover:border-white/10 transition-all group"
+                            className="rounded-[1.75rem] border border-white/10 bg-[#202c21] p-5"
                         >
-                            <div className="flex items-center gap-4">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-105 transition-transform border ${trainee.id === currentUserId ? "bg-[#E2F163] text-black border-[#E2F163]" : "bg-neutral-800 text-white border-white/5 bg-gradient-to-br from-neutral-800 to-neutral-900"}`}>
-                                    {trainee.full_name ? trainee.full_name[0] : <User className="w-6 h-6 opacity-50" />}
+                            <div className="flex min-w-0 items-start gap-4">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dce780]/15 text-lg font-bold text-[#dce780]">
+                                    {trainee.full_name ? trainee.full_name[0] : <User aria-hidden="true" className="h-5 w-5" />}
                                 </div>
+                                <div className="min-w-0 flex-1">
+                                    <h2 className="truncate text-lg font-bold">{trainee.full_name || "ללא שם"}</h2>
+                                    {trainee.phone && <p dir="ltr" className="mt-2 truncate text-right text-xs text-[#aebbad]">{trainee.phone}</p>}
+                                    <p dir="ltr" className="mt-1 truncate text-right text-xs text-[#aebbad]">{trainee.email}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className={`text-lg font-bold mb-1 transition-colors ${trainee.id === currentUserId ? "text-[#E2F163]" : "text-white group-hover:text-[#E2F163]"}`}>
-                                            {trainee.full_name || "ללא שם"}
-                                        </h3>
-                                        {trainee.id === currentUserId && (
-                                            <span className="bg-[#E2F163]/20 text-[#E2F163] text-[10px] px-2 py-0.5 rounded-full font-bold border border-[#E2F163]/30">
-                                                את
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row sm:gap-4 text-sm text-neutral-500 font-medium">
-                                        <span>{trainee.phone}</span>
-                                        <span className="hidden sm:inline">•</span>
-                                        <span>{trainee.email}</span>
-                                    </div>
+                                    <p className="text-xs text-[#aebbad]">יתרת אימונים</p>
+                                    <p className="mt-1 flex items-center gap-2 text-2xl font-bold tabular-nums"><Ticket aria-hidden="true" className="h-4 w-4 text-[#dce780]" />{trainee.tickets}</p>
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedTraineeForUpdate(trainee)}
+                                    className="min-h-11 shrink-0 rounded-full bg-[#dce780] px-4 text-xs font-bold text-[#1b251c] transition-colors active:bg-[#e9f19e]"
+                                >
+                                    עדכון יתרה
+                                </button>
                             </div>
-
-                            <div className="flex items-center gap-4">
-
-
-                                {/* Tickets Display */}
-                                <div className="flex items-center gap-4 bg-black/20 p-2 rounded-2xl border border-white/5">
-                                    <div className="px-4 text-right">
-                                        <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest block mb-1">כרטיסים</span>
-                                        <span className="text-xl font-bold text-white flex items-center gap-2">
-                                            <Ticket className="w-4 h-4 text-[#E2F163]" />
-                                            {trainee.tickets}
-                                        </span>
-                                    </div>
-
-                                    <button
-                                        onClick={() => setSelectedTraineeForUpdate(trainee)}
-                                        className="bg-[#E2F163] text-black px-3 py-2 rounded-xl text-xs font-bold hover:bg-[#d4e450] transition-colors whitespace-nowrap shadow-lg shadow-[#E2F163]/10"
-                                    >
-                                        עדכון יתרה
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
+                        </article>
                     ))}
 
                     {filteredTrainees.length === 0 && (
-                        <div className="text-center py-20 text-neutral-500">
-                            לא נמצאו מתאמנות תואמות לחיפוש 🔍
+                        <div className="rounded-[1.75rem] border border-dashed border-white/15 bg-[#202c21]/50 px-5 py-12 text-center text-sm text-[#aebbad]">
+                            {searchTerm ? "לא נמצאו מתאמנות שמתאימות לחיפוש." : "אין מתאמנות להצגה כרגע."}
                         </div>
                     )}
                 </div>

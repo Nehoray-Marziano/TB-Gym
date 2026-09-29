@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Ticket, ArrowRight, ArrowLeft } from "lucide-react";
-import { useState, useEffect } from "react";
+import { X, Ticket, ArrowLeft } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface TicketUpdateModalProps {
@@ -15,9 +15,9 @@ interface TicketUpdateModalProps {
 }
 
 const PRESETS = [
-    { label: "בסיסי", amount: 4, color: "bg-slate-700 text-slate-100" },
-    { label: "סטנדרטי", amount: 8, color: "bg-[#E2F163] text-black" },
-    { label: "פרימיום", amount: 12, color: "bg-pink-600 text-white" },
+    { label: "4 אימונים", amount: 4 },
+    { label: "8 אימונים", amount: 8 },
+    { label: "12 אימונים", amount: 12 },
 ];
 
 export default function TicketUpdateModal({
@@ -29,11 +29,6 @@ export default function TicketUpdateModal({
     isUpdating
 }: TicketUpdateModalProps) {
     const [amountToAdd, setAmountToAdd] = useState<number>(0);
-
-    // Reset state when opening
-    useEffect(() => {
-        if (isOpen) setAmountToAdd(0);
-    }, [isOpen]);
 
     const handleConfirm = () => {
         if (amountToAdd !== 0) {
@@ -47,111 +42,102 @@ export default function TicketUpdateModal({
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+                        className="fixed inset-0 z-[100] flex items-end justify-center bg-[#071009]/80"
                     >
-                        {/* Modal */}
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="ticket-update-title"
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            transition={{ type: "spring", damping: 28, stiffness: 300 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-[#1A1C19] border border-white/10 w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl relative"
+                            className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[#1b251c]"
                             dir="rtl"
                         >
-                            {/* Header */}
-                            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                                <div>
-                                    <h3 className="text-xl font-bold text-white">עדכון יתרה</h3>
-                                    <p className="text-white/50 text-sm">עבור {traineeName}</p>
-                                </div>
+                            <div className="relative mb-7">
+                                <p className="text-xs font-bold text-[#5c6d2e]">יתרת האימונים של {traineeName}</p>
+                                <h3 id="ticket-update-title" className="mt-2 text-[2rem] font-bold leading-tight">עדכון יתרה.</h3>
                                 <button
+                                    type="button"
                                     onClick={onClose}
-                                    className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                                    aria-label="סגירה"
+                                    className="absolute -top-1 left-0 flex h-11 w-11 items-center justify-center rounded-full border border-[#1b251c]/15"
                                 >
-                                    <X className="w-5 h-5" />
+                                    <X aria-hidden="true" className="h-5 w-5" />
                                 </button>
                             </div>
 
-                            {/* Body */}
-                            <div className="p-6 space-y-8">
+                            <div className="space-y-6">
 
-                                {/* Balance Preview */}
-                                <div className="flex items-center justify-between bg-black/30 p-4 rounded-2xl border border-white/5 relative overflow-hidden">
-                                    <div className="text-center flex-1">
-                                        <span className="text-xs text-white/40 block mb-1">נוכחי</span>
-                                        <span className="text-2xl font-bold text-white/60">{currentBalance}</span>
+                                <div className="flex items-center justify-between rounded-[1.5rem] bg-[#1b251c] p-5 text-white">
+                                    <div className="flex-1 text-center">
+                                        <span className="mb-2 block text-xs text-[#aebbad]">יתרה עכשיו</span>
+                                        <span className="text-[2rem] font-bold tabular-nums">{currentBalance}</span>
                                     </div>
-                                    <ArrowLeft className="w-5 h-5 text-white/20" />
-                                    <div className="text-center flex-1">
-                                        <span className="text-xs text-[#E2F163] block mb-1 font-bold">חדש</span>
-                                        <motion.span
-                                            key={newBalance}
-                                            initial={{ scale: 1.2, color: "#fff" }}
-                                            animate={{ scale: 1, color: "#E2F163" }}
-                                            className="text-3xl font-black"
-                                        >
-                                            {newBalance}
-                                        </motion.span>
+                                    <ArrowLeft aria-hidden="true" className="h-5 w-5 text-[#aebbad]" />
+                                    <div className="flex-1 text-center">
+                                        <span className="mb-2 block text-xs font-bold text-[#dce780]">יתרה אחרי העדכון</span>
+                                        <span className="text-[2.25rem] font-bold tabular-nums text-[#dce780]">{newBalance}</span>
                                     </div>
                                 </div>
 
-                                {/* Custom Input */}
-                                <div className="space-y-3">
-                                    <label className="text-xs font-bold text-white/40 uppercase tracking-wider block pr-1">
-                                        הוספה/הפחתה ידנית
+                                <div className="space-y-2">
+                                    <label htmlFor="ticket-change" className="block text-xs font-bold">
+                                        כמה אימונים להוסיף או להפחית?
                                     </label>
-                                    <div className="flex items-center gap-4">
-                                        <input
-                                            type="number"
-                                            value={amountToAdd === 0 ? '' : amountToAdd}
-                                            onChange={(e) => setAmountToAdd(parseInt(e.target.value) || 0)}
-                                            placeholder="0"
-                                            className="flex-1 bg-neutral-900 border border-white/10 rounded-xl py-4 px-4 text-center text-2xl font-bold text-white focus:outline-none focus:border-[#E2F163] transition-colors placeholder:text-neutral-700"
-                                        />
-                                    </div>
+                                    <input
+                                        id="ticket-change"
+                                        type="number"
+                                        inputMode="numeric"
+                                        step="1"
+                                        value={amountToAdd === 0 ? '' : amountToAdd}
+                                        onChange={(e) => setAmountToAdd(parseInt(e.target.value) || 0)}
+                                        placeholder="0"
+                                        className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-center text-xl font-bold outline-none focus:border-[#829044]"
+                                    />
+                                    <p className="text-xs text-[#5d6958]">להפחתה, כתבי מספר עם סימן מינוס.</p>
                                 </div>
 
-                                {/* Quick Presets */}
-                                <div className="space-y-3">
-                                    <label className="text-xs font-bold text-white/40 uppercase tracking-wider block pr-1">
-                                        חבילות מהירות
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-3">
+                                <div className="space-y-2">
+                                    <p className="text-xs font-bold">בחירה מהירה</p>
+                                    <div className="grid grid-cols-3 gap-2">
                                         {PRESETS.map((preset) => (
                                             <button
+                                                type="button"
                                                 key={preset.label}
                                                 onClick={() => setAmountToAdd(preset.amount)}
+                                                aria-pressed={amountToAdd === preset.amount}
                                                 className={cn(
-                                                    "py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-transform active:scale-95 shadow-lg",
-                                                    preset.color,
-                                                    amountToAdd === preset.amount ? "ring-2 ring-white scale-105" : "opacity-80 hover:opacity-100"
+                                                    "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border px-1 transition-colors",
+                                                    amountToAdd === preset.amount ? "border-[#829044] bg-[#dce780]" : "border-[#1b251c]/15 bg-white"
                                                 )}
                                             >
-                                                <span className="text-[10px] font-bold opacity-80">{preset.label}</span>
-                                                <span className="text-lg font-black leading-none">+{preset.amount}</span>
+                                                <span className="text-[11px] font-bold">{preset.label}</span>
+                                                <span className="text-lg font-bold leading-none tabular-nums">+{preset.amount}</span>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
-                                {/* Action Button */}
                                 <button
+                                    type="button"
                                     onClick={handleConfirm}
                                     disabled={isUpdating || amountToAdd === 0}
-                                    className="w-full py-4 bg-[#E2F163] text-black font-bold text-lg rounded-xl hover:bg-[#d4e450] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(226,241,99,0.2)] active:scale-[0.98] flex items-center justify-center gap-2"
+                                    className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1b251c] px-5 text-sm font-bold text-white disabled:opacity-50"
                                 >
                                     {isUpdating ? (
-                                        <span className="animate-pulse">מעדכן...</span>
+                                        <span>מעדכנים...</span>
                                     ) : (
                                         <>
                                             <span>עדכון יתרה</span>
-                                            <Ticket className="w-5 h-5 fill-black/20" />
+                                            <Ticket aria-hidden="true" className="h-4 w-4 text-[#dce780]" />
                                         </>
                                     )}
                                 </button>
