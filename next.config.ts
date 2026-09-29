@@ -30,28 +30,9 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Dashboard - NEVER cache  
-        urlPattern: /\/dashboard/i,
+        // Never replay personalized HTML or RSC payloads across accounts.
+        urlPattern: /\/(?:dashboard|book|my-bookings|profile|subscription|onboarding|admin)(?:\/|\?|$)/i,
         handler: "NetworkOnly",
-        options: {
-          cacheName: "dashboard-no-cache",
-        },
-      },
-      {
-        // Static pages
-        urlPattern: /\/(subscription|book|onboarding|profile)/i,
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "static-pages-v2",
-          networkTimeoutSeconds: 3,
-          expiration: {
-            maxEntries: 10,
-            maxAgeSeconds: 60 * 60,
-          },
-          cacheableResponse: {
-            statuses: [0, 200],
-          },
-        },
       },
       {
         // Supabase API - NEVER cache
