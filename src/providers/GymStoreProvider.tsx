@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import type { AuthChangeEvent, Session as AuthSession } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
 type Profile = {
@@ -56,6 +57,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [isDevMode, setIsDevMode] = useState(false);
     const fetchedRef = useRef(false);
+    const inFlightFetchRef = useRef<Promise<void> | null>(null);
 
     // Dev Mode Persistence
     useEffect(() => {
@@ -93,78 +95,87 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
             // Safeguard against null data
             return data || { success: false, message: "No response from server" };
-        } catch (error: any) {
+        } catch (error) {
             console.error("Cancel error:", error);
             // Revert on failure
             setTickets(prev => prev - 1);
-            return { success: false, message: error.message || "Failed to cancel" };
+            return { success: false, message: error instanceof Error ? error.message : "Failed to cancel" };
         }
     }, [getClient]);
 
-    const fetchData = useCallback(async (force: boolean = false, userId?: string) => {
-        // ALWAYS fetch from network - data must be fresh (no caching)
-        console.log("[GymStore] Fetching fresh data from network (caching disabled)");
+    const fetchData = useCallback((force: boolean = false, userId?: string) => {
+        // The provider and dashboard can request the same fresh data during one
+        // navigation. Share that request instead of repeating the three RPCs.
+        if (!force && inFlightFetchRef.current) return inFlightFetchRef.current;
 
-        const supabase = getClient();
-        if (!supabase) {
-            console.error("[GymStore] Supabase client is not available (check env vars)");
-            setLoading(false);
-            return;
-        }
+        const request = (async () => {
+            // ALWAYS fetch from network - data must be fresh (no caching)
+            console.log("[GymStore] Fetching fresh data from network (caching disabled)");
 
-        try {
-            // Use passed userId if available (from SSR), otherwise check auth
-            let uid = userId;
-            if (!uid) {
-                const { data: { user }, error: authError } = await supabase.auth.getUser();
-                if (authError || !user) {
-                    console.log("[GymStore] No user found directly or error:", authError);
-                    setLoading(false);
-                    return;
+            const supabase = getClient();
+            if (!supabase) {
+                console.error("[GymStore] Supabase client is not available (check env vars)");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Use passed userId if available (from SSR), otherwise check auth
+                let uid = userId;
+                let authenticatedEmail = "";
+                if (!uid) {
+                    const { data: { user }, error: authError } = await supabase.auth.getUser();
+                    if (authError || !user) {
+                        console.log("[GymStore] No user found directly or error:", authError);
+                        setLoading(false);
+                        return;
+                    }
+                    uid = user.id;
+                    authenticatedEmail = user.email || "";
                 }
-                uid = user.id;
+
+                console.log("[GymStore] Fetching fresh data from network for:", uid);
+
+                // PARALLEL FETCHING: Fire essential user data requests
+                const [profileRes, ticketRes, subRes] = await Promise.all([
+                    supabase.from("profiles").select("id, full_name, role").eq("id", uid).single(),
+                    supabase.rpc("get_available_tickets", { p_user_id: uid }),
+                    supabase.rpc("get_user_subscription", { p_user_id: uid }),
+                ]);
+
+                if (profileRes.data) {
+                    let userEmail = authenticatedEmail;
+                    if (!userEmail) {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        userEmail = user?.email || "";
+                    }
+
+                    setProfile({ ...profileRes.data, email: userEmail });
+                }
+
+                // 2. Set Tickets (new system)
+                if (ticketRes.data !== null) {
+                    setTickets(ticketRes.data);
+                }
+
+                // 3. Set Subscription
+                if (subRes.data) {
+                    const subData = subRes.data.is_active ? subRes.data : null;
+                    setSubscription(subData);
+                }
+
+            } catch (error) {
+                console.error("Error refreshing gym data:", error);
+            } finally {
+                setLoading(false);
             }
+        })();
 
-            console.log("[GymStore] Fetching fresh data from network for:", uid);
-
-            // PARALLEL FETCHING: Fire essential user data requests
-            const [profileRes, ticketRes, subRes] = await Promise.all([
-                supabase.from("profiles").select("id, full_name, role").eq("id", uid).single(),
-                supabase.rpc("get_available_tickets", { p_user_id: uid }),
-                supabase.rpc("get_user_subscription", { p_user_id: uid }),
-            ]);
-
-            // 1. Set Profile
-            if (profileRes.data) {
-                // Determine email from auth session if available (since not in public profile)
-                // We likely need to pass it down or store it.
-                // For now, let's just use the profile data as is, and update the type.
-                // Actually, let's get email from the `user` object if we found it.
-                // We need to store it.
-                // Let's modify the profile state to include email from auth.
-                let userEmail = "";
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) userEmail = user.email || "";
-
-                setProfile({ ...profileRes.data, email: userEmail });
-            }
-
-            // 2. Set Tickets (new system)
-            if (ticketRes.data !== null) {
-                setTickets(ticketRes.data);
-            }
-
-            // 3. Set Subscription
-            if (subRes.data) {
-                const subData = subRes.data.is_active ? subRes.data : null;
-                setSubscription(subData);
-            }
-
-        } catch (error) {
-            console.error("Error refreshing gym data:", error);
-        } finally {
-            setLoading(false);
-        }
+        inFlightFetchRef.current = request;
+        void request.then(() => {
+            if (inFlightFetchRef.current === request) inFlightFetchRef.current = null;
+        });
+        return request;
     }, [getClient]);
 
     // Auth Listener for real-time state updates
@@ -176,7 +187,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
+            const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: AuthSession | null) => {
                 if (event === 'SIGNED_OUT') {
                     setProfile(null);
                     setTickets(0);
@@ -210,9 +221,6 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         // Always fetch fresh data on mount - don't rely on cache
         fetchData();
     }, [fetchData]);
-
-    // Backward compatibility: expose tickets as 'credits' alias
-    const credits = tickets;
 
     return (
         <GymStoreContext.Provider value={{

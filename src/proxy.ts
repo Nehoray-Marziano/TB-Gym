@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
                     return request.cookies.getAll();
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) =>
+                    cookiesToSet.forEach(({ name, value }) =>
                         request.cookies.set(name, value)
                     );
                     response = NextResponse.next({
@@ -44,15 +44,10 @@ export async function proxy(request: NextRequest) {
         }
     );
 
-    // This will refresh session if expired - required for Server Components
-    // https://supabase.com/docs/guides/auth/server-side/nextjs
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (user) {
-        console.log("[Proxy] User authenticated:", user.id);
-    } else {
-        // Only log if not a static asset (though matcher handles this, safe to be sure)
-        console.log("[Proxy] No user found in proxy");
-    }
+    // Verifies the access token and refreshes it when necessary. With an
+    // asymmetric signing key this avoids a remote user lookup on each route.
+    const { error } = await supabase.auth.getClaims();
+    if (error) console.log("[Proxy] Auth verification failed:", error.message);
 
     return response;
 }
