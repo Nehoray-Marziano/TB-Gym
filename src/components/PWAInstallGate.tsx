@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Check, Download, Plus, Share2, Smartphone, X } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import StudioLogo from "@/components/StudioLogo";
 
 export default function PWAInstallGate({ children }: { children: React.ReactNode }) {
     const { canAccess, canInstall, isIOS, justInstalled, promptInstall, isLoading } = usePWAInstall();
+    const reduceMotion = useReducedMotion();
     const [showInstructions, setShowInstructions] = useState(false);
     const [isInstalling, setIsInstalling] = useState(false);
     const [continueInBrowser, setContinueInBrowser] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("talia-browser-access") === "true");
@@ -93,9 +94,9 @@ export default function PWAInstallGate({ children }: { children: React.ReactNode
 
             <AnimatePresence>
                 {showInstructions && (
-                    <div className="fixed inset-0 z-[100] flex items-end justify-center">
+                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-end justify-center">
                         <motion.button type="button" aria-label="סגירה" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowInstructions(false)} className="absolute inset-0 w-full bg-[#111a12]/65" />
-                        <motion.div role="dialog" aria-modal="true" aria-labelledby="install-title" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }} className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7">
+                        <motion.div role="dialog" aria-modal="true" aria-labelledby="install-title" initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }} className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7">
                             <button type="button" onClick={() => setShowInstructions(false)} aria-label="סגירה" className="absolute left-6 top-7 flex h-11 w-11 items-center justify-center rounded-full border border-[#1b251c]/15"><X aria-hidden="true" className="h-5 w-5" /></button>
                             <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dfe6bd]"><Smartphone aria-hidden="true" className="h-7 w-7" /></div>
                             <h2 id="install-title" className="text-2xl font-bold">איך מוסיפים למסך הבית?</h2>
@@ -113,7 +114,7 @@ export default function PWAInstallGate({ children }: { children: React.ReactNode
                             </div>
                             <button type="button" onClick={() => setShowInstructions(false)} className="mt-7 min-h-12 w-full rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed]">הבנתי</button>
                         </motion.div>
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
