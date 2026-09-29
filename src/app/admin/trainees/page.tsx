@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Search, User, Ticket } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import TicketUpdateModal from "@/components/admin/TicketUpdateModal";
+import { motion, useReducedMotion } from "framer-motion";
+import StudioLogo from "@/components/StudioLogo";
 
 type Profile = {
     id: string;
@@ -25,6 +27,7 @@ type Trainee = Profile & {
 
 export default function AdminTraineesPage() {
     const supabase = getSupabaseClient();
+    const reduceMotion = useReducedMotion();
     const [trainees, setTrainees] = useState<Trainee[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -132,13 +135,17 @@ export default function AdminTraineesPage() {
     return (
         <div className="space-y-7 text-[#f6f6ed]">
             {/* Header */}
-            <header className="border-b border-white/15 pb-7">
+            <header className="relative isolate overflow-hidden border-b border-white/15 pb-7">
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
+                <StudioLogo className="pointer-events-none absolute -bottom-14 -left-12 h-56 w-56 bg-[#dce780]/10" />
                 <div className="mb-8 flex items-center justify-between">
                     <span className="flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#dce780]" />ניהול הסטודיו</span>
                     <span className="text-xs text-[#aebbad]">מתאמנות</span>
                 </div>
-                <h1 className="text-[clamp(2.7rem,11vw,4.1rem)] font-bold leading-[1.02] tracking-tight">המתאמנות<br /><span className="text-[#dce780]">שלך.</span></h1>
-                <p className="mt-4 text-sm leading-relaxed text-[#aebbad]">{loading ? "טוענים מתאמנות..." : trainees.length === 1 ? "מתאמנת אחת בסטודיו" : `${trainees.length} מתאמנות בסטודיו`}</p>
+                <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
+                    <h1 className="text-[clamp(3.3rem,13vw,5rem)] font-bold leading-[0.92] tracking-[-0.055em]">המתאמנות<br /><span className="text-[#dce780]">שלך.</span></h1>
+                    <p className="mt-5 text-sm leading-relaxed text-[#aebbad]">{loading ? "טוענים מתאמנות..." : trainees.length === 1 ? "מתאמנת אחת בסטודיו" : `${trainees.length} מתאמנות בסטודיו`}</p>
+                </motion.div>
 
                 <div className="relative mt-7">
                     <Search aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#aebbad]" />
@@ -159,26 +166,27 @@ export default function AdminTraineesPage() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {filteredTrainees.map((trainee) => (
-                        <article
+                    {filteredTrainees.map((trainee, index) => (
+                        <motion.article
                             key={trainee.id}
-                            className="rounded-[1.75rem] border border-white/10 bg-[#202c21] p-5"
+                            initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.06, 0.24), duration: 0.45 }}
+                            className="rounded-[1.75rem] bg-[#f1f0e8] p-5 text-[#162218]"
                         >
                             <div className="flex min-w-0 items-start gap-4">
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dce780]/15 text-lg font-bold text-[#dce780]">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#f28c69] text-lg font-bold text-[#162218]">
                                     {trainee.full_name ? trainee.full_name[0] : <User aria-hidden="true" className="h-5 w-5" />}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <h2 className="truncate text-lg font-bold">{trainee.full_name || "ללא שם"}</h2>
-                                    {trainee.phone && <p dir="ltr" className="mt-2 truncate text-right text-xs text-[#aebbad]">{trainee.phone}</p>}
-                                    <p dir="ltr" className="mt-1 truncate text-right text-xs text-[#aebbad]">{trainee.email}</p>
+                                    {trainee.phone && <p dir="ltr" className="mt-2 truncate text-right text-xs text-[#5d6958]">{trainee.phone}</p>}
+                                    <p dir="ltr" className="mt-1 truncate text-right text-xs text-[#5d6958]">{trainee.email}</p>
                                 </div>
                             </div>
 
-                            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+                            <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#162218]/15 pt-4">
                                 <div>
-                                    <p className="text-xs text-[#aebbad]">יתרת אימונים</p>
-                                    <p className="mt-1 flex items-center gap-2 text-2xl font-bold tabular-nums"><Ticket aria-hidden="true" className="h-4 w-4 text-[#dce780]" />{trainee.tickets}</p>
+                                    <p className="text-xs text-[#5d6958]">יתרת אימונים</p>
+                                    <p className="mt-1 flex items-center gap-2 text-3xl font-bold tabular-nums"><Ticket aria-hidden="true" className="h-4 w-4 text-[#68794f]" />{trainee.tickets}</p>
                                 </div>
                                 <button
                                     type="button"
@@ -188,7 +196,7 @@ export default function AdminTraineesPage() {
                                     עדכון יתרה
                                 </button>
                             </div>
-                        </article>
+                        </motion.article>
                     ))}
 
                     {filteredTrainees.length === 0 && (
