@@ -6,7 +6,7 @@ import { useGymStore, type Session } from "@/providers/GymStoreProvider";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Clock3, CalendarPlus, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import StudioLogo from "@/components/StudioLogo";
+import StudioBotanical from "@/components/StudioBotanical";
 import { useTraineeUserId } from "@/components/TraineeIdentity";
 
 function bookingMessage(message: string | undefined) {
@@ -160,8 +160,8 @@ export default function BookingPage() {
     return (
         <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
             <div className="mx-auto max-w-lg pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
-                <header className="relative isolate overflow-hidden bg-[var(--studio-deep)] px-5 pb-6 pt-[max(1.1rem,env(safe-area-inset-top))] text-[var(--studio-deep-contrast)]">
-                    <StudioLogo className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 bg-[var(--studio-accent-bg)]/10" />
+                <header className="relative isolate overflow-hidden rounded-b-[2rem] bg-[var(--studio-deep)] px-5 pb-6 pt-[max(1.1rem,env(safe-area-inset-top))] text-[var(--studio-deep-contrast)]">
+                    <StudioBotanical sun={false} className="studio-botanical-drift pointer-events-none absolute -bottom-24 -left-20 h-48 w-72 text-[var(--studio-accent-text)]/25" />
                     <p className="relative text-[11px] font-bold text-[var(--studio-accent-text)]">סטודיו טליה / השבוע הקרוב</p>
                     <div className="relative mt-3 flex items-end justify-between gap-3">
                         <h1 className="text-[clamp(2.3rem,10vw,3.2rem)] font-bold leading-none tracking-[-0.06em]">בוחרות אימון<span className="text-[var(--studio-coral-text)]">.</span></h1>
@@ -183,8 +183,8 @@ export default function BookingPage() {
                         ))}
                     </div>
                 ) : sessions.length === 0 ? (
-                    <div className="relative overflow-hidden rounded-[1.75rem] bg-[var(--studio-deep)] px-6 py-8 text-[var(--studio-deep-contrast)]">
-                        <StudioLogo className="pointer-events-none absolute -bottom-12 -left-10 h-52 w-52 bg-[var(--studio-accent-bg)]/15" />
+                    <div className="relative overflow-hidden rounded-[2rem_1.1rem_2rem_1.1rem] bg-[var(--studio-deep)] px-6 py-8 text-[var(--studio-deep-contrast)]">
+                        <StudioBotanical sun={false} className="studio-botanical-drift pointer-events-none absolute -bottom-14 -left-20 h-48 w-72 text-[var(--studio-accent-text)]/25" />
                         <p className="relative mb-9 text-xs font-bold text-[var(--studio-accent-text)]">היומן עוד שקט</p>
                         <h3 className="relative mb-3 max-w-[15rem] text-[1.7rem] font-bold leading-tight">אין כרגע אימונים קרובים.</h3>
                         <p className="relative max-w-[17rem] text-sm leading-relaxed text-[#b8c7ae]">כשהלו״ז יתעדכן, תוכלי לבחור כאן את האימון הבא שלך.</p>
@@ -243,7 +243,7 @@ END:VCALENDAR`;
                         };
 
                         return (
-                            <article key={session.id} className={`overflow-hidden rounded-[1.35rem] border bg-[var(--studio-card)] ${session.isRegistered ? "border-[var(--studio-accent-text)]" : "border-[var(--studio-ink)]/10"}`}>
+                            <article key={session.id} className={`overflow-hidden rounded-[1.6rem_1rem_1.6rem_1rem] border bg-[var(--studio-card)] ${session.isRegistered ? "border-[var(--studio-accent-text)]" : "border-[var(--studio-ink)]/10"}`}>
                                 <div className="flex gap-3 p-3.5">
                                     <div className={`flex h-[4.1rem] w-[3.7rem] shrink-0 flex-col items-center justify-center rounded-[0.9rem] ${session.isRegistered ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "bg-[var(--studio-deep)] text-[var(--studio-accent-text)]"}`}>
                                         <span className="text-[1.6rem] font-bold leading-none tabular-nums">{date.day}</span>
