@@ -8,6 +8,7 @@ import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
 import PaymentModal from "@/components/subscription/PaymentModal";
 import StudioLogo from "@/components/StudioLogo";
+import StudioBotanical from "@/components/StudioBotanical";
 
 const TIERS = [
     { id: 1, displayName: "בסיסי", sessions: 4, price: 240, features: ["4 אימונים בחודש", "60 ₪ לאימון", "גישה לכל השיעורים", "ביטול ללא עלות עד 10 שעות לפני האימון"] },
@@ -92,8 +93,7 @@ export default function SubscriptionPage() {
 
             <main className="mx-auto max-w-lg pb-[calc(7rem+env(safe-area-inset-bottom))]">
                 <header ref={introRef} className="relative isolate overflow-hidden bg-[var(--studio-coral-bg)] px-5 pb-8 pt-4 sm:px-7">
-                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#162218_1px,transparent_1px),linear-gradient(90deg,#162218_1px,transparent_1px)] [background-size:28px_28px]" />
-                    <StudioLogo className="pointer-events-none absolute -bottom-14 -left-12 h-56 w-56 bg-[var(--studio-deep)]/10" />
+                    <StudioBotanical sun={false} className="studio-botanical-drift pointer-events-none absolute -bottom-14 -left-20 h-56 w-80 text-[var(--studio-deep)]/20" />
                     <button type="button" onClick={() => router.back()} aria-label="חזרה" className="relative mb-8 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[#162218]/30 transition-colors active:bg-[var(--studio-deep)]/10"><ChevronRight aria-hidden="true" className="h-5 w-5" /></button>
                     <motion.div initial={reduceMotion ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="relative">
                         <p className="mb-3 flex items-center gap-2 text-xs font-bold"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-accent-bg)]" />המסלולים בסטודיו</p>
