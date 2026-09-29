@@ -27,7 +27,7 @@ export default function BottomNav() {
                             href={href}
                             prefetch
                             aria-current={active ? "page" : undefined}
-                            className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-bold outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--studio-accent-text)] ${active ? "text-[var(--studio-ink)]" : "text-[var(--studio-muted)] active:bg-[var(--studio-canvas)]"}`}
+                            className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-bold outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--studio-accent-text)] ${active ? "studio-nav-current text-[var(--studio-ink)]" : "text-[var(--studio-muted)] active:bg-[var(--studio-canvas)]"}`}
                         >
                             <span className={`absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-[var(--studio-accent-text)] transition-transform duration-200 ${active ? "scale-x-100" : "scale-x-0"}`} />
                             <Icon aria-hidden="true" className="h-[1.3rem] w-[1.3rem]" strokeWidth={active ? 2.3 : 1.8} />

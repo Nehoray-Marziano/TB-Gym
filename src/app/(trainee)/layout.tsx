@@ -2,6 +2,7 @@ import BottomNav from "@/components/BottomNav";
 import { TraineeIdentity } from "@/components/TraineeIdentity";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import PageEntrance from "@/components/PageEntrance";
 
 export default async function TraineeLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const supabase = await createClient();
@@ -9,5 +10,5 @@ export default async function TraineeLayout({ children }: Readonly<{ children: R
     const userId = data?.claims?.sub;
     if (!userId) redirect("/auth/login");
 
-    return <TraineeIdentity userId={userId}>{children}<BottomNav /></TraineeIdentity>;
+    return <TraineeIdentity userId={userId}><PageEntrance>{children}</PageEntrance><BottomNav /></TraineeIdentity>;
 }
