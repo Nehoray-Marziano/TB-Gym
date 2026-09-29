@@ -1,17 +1,8 @@
-import { createClient } from "@/utils/supabase/server";
-import UserDashboard from "@/components/home/UserDashboard";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function DashboardPage() {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.getClaims();
-    if (error) console.error("[Dashboard] Auth Error:", error.message);
+import TraineeDashboard from "@/components/home/TraineeDashboard";
+import { useTraineeUserId } from "@/components/TraineeIdentity";
 
-    const userId = data?.claims?.sub;
-    if (!userId) {
-        console.log("[Dashboard] No user found, redirecting to login");
-        redirect("/auth/login");
-    }
-
-    return <UserDashboard userId={userId} />;
+export default function DashboardPage() {
+    return <TraineeDashboard userId={useTraineeUserId()} />;
 }
