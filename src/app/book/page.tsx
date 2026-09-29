@@ -315,7 +315,7 @@ END:VCALENDAR`;
 
             <AnimatePresence>
                 {sessionToCancel && (
-                    <div className="fixed inset-0 z-[100] flex items-end justify-center">
+                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-end justify-center">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -324,7 +324,7 @@ END:VCALENDAR`;
                             className="absolute inset-0 bg-[#111a12]/65"
                         />
                         <motion.div
-                            initial={{ y: "100%" }}
+                            initial={reduceMotion ? false : { y: "100%" }}
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 28, stiffness: 300 }}
@@ -346,7 +346,7 @@ END:VCALENDAR`;
                                 <button type="button" onClick={confirmCancel} className="min-h-12 rounded-full border border-[#a53d35]/40 px-3 text-sm font-bold text-[#a53d35] transition-colors active:bg-[#a53d35]/10">כן, לבטל</button>
                             </div>
                         </motion.div>
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
