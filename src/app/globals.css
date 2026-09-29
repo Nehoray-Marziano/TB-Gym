@@ -174,18 +174,28 @@ a,
   touch-action: manipulation;
 }
 
-/* Smooth scrolling for all scrollable containers */
-* {
-  scroll-behavior: smooth;
+/* Animate only the elements that need it. A blanket transform creates stacking
+   contexts around sheets and prevents some native transitions from rendering. */
+.studio-artwork-mark {
+  transform-origin: 50% 50%;
 }
 
-/* Hardware acceleration for animations */
-.animate-pulse,
-[class*="transition"],
-[class*="hover:"] {
-  will-change: transform, opacity;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+.studio-artwork-orb {
+  animation: studio-orbit 7s ease-in-out infinite alternate;
+}
+
+@keyframes studio-orbit {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(12px, -14px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Custom Scrollbar */

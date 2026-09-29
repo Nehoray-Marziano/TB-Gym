@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, CalendarDays, Check, Mail, Ticket, X } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Mail, X } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import StudioLogo from "@/components/StudioLogo";
 
@@ -27,6 +27,7 @@ export default function LandingPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [authError, setAuthError] = useState("");
     const supabase = getSupabaseClient();
+    const reduceMotion = useReducedMotion();
 
     const resetLoginState = () => {
         setIsLoginOpen(false);
@@ -92,70 +93,61 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-[#f1f0e8] text-[#1b251c]">
-            <main className="mx-auto max-w-lg px-5 pb-16 pt-6 sm:px-7">
-                <header className="flex items-center justify-between border-b border-[#1b251c]/15 pb-5">
-                    <div className="flex items-center gap-3">
-                        <StudioLogo className="h-9 w-9 bg-[#1b251c]" />
-                        <span className="border-s border-[#1b251c]/20 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-[#5f6c5b]">האזור שלך בסטודיו</span>
-                </header>
+        <div className="min-h-dvh overflow-x-hidden bg-[#e9eadc] text-[#1b251c]">
+            <main className="mx-auto max-w-lg">
+                <section className="relative isolate overflow-hidden bg-[#162218] px-5 pb-7 pt-6 text-[#f6f6ed] sm:px-7" aria-labelledby="landing-title">
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
+                    <header className="relative flex items-center justify-between border-b border-white/20 pb-5">
+                        <div className="flex items-center gap-3">
+                            <StudioLogo className="h-9 w-9 bg-[#dce780]" />
+                            <span className="border-s border-white/25 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
+                        </div>
+                        <span className="text-[11px] font-bold text-[#bac9ae]">האזור שלך בסטודיו</span>
+                    </header>
 
-                <section className="pt-11" aria-labelledby="landing-title">
-                    <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[#5d6958]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#809143]" />לוח האימונים של טליה</p>
-                    <h1 id="landing-title" className="text-[clamp(3.7rem,15vw,5.7rem)] font-bold leading-[0.98] tracking-tight">
-                        יש לך<br /><span className="text-[#829044]">מקום</span><br />לזוז<span className="text-[#829044]">.</span>
-                    </h1>
-                    <p className="mt-6 max-w-[19rem] text-[15px] leading-relaxed text-[#5d6958]">האימונים הקרובים, המקום ששמרת והיתרה שלך. הכול כאן, לפני שיוצאים לסטודיו.</p>
-                    <button
-                        id="main-signin-button"
-                        type="button"
-                        onClick={() => setIsLoginOpen(true)}
-                        className="mt-8 flex min-h-14 w-full items-center justify-between rounded-full bg-[#1b251c] px-6 text-sm font-bold text-[#f6f6ed] transition-colors active:bg-[#334436]"
-                    >
+                    <div className="relative pt-9">
+                        <motion.p initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-4 flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#f28c69]" />לוח האימונים של טליה</motion.p>
+                        <motion.h1 id="landing-title" initial={reduceMotion ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }} className="relative z-10 font-bold leading-[0.83] tracking-[-0.065em]">
+                            <span className="block text-[clamp(3.3rem,13vw,5rem)]">יש לך</span>
+                            <span className="block text-[clamp(5.5rem,23vw,8rem)] text-[#dce780]">מקום</span>
+                            <span className="block text-[clamp(4.4rem,18vw,6.7rem)]">לזוז<span className="text-[#f28c69]">.</span></span>
+                        </motion.h1>
+                    </div>
+
+                    <motion.div initial={reduceMotion ? false : { opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} aria-label="סטודיו טליה" className="relative mt-8 h-[clamp(12rem,33dvh,18rem)] overflow-hidden rounded-[1.75rem] bg-[#dce780] text-[#162218]">
+                        <div aria-hidden="true" className="absolute inset-0 opacity-20 [background-image:repeating-linear-gradient(-25deg,transparent_0,transparent_26px,#1b251c_27px,#1b251c_28px)]" />
+                        <div aria-hidden="true" className="absolute -left-11 -top-14 h-[18rem] w-[18rem] rotate-[-13deg] rounded-full border-[1.75rem] border-[#162218]/15" />
+                        <div aria-hidden="true" className="studio-artwork-orb absolute -left-5 bottom-0 h-16 w-16 rounded-full bg-[#f28c69]" />
+                        <StudioLogo className="studio-artwork-mark absolute -bottom-10 -left-6 h-[clamp(15rem,61vw,20rem)] w-[clamp(15rem,61vw,20rem)] bg-[#162218]" />
+                        <div className="absolute right-5 top-5 flex flex-col items-start gap-1 text-[10px] font-bold"><span>טליה / אימונים</span><span className="h-px w-14 bg-[#162218]/40" /></div>
+                        <span className="absolute bottom-5 right-5 rounded-full bg-[#162218] px-4 py-2 text-[11px] font-bold text-[#dce780]">לבחור. להירשם. להגיע.</span>
+                    </motion.div>
+
+                    <p className="relative mt-6 max-w-[19rem] text-sm leading-relaxed text-[#c4d0bd]">האימונים הקרובים, המקום ששמרת והיתרה שלך. הכול כאן, לפני שיוצאים לסטודיו.</p>
+                    <button id="main-signin-button" type="button" onClick={() => setIsLoginOpen(true)} className="relative mt-6 flex min-h-14 w-full items-center justify-between rounded-full bg-[#dce780] px-6 text-sm font-bold text-[#162218] transition-transform active:scale-[0.98]">
                         כניסה לאזור שלי <ArrowLeft aria-hidden="true" className="h-5 w-5" />
                     </button>
+                    <div className="relative mt-7 flex items-center justify-between border-t border-white/20 pt-4 text-[11px] font-bold text-[#b8c7ae]"><span>סטודיו טליה</span><span>פשוט להגיע לאימון.</span></div>
                 </section>
 
-                <section aria-label="סטודיו טליה" className="relative mt-10 h-[21rem] overflow-hidden rounded-[2rem] bg-[#1b251c] p-6 text-[#f6f6ed]">
-                    <div aria-hidden="true" className="pointer-events-none absolute -left-32 -top-56 h-80 w-80 rounded-full border-[42px] border-[#dce780]" />
-                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-36 -right-28 h-72 w-72 rounded-full border-[38px] border-[#dce780]/20" />
-                    <div aria-hidden="true" className="pointer-events-none absolute bottom-0 left-[37%] top-0 w-px rotate-[25deg] bg-[#dce780]/15" />
-                    <div className="relative flex items-start justify-between">
-                        <span className="text-[11px] font-bold text-[#dce780]">טליה / הסטודיו שלך</span>
-                        <span className="text-[11px] font-bold text-[#aab7a0]">לוח האימונים מחכה לך</span>
-                    </div>
-                    <div className="relative mt-16">
-                        <p className="text-[clamp(2rem,10vw,2.65rem)] font-bold leading-[1.04] tracking-tight">לבחור אימון.<br />לשמור מקום.<br /><span className="text-[#dce780]">פשוט להגיע.</span></p>
-                    </div>
-                    <div className="relative mt-7 flex items-center justify-between border-t border-white/20 pt-4 text-[11px] text-[#b9c6b2]">
-                        <span>כל מה שצריך לאימון הבא</span>
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#dce780]" />
-                    </div>
-                </section>
-
-                <section className="mt-14" aria-labelledby="what-is-here">
-                    <div className="mb-4 flex items-end justify-between border-b border-[#1b251c]/15 pb-3">
-                        <h2 id="what-is-here" className="text-lg font-bold">מה מחכה לך כאן</h2>
-                    </div>
-                    <div className="divide-y divide-[#1b251c]/15">
-                        <div className="flex min-h-24 items-center gap-4 py-4">
-                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd] text-[#1b251c]"><CalendarDays aria-hidden="true" className="h-5 w-5" /></span>
-                            <div><h3 className="font-bold">לוח האימונים</h3><p className="mt-1 text-xs text-[#5d6958]">רואות מה קרוב ובוחרות מתי להגיע.</p></div>
-                        </div>
-                        <div className="flex min-h-24 items-center gap-4 py-4">
-                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd] text-[#1b251c]"><Check aria-hidden="true" className="h-5 w-5" /></span>
-                            <div><h3 className="font-bold">המקום שלך</h3><p className="mt-1 text-xs text-[#5d6958]">ההרשמה והאימון הבא תמיד מולך.</p></div>
-                        </div>
-                        <div className="flex min-h-24 items-center gap-4 py-4">
-                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfe6bd] text-[#1b251c]"><Ticket aria-hidden="true" className="h-5 w-5" /></span>
-                            <div><h3 className="font-bold">יתרת האימונים</h3><p className="mt-1 text-xs text-[#5d6958]">היתרה שלך תמיד מול העיניים.</p></div>
-                        </div>
+                <section className="px-5 pb-14 pt-14 sm:px-7" aria-labelledby="what-is-here">
+                    <p className="mb-3 text-xs font-bold text-[#68794f]">כאן מתחיל האימון הבא</p>
+                    <h2 id="what-is-here" className="max-w-[18rem] text-[clamp(2.3rem,10vw,3.4rem)] font-bold leading-[1.02] tracking-tight">כל מה שצריך.<br /><span className="text-[#829044]">במקום אחד.</span></h2>
+                    <div className="mt-9 border-t border-[#1b251c]/25">
+                        {[
+                            ["01", "לוח האימונים", "רואות מה קרוב ובוחרות מתי להגיע."],
+                            ["02", "המקום שלך", "ההרשמה והאימון הבא תמיד מולך."],
+                            ["03", "יתרת האימונים", "היתרה שלך תמיד מול העיניים."],
+                        ].map(([number, title, description]) => (
+                            <div key={number} className="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-[#1b251c]/25 py-6">
+                                <span className="pt-1 text-xs font-bold text-[#829044]">{number}</span>
+                                <div><h3 className="text-lg font-bold">{title}</h3><p className="mt-1 text-xs leading-relaxed text-[#5d6958]">{description}</p></div>
+                            </div>
+                        ))}
                     </div>
                 </section>
 
-                <footer className="mt-14 border-t border-[#1b251c]/15 pt-5 text-xs text-[#6f795f]">© סטודיו טליה</footer>
+                <footer className="mx-5 border-t border-[#1b251c]/20 pb-8 pt-5 text-xs text-[#6f795f] sm:mx-7">© סטודיו טליה</footer>
             </main>
 
             <AnimatePresence>
