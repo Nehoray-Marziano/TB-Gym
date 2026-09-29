@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { Search, User, Check, X } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export type Trainee = {
@@ -22,6 +22,7 @@ interface TraineeSelectorProps {
 
 export function TraineeSelector({ selectedTrainees, onSelect, onClose }: TraineeSelectorProps) {
     const supabase = getSupabaseClient();
+    const reduceMotion = useReducedMotion();
     const [trainees, setTrainees] = useState<Trainee[]>([]);
     const [term, setTerm] = useState("");
     const [loading, setLoading] = useState(true);
@@ -61,13 +62,13 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
     };
 
     return (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center">
+        <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] flex items-end justify-center">
             <div className="absolute inset-0 bg-[#071009]/80" onClick={onClose} />
             <motion.div
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="trainee-selector-title"
-                initial={{ y: "100%" }}
+                initial={reduceMotion ? false : { y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
@@ -158,6 +159,6 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                     </button>
                 </div>
             </motion.div>
-        </div>
+        </motion.div>
     );
 }
