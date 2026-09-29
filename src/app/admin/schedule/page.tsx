@@ -2,7 +2,7 @@
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { format } from "date-fns";
 import { Bell, Calendar as CalendarIcon, Clock, Trash2, Users, Plus, X } from "lucide-react";
 
@@ -16,6 +16,7 @@ import {
 import { MuiTimePickerWrapper } from "@/components/ui/time-picker-mui";
 import { Button } from "@/components/ui/button";
 import { TraineeSelector, type Trainee } from "@/components/admin/trainee-selector";
+import StudioLogo from "@/components/StudioLogo";
 
 type Session = {
     id: string;
@@ -42,6 +43,7 @@ type Booking = {
 
 export default function AdminSchedulePage() {
     const supabase = getSupabaseClient();
+    const reduceMotion = useReducedMotion();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -233,14 +235,18 @@ export default function AdminSchedulePage() {
     return (
         <div className="space-y-7 text-[#f6f6ed]">
             {/* Header */}
-            <header className="border-b border-white/15 pb-7">
+            <header className="relative isolate overflow-hidden border-b border-white/15 pb-7">
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
+                <StudioLogo className="pointer-events-none absolute -bottom-12 -left-14 h-56 w-56 bg-[#dce780]/10" />
                 <div className="mb-8 flex items-center justify-between">
                     <span className="flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#dce780]" />ניהול הסטודיו</span>
                     <span className="text-xs text-[#aebbad]">יומן האימונים</span>
                 </div>
-                <h1 className="text-[clamp(2.7rem,11vw,4.1rem)] font-bold leading-[1.02] tracking-tight">האימונים<br /><span className="text-[#dce780]">שלך.</span></h1>
-                <p className="mt-4 text-sm leading-relaxed text-[#aebbad]">יוצרים אימונים, רואים מי נרשמה ושומרים על הלוח מסודר.</p>
-                <div className="mt-7 flex flex-col gap-3">
+                <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
+                    <h1 className="text-[clamp(3.3rem,13vw,5rem)] font-bold leading-[0.92] tracking-[-0.055em]">האימונים<br /><span className="text-[#dce780]">שלך.</span></h1>
+                    <p className="mt-5 text-sm leading-relaxed text-[#aebbad]">יוצרים אימונים, רואים מי נרשמה ושומרים על הלוח מסודר.</p>
+                </motion.div>
+                <div className="relative mt-7 flex flex-col gap-3">
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex min-h-14 w-full items-center justify-between rounded-full bg-[#dce780] px-5 text-sm font-bold text-[#1b251c] transition-colors active:bg-[#e9f19e]"
@@ -321,27 +327,28 @@ export default function AdminSchedulePage() {
             ) : (
                 <div className="space-y-3">
                     <AnimatePresence mode="wait">
-                        {displayedSessions.map((session) => {
+                        {displayedSessions.map((session, index) => {
                             const count = session.current_bookings || 0;
                             const fillPercent = Math.min((count / session.max_capacity) * 100, 100);
                             const isFull = count >= session.max_capacity;
 
                             return (
-                                <div
+                                <motion.div
                                     key={session.id}
-                                    className="rounded-[1.75rem] border border-white/10 bg-[#202c21] p-5"
+                                    initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -12 }} transition={{ delay: Math.min(index * 0.06, 0.24), duration: 0.4 }}
+                                    className="rounded-[1.75rem] bg-[#f1f0e8] p-5 text-[#162218]"
                                 >
                                     {/* Top Metadata */}
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <h3 className="text-xl font-bold leading-tight">{session.title}</h3>
-                                            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#aebbad]">
-                                                <span className="flex min-h-8 items-center gap-1.5 rounded-full bg-white/5 px-3">
-                                                    <CalendarIcon aria-hidden="true" className="h-3.5 w-3.5 text-[#dce780]" />
+                                            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#5d6958]">
+                                                <span className="flex min-h-8 items-center gap-1.5 rounded-full bg-[#e9eadc] px-3">
+                                                    <CalendarIcon aria-hidden="true" className="h-3.5 w-3.5 text-[#68794f]" />
                                                     {new Date(session.start_time).toLocaleDateString("he-IL", { day: 'numeric', month: 'numeric' })}
                                                 </span>
-                                                <span className="flex min-h-8 items-center gap-1.5 rounded-full bg-white/5 px-3">
-                                                    <Clock aria-hidden="true" className="h-3.5 w-3.5 text-[#dce780]" />
+                                                <span className="flex min-h-8 items-center gap-1.5 rounded-full bg-[#e9eadc] px-3">
+                                                    <Clock aria-hidden="true" className="h-3.5 w-3.5 text-[#68794f]" />
                                                     {new Date(session.start_time).toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
@@ -350,7 +357,7 @@ export default function AdminSchedulePage() {
                                             type="button"
                                             aria-label={`מחיקת ${session.title}`}
                                             onClick={() => handleDeleteClick(session)}
-                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 text-[#aebbad] transition-colors active:bg-[#a53d35]/20 active:text-[#f2b0a9]"
+                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#162218]/15 text-[#8b3e36] transition-colors active:bg-[#a53d35]/10"
                                         >
                                             <Trash2 aria-hidden="true" className="h-4 w-4" />
                                         </button>
@@ -359,15 +366,15 @@ export default function AdminSchedulePage() {
                                     {/* Progress Bar */}
                                     <div className="mt-6">
                                         <div className="mb-2 flex items-baseline justify-between text-xs">
-                                            <span dir="ltr" className={isFull ? "font-bold tabular-nums text-[#f2b0a9]" : "font-bold tabular-nums text-[#dce780]"}>
+                                            <span dir="ltr" className={isFull ? "font-bold tabular-nums text-[#a53d35]" : "font-bold tabular-nums text-[#4e652c]"}>
                                                 {count} / {session.max_capacity}
                                             </span>
-                                            <span className="text-[#aebbad]">{isFull ? "האימון מלא" : "מקומות תפוסים"}</span>
+                                            <span className="text-[#5d6958]">{isFull ? "האימון מלא" : "מקומות תפוסים"}</span>
                                         </div>
-                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#162218]/10">
                                             <div
                                                 style={{ width: `${fillPercent}%` }}
-                                                className={`h-full rounded-full ${isFull ? "bg-[#f2b0a9]" : "bg-[#dce780]"}`}
+                                                className={`h-full rounded-full ${isFull ? "bg-[#a53d35]" : "bg-[#829044]"}`}
                                             />
                                         </div>
                                     </div>
@@ -379,12 +386,12 @@ export default function AdminSchedulePage() {
                                             setViewBookingsSession(session);
                                             fetchBookings(session.id);
                                         }}
-                                        className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-sm font-bold transition-colors active:bg-white/10"
+                                        className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#162218] text-sm font-bold text-[#dce780] transition-colors active:bg-[#334436]"
                                     >
                                         <Users aria-hidden="true" className="h-4 w-4 text-[#dce780]" />
                                         ניהול נרשמות
                                     </button>
-                                </div>
+                                </motion.div>
                             )
                         })}
                     </AnimatePresence>
@@ -409,12 +416,13 @@ export default function AdminSchedulePage() {
             {/* CREATE MODAL */}
             <AnimatePresence>
                 {isModalOpen && (
-                    <div className="fixed inset-0 z-[60] flex items-end justify-center">
+                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-end justify-center">
                         <div
                             onClick={() => setIsModalOpen(false)}
                             className="absolute inset-0 bg-[#071009]/80"
                         />
-                        <div
+                        <motion.div
+                            initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="create-session-title"
@@ -562,8 +570,8 @@ export default function AdminSchedulePage() {
                                     פרסום אימון
                                 </button>
                             </form>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
@@ -581,12 +589,13 @@ export default function AdminSchedulePage() {
             {/* View Bookings Modal */}
             <AnimatePresence>
                 {viewBookingsSession && (
-                    <div className="fixed inset-0 z-[60] flex items-end justify-center">
+                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-end justify-center">
                         <div
                             onClick={() => setViewBookingsSession(null)}
                             className="absolute inset-0 bg-[#071009]/80"
                         />
-                        <div
+                        <motion.div
+                            initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="session-bookings-title"
@@ -628,20 +637,21 @@ export default function AdminSchedulePage() {
                             <button type="button" onClick={() => setViewBookingsSession(null)} className="mt-6 min-h-12 w-full rounded-full bg-[#1b251c] px-5 text-sm font-bold text-white">
                                 סגירה
                             </button>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
             {/* Delete Confirmation Modal */}
             <AnimatePresence>
                 {deleteConfirmation.isOpen && (
-                    <div className="fixed inset-0 z-[80] flex items-end justify-center">
+                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[80] flex items-end justify-center">
                         <div
                             onClick={() => setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 })}
                             className="absolute inset-0 bg-[#071009]/80"
                         />
-                        <div
+                        <motion.div
+                            initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
                             role="alertdialog"
                             aria-modal="true"
                             aria-labelledby="delete-session-title"
@@ -670,8 +680,8 @@ export default function AdminSchedulePage() {
                                     להשאיר את האימון
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
