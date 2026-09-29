@@ -63,7 +63,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
     const bgColors = {
         success: "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] border-[#dce780]",
-        error: "bg-[#a53d35] text-white border-[#a53d35]",
+        error: "bg-[var(--studio-danger)] text-white border-[var(--studio-danger)]",
         info: "bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)] border-[#162218]"
     }
 

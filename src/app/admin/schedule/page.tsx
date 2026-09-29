@@ -357,7 +357,7 @@ export default function AdminSchedulePage() {
                                             type="button"
                                             aria-label={`מחיקת ${session.title}`}
                                             onClick={() => handleDeleteClick(session)}
-                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#162218]/15 text-[#8b3e36] transition-colors active:bg-[#a53d35]/10"
+                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#162218]/15 text-[var(--studio-danger)] transition-colors active:bg-[var(--studio-danger)]/10"
                                         >
                                             <Trash2 aria-hidden="true" className="h-4 w-4" />
                                         </button>
@@ -366,7 +366,7 @@ export default function AdminSchedulePage() {
                                     {/* Progress Bar */}
                                     <div className="mt-6">
                                         <div className="mb-2 flex items-baseline justify-between text-xs">
-                                            <span dir="ltr" className={isFull ? "font-bold tabular-nums text-[#a53d35]" : "font-bold tabular-nums text-[#4e652c]"}>
+                                            <span dir="ltr" className={isFull ? "font-bold tabular-nums text-[var(--studio-danger)]" : "font-bold tabular-nums text-[var(--studio-subtle)]"}>
                                                 {count} / {session.max_capacity}
                                             </span>
                                             <span className="text-[var(--studio-muted)]">{isFull ? "האימון מלא" : "מקומות תפוסים"}</span>
@@ -374,7 +374,7 @@ export default function AdminSchedulePage() {
                                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--studio-deep)]/10">
                                             <div
                                                 style={{ width: `${fillPercent}%` }}
-                                                className={`h-full rounded-full ${isFull ? "bg-[#a53d35]" : "bg-[#829044]"}`}
+                                                className={`h-full rounded-full ${isFull ? "bg-[var(--studio-danger)]" : "bg-[var(--studio-accent-text)]"}`}
                                             />
                                         </div>
                                     </div>
@@ -432,7 +432,7 @@ export default function AdminSchedulePage() {
                                 <X aria-hidden="true" className="h-5 w-5" />
                             </button>
 
-                            <p className="text-xs font-bold text-[#5c6d2e]">יומן האימונים</p>
+                            <p className="text-xs font-bold text-[var(--studio-subtle)]">יומן האימונים</p>
                             <h2 id="create-session-title" className="mb-7 mt-2 text-[2rem] font-bold leading-tight">אימון חדש.</h2>
 
                             <form onSubmit={handleCreate} className="space-y-5">
@@ -443,7 +443,7 @@ export default function AdminSchedulePage() {
                                         type="text"
                                         value={newSession.title}
                                         onChange={e => setNewSession({ ...newSession, title: e.target.value })}
-                                        className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-base font-bold outline-none focus:border-[#829044]"
+                                        className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-base font-bold outline-none focus:border-[var(--studio-accent-text)]"
                                         placeholder="למשל, אימון כוח"
                                     />
                                 </div>
@@ -453,7 +453,7 @@ export default function AdminSchedulePage() {
                                         <span className="text-xs font-bold">תאריך</span>
                                         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                             <PopoverTrigger asChild>
-                                                <Button variant={"outline"} className="h-14 w-full justify-between rounded-2xl border-[#1b251c]/20 bg-white px-3 text-sm font-medium text-[var(--studio-ink)] hover:bg-white hover:text-[var(--studio-ink)]">
+                                                <Button variant={"outline"} className="h-14 w-full justify-between rounded-2xl border-[#1b251c]/20 bg-[var(--studio-card)] px-3 text-sm font-medium text-[var(--studio-ink)] hover:bg-[var(--studio-card)] hover:text-[var(--studio-ink)]">
                                                     {newSession.date ? format(newSession.date, "dd/MM/yyyy") : <span className="text-[var(--studio-muted)]">בחירת תאריך</span>}
                                                     <CalendarIcon aria-hidden="true" className="h-4 w-4 text-[var(--studio-muted)]" />
                                                 </Button>
@@ -507,7 +507,7 @@ export default function AdminSchedulePage() {
                                     {!isPrivateSession ? (
                                         <div className="space-y-2">
                                             <span className="text-xs font-bold">מספר מקומות</span>
-                                            <div className="flex min-h-14 items-center gap-4 rounded-2xl border border-[#1b251c]/20 bg-white p-2 ps-4">
+                                            <div className="flex min-h-14 items-center gap-4 rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] p-2 ps-4">
                                                 <div className="flex-1 text-lg font-bold tabular-nums">{newSession.max_capacity}</div>
                                                 <div className="flex gap-2">
                                                     <button type="button" aria-label="הפחתת מקום" onClick={() => setNewSession(p => ({ ...p, max_capacity: Math.max(1, p.max_capacity - 1) }))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8ebdf] text-lg font-bold">−</button>
@@ -522,7 +522,7 @@ export default function AdminSchedulePage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowTraineeSelector(true)}
-                                                    className="text-xs font-bold text-[#5c6d2e] underline underline-offset-4"
+                                                    className="text-xs font-bold text-[var(--studio-subtle)] underline underline-offset-4"
                                                 >
                                                     {selectedTrainees.length > 0 ? "עריכה" : "בחירה"}
                                                 </button>
@@ -531,7 +531,7 @@ export default function AdminSchedulePage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowTraineeSelector(true)}
-                                                    className="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#1b251c]/25 bg-white p-4"
+                                                    className="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#1b251c]/25 bg-[var(--studio-card)] p-4"
                                                 >
                                                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dfe6bd]">
                                                         <Users aria-hidden="true" className="h-5 w-5" />
@@ -541,7 +541,7 @@ export default function AdminSchedulePage() {
                                             ) : (
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {selectedTrainees.map(t => (
-                                                        <div key={t.id} className="flex items-center gap-2 rounded-xl border border-[#1b251c]/10 bg-white p-2">
+                                                        <div key={t.id} className="flex items-center gap-2 rounded-xl border border-[#1b251c]/10 bg-[var(--studio-card)] p-2">
                                                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--studio-accent-bg)] text-xs font-bold">
                                                                 {t.full_name?.[0]}
                                                             </div>
@@ -551,7 +551,7 @@ export default function AdminSchedulePage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setShowTraineeSelector(true)}
-                                                        className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#1b251c]/25 bg-white p-2 text-xs font-bold text-[#5c6d2e]"
+                                                        className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#1b251c]/25 bg-[var(--studio-card)] p-2 text-xs font-bold text-[var(--studio-subtle)]"
                                                     >
                                                         + עריכה
                                                     </button>
@@ -602,7 +602,7 @@ export default function AdminSchedulePage() {
                             className="relative z-10 flex max-h-[94dvh] w-full max-w-lg flex-col rounded-t-[2rem] bg-[var(--studio-sheet)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
                         >
                             <div className="mb-6 shrink-0">
-                                <p className="text-xs font-bold text-[#5c6d2e]">{viewBookingsSession.title}</p>
+                                <p className="text-xs font-bold text-[var(--studio-subtle)]">{viewBookingsSession.title}</p>
                                 <h2 id="session-bookings-title" className="mt-2 text-[2rem] font-bold leading-tight">מי נרשמה?</h2>
                             </div>
 
@@ -610,12 +610,12 @@ export default function AdminSchedulePage() {
                                 {loadingBookings ? (
                                     <div className="flex justify-center p-8"><div aria-label="טוענים נרשמות" className="h-6 w-6 animate-spin rounded-full border-2 border-[#1b251c] border-t-transparent" /></div>
                                 ) : sessionBookings.length === 0 ? (
-                                    <div className="rounded-2xl border border-dashed border-[#1b251c]/20 bg-white px-4 py-10 text-center text-sm text-[var(--studio-muted)]">
+                                    <div className="rounded-2xl border border-dashed border-[#1b251c]/20 bg-[var(--studio-card)] px-4 py-10 text-center text-sm text-[var(--studio-muted)]">
                                         עדיין אין נרשמות לאימון הזה.
                                     </div>
                                 ) : (
                                     sessionBookings.map(booking => (
-                                        <div key={booking.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#1b251c]/10 bg-white p-4">
+                                        <div key={booking.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#1b251c]/10 bg-[var(--studio-card)] p-4">
                                             <div className="flex min-w-0 items-center gap-3">
                                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dfe6bd] text-sm font-bold">{booking.users?.full_name?.[0] || "?"}</div>
                                                 <div className="min-w-0">
@@ -625,7 +625,7 @@ export default function AdminSchedulePage() {
                                             </div>
                                             <button
                                                 onClick={() => handleCancelBooking(booking)}
-                                                className="min-h-11 shrink-0 rounded-full border border-[#a53d35]/20 px-3 text-xs font-bold text-[#a53d35]"
+                                                className="min-h-11 shrink-0 rounded-full border border-[var(--studio-danger)]/20 px-3 text-xs font-bold text-[var(--studio-danger)]"
                                             >
                                                 ביטול הרשמה
                                             </button>
@@ -657,7 +657,7 @@ export default function AdminSchedulePage() {
                             aria-labelledby="delete-session-title"
                             className="relative z-10 max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
                         >
-                            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#a53d35]/10 text-[#a53d35]"><Trash2 aria-hidden="true" className="h-6 w-6" /></span>
+                            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--studio-danger)]/10 text-[var(--studio-danger)]"><Trash2 aria-hidden="true" className="h-6 w-6" /></span>
                             <h2 id="delete-session-title" className="mt-5 text-[2rem] font-bold leading-tight">למחוק את האימון?</h2>
                             <p className="mb-7 mt-3 text-sm leading-relaxed text-[var(--studio-muted)]">
                                 {deleteConfirmation.userCount > 0
@@ -669,7 +669,7 @@ export default function AdminSchedulePage() {
                                 <button
                                     onClick={executeDeleteSession}
                                     disabled={isDeleting}
-                                    className="min-h-14 w-full rounded-full bg-[#a53d35] px-5 text-sm font-bold text-white disabled:opacity-50"
+                                    className="min-h-14 w-full rounded-full bg-[var(--studio-danger)] px-5 text-sm font-bold text-white disabled:opacity-50"
                                 >
                                     {isDeleting ? "מוחקים..." : "כן, למחוק את האימון"}
                                 </button>

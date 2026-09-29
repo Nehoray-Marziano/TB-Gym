@@ -89,8 +89,8 @@ export default function MyBookingsPage() {
                     </button>
                     <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
                         <p className="mb-4 flex items-center gap-2 text-xs font-bold"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-bg)]" />היומן שלך</p>
-                        <h1 className="text-[clamp(3.6rem,15vw,5.2rem)] font-bold leading-[0.9] tracking-[-0.06em]">האימונים<br /><span className="text-[#576c3a]">שלי.</span></h1>
-                        <p className="mt-5 max-w-[18rem] text-sm leading-relaxed text-[#35482c]">המקומות שכבר שמורים לך בסטודיו.</p>
+                        <h1 className="text-[clamp(3.6rem,15vw,5.2rem)] font-bold leading-[0.9] tracking-[-0.06em]">האימונים<br /><span className="text-[var(--studio-ink)]">שלי.</span></h1>
+                        <p className="mt-5 max-w-[18rem] text-sm leading-relaxed text-[var(--studio-muted)]">המקומות שכבר שמורים לך בסטודיו.</p>
                     </motion.div>
                 </header>
 
@@ -122,7 +122,7 @@ export default function MyBookingsPage() {
                                     </div>
                                 </div>
                                 <div className="flex min-h-11 items-center justify-between gap-3 border-t border-[#162218]/10 px-5 text-xs font-bold">
-                                    <span className={booking.status === "pending" ? "text-[#90641e]" : "text-[#4e652c]"}>{booking.status === "pending" ? "ממתין לאישור" : "המקום שלך שמור"}</span>
+                                    <span className={booking.status === "pending" ? "text-[var(--studio-warning-ink)]" : "text-[var(--studio-subtle)]"}>{booking.status === "pending" ? "ממתין לאישור" : "המקום שלך שמור"}</span>
                                     <span className="text-[var(--studio-muted)]">{getRelativeTimeHebrew(booking.session.start_time)}</span>
                                 </div>
                             </motion.article>

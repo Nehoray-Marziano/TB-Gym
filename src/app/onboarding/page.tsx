@@ -86,7 +86,7 @@ export default function OnboardingPage() {
         }
     };
 
-    const fieldClass = "min-h-16 w-full rounded-[1.25rem] border border-[#1b251c]/20 bg-white px-5 text-xl font-bold text-[var(--studio-ink)] outline-none placeholder:font-normal placeholder:text-[#899284] focus:border-[#829044]";
+    const fieldClass = "min-h-16 w-full rounded-[1.25rem] border border-[#1b251c]/20 bg-[var(--studio-card)] px-5 text-xl font-bold text-[var(--studio-ink)] outline-none placeholder:font-normal placeholder:text-[#899284] focus:border-[var(--studio-accent-text)]";
 
     return (
         <main className="min-h-dvh bg-[var(--studio-sheet)] text-[var(--studio-ink)]">
@@ -101,8 +101,8 @@ export default function OnboardingPage() {
 
                 {loading ? (
                     <div className="flex flex-1 flex-col justify-center py-10">
-                        <span className="mb-5 inline-flex h-3 w-3 animate-pulse rounded-full bg-[#829044]" />
-                        <h1 className="text-[clamp(3rem,13vw,4.5rem)] font-bold leading-[1.02] tracking-tight">כמעט<br /><span className="text-[#829044]">מוכנות.</span></h1>
+                        <span className="mb-5 inline-flex h-3 w-3 animate-pulse rounded-full bg-[var(--studio-accent-text)]" />
+                        <h1 className="text-[clamp(3rem,13vw,4.5rem)] font-bold leading-[1.02] tracking-tight">כמעט<br /><span className="text-[var(--studio-subtle)]">מוכנות.</span></h1>
                         <p className="mt-5 text-sm text-[var(--studio-muted)]">מסדרות לך מקום בסטודיו...</p>
                     </div>
                 ) : (
@@ -114,7 +114,7 @@ export default function OnboardingPage() {
                             </div>
                             <div aria-label={`שלב ${step} מתוך ${STEPS.length}`} className="flex gap-1.5">
                                 {STEPS.map((_, index) => (
-                                    <span key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? "bg-[#829044]" : "bg-[var(--studio-deep)]/15"}`} />
+                                    <span key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? "bg-[var(--studio-accent-text)]" : "bg-[var(--studio-deep)]/15"}`} />
                                 ))}
                             </div>
                         </div>
@@ -127,7 +127,7 @@ export default function OnboardingPage() {
                             aria-labelledby="onboarding-title"
                             className="flex-1 pb-10 pt-11"
                         >
-                            <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#829044]" />הפרטים שלך בסטודיו</p>
+                            <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-accent-text)]" />הפרטים שלך בסטודיו</p>
                             <h1 id="onboarding-title" className="max-w-[18rem] text-[clamp(2.8rem,12vw,4.1rem)] font-bold leading-[1.03] tracking-tight">{STEPS[step - 1].title}</h1>
                             <p className="mt-4 text-sm leading-relaxed text-[var(--studio-muted)]">{STEPS[step - 1].description}</p>
 
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
                                     <div>
                                         <label htmlFor="onboarding-age" className="mb-2 block text-xs font-bold">גיל</label>
                                         <div className="flex items-center gap-2">
-                                            <button type="button" aria-label="להפחית שנה" onClick={() => setFormData({ ...formData, age: String(Math.max(16, (parseInt(formData.age) || 25) - 1)) })} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#1b251c]/15 bg-white"><Minus aria-hidden="true" className="h-5 w-5" /></button>
+                                            <button type="button" aria-label="להפחית שנה" onClick={() => setFormData({ ...formData, age: String(Math.max(16, (parseInt(formData.age) || 25) - 1)) })} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#1b251c]/15 bg-[var(--studio-card)]"><Minus aria-hidden="true" className="h-5 w-5" /></button>
                                             <input
                                                 id="onboarding-age"
                                                 type="number"
@@ -162,7 +162,7 @@ export default function OnboardingPage() {
                                                 placeholder="25"
                                                 className={`${fieldClass} min-w-0 text-center tabular-nums`}
                                             />
-                                            <button type="button" aria-label="להוסיף שנה" onClick={() => setFormData({ ...formData, age: String(Math.min(100, (parseInt(formData.age) || 25) + 1)) })} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#1b251c]/15 bg-white"><Plus aria-hidden="true" className="h-5 w-5" /></button>
+                                            <button type="button" aria-label="להוסיף שנה" onClick={() => setFormData({ ...formData, age: String(Math.min(100, (parseInt(formData.age) || 25) + 1)) })} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#1b251c]/15 bg-[var(--studio-card)]"><Plus aria-hidden="true" className="h-5 w-5" /></button>
                                         </div>
                                     </div>
                                 )}
@@ -191,7 +191,7 @@ export default function OnboardingPage() {
                                             type="button"
                                             aria-pressed={formData.isHealthy === true}
                                             onClick={() => setFormData({ ...formData, isHealthy: true, medicalConditions: "" })}
-                                            className={`flex min-h-20 w-full items-center justify-between rounded-[1.25rem] border px-5 text-right text-sm font-bold ${formData.isHealthy === true ? "border-[#829044] bg-[var(--studio-accent-bg)]" : "border-[#1b251c]/15 bg-white"}`}
+                                            className={`flex min-h-20 w-full items-center justify-between rounded-[1.25rem] border px-5 text-right text-sm font-bold ${formData.isHealthy === true ? "border-[var(--studio-accent-text)] bg-[var(--studio-accent-bg)]" : "border-[#1b251c]/15 bg-[var(--studio-card)]"}`}
                                         >
                                             אין משהו מיוחד שצריך לדעת
                                             <span aria-hidden="true" className={`h-5 w-5 shrink-0 rounded-full border-2 ${formData.isHealthy === true ? "border-[#1b251c] bg-[var(--studio-deep)] shadow-[inset_0_0_0_4px_#dce780]" : "border-[#1b251c]/30"}`} />
@@ -200,7 +200,7 @@ export default function OnboardingPage() {
                                             type="button"
                                             aria-pressed={formData.isHealthy === false}
                                             onClick={() => setFormData({ ...formData, isHealthy: false })}
-                                            className={`flex min-h-20 w-full items-center justify-between rounded-[1.25rem] border px-5 text-right text-sm font-bold ${formData.isHealthy === false ? "border-[#829044] bg-[var(--studio-accent-bg)]" : "border-[#1b251c]/15 bg-white"}`}
+                                            className={`flex min-h-20 w-full items-center justify-between rounded-[1.25rem] border px-5 text-right text-sm font-bold ${formData.isHealthy === false ? "border-[var(--studio-accent-text)] bg-[var(--studio-accent-bg)]" : "border-[#1b251c]/15 bg-[var(--studio-card)]"}`}
                                         >
                                             יש משהו שחשוב שתדעו
                                             <span aria-hidden="true" className={`h-5 w-5 shrink-0 rounded-full border-2 ${formData.isHealthy === false ? "border-[#1b251c] bg-[var(--studio-deep)] shadow-[inset_0_0_0_4px_#dce780]" : "border-[#1b251c]/30"}`} />
@@ -213,7 +213,7 @@ export default function OnboardingPage() {
                                                     value={formData.medicalConditions}
                                                     onChange={(event) => setFormData({ ...formData, medicalConditions: event.target.value })}
                                                     placeholder="מה חשוב שנדע?"
-                                                    className="min-h-28 w-full resize-none rounded-[1.25rem] border border-[#1b251c]/20 bg-white p-4 text-sm outline-none placeholder:text-[#899284] focus:border-[#829044]"
+                                                    className="min-h-28 w-full resize-none rounded-[1.25rem] border border-[#1b251c]/20 bg-[var(--studio-card)] p-4 text-sm outline-none placeholder:text-[#899284] focus:border-[var(--studio-accent-text)]"
                                                 />
                                             </div>
                                         )}

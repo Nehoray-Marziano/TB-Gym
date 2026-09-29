@@ -29,7 +29,7 @@ export default function PWAInstallGate({ children }: { children: React.ReactNode
                     </div>
                     <div className="mt-auto pt-12">
                         <p className="mb-3 text-xs font-bold text-[var(--studio-muted)]">הכול מוכן / 01</p>
-                        <h1 className="text-[clamp(3.3rem,13vw,5rem)] font-bold leading-[1.04] tracking-tight">האפליקציה<br />מחכה לך<span className="text-[#829044]">.</span></h1>
+                        <h1 className="text-[clamp(3.3rem,13vw,5rem)] font-bold leading-[1.04] tracking-tight">האפליקציה<br />מחכה לך<span className="text-[var(--studio-subtle)]">.</span></h1>
                         <p className="mt-5 max-w-[19rem] text-sm leading-relaxed text-[var(--studio-muted)]">חפשי את סטודיו טליה במסך הבית ופתחי משם את האימונים שלך.</p>
                     </div>
                     <div className="relative mt-10 overflow-hidden rounded-[2rem] bg-[var(--studio-deep)] p-6 text-[var(--studio-deep-contrast)]">
@@ -70,7 +70,7 @@ export default function PWAInstallGate({ children }: { children: React.ReactNode
 
                 <div className="pt-12">
                     <p className="mb-4 text-xs font-bold text-[var(--studio-muted)]">האימונים שלך, במסך הבית / 01</p>
-                    <h1 className="text-[clamp(3.25rem,13vw,5rem)] font-bold leading-[1.04] tracking-tight">הסטודיו<br />תמיד איתך<span className="text-[#829044]">.</span></h1>
+                    <h1 className="text-[clamp(3.25rem,13vw,5rem)] font-bold leading-[1.04] tracking-tight">הסטודיו<br />תמיד איתך<span className="text-[var(--studio-subtle)]">.</span></h1>
                     <p className="mt-5 max-w-[19rem] text-sm leading-relaxed text-[var(--studio-muted)]">הוסיפי את סטודיו טליה למסך הבית כדי להגיע ללוח האימונים בלחיצה אחת.</p>
                 </div>
 

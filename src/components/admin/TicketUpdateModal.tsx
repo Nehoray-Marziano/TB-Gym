@@ -62,7 +62,7 @@ export default function TicketUpdateModal({
                             dir="rtl"
                         >
                             <div className="relative mb-7">
-                                <p className="text-xs font-bold text-[#5c6d2e]">יתרת האימונים של {traineeName}</p>
+                                <p className="text-xs font-bold text-[var(--studio-subtle)]">יתרת האימונים של {traineeName}</p>
                                 <h3 id="ticket-update-title" className="mt-2 text-[2rem] font-bold leading-tight">עדכון יתרה.</h3>
                                 <button
                                     type="button"
@@ -100,7 +100,7 @@ export default function TicketUpdateModal({
                                         value={amountToAdd === 0 ? '' : amountToAdd}
                                         onChange={(e) => setAmountToAdd(parseInt(e.target.value) || 0)}
                                         placeholder="0"
-                                        className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-center text-xl font-bold outline-none focus:border-[#829044]"
+                                        className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-center text-xl font-bold outline-none focus:border-[var(--studio-accent-text)]"
                                     />
                                     <p className="text-xs text-[var(--studio-muted)]">להפחתה, כתבי מספר עם סימן מינוס.</p>
                                 </div>
@@ -116,7 +116,7 @@ export default function TicketUpdateModal({
                                                 aria-pressed={amountToAdd === preset.amount}
                                                 className={cn(
                                                     "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border px-1 transition-colors",
-                                                    amountToAdd === preset.amount ? "border-[#829044] bg-[var(--studio-accent-bg)]" : "border-[#1b251c]/15 bg-white"
+                                                    amountToAdd === preset.amount ? "border-[var(--studio-accent-text)] bg-[var(--studio-accent-bg)]" : "border-[#1b251c]/15 bg-[var(--studio-card)]"
                                                 )}
                                             >
                                                 <span className="text-[11px] font-bold">{preset.label}</span>

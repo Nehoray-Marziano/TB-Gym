@@ -123,7 +123,7 @@ export default function PaymentModal({
                                             {copied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
                                         </div>
                                     </button>
-                                    {copied && <p className="mt-1 text-xs text-[#4e652c]">הועתק</p>}
+                                    {copied && <p className="mt-1 text-xs text-[var(--studio-subtle)]">הועתק</p>}
                                 </div>
 
                                 {/* Action Buttons */}

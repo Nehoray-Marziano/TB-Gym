@@ -15,8 +15,8 @@ export default function AuthCodeErrorPage() {
                 </header>
 
                 <div className="flex flex-1 flex-col justify-center py-12">
-                    <p className="mb-5 flex items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#829044]" />משהו עצר בדרך</p>
-                    <h1 className="text-[clamp(3.2rem,13vw,4.7rem)] font-bold leading-[1.02] tracking-tight">הכניסה<br /><span className="text-[#829044]">לא הושלמה.</span></h1>
+                    <p className="mb-5 flex items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-accent-text)]" />משהו עצר בדרך</p>
+                    <h1 className="text-[clamp(3.2rem,13vw,4.7rem)] font-bold leading-[1.02] tracking-tight">הכניסה<br /><span className="text-[var(--studio-subtle)]">לא הושלמה.</span></h1>
                     <p className="mt-6 max-w-[18rem] text-sm leading-relaxed text-[var(--studio-muted)]">אפשר לנסות להיכנס שוב. אם זה קורה שוב, חכי רגע ונסי מחדש.</p>
 
                     <div aria-hidden="true" className="relative mt-12 h-36 overflow-hidden rounded-[1.75rem] bg-[var(--studio-deep)]">

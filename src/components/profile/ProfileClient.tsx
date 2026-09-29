@@ -223,13 +223,13 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, is_healthy: false })}
-                                            className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${!formData.is_healthy ? "border-[#a53d35] bg-[#a53d35]/10 text-[#a53d35]" : "border-[#162218]/15 text-[var(--studio-muted)]"}`}
+                                            className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${!formData.is_healthy ? "border-[var(--studio-danger)] bg-[var(--studio-danger)]/10 text-[var(--studio-danger)]" : "border-[#162218]/15 text-[var(--studio-muted)]"}`}
                                         >
                                             יש מגבלות
                                         </button>
                                     </div>
                                 ) : (
-                                    <p className={`font-bold ${health.is_healthy ? "text-[#4e652c]" : "text-[#a53d35]"}`}>
+                                    <p className={`font-bold ${health.is_healthy ? "text-[var(--studio-subtle)]" : "text-[var(--studio-danger)]"}`}>
                                         {health.is_healthy ? "תקינה" : "קיימות מגבלות רפואיות"}
                                     </p>
                                 )}
@@ -413,7 +413,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 <button
                     type="button"
                     onClick={handleLogout}
-                    className="mt-7 flex min-h-14 w-full items-center justify-center gap-2 rounded-full border border-[#a53d35]/25 bg-[#a53d35]/10 px-4 text-sm font-bold text-[#a53d35] transition-colors active:bg-[#a53d35]/20"
+                    className="mt-7 flex min-h-14 w-full items-center justify-center gap-2 rounded-full border border-[var(--studio-danger)]/25 bg-[var(--studio-danger)]/10 px-4 text-sm font-bold text-[var(--studio-danger)] transition-colors active:bg-[var(--studio-danger)]/20"
                 >
                     <LogOut aria-hidden="true" className="h-4 w-4" />
                     התנתקות

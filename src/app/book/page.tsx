@@ -263,14 +263,14 @@ END:VCALENDAR`;
                         };
 
                         return (
-                            <article key={session.id} className={`overflow-hidden rounded-[1.75rem] border bg-[var(--studio-card)] ${session.isRegistered ? "border-[#829044]" : "border-[#162218]/10"}`}>
+                            <article key={session.id} className={`overflow-hidden rounded-[1.75rem] border bg-[var(--studio-card)] ${session.isRegistered ? "border-[var(--studio-accent-text)]" : "border-[#162218]/10"}`}>
                                 <div className="p-5">
                                     <div className="mb-5 flex items-start justify-between gap-3">
                                         <div className={`flex h-[4.5rem] w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-[1.1rem] ${session.isRegistered ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "bg-[var(--studio-deep)] text-[var(--studio-accent-text)]"}`}>
                                             <span className="text-[1.85rem] font-bold leading-none tabular-nums">{date.day}</span>
                                             <span className="mt-1 text-xs font-bold">{date.month}</span>
                                         </div>
-                                        <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${session.isRegistered ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : isFull ? "bg-[#e1e3db] text-[#596252]" : isAlmostFull ? "bg-[#f4e6cd] text-[#754d16]" : "bg-[#e8ecd5] text-[#4e652c]"}`}>
+                                        <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${session.isRegistered ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : isFull ? "bg-[var(--studio-neutral-bg)] text-[var(--studio-muted)]" : isAlmostFull ? "bg-[var(--studio-warning-bg)] text-[var(--studio-warning-ink)]" : "bg-[var(--studio-accent-bg)] text-[var(--studio-subtle)]"}`}>
                                             {session.isRegistered ? "המקום שלך שמור" : isFull ? "האימון מלא" : isAlmostFull ? `נשארו ${spotsLeft} מקומות` : "אפשר להירשם"}
                                         </span>
                                     </div>
@@ -281,7 +281,7 @@ END:VCALENDAR`;
                                         {date.weekday} · {date.time}
                                     </p>
                                     <p className="mt-3 text-xs text-[var(--studio-muted)]">{getRelativeTimeHebrew(session.start_time)} · {session.current_bookings || 0} מתוך {session.max_capacity} מקומות תפוסים</p>
-                                    <div role="meter" aria-label={`תפוסה באימון ${session.title}`} aria-valuemin={0} aria-valuemax={session.max_capacity} aria-valuenow={session.current_bookings || 0} className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--studio-deep)]/10"><span className="block h-full rounded-full bg-[#829044]" style={{ width: `${occupancy}%` }} /></div>
+                                    <div role="meter" aria-label={`תפוסה באימון ${session.title}`} aria-valuemin={0} aria-valuemax={session.max_capacity} aria-valuenow={session.current_bookings || 0} className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--studio-deep)]/10"><span className="block h-full rounded-full bg-[var(--studio-accent-text)]" style={{ width: `${occupancy}%` }} /></div>
                                 </div>
 
                                 {session.isRegistered ? (
@@ -290,7 +290,7 @@ END:VCALENDAR`;
                                             <CalendarPlus aria-hidden="true" className="h-4 w-4" /> הוספה ליומן
                                         </button>
                                         <div className="w-px bg-[var(--studio-deep)]/10" />
-                                        <button type="button" onClick={handleCancelClick} className="flex min-h-12 flex-1 items-center justify-center gap-2 px-2 text-xs font-bold text-[#a53d35] transition-colors active:bg-[#a53d35]/10">
+                                        <button type="button" onClick={handleCancelClick} className="flex min-h-12 flex-1 items-center justify-center gap-2 px-2 text-xs font-bold text-[var(--studio-danger)] transition-colors active:bg-[var(--studio-danger)]/10">
                                             <X aria-hidden="true" className="h-4 w-4" /> ביטול הרשמה
                                         </button>
                                     </div>
@@ -299,7 +299,7 @@ END:VCALENDAR`;
                                         type="button"
                                         onClick={() => !isFull && handleBook(session.id)}
                                         disabled={bookingId === session.id || isFull}
-                                        className={`flex min-h-14 w-full items-center justify-between border-t px-5 text-sm font-bold transition-colors ${isFull ? "border-[#162218]/10 bg-[#e1e3db] text-[#596252]" : "border-[#dce780] bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] active:bg-[#e8f29a]"}`}
+                                        className={`flex min-h-14 w-full items-center justify-between border-t px-5 text-sm font-bold transition-colors ${isFull ? "border-[#162218]/10 bg-[var(--studio-neutral-bg)] text-[var(--studio-muted)]" : "border-[#dce780] bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] active:bg-[#e8f29a]"}`}
                                     >
                                         {bookingId === session.id ? "רושמים אותך..." : isFull ? "האימון מלא" : "שמרי לי מקום"}
                                         {!isFull && (bookingId === session.id ? <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <ArrowLeft aria-hidden="true" className="h-4 w-4" />)}
@@ -334,7 +334,7 @@ END:VCALENDAR`;
                             className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
                         >
                             <button type="button" onClick={() => setSessionToCancel(null)} aria-label="סגירה" className="absolute left-5 top-6 flex h-11 w-11 items-center justify-center rounded-full border border-[#162218]/15"><X aria-hidden="true" className="h-5 w-5" /></button>
-                            <p className="mb-2 text-xs font-bold text-[#8b3e36]">ההרשמה שלך</p>
+                            <p className="mb-2 text-xs font-bold text-[var(--studio-danger)]">ההרשמה שלך</p>
                             <h3 id="cancel-booking-title" className="max-w-[16rem] text-[2rem] font-bold leading-tight">לבטל את ההרשמה?</h3>
                             <div className="mt-7 rounded-[1.5rem] bg-[var(--studio-deep)] p-5 text-[var(--studio-deep-contrast)]">
                                 <p className="text-xs font-bold text-[var(--studio-accent-text)]">האימון שיתפנה</p>
@@ -343,7 +343,7 @@ END:VCALENDAR`;
                             <p className="mt-5 text-sm leading-relaxed text-[var(--studio-muted)]">המקום שלך יתפנה, והאימון יוחזר ליתרה שלך.</p>
                             <div className="mt-7 grid grid-cols-2 gap-3">
                                 <button type="button" onClick={() => setSessionToCancel(null)} className="min-h-12 rounded-full bg-[var(--studio-deep)] px-3 text-sm font-bold text-[var(--studio-deep-contrast)] transition-colors active:bg-[#334436]">להישאר רשומה</button>
-                                <button type="button" onClick={confirmCancel} className="min-h-12 rounded-full border border-[#a53d35]/40 px-3 text-sm font-bold text-[#a53d35] transition-colors active:bg-[#a53d35]/10">כן, לבטל</button>
+                                <button type="button" onClick={confirmCancel} className="min-h-12 rounded-full border border-[var(--studio-danger)]/40 px-3 text-sm font-bold text-[var(--studio-danger)] transition-colors active:bg-[var(--studio-danger)]/10">כן, לבטל</button>
                             </div>
                         </motion.div>
                     </motion.div>

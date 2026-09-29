@@ -77,7 +77,7 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                 {/* Header */}
                 <div className="border-b border-[#1b251c]/10 px-5 pb-5 pt-7">
                     <div className="mb-5 flex items-start justify-between gap-3">
-                        <div><p className="text-xs font-bold text-[#5c6d2e]">אימון למוזמנות</p><h3 id="trainee-selector-title" className="mt-2 text-[2rem] font-bold leading-tight">את מי מזמינים?</h3></div>
+                        <div><p className="text-xs font-bold text-[var(--studio-subtle)]">אימון למוזמנות</p><h3 id="trainee-selector-title" className="mt-2 text-[2rem] font-bold leading-tight">את מי מזמינים?</h3></div>
                         <button type="button" onClick={onClose} aria-label="סגירה" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#1b251c]/15">
                             <X aria-hidden="true" className="h-5 w-5" />
                         </button>
@@ -92,7 +92,7 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                             placeholder="חיפוש לפי שם או טלפון"
                             value={term}
                             onChange={e => setTerm(e.target.value)}
-                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white py-3 pr-10 pl-4 text-sm outline-none focus:border-[#829044]"
+                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] py-3 pr-10 pl-4 text-sm outline-none focus:border-[var(--studio-accent-text)]"
                         />
                     </div>
                 </div>
@@ -102,7 +102,7 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                     {loading ? (
                         <div className="flex justify-center p-8"><div aria-label="טוענים מתאמנות" className="h-6 w-6 animate-spin rounded-full border-2 border-[#1b251c] border-t-transparent" /></div>
                     ) : fetchError ? (
-                        <div role="alert" className="p-4 text-center text-sm font-bold text-[#a53d35]">{fetchError}</div>
+                        <div role="alert" className="p-4 text-center text-sm font-bold text-[var(--studio-danger)]">{fetchError}</div>
                     ) : filtered.length === 0 ? (
                         <div className="p-8 text-center text-sm text-[var(--studio-muted)]">לא נמצאו מתאמנות.</div>
                     ) : (
@@ -117,8 +117,8 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                                     className={cn(
                                         "flex min-h-16 w-full items-center gap-3 rounded-2xl border p-3 text-right transition-colors",
                                         isSelected
-                                            ? "border-[#829044]/50 bg-[#dfe6bd]"
-                                            : "border-[#1b251c]/10 bg-white"
+                                            ? "border-[var(--studio-accent-text)]/50 bg-[#dfe6bd]"
+                                            : "border-[#1b251c]/10 bg-[var(--studio-card)]"
                                     )}
                                 >
                                     <div className={cn(

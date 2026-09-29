@@ -132,7 +132,7 @@ export default function LandingPage() {
 
                 <section className="px-5 pb-14 pt-14 sm:px-7" aria-labelledby="what-is-here">
                     <p className="mb-3 text-xs font-bold text-[var(--studio-subtle)]">כאן מתחיל האימון הבא</p>
-                    <h2 id="what-is-here" className="max-w-[18rem] text-[clamp(2.3rem,10vw,3.4rem)] font-bold leading-[1.02] tracking-tight">כל מה שצריך.<br /><span className="text-[#829044]">במקום אחד.</span></h2>
+                    <h2 id="what-is-here" className="max-w-[18rem] text-[clamp(2.3rem,10vw,3.4rem)] font-bold leading-[1.02] tracking-tight">כל מה שצריך.<br /><span className="text-[var(--studio-subtle)]">במקום אחד.</span></h2>
                     <div className="mt-9 border-t border-[#1b251c]/25">
                         {[
                             ["01", "לוח האימונים", "רואות מה קרוב ובוחרות מתי להגיע."],
@@ -140,14 +140,14 @@ export default function LandingPage() {
                             ["03", "יתרת האימונים", "היתרה שלך תמיד מול העיניים."],
                         ].map(([number, title, description]) => (
                             <div key={number} className="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-[#1b251c]/25 py-6">
-                                <span className="pt-1 text-xs font-bold text-[#829044]">{number}</span>
+                                <span className="pt-1 text-xs font-bold text-[var(--studio-subtle)]">{number}</span>
                                 <div><h3 className="text-lg font-bold">{title}</h3><p className="mt-1 text-xs leading-relaxed text-[var(--studio-muted)]">{description}</p></div>
                             </div>
                         ))}
                     </div>
                 </section>
 
-                <footer className="mx-5 border-t border-[#1b251c]/20 pb-8 pt-5 text-xs text-[#6f795f] sm:mx-7">© סטודיו טליה</footer>
+                <footer className="mx-5 border-t border-[#1b251c]/20 pb-8 pt-5 text-xs text-[var(--studio-subtle)] sm:mx-7">© סטודיו טליה</footer>
             </main>
 
             <AnimatePresence>
@@ -173,7 +173,7 @@ export default function LandingPage() {
                             className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
                         >
                             <button type="button" onClick={resetLoginState} aria-label="סגירה" className="absolute left-6 top-7 flex h-11 w-11 items-center justify-center rounded-full border border-[#1b251c]/15"><X aria-hidden="true" className="h-5 w-5" /></button>
-                            <p className="mb-2 text-xs font-bold text-[#5c6d2e]">סטודיו טליה</p>
+                            <p className="mb-2 text-xs font-bold text-[var(--studio-subtle)]">סטודיו טליה</p>
                             <h2 id="login-title" className="max-w-[15rem] text-[2rem] font-bold leading-tight">
                                 {loginView === "menu" ? "איך נוח לך להיכנס?" : loginView === "email" ? "נשלח לך קוד למייל" : "הקוד בדרך אלייך"}
                             </h2>
@@ -187,7 +187,7 @@ export default function LandingPage() {
                                         {isLoading ? <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <GoogleMark />}
                                         המשך עם גוגל
                                     </button>
-                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); }} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full border border-[#1b251c]/20 bg-white px-5 text-sm font-bold">
+                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); }} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full border border-[#1b251c]/20 bg-[var(--studio-card)] px-5 text-sm font-bold">
                                         <Mail aria-hidden="true" className="h-4 w-4" /> כניסה עם קוד במייל
                                     </button>
                                 </div>
@@ -196,7 +196,7 @@ export default function LandingPage() {
                             {loginView === "email" && (
                                 <form onSubmit={(event) => { event.preventDefault(); handleSendCode(); }} className="space-y-3">
                                     <label htmlFor="login-email" className="block text-xs font-bold">כתובת המייל שלך</label>
-                                    <input id="login-email" type="email" inputMode="email" autoComplete="email" required dir="ltr" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="כתובת המייל שלך" className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-sm outline-none focus:border-[#829044]" />
+                                    <input id="login-email" type="email" inputMode="email" autoComplete="email" required dir="ltr" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="כתובת המייל שלך" className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-sm outline-none focus:border-[var(--studio-accent-text)]" />
                                     <button type="submit" disabled={isLoading || !email} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-[var(--studio-deep-contrast)] disabled:opacity-50">{isLoading ? "שולחים..." : "שלחי לי קוד"}<ArrowLeft aria-hidden="true" className="h-4 w-4" /></button>
                                     <button type="button" onClick={() => { setAuthError(""); setLoginView("menu"); }} className="flex min-h-11 items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה לאפשרויות</button>
                                 </form>
@@ -205,13 +205,13 @@ export default function LandingPage() {
                             {loginView === "otp" && (
                                 <form onSubmit={(event) => { event.preventDefault(); handleVerifyCode(); }} className="space-y-3">
                                     <label htmlFor="login-code" className="block text-xs font-bold">הקוד שקיבלת</label>
-                                    <input id="login-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={10} required dir="ltr" value={otpCode} onChange={(event) => setOtpCode(event.target.value)} placeholder="••••••" className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-center text-xl tracking-[0.35em] outline-none focus:border-[#829044]" />
+                                    <input id="login-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={10} required dir="ltr" value={otpCode} onChange={(event) => setOtpCode(event.target.value)} placeholder="••••••" className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-center text-xl tracking-[0.35em] outline-none focus:border-[var(--studio-accent-text)]" />
                                     <button type="submit" disabled={isLoading || otpCode.length < 6} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-[var(--studio-deep-contrast)] disabled:opacity-50">{isLoading ? "בודקים..." : "אימות וכניסה"}<ArrowLeft aria-hidden="true" className="h-4 w-4" /></button>
                                     <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); }} className="flex min-h-11 items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה לכתובת המייל</button>
                                 </form>
                             )}
 
-                            {authError && <p role="alert" className="mt-4 rounded-2xl bg-[#a53d35]/10 p-3 text-sm text-[#a53d35]">{authError}</p>}
+                            {authError && <p role="alert" className="mt-4 rounded-2xl bg-[var(--studio-danger)]/10 p-3 text-sm text-[var(--studio-danger)]">{authError}</p>}
                         </motion.div>
                     </motion.div>
                 )}
