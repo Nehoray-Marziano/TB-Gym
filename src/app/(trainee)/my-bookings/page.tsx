@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronRight, Clock3 } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import StudioLogo from "@/components/StudioLogo";
@@ -31,7 +30,6 @@ function formatDate(date: string, options: Intl.DateTimeFormatOptions) {
 export default function MyBookingsPage() {
     const router = useRouter();
     const userId = useTraineeUserId();
-    const reduceMotion = useReducedMotion();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -70,29 +68,16 @@ export default function MyBookingsPage() {
     return (
         <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
             <main className="mx-auto max-w-lg pb-[calc(8rem+env(safe-area-inset-bottom))]">
-                <header className="relative isolate overflow-hidden bg-[var(--studio-accent-bg)] px-5 pb-20 pt-5 sm:px-7">
-                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#162218_1px,transparent_1px),linear-gradient(90deg,#162218_1px,transparent_1px)] [background-size:28px_28px]" />
-                    <StudioLogo className="pointer-events-none absolute -bottom-16 -left-12 h-64 w-64 bg-[var(--studio-deep)]/10" />
-                    <button
-                        type="button"
-                        onClick={() => router.back()}
-                        aria-label="חזרה"
-                        className="relative mb-12 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[#162218]/30 transition-colors active:bg-[var(--studio-deep)]/10"
-                    >
-                        <ChevronRight aria-hidden="true" className="h-5 w-5" />
-                    </button>
-                    <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
-                        <p className="mb-4 flex items-center gap-2 text-xs font-bold"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-bg)]" />היומן שלך</p>
-                        <h1 className="text-[clamp(3.6rem,15vw,5.2rem)] font-bold leading-[0.9] tracking-[-0.06em]">האימונים<br /><span className="text-[var(--studio-ink)]">שלי.</span></h1>
-                        <p className="mt-5 max-w-[18rem] text-sm leading-relaxed text-[var(--studio-muted)]">המקומות שכבר שמורים לך בסטודיו.</p>
-                    </motion.div>
+                <header className="relative flex items-center gap-3 bg-[var(--studio-accent-bg)] px-5 py-5">
+                    <button type="button" onClick={() => router.back()} aria-label="חזרה" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--studio-ink)]/20"><ChevronRight aria-hidden="true" className="h-5 w-5" /></button>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-bold text-[var(--studio-subtle)]">היומן שלך</p>
+                        <h1 className="text-[2rem] font-bold leading-tight tracking-tight">האימונים שלי<span className="text-[var(--studio-coral-ink)]">.</span></h1>
+                    </div>
+                    {!loading && <span className="text-xs font-bold">{bookings.length}</span>}
                 </header>
 
-                <div className="relative -mt-8 rounded-t-[2rem] bg-[var(--studio-canvas)] px-5 pt-8 sm:px-7">
-                    <div className="mb-5 border-b border-[#162218]/25 pb-4">
-                        <div className="flex items-center justify-between gap-3 text-[10px] font-bold text-[var(--studio-subtle)]"><p>היומן שלי / 02</p>{!loading && <span>{bookings.length} {bookings.length === 1 ? "אימון" : "אימונים"}</span>}</div>
-                        <h2 className="mt-2 text-[1.65rem] font-bold leading-tight">מה מחכה לך.</h2>
-                    </div>
+                <div className="px-5 pt-4">
 
                 {loading ? (
                     <div className="space-y-3" aria-busy="true">
@@ -100,9 +85,9 @@ export default function MyBookingsPage() {
                     </div>
                 ) : bookings.length > 0 ? (
                     <div className="space-y-3">
-                        {bookings.map((booking, index) => (
-                            <motion.article key={booking.id} initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.07, 0.28), duration: 0.45 }} className="overflow-hidden rounded-[1.75rem] border border-[#162218]/10 bg-[var(--studio-card)]">
-                                <div className="flex gap-4 p-5">
+                        {bookings.map((booking) => (
+                            <article key={booking.id} className="overflow-hidden rounded-[1.35rem] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)]">
+                                <div className="flex gap-3 p-3.5">
                                     <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-[1.1rem] bg-[var(--studio-deep)] text-[var(--studio-accent-text)]">
                                         <span className="text-[1.85rem] font-bold leading-none tabular-nums">{formatDate(booking.session.start_time, { day: "numeric" })}</span>
                                         <span className="mt-1 text-xs font-bold">{formatDate(booking.session.start_time, { month: "short" })}</span>
@@ -119,7 +104,7 @@ export default function MyBookingsPage() {
                                     <span className={booking.status === "pending" ? "text-[var(--studio-warning-ink)]" : "text-[var(--studio-subtle)]"}>{booking.status === "pending" ? "ממתין לאישור" : "המקום שלך שמור"}</span>
                                     <span className="text-[var(--studio-muted)]">{getRelativeTimeHebrew(booking.session.start_time)}</span>
                                 </div>
-                            </motion.article>
+                            </article>
                         ))}
                     </div>
                 ) : (
