@@ -4,7 +4,7 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import StudioLogo from "@/components/StudioLogo";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Minus, Plus } from "lucide-react";
 
 type FormData = {
@@ -24,6 +24,7 @@ const STEPS = [
 
 export default function OnboardingPage() {
     const router = useRouter();
+    const reduceMotion = useReducedMotion();
     const supabase = getSupabaseClient();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -120,7 +121,7 @@ export default function OnboardingPage() {
 
                         <motion.section
                             key={step}
-                            initial={{ opacity: 0, y: 12 }}
+                            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.22 }}
                             aria-labelledby="onboarding-title"
