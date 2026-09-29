@@ -93,61 +93,49 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
-            <main className="mx-auto max-w-lg">
-                <section className="relative isolate overflow-hidden bg-[var(--studio-deep)] px-5 pb-5 pt-4 text-[var(--studio-deep-contrast)] sm:px-7" aria-labelledby="landing-title">
-                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
-                    <header className="relative flex items-center justify-between border-b border-white/20 pb-3">
-                        <div className="flex items-center gap-3">
-                            <StudioLogo className="h-9 w-9 bg-[var(--studio-accent-bg)]" />
-                            <span className="border-s border-white/25 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
-                        </div>
-                        <span className="text-[11px] font-bold text-[#bac9ae]">האזור שלך בסטודיו</span>
-                    </header>
-
-                    <div className="relative pt-6">
-                        <motion.p initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-3 flex items-center gap-2 text-xs font-bold text-[var(--studio-accent-text)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-bg)]" />לוח האימונים של טליה</motion.p>
-                        <motion.h1 id="landing-title" initial={reduceMotion ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }} className="relative z-10 font-bold leading-[0.83] tracking-[-0.065em]">
-                            <span className="block text-[clamp(3.3rem,13vw,5rem)]">יש לך</span>
-                            <span className="block text-[clamp(5.5rem,23vw,8rem)] text-[var(--studio-accent-text)]">מקום</span>
-                            <span className="block text-[clamp(4.4rem,18vw,6.7rem)]">לזוז<span className="text-[var(--studio-coral-text)]">.</span></span>
-                        </motion.h1>
+        <div className="min-h-svh overflow-x-hidden bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)]">
+            <main className="relative isolate mx-auto flex min-h-svh max-w-lg flex-col overflow-hidden px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:30px_30px]" />
+                <header className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <StudioLogo className="h-9 w-9 bg-[var(--studio-accent-bg)]" />
+                        <span className="text-xs font-bold leading-[1.05]">טליה<br />סטודיו</span>
                     </div>
+                    <span className="rounded-full border border-white/25 px-3 py-1.5 text-[10px] font-bold text-[var(--studio-accent-text)]">האזור שלך</span>
+                </header>
 
-                    <motion.div initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.16, ease: [0.22, 1, 0.36, 1] }} aria-label="איור של סטודיו טליה" className="relative mt-5 h-[clamp(9rem,42vw,12rem)] overflow-hidden border-y border-[#dce780]/50 bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]">
-                        <div aria-hidden="true" className="absolute inset-0 opacity-20 [background-image:repeating-linear-gradient(-25deg,transparent_0,transparent_26px,#1b251c_27px,#1b251c_28px)]" />
-                        <div aria-hidden="true" className="absolute -left-11 -top-14 h-[18rem] w-[18rem] rotate-[-13deg] rounded-full border-[1.75rem] border-[#162218]/15" />
-                        <div aria-hidden="true" className="studio-artwork-orb absolute -left-5 bottom-0 h-16 w-16 rounded-full bg-[var(--studio-coral-bg)]" />
-                        <StudioLogo className="studio-artwork-mark absolute -bottom-12 -left-4 h-[clamp(12rem,52vw,16rem)] w-[clamp(12rem,52vw,16rem)] bg-[var(--studio-deep)]" />
-                        <div className="absolute right-5 top-5 flex flex-col items-start gap-1 text-[10px] font-bold"><span>טליה / אימונים</span><span className="h-px w-14 bg-[var(--studio-deep)]/40" /></div>
-                        <span className="absolute bottom-4 right-5 border-t border-[#162218]/50 pt-1 text-[11px] font-bold">לבחור. להירשם. להגיע.</span>
-                    </motion.div>
+                <section aria-labelledby="landing-title" className="relative mt-[clamp(2rem,7svh,4.5rem)] [@media(max-height:650px)]:mt-4">
+                    <p className="mb-3 text-xs font-bold text-[var(--studio-accent-text)]">האימון הבא מתחיל כאן</p>
+                    <h1 id="landing-title" className="font-bold leading-[0.88] tracking-[-0.065em]">
+                        <span className="block text-[clamp(2.8rem,12vw,4rem)]">יש לך</span>
+                        <span className="relative block w-fit text-[clamp(5.3rem,23vw,7.6rem)] text-[var(--studio-accent-text)]">מקום
+                            <svg aria-hidden="true" viewBox="0 0 260 24" preserveAspectRatio="none" className="absolute -bottom-2 right-0 h-5 w-full overflow-visible text-[var(--studio-coral-bg)]">
+                                <motion.path d="M4 17 C56 3 114 4 158 12 S226 20 256 4" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" initial={reduceMotion ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.8, delay: 0.25, ease: "easeOut" }} />
+                            </svg>
+                        </span>
+                        <span className="mt-2 block text-[clamp(4rem,18vw,6rem)]">לזוז<span className="text-[var(--studio-coral-text)]">.</span></span>
+                    </h1>
+                </section>
 
-                    <p className="relative mt-4 max-w-[19rem] text-sm leading-relaxed text-[#c4d0bd]">האימונים הקרובים, המקום ששמרת והיתרה שלך. הכול כאן, לפני שיוצאים לסטודיו.</p>
-                    <button id="main-signin-button" type="button" onClick={() => setIsLoginOpen(true)} className="relative mt-4 flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-accent-bg)] px-6 text-sm font-bold text-[var(--studio-ink)] transition-transform active:scale-[0.98]">
-                        כניסה לאזור שלי <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+                <div aria-hidden="true" className="pointer-events-none relative my-3 min-h-20 flex-1 overflow-hidden [@media(max-height:650px)]:min-h-10">
+                    <svg viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet" className="absolute bottom-[-10%] left-[-8%] h-full w-full max-h-56 text-[var(--studio-accent-bg)]">
+                        <path d="M-20 177 C90 26 218 206 380 2" fill="none" stroke="currentColor" strokeOpacity=".35" strokeWidth="2" />
+                        <path d="M-20 198 C99 48 226 217 380 24" fill="none" stroke="currentColor" strokeOpacity=".22" strokeWidth="2" />
+                        <circle cx="297" cy="70" r="50" fill="var(--studio-coral-bg)" />
+                    </svg>
+                    <StudioLogo className="absolute bottom-[-2rem] left-2 h-40 w-40 rotate-[-13deg] bg-[var(--studio-accent-bg)]" />
+                </div>
+
+                <div className="relative">
+                    <p className="mb-5 max-w-[18rem] text-sm leading-relaxed text-[var(--studio-deep-contrast)]/75 [@media(max-height:650px)]:mb-2">האימונים, ההרשמות והיתרה שלך. הכול מחכה לך כאן.</p>
+                    {authError && <p role="alert" className="mb-3 text-xs font-bold text-[var(--studio-coral-text)]">{authError}</p>}
+                    <button id="main-signin-button" type="button" onClick={handleGoogleLogin} disabled={isLoading} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-accent-bg)] px-5 text-sm font-bold text-[var(--studio-ink)] transition-transform active:scale-[0.985] disabled:opacity-60">
+                        <span className="flex items-center gap-3"><GoogleMark />{isLoading ? "מחברות אותך..." : "ממשיכים עם גוגל"}</span><ArrowLeft aria-hidden="true" className="h-5 w-5" />
                     </button>
-                    <div className="relative mt-5 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-bold text-[#b8c7ae]"><span>סטודיו טליה</span><span>פשוט להגיע לאימון.</span></div>
-                </section>
-
-                <section className="px-5 pb-14 pt-14 sm:px-7" aria-labelledby="what-is-here">
-                    <p className="mb-3 text-xs font-bold text-[var(--studio-subtle)]">כאן מתחיל האימון הבא</p>
-                    <h2 id="what-is-here" className="max-w-[18rem] text-[clamp(2.3rem,10vw,3.4rem)] font-bold leading-[1.02] tracking-tight">כל מה שצריך.<br /><span className="text-[var(--studio-subtle)]">במקום אחד.</span></h2>
-                    <div className="mt-9 border-t border-[#1b251c]/25">
-                        {[
-                            ["01", "לוח האימונים", "רואות מה קרוב ובוחרות מתי להגיע."],
-                            ["02", "המקום שלך", "ההרשמה והאימון הבא תמיד מולך."],
-                            ["03", "יתרת האימונים", "היתרה שלך תמיד מול העיניים."],
-                        ].map(([number, title, description]) => (
-                            <div key={number} className="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-[#1b251c]/25 py-6">
-                                <span className="pt-1 text-xs font-bold text-[var(--studio-subtle)]">{number}</span>
-                                <div><h3 className="text-lg font-bold">{title}</h3><p className="mt-1 text-xs leading-relaxed text-[var(--studio-muted)]">{description}</p></div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                <footer className="mx-5 border-t border-[#1b251c]/20 pb-8 pt-5 text-xs text-[var(--studio-subtle)] sm:mx-7">© סטודיו טליה</footer>
+                    <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); setIsLoginOpen(true); }} className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 text-xs font-bold text-[var(--studio-deep-contrast)]">
+                        <Mail aria-hidden="true" className="h-4 w-4" /> כניסה עם קוד במייל
+                    </button>
+                </div>
             </main>
 
             <AnimatePresence>
