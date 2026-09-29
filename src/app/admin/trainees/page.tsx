@@ -33,6 +33,7 @@ export default function AdminTraineesPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [grantingTickets, setGrantingTickets] = useState<string | null>(null);
     const [selectedTraineeForUpdate, setSelectedTraineeForUpdate] = useState<Trainee | null>(null);
+    const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
     const { toast } = useToast();
 
     const fetchTrainees = useCallback(async () => {
@@ -117,7 +118,7 @@ export default function AdminTraineesPage() {
             ));
 
             toast({ title: "הכרטיסים עודכנו בהצלחה", type: "success" });
-            setSelectedTraineeForUpdate(null); // Close modal
+            setIsTicketModalOpen(false);
         } catch (err: unknown) {
             console.error(err);
             toast({ title: "שגיאה בהענקת כרטיסים", description: err instanceof Error ? err.message : "כדאי לנסות שוב בעוד רגע.", type: "error" });
@@ -190,7 +191,7 @@ export default function AdminTraineesPage() {
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setSelectedTraineeForUpdate(trainee)}
+                                    onClick={() => { setSelectedTraineeForUpdate(trainee); setIsTicketModalOpen(true); }}
                                     className="min-h-11 shrink-0 rounded-full bg-[#dce780] px-4 text-xs font-bold text-[#1b251c] transition-colors active:bg-[#e9f19e]"
                                 >
                                     עדכון יתרה
@@ -208,16 +209,14 @@ export default function AdminTraineesPage() {
             )}
 
             {/* Ticket Update Modal */}
-            {selectedTraineeForUpdate && (
-                <TicketUpdateModal
-                    isOpen={!!selectedTraineeForUpdate}
-                    onClose={() => setSelectedTraineeForUpdate(null)}
-                    onConfirm={(amount) => handleGrantTickets(selectedTraineeForUpdate.id, amount)}
-                    traineeName={selectedTraineeForUpdate.full_name}
-                    currentBalance={selectedTraineeForUpdate.tickets}
-                    isUpdating={grantingTickets === selectedTraineeForUpdate.id}
-                />
-            )}
+            <TicketUpdateModal
+                isOpen={isTicketModalOpen}
+                onClose={() => setIsTicketModalOpen(false)}
+                onConfirm={(amount) => { if (selectedTraineeForUpdate) void handleGrantTickets(selectedTraineeForUpdate.id, amount); }}
+                traineeName={selectedTraineeForUpdate?.full_name ?? ""}
+                currentBalance={selectedTraineeForUpdate?.tickets ?? 0}
+                isUpdating={!!selectedTraineeForUpdate && grantingTickets === selectedTraineeForUpdate.id}
+            />
         </div>
     );
 }

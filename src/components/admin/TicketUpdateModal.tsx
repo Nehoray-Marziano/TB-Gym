@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X, Ticket, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ export default function TicketUpdateModal({
     isUpdating
 }: TicketUpdateModalProps) {
     const [amountToAdd, setAmountToAdd] = useState<number>(0);
+    const reduceMotion = useReducedMotion();
 
     const handleConfirm = () => {
         if (amountToAdd !== 0) {
@@ -39,11 +40,10 @@ export default function TicketUpdateModal({
     const newBalance = currentBalance + amountToAdd;
 
     return (
-        <AnimatePresence>
+        <AnimatePresence onExitComplete={() => setAmountToAdd(0)}>
             {isOpen && (
-                <>
                     <motion.div
-                        initial={{ opacity: 0 }}
+                        initial={reduceMotion ? false : { opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
@@ -53,7 +53,7 @@ export default function TicketUpdateModal({
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="ticket-update-title"
-                            initial={{ y: "100%" }}
+                            initial={reduceMotion ? false : { y: "100%" }}
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 28, stiffness: 300 }}
@@ -144,7 +144,6 @@ export default function TicketUpdateModal({
                             </div>
                         </motion.div>
                     </motion.div>
-                </>
             )}
         </AnimatePresence>
     );
