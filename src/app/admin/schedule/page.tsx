@@ -1,11 +1,10 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { he } from "date-fns/locale";
-import { Calendar as CalendarIcon, Clock, Trash2, Users, Plus, X } from "lucide-react";
+import { Bell, Calendar as CalendarIcon, Clock, Trash2, Users, Plus, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,13 +15,6 @@ import {
 } from "@/components/ui/popover";
 import { MuiTimePickerWrapper } from "@/components/ui/time-picker-mui";
 import { Button } from "@/components/ui/button";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { TraineeSelector, type Trainee } from "@/components/admin/trainee-selector";
 
 type Session = {
@@ -37,6 +29,7 @@ type Session = {
 
 type Booking = {
     id: string;
+    user_id: string;
     status: string;
     created_at: string;
     users: {
@@ -86,28 +79,24 @@ export default function AdminSchedulePage() {
 
     // Private Session State
     const [isPrivateSession, setIsPrivateSession] = useState(false);
-    // @ts-ignore
     const [selectedTrainees, setSelectedTrainees] = useState<Trainee[]>([]);
     const [showTraineeSelector, setShowTraineeSelector] = useState(false);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
         const { data, error } = await supabase
             .from("gym_sessions_with_counts")
             .select("*, bookings(count)")
             .order("start_time", { ascending: true });
 
         if (error) console.error(error);
-        // @ts-ignore
-        else setSessions(data || []);
+        else setSessions((data || []) as unknown as Session[]);
         setLoading(false);
-    };
+    }, [supabase]);
 
     useEffect(() => {
         fetchSessions();
-    }, []);
-
-    // ... (rest of code)
+    }, [fetchSessions]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -136,9 +125,9 @@ export default function AdminSchedulePage() {
             setIsPrivateSession(false);
             setSelectedTrainees([]);
             fetchSessions();
-        } catch (err: any) {
+        } catch (err) {
             console.error(err);
-            alert("שגיאה בשמירה: " + err.message);
+            alert("לא הצלחנו לשמור את האימון. כדאי לנסות שוב.");
         } finally {
             setIsCreating(false);
         }
@@ -176,9 +165,9 @@ export default function AdminSchedulePage() {
             }
 
             fetchSessions();
-        } catch (err: any) {
+        } catch (err) {
             console.error("Delete error:", err);
-            alert("שגיאה במחיקה: " + err.message);
+            alert("לא הצלחנו למחוק את האימון. כדאי לנסות שוב.");
         } finally {
             setIsDeleting(false);
             setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 });
@@ -199,13 +188,12 @@ export default function AdminSchedulePage() {
             console.error(error);
             alert("שגיאה בטעינת נרשמות");
         } else {
-            // @ts-ignore
-            setSessionBookings(data || []);
+            setSessionBookings((data || []) as unknown as Booking[]);
         }
         setLoadingBookings(false);
     };
 
-    const handleCancelBooking = async (booking: Booking & { user_id: string }) => {
+    const handleCancelBooking = async (booking: Booking) => {
         if (!confirm("האם לבטל את ההרשמה ולזכות את המנויה?")) return;
         try {
             const { error } = await supabase.rpc("admin_cancel_booking", { p_booking_id: booking.id });
@@ -228,8 +216,9 @@ export default function AdminSchedulePage() {
 
             if (viewBookingsSession) fetchBookings(viewBookingsSession.id);
             fetchSessions();
-        } catch (err: any) {
-            alert("שגיאה בביטול: " + err.message);
+        } catch (err) {
+            console.error("Cancel booking error:", err);
+            alert("לא הצלחנו לבטל את ההרשמה. כדאי לנסות שוב.");
         }
     };
 
@@ -242,14 +231,23 @@ export default function AdminSchedulePage() {
     const displayedSessions = activeTab === 'upcoming' ? upcomingSessions : pastSessions;
 
     return (
-        <div className="pb-24 font-sans text-neutral-100 min-h-screen overflow-x-hidden">
+        <div className="space-y-7 text-[#f6f6ed]">
             {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">ניהול מערכת שעות</h1>
-                    <p className="text-neutral-400 font-medium">צרי ועדכני אימונים לקהילה שלך</p>
+            <header className="border-b border-white/15 pb-7">
+                <div className="mb-8 flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#dce780]" />ניהול הסטודיו</span>
+                    <span className="text-xs text-[#aebbad]">יומן האימונים</span>
                 </div>
-                <div className="flex gap-3">
+                <h1 className="text-[clamp(2.7rem,11vw,4.1rem)] font-bold leading-[1.02] tracking-tight">האימונים<br /><span className="text-[#dce780]">שלך.</span></h1>
+                <p className="mt-4 text-sm leading-relaxed text-[#aebbad]">יוצרים אימונים, רואים מי נרשמה ושומרים על הלוח מסודר.</p>
+                <div className="mt-7 flex flex-col gap-3">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex min-h-14 w-full items-center justify-between rounded-full bg-[#dce780] px-5 text-sm font-bold text-[#1b251c] transition-colors active:bg-[#e9f19e]"
+                    >
+                        <span>אימון חדש</span>
+                        <Plus aria-hidden="true" className="h-5 w-5" />
+                    </button>
                     <button
                         onClick={async () => {
                             if (confirm("לשלוח התראה לכל המתאמנות שהלוז מוכן?")) {
@@ -263,64 +261,50 @@ export default function AdminSchedulePage() {
                                             targetRole: "trainee"
                                         })
                                     });
-                                    const data = await res.json();
+                                    await res.json();
                                     alert("ההודעה נשלחה בהצלחה!");
-                                } catch (e) {
+                                } catch {
                                     alert("שגיאה בשליחה");
                                 }
                             }
                         }}
-                        className="bg-neutral-800 text-white px-4 py-3 rounded-2xl font-bold border border-neutral-700 hover:bg-neutral-700 active:scale-95 transition-all flex items-center gap-2"
+                        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-xs font-bold text-[#f6f6ed] transition-colors active:bg-white/10"
                     >
-                        <span>🔔 עדכון לוז</span>
-                    </button>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="group bg-[#E2F163] text-black px-6 py-3 rounded-2xl font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-transform"
-                    >
-                        <div className="bg-black/10 rounded-full p-1 group-hover:bg-black/20 transition-colors">
-                            <Plus className="w-5 h-5" />
-                        </div>
-                        <span>אימון חדש</span>
+                        <Bell aria-hidden="true" className="h-4 w-4" />להודיע למתאמנות שהלוח עודכן
                     </button>
                 </div>
             </header>
 
             {/* Tabs */}
-            <div className="bg-neutral-900/40 border border-white/5 p-1.5 rounded-2xl flex relative overflow-hidden mb-8 max-w-md">
-                <div
-                    style={{ transform: activeTab === 'upcoming' ? 'translateX(100%)' : 'translateX(0%)' }}
-                    className="absolute w-1/2 h-full top-0 left-0 p-1.5 transition-transform duration-200"
-                >
-                    <div className="w-full h-full bg-[#E2F163] rounded-xl shadow-lg" />
-                </div>
-
+            <div className="grid grid-cols-2 gap-2 rounded-[1.25rem] border border-white/10 bg-[#202c21] p-1.5">
                 <button
                     onClick={() => setActiveTab('upcoming')}
+                    aria-pressed={activeTab === 'upcoming'}
                     className={cn(
-                        "flex-1 py-3 text-sm font-bold rounded-xl relative z-10 transition-colors flex items-center justify-center gap-2",
-                        activeTab === 'upcoming' ? "text-black" : "text-white/70 hover:text-white"
+                        "flex min-h-12 items-center justify-center gap-2 rounded-[0.9rem] px-2 text-xs font-bold transition-colors",
+                        activeTab === 'upcoming' ? "bg-[#dce780] text-[#1b251c]" : "text-[#aebbad]"
                     )}
                 >
                     אימונים קרובים
                     <span className={cn(
-                        "text-xs px-2 py-0.5 rounded-full",
-                        activeTab === 'upcoming' ? "bg-black/20 text-black" : "bg-neutral-700 text-white"
+                        "rounded-full px-2 py-0.5 text-[11px] tabular-nums",
+                        activeTab === 'upcoming' ? "bg-[#1b251c]/10" : "bg-white/10"
                     )}>
                         {upcomingSessions.length}
                     </span>
                 </button>
                 <button
                     onClick={() => setActiveTab('past')}
+                    aria-pressed={activeTab === 'past'}
                     className={cn(
-                        "flex-1 py-3 text-sm font-bold rounded-xl relative z-10 transition-colors flex items-center justify-center gap-2",
-                        activeTab === 'past' ? "text-black" : "text-white/70 hover:text-white"
+                        "flex min-h-12 items-center justify-center gap-2 rounded-[0.9rem] px-2 text-xs font-bold transition-colors",
+                        activeTab === 'past' ? "bg-[#dce780] text-[#1b251c]" : "text-[#aebbad]"
                     )}
                 >
                     אימונים שעברו
                     <span className={cn(
-                        "text-xs px-2 py-0.5 rounded-full",
-                        activeTab === 'past' ? "bg-black/20 text-black" : "bg-neutral-700 text-white"
+                        "rounded-full px-2 py-0.5 text-[11px] tabular-nums",
+                        activeTab === 'past' ? "bg-[#1b251c]/10" : "bg-white/10"
                     )}>
                         {pastSessions.length}
                     </span>
@@ -329,33 +313,15 @@ export default function AdminSchedulePage() {
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="bg-neutral-900/40 border border-neutral-800 p-6 rounded-[2rem] h-[200px] animate-pulse relative">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="space-y-2">
-                                    <div className="h-8 w-32 bg-neutral-800 rounded-lg" />
-                                    <div className="flex gap-2">
-                                        <div className="h-6 w-20 bg-neutral-800 rounded-lg" />
-                                        <div className="h-6 w-16 bg-neutral-800 rounded-lg" />
-                                    </div>
-                                </div>
-                                <div className="w-10 h-10 bg-neutral-800 rounded-full" />
-                            </div>
-                            <div className="space-y-2 mt-8">
-                                <div className="flex justify-between">
-                                    <div className="h-4 w-20 bg-neutral-800 rounded" />
-                                    <div className="h-4 w-10 bg-neutral-800 rounded" />
-                                </div>
-                                <div className="h-2 w-full bg-neutral-800 rounded-full" />
-                            </div>
-                        </div>
+                <div aria-label="טוענים אימונים" className="space-y-3">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                        <div key={i} className="h-48 animate-pulse rounded-[1.75rem] bg-[#202c21]" />
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-3">
                     <AnimatePresence mode="wait">
-                        {displayedSessions.map((session, index) => {
+                        {displayedSessions.map((session) => {
                             const count = session.current_bookings || 0;
                             const fillPercent = Math.min((count / session.max_capacity) * 100, 100);
                             const isFull = count >= session.max_capacity;
@@ -363,59 +329,59 @@ export default function AdminSchedulePage() {
                             return (
                                 <div
                                     key={session.id}
-                                    className="group relative bg-neutral-900/40 border border-white/5 p-6 rounded-[2rem] overflow-hidden hover:bg-neutral-900/60 transition-colors"
+                                    className="rounded-[1.75rem] border border-white/10 bg-[#202c21] p-5"
                                 >
-                                    {/* Glass reflection effect */}
-                                    <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
                                     {/* Top Metadata */}
-                                    <div className="flex justify-between items-start mb-6 relative z-10">
-                                        <div>
-                                            <h3 className="text-2xl font-bold text-white mb-2 leading-none">{session.title}</h3>
-                                            <div className="flex items-center gap-4 text-sm font-medium text-neutral-400">
-                                                <div className="flex items-center gap-1.5 bg-neutral-800/50 px-2.5 py-1 rounded-lg">
-                                                    <CalendarIcon className="w-4 h-4 text-[#E2F163]" />
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <h3 className="text-xl font-bold leading-tight">{session.title}</h3>
+                                            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#aebbad]">
+                                                <span className="flex min-h-8 items-center gap-1.5 rounded-full bg-white/5 px-3">
+                                                    <CalendarIcon aria-hidden="true" className="h-3.5 w-3.5 text-[#dce780]" />
                                                     {new Date(session.start_time).toLocaleDateString("he-IL", { day: 'numeric', month: 'numeric' })}
-                                                </div>
-                                                <div className="flex items-center gap-1.5 bg-neutral-800/50 px-2.5 py-1 rounded-lg">
-                                                    <Clock className="w-4 h-4 text-[#E2F163]" />
+                                                </span>
+                                                <span className="flex min-h-8 items-center gap-1.5 rounded-full bg-white/5 px-3">
+                                                    <Clock aria-hidden="true" className="h-3.5 w-3.5 text-[#dce780]" />
                                                     {new Date(session.start_time).toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
-                                                </div>
+                                                </span>
                                             </div>
                                         </div>
                                         <button
+                                            type="button"
+                                            aria-label={`מחיקת ${session.title}`}
                                             onClick={() => handleDeleteClick(session)}
-                                            className="w-10 h-10 flex items-center justify-center rounded-full bg-neutral-800/50 text-neutral-500 hover:bg-red-500/20 hover:text-red-500 transition-all active:scale-95"
+                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 text-[#aebbad] transition-colors active:bg-[#a53d35]/20 active:text-[#f2b0a9]"
                                         >
-                                            <Trash2 className="w-5 h-5" />
+                                            <Trash2 aria-hidden="true" className="h-4 w-4" />
                                         </button>
                                     </div>
 
                                     {/* Progress Bar */}
-                                    <div className="relative z-10 mb-6">
-                                        <div className="flex justify-between text-xs font-bold mb-2 uppercase tracking-wide">
-                                            <span className={isFull ? "text-red-400" : "text-[#E2F163]"}>
-                                                {isFull ? "אין מקום" : `${count} רשומות`}
+                                    <div className="mt-6">
+                                        <div className="mb-2 flex items-baseline justify-between text-xs">
+                                            <span dir="ltr" className={isFull ? "font-bold tabular-nums text-[#f2b0a9]" : "font-bold tabular-nums text-[#dce780]"}>
+                                                {count} / {session.max_capacity}
                                             </span>
-                                            <span className="text-neutral-600">מתוך {session.max_capacity}</span>
+                                            <span className="text-[#aebbad]">{isFull ? "האימון מלא" : "מקומות תפוסים"}</span>
                                         </div>
-                                        <div className="h-1.5 w-full bg-neutral-800/80 rounded-full overflow-hidden">
+                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                                             <div
                                                 style={{ width: `${fillPercent}%` }}
-                                                className={`h-full rounded-full ${isFull ? "bg-red-500" : "bg-[#E2F163]"}`}
+                                                className={`h-full rounded-full ${isFull ? "bg-[#f2b0a9]" : "bg-[#dce780]"}`}
                                             />
                                         </div>
                                     </div>
 
                                     {/* Action Button */}
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             setViewBookingsSession(session);
                                             fetchBookings(session.id);
                                         }}
-                                        className="w-full py-3 bg-white/5 border border-white/5 hover:bg-white/10 text-neutral-200 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 group-hover:border-white/10"
+                                        className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-sm font-bold transition-colors active:bg-white/10"
                                     >
-                                        <Users className="w-4 h-4 opacity-50" />
+                                        <Users aria-hidden="true" className="h-4 w-4 text-[#dce780]" />
                                         ניהול נרשמות
                                     </button>
                                 </div>
@@ -427,17 +393,15 @@ export default function AdminSchedulePage() {
 
             {/* Empty State */}
             {!loading && displayedSessions.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-32 text-center opacity-60">
-                    <div className="w-24 h-24 bg-neutral-800 rounded-full flex items-center justify-center text-4xl mb-6 grayscale">
-                        {activeTab === 'upcoming' ? '🧘‍♀️' : '📚'}
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">
-                        {activeTab === 'upcoming' ? 'אין אימונים קרובים' : 'אין אימונים קודמים'}
+                <div className="rounded-[1.75rem] border border-dashed border-white/15 bg-[#202c21]/50 px-6 py-12 text-center">
+                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dce780]/15 text-[#dce780]"><CalendarIcon aria-hidden="true" className="h-7 w-7" /></span>
+                    <h3 className="mt-5 text-lg font-bold">
+                        {activeTab === 'upcoming' ? 'אין אימונים קרובים כרגע' : 'אין אימונים קודמים'}
                     </h3>
-                    <p className="text-neutral-500">
+                    <p className="mx-auto mt-2 max-w-56 text-sm leading-relaxed text-[#aebbad]">
                         {activeTab === 'upcoming'
-                            ? 'הלוח ריק, זה הזמן להוסיף קצת אנרגיה!'
-                            : 'עדיין לא התקיימו אימונים'}
+                            ? 'כדי להתחיל, הוסיפי אימון חדש ללוח.'
+                            : 'כאן יופיעו אימונים שכבר התקיימו.'}
                     </p>
                 </div>
             )}
@@ -445,43 +409,48 @@ export default function AdminSchedulePage() {
             {/* CREATE MODAL */}
             <AnimatePresence>
                 {isModalOpen && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[60] flex items-end justify-center">
                         <div
                             onClick={() => setIsModalOpen(false)}
-                            className="absolute inset-0 bg-black/60"
+                            className="absolute inset-0 bg-[#071009]/80"
                         />
                         <div
-                            className="bg-[#1A1C19] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="create-session-title"
+                            className="relative z-10 max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-7 text-[#1b251c]"
                         >
-                            <button onClick={() => setIsModalOpen(false)} className="absolute top-6 left-6 p-2 bg-neutral-800/50 rounded-full hover:bg-neutral-700 transition-colors">
-                                <X className="w-5 h-5 text-neutral-400" />
+                            <button type="button" onClick={() => setIsModalOpen(false)} aria-label="סגירה" className="absolute left-5 top-6 flex h-11 w-11 items-center justify-center rounded-full border border-[#1b251c]/15">
+                                <X aria-hidden="true" className="h-5 w-5" />
                             </button>
 
-                            <h2 className="text-3xl font-bold text-white mb-8 text-center tracking-tight">אימון חדש 🔥</h2>
+                            <p className="text-xs font-bold text-[#5c6d2e]">יומן האימונים</p>
+                            <h2 id="create-session-title" className="mb-7 mt-2 text-[2rem] font-bold leading-tight">אימון חדש.</h2>
 
-                            <form onSubmit={handleCreate} className="space-y-6">
+                            <form onSubmit={handleCreate} className="space-y-5">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">שם השיעור</label>
+                                    <label htmlFor="new-session-title" className="text-xs font-bold">שם האימון</label>
                                     <input
+                                        id="new-session-title"
                                         type="text"
                                         value={newSession.title}
                                         onChange={e => setNewSession({ ...newSession, title: e.target.value })}
-                                        className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-[#E2F163] focus:ring-1 focus:ring-[#E2F163]/50 transition-all font-bold text-lg"
-                                        placeholder="לדוגמה: פונקציונלי חזק"
+                                        className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-base font-bold outline-none focus:border-[#829044]"
+                                        placeholder="למשל, אימון כוח"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">תאריך</label>
+                                        <span className="text-xs font-bold">תאריך</span>
                                         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                             <PopoverTrigger asChild>
-                                                <Button variant={"outline"} className="w-full h-14 rounded-2xl bg-neutral-900 border-neutral-800 text-white hover:bg-neutral-800 hover:text-white justify-between px-4 text-base font-medium">
-                                                    {newSession.date ? format(newSession.date, "dd/MM/yyyy") : <span className="text-neutral-500">בחרי תאריך</span>}
-                                                    <CalendarIcon className="h-4 w-4 opacity-50" />
+                                                <Button variant={"outline"} className="h-14 w-full justify-between rounded-2xl border-[#1b251c]/20 bg-white px-3 text-sm font-medium text-[#1b251c] hover:bg-white hover:text-[#1b251c]">
+                                                    {newSession.date ? format(newSession.date, "dd/MM/yyyy") : <span className="text-[#5d6958]">בחירת תאריך</span>}
+                                                    <CalendarIcon aria-hidden="true" className="h-4 w-4 text-[#5d6958]" />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0 border-neutral-800 bg-[#1A1C19]" align="start">
+                                            <PopoverContent side="top" sideOffset={8} className="z-[70] max-h-[42dvh] w-auto overflow-y-auto border-[#1b251c]/20 bg-[#f1f0e8] p-0" align="start">
                                                 <Calendar
                                                     mode="single"
                                                     selected={newSession.date}
@@ -492,13 +461,13 @@ export default function AdminSchedulePage() {
                                                         }
                                                     }}
                                                     initialFocus
-                                                    className="rounded-xl border border-neutral-800"
+                                                    className="rounded-xl border border-[#1b251c]/15"
                                                 />
                                             </PopoverContent>
                                         </Popover>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">שעה</label>
+                                        <span className="text-xs font-bold">שעה</span>
                                         <MuiTimePickerWrapper
                                             value={newSession.time}
                                             onChange={(t: string) => setNewSession({ ...newSession, time: t })}
@@ -508,26 +477,20 @@ export default function AdminSchedulePage() {
 
 
                                 <div className="space-y-4">
-                                    <div className="bg-neutral-900 border border-neutral-800 p-1.5 rounded-2xl flex relative overflow-hidden">
-                                        {/* Toggle Background Animation */}
-                                        <div
-                                            style={{ transform: isPrivateSession ? 'translateX(0%)' : 'translateX(100%)' }}
-                                            className="absolute w-1/2 h-full top-0 left-0 p-1.5 transition-transform duration-200"
-                                        >
-                                            <div className="w-full h-full bg-[#E2F163] rounded-xl shadow-lg" />
-                                        </div>
-
+                                    <div className="grid grid-cols-2 gap-1 rounded-2xl bg-[#dfe4d0] p-1">
                                         <button
                                             type="button"
                                             onClick={() => setIsPrivateSession(false)}
-                                            className={cn("flex-1 py-3 text-sm font-bold rounded-xl relative z-10 transition-colors", !isPrivateSession ? "text-black" : "text-neutral-500 hover:text-white")}
+                                            aria-pressed={!isPrivateSession}
+                                            className={cn("min-h-12 rounded-xl px-1 text-xs font-bold transition-colors", !isPrivateSession ? "bg-[#1b251c] text-white" : "text-[#5d6958]")}
                                         >
                                             הרשמה פתוחה
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setIsPrivateSession(true)}
-                                            className={cn("flex-1 py-3 text-sm font-bold rounded-xl relative z-10 transition-colors", isPrivateSession ? "text-black" : "text-neutral-500 hover:text-white")}
+                                            aria-pressed={isPrivateSession}
+                                            className={cn("min-h-12 rounded-xl px-1 text-xs font-bold transition-colors", isPrivateSession ? "bg-[#1b251c] text-white" : "text-[#5d6958]")}
                                         >
                                             בחירת מתאמנות
                                         </button>
@@ -535,23 +498,23 @@ export default function AdminSchedulePage() {
 
                                     {!isPrivateSession ? (
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">מקסימום נרשמות</label>
-                                            <div className="flex items-center gap-4 bg-neutral-900 border border-neutral-800 rounded-2xl p-2 pl-4">
-                                                <div className="flex-1 text-right mr-2 font-bold text-white text-lg">{newSession.max_capacity}</div>
+                                            <span className="text-xs font-bold">מספר מקומות</span>
+                                            <div className="flex min-h-14 items-center gap-4 rounded-2xl border border-[#1b251c]/20 bg-white p-2 ps-4">
+                                                <div className="flex-1 text-lg font-bold tabular-nums">{newSession.max_capacity}</div>
                                                 <div className="flex gap-2">
-                                                    <button type="button" onClick={() => setNewSession(p => ({ ...p, max_capacity: Math.max(1, p.max_capacity - 1) }))} className="w-10 h-10 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center font-bold transition-colors">-</button>
-                                                    <button type="button" onClick={() => setNewSession(p => ({ ...p, max_capacity: p.max_capacity + 1 }))} className="w-10 h-10 rounded-xl bg-[#E2F163] text-black hover:bg-[#d4e450] flex items-center justify-center font-bold transition-colors">+</button>
+                                                    <button type="button" aria-label="הפחתת מקום" onClick={() => setNewSession(p => ({ ...p, max_capacity: Math.max(1, p.max_capacity - 1) }))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8ebdf] text-lg font-bold">−</button>
+                                                    <button type="button" aria-label="הוספת מקום" onClick={() => setNewSession(p => ({ ...p, max_capacity: p.max_capacity + 1 }))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dce780] text-lg font-bold">+</button>
                                                 </div>
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center">
-                                                <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest mr-1">מוזמנות ({selectedTrainees.length})</label>
+                                                <span className="text-xs font-bold">מוזמנות ({selectedTrainees.length})</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowTraineeSelector(true)}
-                                                    className="text-[#E2F163] text-xs font-bold hover:underline"
+                                                    className="text-xs font-bold text-[#5c6d2e] underline underline-offset-4"
                                                 >
                                                     {selectedTrainees.length > 0 ? "עריכה" : "בחירה"}
                                                 </button>
@@ -560,27 +523,27 @@ export default function AdminSchedulePage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowTraineeSelector(true)}
-                                                    className="w-full bg-neutral-900 border border-dashed border-neutral-700 hover:border-[#E2F163] hover:bg-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all group"
+                                                    className="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#1b251c]/25 bg-white p-4"
                                                 >
-                                                    <div className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center group-hover:bg-[#E2F163] transition-colors">
-                                                        <Users className="w-5 h-5 text-neutral-400 group-hover:text-black" />
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dfe6bd]">
+                                                        <Users aria-hidden="true" className="h-5 w-5" />
                                                     </div>
-                                                    <span className="text-sm font-bold text-neutral-400 group-hover:text-white">לחצי להוספת מתאמנות</span>
+                                                    <span className="text-sm font-bold">בחירת מתאמנות לאימון</span>
                                                 </button>
                                             ) : (
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {selectedTrainees.map(t => (
-                                                        <div key={t.id} className="bg-neutral-800 rounded-xl p-2 flex items-center gap-2 border border-white/5">
-                                                            <div className="w-8 h-8 rounded-full bg-[#E2F163] text-black flex items-center justify-center font-bold text-xs shrink-0">
+                                                        <div key={t.id} className="flex items-center gap-2 rounded-xl border border-[#1b251c]/10 bg-white p-2">
+                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dce780] text-xs font-bold">
                                                                 {t.full_name?.[0]}
                                                             </div>
-                                                            <span className="text-sm text-white font-medium truncate">{t.full_name}</span>
+                                                            <span className="truncate text-sm font-medium">{t.full_name}</span>
                                                         </div>
                                                     ))}
                                                     <button
                                                         type="button"
                                                         onClick={() => setShowTraineeSelector(true)}
-                                                        className="bg-neutral-900 border border-dashed border-neutral-700 rounded-xl p-2 flex items-center justify-center gap-2 text-neutral-400 hover:text-[#E2F163] hover:border-[#E2F163] transition-all text-xs font-bold"
+                                                        className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#1b251c]/25 bg-white p-2 text-xs font-bold text-[#5c6d2e]"
                                                     >
                                                         + עריכה
                                                     </button>
@@ -594,7 +557,7 @@ export default function AdminSchedulePage() {
 
                                 <button
                                     disabled={isCreating || !newSession.title || !newSession.date || (isPrivateSession && selectedTrainees.length === 0)}
-                                    className="w-full py-4 rounded-2xl font-bold bg-[#E2F163] text-black text-lg hover:shadow-[0_0_30px_rgba(226,241,99,0.4)] hover:scale-[1.02] transition-all active:scale-95 mt-4 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+                                    className="mt-4 min-h-14 w-full rounded-full bg-[#1b251c] px-5 text-sm font-bold text-white disabled:opacity-50"
                                 >
                                     פרסום אימון
                                 </button>
@@ -615,52 +578,54 @@ export default function AdminSchedulePage() {
                 )}
             </AnimatePresence>
 
-            {/* View Bookings Modal - Glass Style */}
+            {/* View Bookings Modal */}
             <AnimatePresence>
                 {viewBookingsSession && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[60] flex items-end justify-center">
                         <div
                             onClick={() => setViewBookingsSession(null)}
-                            className="absolute inset-0 bg-black/60"
+                            className="absolute inset-0 bg-[#071009]/80"
                         />
                         <div
-                            className="bg-[#1A1C19] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl max-h-[80vh] flex flex-col"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="session-bookings-title"
+                            className="relative z-10 flex max-h-[94dvh] w-full max-w-lg flex-col rounded-t-[2rem] bg-[#f1f0e8] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[#1b251c]"
                         >
-                            <div className="text-center mb-6 shrink-0">
-                                <h2 className="text-2xl font-bold text-white mb-1">רשימת משתתפות</h2>
-                                <p className="text-neutral-500 font-medium text-sm">{viewBookingsSession.title}</p>
+                            <div className="mb-6 shrink-0">
+                                <p className="text-xs font-bold text-[#5c6d2e]">{viewBookingsSession.title}</p>
+                                <h2 id="session-bookings-title" className="mt-2 text-[2rem] font-bold leading-tight">מי נרשמה?</h2>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                            <div className="flex-1 space-y-3 overflow-y-auto">
                                 {loadingBookings ? (
-                                    <div className="flex justify-center p-8"><div className="w-6 h-6 border-2 border-[#E2F163] border-t-transparent rounded-full animate-spin" /></div>
+                                    <div className="flex justify-center p-8"><div aria-label="טוענים נרשמות" className="h-6 w-6 animate-spin rounded-full border-2 border-[#1b251c] border-t-transparent" /></div>
                                 ) : sessionBookings.length === 0 ? (
-                                    <div className="text-center py-10 text-neutral-500 bg-neutral-900/50 rounded-2xl border border-dashed border-neutral-800">
-                                        אף אחת לא נרשמה עדיין 🦗
+                                    <div className="rounded-2xl border border-dashed border-[#1b251c]/20 bg-white px-4 py-10 text-center text-sm text-[#5d6958]">
+                                        עדיין אין נרשמות לאימון הזה.
                                     </div>
                                 ) : (
                                     sessionBookings.map(booking => (
-                                        <div key={booking.id} className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl flex justify-between items-center group">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-lg">👩‍</div>
-                                                <div>
-                                                    <p className="font-bold text-white text-sm">{booking.users?.full_name || "ללא שם"}</p>
-                                                    <p className="text-xs text-neutral-500 font-mono">{booking.users?.phone}</p>
+                                        <div key={booking.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#1b251c]/10 bg-white p-4">
+                                            <div className="flex min-w-0 items-center gap-3">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dfe6bd] text-sm font-bold">{booking.users?.full_name?.[0] || "?"}</div>
+                                                <div className="min-w-0">
+                                                    <p className="truncate text-sm font-bold">{booking.users?.full_name || "ללא שם"}</p>
+                                                    <p className="mt-1 text-xs text-[#5d6958]" dir="ltr">{booking.users?.phone}</p>
                                                 </div>
                                             </div>
                                             <button
-                                                // @ts-ignore
                                                 onClick={() => handleCancelBooking(booking)}
-                                                className="text-xs font-bold text-red-400 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 px-3 py-2 rounded-lg transition-colors"
+                                                className="min-h-11 shrink-0 rounded-full border border-[#a53d35]/20 px-3 text-xs font-bold text-[#a53d35]"
                                             >
-                                                ביטול
+                                                ביטול הרשמה
                                             </button>
                                         </div>
                                     ))
                                 )}
                             </div>
 
-                            <button onClick={() => setViewBookingsSession(null)} className="mt-6 w-full py-3 bg-neutral-900 text-neutral-400 hover:text-white rounded-xl font-bold transition-colors">
+                            <button type="button" onClick={() => setViewBookingsSession(null)} className="mt-6 min-h-12 w-full rounded-full bg-[#1b251c] px-5 text-sm font-bold text-white">
                                 סגירה
                             </button>
                         </div>
@@ -668,38 +633,41 @@ export default function AdminSchedulePage() {
                 )}
             </AnimatePresence>
 
-            {/* Delete Confirmation Modal - Glass Style */}
+            {/* Delete Confirmation Modal */}
             <AnimatePresence>
                 {deleteConfirmation.isOpen && (
-                    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[80] flex items-end justify-center">
                         <div
                             onClick={() => setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 })}
-                            className="absolute inset-0 bg-black/80"
+                            className="absolute inset-0 bg-[#071009]/80"
                         />
                         <div
-                            className="bg-[#1A1C19] border border-red-500/20 p-8 rounded-[2.5rem] w-full max-w-sm relative z-10 shadow-lg text-center"
+                            role="alertdialog"
+                            aria-modal="true"
+                            aria-labelledby="delete-session-title"
+                            className="relative z-10 max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[#1b251c]"
                         >
-                            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-pulse">⚠️</div>
-                            <h2 className="text-2xl font-bold text-white mb-2">מחיקת אימון</h2>
-                            <p className="text-neutral-400 mb-8 text-sm leading-relaxed">
+                            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#a53d35]/10 text-[#a53d35]"><Trash2 aria-hidden="true" className="h-6 w-6" /></span>
+                            <h2 id="delete-session-title" className="mt-5 text-[2rem] font-bold leading-tight">למחוק את האימון?</h2>
+                            <p className="mb-7 mt-3 text-sm leading-relaxed text-[#5d6958]">
                                 {deleteConfirmation.userCount > 0
-                                    ? `ישנן ${deleteConfirmation.userCount} נרשמות. המחיקה תזכה אותן אוטומטית.`
-                                    : "האם את בטוחה? פעולה זו אינה הפיכה."}
+                                    ? `${deleteConfirmation.userCount} נרשמות יקבלו את הזיכוי שלהן בחזרה. אי אפשר לבטל את המחיקה.`
+                                    : "האימון יוסר מהלוח. אי אפשר לבטל את המחיקה."}
                             </p>
 
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 <button
                                     onClick={executeDeleteSession}
                                     disabled={isDeleting}
-                                    className="w-full py-4 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                                    className="min-h-14 w-full rounded-full bg-[#a53d35] px-5 text-sm font-bold text-white disabled:opacity-50"
                                 >
-                                    {isDeleting ? "מוחק..." : "כן, למחוק"}
+                                    {isDeleting ? "מוחקים..." : "כן, למחוק את האימון"}
                                 </button>
                                 <button
                                     onClick={() => setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 })}
-                                    className="w-full py-4 text-neutral-500 hover:text-white font-bold transition-colors"
+                                    className="min-h-12 w-full text-sm font-bold text-[#5d6958]"
                                 >
-                                    ביטול
+                                    להשאיר את האימון
                                 </button>
                             </div>
                         </div>

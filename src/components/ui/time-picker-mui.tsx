@@ -2,6 +2,7 @@
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { heIL } from "@mui/x-date-pickers/locales";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
 import type { } from '@mui/x-date-pickers/themeAugmentation';
@@ -11,23 +12,22 @@ import { Clock } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-// Create a custom MUI theme to match the app's dark neon aesthetics
-// Create a custom MUI theme to match the app's dark neon aesthetics
+// Keep the time dialog aligned with the studio's mobile palette.
 const theme = createTheme({
     direction: "rtl", // Fix visual direction
     palette: {
         mode: "dark",
         primary: {
-            main: "#E2F163", // Neon Yellow
-            contrastText: "#000000",
+            main: "#dce780",
+            contrastText: "#1b251c",
         },
         background: {
-            paper: "#1A1C19", // Dark background
-            default: "#000000",
+            paper: "#202c21",
+            default: "#111a12",
         },
         text: {
-            primary: "#ffffff",
-            secondary: "#a3a3a3",
+            primary: "#f6f6ed",
+            secondary: "#aebbad",
         },
     },
     typography: {
@@ -37,10 +37,10 @@ const theme = createTheme({
         MuiDialog: {
             styleOverrides: {
                 paper: {
-                    borderRadius: "2.5rem", // Match app rounded corners
+                    borderRadius: "2rem",
                     border: "1px solid rgba(255, 255, 255, 0.1)",
                     backgroundImage: "none",
-                    backgroundColor: "#1A1C19",
+                    backgroundColor: "#202c21",
                     direction: "rtl"
                 },
             },
@@ -48,12 +48,12 @@ const theme = createTheme({
         MuiPickersLayout: {
             styleOverrides: {
                 root: {
-                    backgroundColor: "#1A1C19",
-                    color: "#ffffff",
+                    backgroundColor: "#202c21",
+                    color: "#f6f6ed",
                     direction: "rtl"
                 },
                 contentWrapper: {
-                    backgroundColor: "#1A1C19",
+                    backgroundColor: "#202c21",
                 }
             }
         },
@@ -73,13 +73,12 @@ const theme = createTheme({
                     width: "12px", // Smaller thumb
                     height: "12px",
                     border: "none",
-                    backgroundColor: "#E2F163", // Solid neon
-                    boxShadow: "0 0 10px rgba(226, 241, 99, 0.5)", // Glow effect
+                    backgroundColor: "#dce780",
                     top: "calc(50% - 6px)", // Center adjustment
                     left: "calc(50% - 6px)",
                 },
                 root: {
-                    backgroundColor: "#E2F163",
+                    backgroundColor: "#dce780",
                     width: "2px", // Thinner line
                 }
             }
@@ -89,9 +88,9 @@ const theme = createTheme({
                 root: {
                     color: "rgba(255, 255, 255, 0.6)",
                     "&.Mui-selected": {
-                        color: "#000000",
+                        color: "#1b251c",
                         fontWeight: "bold",
-                        backgroundColor: "#E2F163",
+                        backgroundColor: "#dce780",
                     },
                     "&:not(.Mui-selected):hover": {
                         backgroundColor: "rgba(255,255,255,0.1)",
@@ -132,15 +131,15 @@ export function MuiTimePickerWrapper({ value, onChange, className }: MuiTimePick
 
     return (
         <ThemeProvider theme={theme}>
-            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he" localeText={heIL.components.MuiLocalizationProvider.defaultProps.localeText}>
                 <div className={className}>
-                    {/* Trigger Button - Mimicking the existing button style */}
+                    {/* Trigger opens the native mobile clock dialog. */}
                     <button
                         type="button"
                         onClick={() => setOpen(true)}
                         className={cn(
-                            "w-full h-14 bg-neutral-900 border border-neutral-800 rounded-2xl text-base font-medium px-4 text-white hover:bg-neutral-800 focus:ring-1 focus:ring-[#E2F163] flex items-center justify-between transition-all",
-                            open && "ring-1 ring-[#E2F163]"
+                            "flex h-14 w-full items-center justify-between rounded-2xl border border-[#1b251c]/20 bg-white px-3 text-sm font-medium text-[#1b251c] transition-colors focus:border-[#829044]",
+                            open && "border-[#829044]"
                         )}
                     >
                         <span>{value}</span>

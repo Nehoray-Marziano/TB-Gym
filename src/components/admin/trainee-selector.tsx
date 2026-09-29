@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { Search, User, Check, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export type Trainee = {
@@ -23,7 +23,6 @@ interface TraineeSelectorProps {
 export function TraineeSelector({ selectedTrainees, onSelect, onClose }: TraineeSelectorProps) {
     const supabase = getSupabaseClient();
     const [trainees, setTrainees] = useState<Trainee[]>([]);
-    const [filtered, setFiltered] = useState<Trainee[]>([]);
     const [term, setTerm] = useState("");
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
@@ -37,25 +36,21 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
 
             if (error) {
                 console.error("Error fetching trainees:", error);
-                setFetchError(error.message);
+                setFetchError("לא הצלחנו לטעון את המתאמנות. כדאי לנסות שוב.");
             } else if (data) {
-                // @ts-ignore
-                setTrainees(data);
-                setFiltered(data);
+                setTrainees(data as Trainee[]);
             }
             setLoading(false);
         };
         fetchTrainees();
-    }, []);
+    }, [supabase]);
 
-    useEffect(() => {
-        const lowerTerm = term.toLowerCase();
-        setFiltered(trainees.filter(t =>
-            (t.full_name || "").toLowerCase().includes(lowerTerm) ||
-            (t.phone || "").includes(lowerTerm) ||
-            (t.email || "").toLowerCase().includes(lowerTerm)
-        ));
-    }, [term, trainees]);
+    const lowerTerm = term.toLowerCase();
+    const filtered = trainees.filter(t =>
+        (t.full_name || "").toLowerCase().includes(lowerTerm) ||
+        (t.phone || "").includes(lowerTerm) ||
+        (t.email || "").toLowerCase().includes(lowerTerm)
+    );
 
     const toggleSelection = (trainee: Trainee) => {
         if (selectedTrainees.some(t => t.id === trainee.id)) {
@@ -66,92 +61,100 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
     };
 
     return (
-        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center sm:p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="fixed inset-0 z-[70] flex items-end justify-center">
+            <div className="absolute inset-0 bg-[#071009]/80" onClick={onClose} />
             <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-[#1A1C19] border-t sm:border border-white/10 w-full sm:max-w-lg rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col h-[90dvh] sm:h-auto sm:max-h-[85vh] relative z-10"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="trainee-selector-title"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                className="relative z-10 flex h-[94dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[2rem] bg-[#f1f0e8] text-[#1b251c]"
             >
                 {/* Header */}
-                <div className="p-6 pb-4 border-b border-white/5 bg-[#1A1C19]/50 backdrop-blur-xl z-20">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold text-white">בחירת מתאמנות</h3>
-                        <button onClick={onClose} className="p-2 bg-neutral-800/50 rounded-full hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors">
-                            <X className="w-5 h-5" />
+                <div className="border-b border-[#1b251c]/10 px-5 pb-5 pt-7">
+                    <div className="mb-5 flex items-start justify-between gap-3">
+                        <div><p className="text-xs font-bold text-[#5c6d2e]">אימון למוזמנות</p><h3 id="trainee-selector-title" className="mt-2 text-[2rem] font-bold leading-tight">את מי מזמינים?</h3></div>
+                        <button type="button" onClick={onClose} aria-label="סגירה" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#1b251c]/15">
+                            <X aria-hidden="true" className="h-5 w-5" />
                         </button>
                     </div>
 
                     {/* Search */}
                     <div className="relative">
-                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+                        <Search aria-hidden="true" className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5d6958]" />
                         <input
                             type="text"
-                            placeholder="חפשי מתאמנת..."
+                            aria-label="חיפוש מתאמנת"
+                            placeholder="חיפוש לפי שם או טלפון"
                             value={term}
                             onChange={e => setTerm(e.target.value)}
-                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl py-3 pr-10 pl-4 text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#E2F163] transition-colors"
+                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white py-3 pr-10 pl-4 text-sm outline-none focus:border-[#829044]"
                         />
                     </div>
                 </div>
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                <div className="flex-1 space-y-2 overflow-y-auto p-5">
                     {loading ? (
-                        <div className="flex justify-center p-8"><div className="w-6 h-6 border-2 border-[#E2F163] border-t-transparent rounded-full animate-spin" /></div>
+                        <div className="flex justify-center p-8"><div aria-label="טוענים מתאמנות" className="h-6 w-6 animate-spin rounded-full border-2 border-[#1b251c] border-t-transparent" /></div>
                     ) : fetchError ? (
-                        <div className="text-red-500 text-center p-4 font-bold">שגיאה בטעינת נתונים: {fetchError}</div>
+                        <div role="alert" className="p-4 text-center text-sm font-bold text-[#a53d35]">{fetchError}</div>
                     ) : filtered.length === 0 ? (
-                        <div className="text-neutral-500 text-center p-8">לא נמצאו מתאמנות</div>
+                        <div className="p-8 text-center text-sm text-[#5d6958]">לא נמצאו מתאמנות.</div>
                     ) : (
                         filtered.map(trainee => {
                             const isSelected = selectedTrainees.some(t => t.id === trainee.id);
                             return (
-                                <div
+                                <button
+                                    type="button"
                                     key={trainee.id}
                                     onClick={() => toggleSelection(trainee)}
+                                    aria-pressed={isSelected}
                                     className={cn(
-                                        "flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer group",
+                                        "flex min-h-16 w-full items-center gap-3 rounded-2xl border p-3 text-right transition-colors",
                                         isSelected
-                                            ? "bg-[#E2F163]/10 border-[#E2F163]/50"
-                                            : "bg-neutral-900/40 border-transparent hover:bg-neutral-900/80 hover:border-white/5"
+                                            ? "border-[#829044]/50 bg-[#dfe6bd]"
+                                            : "border-[#1b251c]/10 bg-white"
                                     )}
                                 >
                                     <div className={cn(
-                                        "w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold transition-colors shrink-0",
-                                        isSelected ? "bg-[#E2F163] text-black" : "bg-neutral-800 text-neutral-400 group-hover:text-white"
+                                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                                        isSelected ? "bg-[#1b251c] text-white" : "bg-[#dfe6bd] text-[#1b251c]"
                                     )}>
-                                        {trainee.full_name?.[0] || <User className="w-5 h-5" />}
+                                        {trainee.full_name?.[0] || <User aria-hidden="true" className="h-5 w-5" />}
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className={cn("font-bold text-sm truncate", isSelected ? "text-[#E2F163]" : "text-white")}>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-bold">
                                             {trainee.full_name || "ללא שם"}
                                         </p>
-                                        <p className="text-xs text-neutral-500 font-mono truncate">{trainee.phone}</p>
+                                        <p dir="ltr" className="mt-1 truncate text-xs text-[#5d6958]">{trainee.phone}</p>
                                     </div>
                                     <div className={cn(
-                                        "w-6 h-6 rounded-full border flex items-center justify-center transition-all",
-                                        isSelected ? "bg-[#E2F163] border-[#E2F163]" : "border-neutral-700 group-hover:border-neutral-500"
+                                        "flex h-6 w-6 items-center justify-center rounded-full border",
+                                        isSelected ? "border-[#1b251c] bg-[#1b251c]" : "border-[#1b251c]/30"
                                     )}>
-                                        {isSelected && <Check className="w-3.5 h-3.5 text-black stroke-[3]" />}
+                                        {isSelected && <Check aria-hidden="true" className="h-3.5 w-3.5 text-white" />}
                                     </div>
-                                </div>
+                                </button>
                             );
                         })
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-white/5 bg-[#1A1C19] z-20 flex justify-between items-center">
-                    <span className="text-sm font-bold text-neutral-400 bg-neutral-900 px-3 py-1 rounded-lg">
-                        נבחרו: <span className="text-[#E2F163]">{selectedTrainees.length}</span>
+                <div className="flex items-center justify-between gap-3 border-t border-[#1b251c]/10 bg-[#f1f0e8] px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
+                    <span className="text-xs font-bold text-[#5d6958]">
+                        נבחרו {selectedTrainees.length}
                     </span>
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="bg-[#E2F163] text-black font-bold px-6 py-2.5 rounded-xl hover:bg-[#d4e450] transition-colors shadow-[0_0_15px_rgba(226,241,99,0.2)]"
+                        className="min-h-12 rounded-full bg-[#1b251c] px-6 text-sm font-bold text-white"
                     >
-                        אישור
+                        סיימתי
                     </button>
                 </div>
             </motion.div>
