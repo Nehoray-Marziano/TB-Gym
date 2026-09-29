@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Search, User, Ticket } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import TicketUpdateModal from "@/components/admin/TicketUpdateModal";
-import { motion, useReducedMotion } from "framer-motion";
 import StudioLogo from "@/components/StudioLogo";
 
 type Profile = {
@@ -18,16 +17,10 @@ type Profile = {
 
 type Trainee = Profile & {
     tickets: number;
-    subscription: {
-        tier_display_name: string;
-        expires_at: string;
-        is_active: boolean;
-    } | null;
 };
 
 export default function AdminTraineesPage() {
     const supabase = getSupabaseClient();
-    const reduceMotion = useReducedMotion();
     const [trainees, setTrainees] = useState<Trainee[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -37,43 +30,37 @@ export default function AdminTraineesPage() {
     const { toast } = useToast();
 
     const fetchTrainees = useCallback(async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            alert("צריך להיכנס לחשבון כדי לראות את המתאמנות.");
-            return;
-        }
-
-        // Get profiles
-        const { data: profiles, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .order("full_name", { ascending: true });
-
-        if (error) {
+        try {
+            const cutoff = new Date().toISOString();
+            const [profilesRes, ticketsRes] = await Promise.all([
+                supabase.from("profiles").select("id,full_name,email,phone,role").order("full_name", { ascending: true }),
+                supabase.from("user_tickets").select("id,user_id").is("used_at", null).gt("expires_at", cutoff).order("user_id").order("id").range(0, 999),
+            ]);
+            if (profilesRes.error) throw profilesRes.error;
+            const traineeProfiles = (profilesRes.data as Profile[]).filter((profile) => profile.role !== "administrator");
+            const counts = new Map<string, number>();
+            if (ticketsRes.error) {
+                const fallback = await Promise.all(traineeProfiles.map((profile) => supabase.rpc("get_available_tickets", { p_user_id: profile.id })));
+                fallback.forEach((result, index) => counts.set(traineeProfiles[index].id, result.data || 0));
+            } else {
+                let rows = ticketsRes.data || [];
+                let offset = rows.length;
+                while (rows.length > 0) {
+                    rows.forEach(({ user_id }: { user_id: string }) => counts.set(user_id, (counts.get(user_id) || 0) + 1));
+                    if (rows.length < 1000) break;
+                    const next = await supabase.from("user_tickets").select("id,user_id").is("used_at", null).gt("expires_at", cutoff).order("user_id").order("id").range(offset, offset + 999);
+                    if (next.error) throw next.error;
+                    rows = next.data || [];
+                    offset += rows.length;
+                }
+            }
+            setTrainees(traineeProfiles.map((profile) => ({ ...profile, tickets: counts.get(profile.id) || 0 })));
+        } catch (error) {
             console.error(error);
             toast({ title: "לא הצלחנו לטעון את המתאמנות", description: "כדאי לנסות שוב בעוד רגע.", type: "error" });
-            return;
+        } finally {
+            setLoading(false);
         }
-
-        // For each profile, get tickets and subscription info
-        const traineeProfiles = (profiles as Profile[]).filter((profile) => profile.role !== "administrator");
-        const traineesWithData = await Promise.all(
-            traineeProfiles.map(async (p) => {
-                const [ticketRes, subRes] = await Promise.all([
-                    supabase.rpc("get_available_tickets", { p_user_id: p.id }),
-                    supabase.rpc("get_user_subscription", { p_user_id: p.id }),
-                ]);
-
-                return {
-                    ...p,
-                    tickets: ticketRes.data || 0,
-                    subscription: subRes.data?.is_active ? subRes.data : null,
-                };
-            })
-        );
-
-        setTrainees(traineesWithData);
-        setLoading(false);
     }, [supabase, toast]);
 
     useEffect(() => {
@@ -92,33 +79,21 @@ export default function AdminTraineesPage() {
             if (error) throw error;
             if (!data?.success) throw new Error(data?.message || "Ticket update failed");
 
-            // 2. Send Notification
-            const notifRes = await fetch('/api/notifications/grant-tickets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, amount: quantity })
-            });
-
-            const notifData = await notifRes.json();
-
-            if (!notifRes.ok) {
-                console.error("Notification API Error:", notifData);
-                toast({
-                    title: "שגיאה בשליחת התראה",
-                    description: JSON.stringify(notifData.error || "Unknown error"),
-                    type: "error" // Using 'error' variant if available, or just title
-                });
-            } else {
-                console.log("Notification sent:", notifData);
-            }
-
-            // Update local state
             setTrainees(prev => prev.map(t =>
                 t.id === userId ? { ...t, tickets: t.tickets + quantity } : t
             ));
-
             toast({ title: "הכרטיסים עודכנו בהצלחה", type: "success" });
             setIsTicketModalOpen(false);
+            void fetch('/api/notifications/grant-tickets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, amount: quantity })
+            }).then(response => {
+                if (!response.ok) throw new Error(`Notification failed: ${response.status}`);
+            }).catch(error => {
+                console.error(error);
+                toast({ title: "היתרה עודכנה, אבל לא נשלחה התראה", type: "error" });
+            });
         } catch (err: unknown) {
             console.error(err);
             toast({ title: "שגיאה בהענקת כרטיסים", description: err instanceof Error ? err.message : "כדאי לנסות שוב בעוד רגע.", type: "error" });
@@ -134,21 +109,19 @@ export default function AdminTraineesPage() {
     );
 
     return (
-        <div className="space-y-7 text-[var(--studio-deep-contrast)]">
+        <div className="space-y-4 text-[var(--studio-deep-contrast)]">
             {/* Header */}
-            <header className="relative isolate overflow-hidden border-b border-white/15 pb-7">
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
-                <StudioLogo className="pointer-events-none absolute -bottom-14 -left-12 h-56 w-56 bg-[var(--studio-accent-bg)]/10" />
-                <div className="mb-8 flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-xs font-bold text-[var(--studio-accent-text)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-accent-bg)]" />ניהול הסטודיו</span>
-                    <span className="text-xs text-[#aebbad]">מתאמנות</span>
+            <header className="border-b border-white/15 pb-4">
+                <div className="flex items-center gap-3">
+                    <StudioLogo className="h-10 w-10 shrink-0 bg-[var(--studio-accent-bg)]" />
+                    <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-bold text-[var(--studio-accent-text)]">ניהול הסטודיו</p>
+                        <h1 className="text-[1.9rem] font-bold leading-tight tracking-tight">המתאמנות</h1>
+                    </div>
+                    {!loading && <span className="text-sm font-bold tabular-nums text-[var(--studio-accent-text)]">{trainees.length}</span>}
                 </div>
-                <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
-                    <h1 className="text-[clamp(3.3rem,13vw,5rem)] font-bold leading-[0.92] tracking-[-0.055em]">המתאמנות<br /><span className="text-[var(--studio-accent-text)]">שלך.</span></h1>
-                    <p className="mt-5 text-sm leading-relaxed text-[#aebbad]">{loading ? "טוענים מתאמנות..." : trainees.length === 1 ? "מתאמנת אחת בסטודיו" : `${trainees.length} מתאמנות בסטודיו`}</p>
-                </motion.div>
 
-                <div className="relative mt-7">
+                <div className="relative mt-4">
                     <Search aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#aebbad]" />
                     <input
                         type="text"
@@ -156,38 +129,37 @@ export default function AdminTraineesPage() {
                         placeholder="חיפוש לפי שם, מייל או טלפון"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="min-h-14 w-full rounded-2xl border border-white/15 bg-[#202c21] py-3 pr-12 pl-4 text-sm text-[var(--studio-deep-contrast)] outline-none placeholder:text-[#aebbad] focus:border-[#dce780]"
+                        className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#202c21] py-2 pr-12 pl-4 text-sm text-[var(--studio-deep-contrast)] outline-none placeholder:text-[#aebbad] focus:border-[#dce780]"
                     />
                 </div>
             </header>
 
             {loading ? (
                 <div aria-label="טוענים מתאמנות" className="space-y-3">
-                    {Array.from({ length: 2 }).map((_, index) => <div key={index} className="h-44 animate-pulse rounded-[1.75rem] bg-[#202c21]" />)}
+                    {Array.from({ length: 2 }).map((_, index) => <div key={index} className="h-32 animate-pulse rounded-[1.35rem] bg-[#202c21]" />)}
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {filteredTrainees.map((trainee, index) => (
-                        <motion.article
+                    {filteredTrainees.map((trainee) => (
+                        <article
                             key={trainee.id}
-                            initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.06, 0.24), duration: 0.45 }}
-                            className="rounded-[1.75rem] bg-[var(--studio-sheet)] p-5 text-[var(--studio-ink)]"
+                            className="rounded-[1.35rem] bg-[var(--studio-sheet)] p-4 text-[var(--studio-ink)]"
                         >
-                            <div className="flex min-w-0 items-start gap-4">
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-coral-bg)] text-lg font-bold text-[var(--studio-ink)]">
+                            <div className="flex min-w-0 items-start gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-coral-bg)] text-lg font-bold text-[var(--studio-ink)]">
                                     {trainee.full_name ? trainee.full_name[0] : <User aria-hidden="true" className="h-5 w-5" />}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <h2 className="truncate text-lg font-bold">{trainee.full_name || "ללא שם"}</h2>
-                                    {trainee.phone && <p dir="ltr" className="mt-2 truncate text-right text-xs text-[var(--studio-muted)]">{trainee.phone}</p>}
+                                    {trainee.phone && <p dir="ltr" className="mt-1 truncate text-right text-xs text-[var(--studio-muted)]">{trainee.phone}</p>}
                                     <p dir="ltr" className="mt-1 truncate text-right text-xs text-[var(--studio-muted)]">{trainee.email}</p>
                                 </div>
                             </div>
 
-                            <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#162218]/15 pt-4">
+                            <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#162218]/15 pt-3">
                                 <div>
                                     <p className="text-xs text-[var(--studio-muted)]">יתרת אימונים</p>
-                                    <p className="mt-1 flex items-center gap-2 text-3xl font-bold tabular-nums"><Ticket aria-hidden="true" className="h-4 w-4 text-[var(--studio-subtle)]" />{trainee.tickets}</p>
+                                    <p className="mt-0.5 flex items-center gap-2 text-2xl font-bold tabular-nums"><Ticket aria-hidden="true" className="h-4 w-4 text-[var(--studio-subtle)]" />{trainee.tickets}</p>
                                 </div>
                                 <button
                                     type="button"
@@ -197,7 +169,7 @@ export default function AdminTraineesPage() {
                                     עדכון יתרה
                                 </button>
                             </div>
-                        </motion.article>
+                        </article>
                     ))}
 
                     {filteredTrainees.length === 0 && (
