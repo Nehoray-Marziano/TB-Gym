@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { CalendarDays, House, UserRound } from "lucide-react";
 
 const items = [
-    { href: "/dashboard", label: "בית", icon: House },
+    { href: "/dashboard", label: "היום", icon: House },
     { href: "/book", label: "אימונים", icon: CalendarDays },
-    { href: "/profile", label: "פרופיל", icon: UserRound },
+    { href: "/profile", label: "חשבון", icon: UserRound },
 ] as const;
 
 export default function BottomNav() {
@@ -16,20 +16,21 @@ export default function BottomNav() {
     return (
         <nav
             aria-label="ניווט ראשי"
-            className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-4 right-4 z-50 mx-auto max-w-md rounded-[1.5rem] border border-border/80 bg-card/95 p-1.5 text-card-foreground shadow-[0_16px_50px_-20px_rgba(0,0,0,0.35)] backdrop-blur-xl"
+            className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--studio-ink)]/10 bg-[var(--studio-card)]/95 pb-[env(safe-area-inset-bottom)] text-[var(--studio-ink)] shadow-[0_-10px_32px_rgba(12,25,13,0.06)] backdrop-blur-xl"
         >
-            <div className="grid grid-cols-3 gap-1">
+            <div className="mx-auto grid h-[4.5rem] max-w-lg grid-cols-3 px-3">
                 {items.map(({ href, label, icon: Icon }) => {
-                    const active = pathname === href || (href === "/dashboard" && pathname === "/");
+                    const active = pathname === href || (href === "/dashboard" && pathname === "/my-bookings");
                     return (
                         <Link
                             key={href}
                             href={href}
                             prefetch
                             aria-current={active ? "page" : undefined}
-                            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-[1.1rem] text-[11px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${active ? "bg-primary/15 text-foreground" : "text-muted-foreground active:bg-muted/40"}`}
+                            className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-bold outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--studio-accent-text)] ${active ? "text-[var(--studio-ink)]" : "text-[var(--studio-muted)] active:bg-[var(--studio-canvas)]"}`}
                         >
-                            <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={active ? 2.2 : 1.8} />
+                            <span className={`absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-[var(--studio-accent-text)] transition-transform duration-200 ${active ? "scale-x-100" : "scale-x-0"}`} />
+                            <Icon aria-hidden="true" className="h-[1.3rem] w-[1.3rem]" strokeWidth={active ? 2.3 : 1.8} />
                             <span>{label}</span>
                         </Link>
                     );

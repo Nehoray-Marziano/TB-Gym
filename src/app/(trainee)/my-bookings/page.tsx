@@ -7,8 +7,8 @@ import { ArrowLeft, ChevronRight, Clock3 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
-import BottomNav from "@/components/BottomNav";
 import StudioLogo from "@/components/StudioLogo";
+import { useTraineeUserId } from "@/components/TraineeIdentity";
 
 type BookedSession = {
     id: string;
@@ -30,6 +30,7 @@ function formatDate(date: string, options: Intl.DateTimeFormatOptions) {
 
 export default function MyBookingsPage() {
     const router = useRouter();
+    const userId = useTraineeUserId();
     const reduceMotion = useReducedMotion();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,17 +38,10 @@ export default function MyBookingsPage() {
     useEffect(() => {
         const fetchBookings = async () => {
             const supabase = getSupabaseClient();
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (!user) {
-                router.push("/auth/login");
-                return;
-            }
-
             const { data: myBookings, error } = await supabase
                 .from("bookings")
                 .select("id, status, created_at, session:gym_sessions(*)")
-                .eq("user_id", user.id)
+                .eq("user_id", userId)
                 .in("status", ["confirmed", "pending"])
                 .order("created_at", { ascending: false });
 
@@ -71,7 +65,7 @@ export default function MyBookingsPage() {
         };
 
         fetchBookings();
-    }, [router]);
+    }, [userId]);
 
     return (
         <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
@@ -141,7 +135,6 @@ export default function MyBookingsPage() {
                 )}
                 </div>
             </main>
-            <BottomNav />
         </div>
     );
 }

@@ -55,16 +55,10 @@ export async function proxy(request: NextRequest) {
 export const config = {
     matcher: [
         /*
-         * Match ONLY pages that actually need auth:
-         * - /dashboard (user dashboard)
-         * - /admin/* (admin pages)
-         * - /profile (user profile)
-         * 
-         * Exclude static/public pages like:
-         * - /subscription, /book, /auth/*, /onboarding, etc.
+         * Admin pages still use the proxy for token refresh. The shared
+         * trainee layout verifies claims once for dashboard, book, profile,
+         * and bookings, then stays mounted during tab navigation.
          */
-        "/dashboard",
         "/admin/:path*",
-        "/profile",
     ],
 };

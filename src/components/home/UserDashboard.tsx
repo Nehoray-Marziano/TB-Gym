@@ -9,7 +9,6 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import StudioLogo from "@/components/StudioLogo";
-import BottomNav from "@/components/BottomNav";
 import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -224,7 +223,6 @@ export default function UserDashboard({ userId }: { userId: string }) {
                     )}
                 </motion.section>
             </main>
-            <BottomNav />
             <NotificationPermissionModal />
         </div>
     );
