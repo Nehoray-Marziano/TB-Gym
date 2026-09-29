@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { X, Check, AlertCircle, Info } from "lucide-react"
 
 type ToastType = "success" | "error" | "info"
@@ -21,6 +21,7 @@ const ToastContext = React.createContext<ToastContextType | undefined>(undefined
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toasts, setToasts] = React.useState<Toast[]>([])
+    const reduceMotion = useReducedMotion()
 
     const toast = React.useCallback(({ title, description, type }: Omit<Toast, "id">) => {
         const id = Math.random().toString(36).substring(2, 9)
@@ -39,15 +40,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     return (
         <ToastContext.Provider value={{ toast }}>
             {children}
-            <div className="fixed bottom-0 left-0 p-6 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none">
+            <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] mx-auto flex w-full max-w-lg flex-col gap-2 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 <AnimatePresence mode="popLayout">
                     {toasts.map((t) => (
                         <motion.div
                             key={t.id}
-                            layout
-                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                            layout={!reduceMotion}
+                            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                            exit={{ opacity: 0, y: reduceMotion ? 0 : 12, transition: { duration: 0.2 } }}
                             className="pointer-events-auto"
                         >
                             <ToastItem toast={t} onDismiss={() => removeToast(t.id)} />
@@ -61,9 +62,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
     const bgColors = {
-        success: "bg-[#E2F163] text-black border-[#E2F163]",
-        error: "bg-red-500 text-white border-red-500",
-        info: "bg-neutral-800 text-white border-white/10"
+        success: "bg-[#dce780] text-[#162218] border-[#dce780]",
+        error: "bg-[#a53d35] text-white border-[#a53d35]",
+        info: "bg-[#162218] text-[#f6f6ed] border-[#162218]"
     }
 
     const icons = {
@@ -75,7 +76,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
     const Icon = icons[toast.type]
 
     return (
-        <div className={`${bgColors[toast.type]} border p-4 rounded-2xl shadow-2xl flex items-start gap-4 relative overflow-hidden`}>
+        <div role="status" className={`${bgColors[toast.type]} relative flex items-start gap-3 overflow-hidden rounded-[1.5rem] border p-4 shadow-2xl`}>
             <div className="mt-1">
                 <Icon className="w-5 h-5" />
             </div>
@@ -83,8 +84,8 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
                 <h3 className="font-bold text-sm">{toast.title}</h3>
                 {toast.description && <p className="text-xs opacity-90 mt-1">{toast.description}</p>}
             </div>
-            <button onClick={onDismiss} className="opacity-50 hover:opacity-100 transition-opacity">
-                <X className="w-4 h-4" />
+            <button type="button" onClick={onDismiss} aria-label="סגירה" className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full opacity-70 transition-opacity active:opacity-100">
+                <X aria-hidden="true" className="h-4 w-4" />
             </button>
         </div>
     )
