@@ -8,6 +8,7 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import StudioLogo from "@/components/StudioLogo";
+import StudioBotanical from "@/components/StudioBotanical";
 import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -113,9 +114,9 @@ export default function TraineeDashboard({ userId }: { userId: string }) {
                     {profile?.role === "administrator" && <Link href="/admin" className="mb-1 shrink-0 rounded-full border border-[var(--studio-ink)]/20 px-3 py-2 text-[11px] font-bold">ניהול</Link>}
                 </div>
 
-                <section aria-labelledby="next-class" className="relative isolate overflow-hidden rounded-[2rem] bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)] shadow-[0_22px_48px_-30px_rgba(12,25,13,0.65)]">
-                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:26px_26px]" />
-                    <StudioLogo className="pointer-events-none absolute -bottom-14 -left-12 h-52 w-52 bg-[var(--studio-accent-bg)]/10" />
+                <section aria-labelledby="next-class" className="relative isolate overflow-hidden rounded-[2.4rem_1.4rem_2.4rem_1.4rem] bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)] shadow-[0_22px_48px_-30px_rgba(12,25,13,0.4)]">
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_8%_80%,var(--studio-accent-bg)_0%,transparent_55%)] opacity-[0.12]" />
+                    <StudioBotanical className="studio-botanical-drift pointer-events-none absolute -bottom-8 -left-20 h-52 w-80 text-[var(--studio-accent-text)]/20" />
                     <div className="relative px-5 pb-5 pt-5">
                         <div className="flex items-center justify-between gap-3">
                             <span className="flex items-center gap-2 text-[11px] font-bold text-[var(--studio-accent-text)]"><span className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-bg)]" />האימון הבא שלך</span>
@@ -147,7 +148,7 @@ export default function TraineeDashboard({ userId }: { userId: string }) {
                     </Link>
                 </section>
 
-                <Link href="/subscription" className="mt-4 flex min-h-[6.5rem] items-center gap-4 overflow-hidden rounded-[1.5rem] bg-[var(--studio-accent-bg)] px-5 text-[var(--studio-ink)] transition-transform active:scale-[0.99]">
+                <Link href="/subscription" className="mt-4 flex min-h-[6.5rem] items-center gap-4 overflow-hidden rounded-[1.8rem_1rem_1.8rem_1rem] bg-[var(--studio-accent-bg)] px-5 text-[var(--studio-ink)] transition-transform active:scale-[0.99]">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-deep)] text-[var(--studio-accent-text)]"><Ticket aria-hidden="true" className="h-5 w-5" /></div>
                     <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold">יתרת האימונים</p>
