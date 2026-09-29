@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Mail, X } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import StudioLogo from "@/components/StudioLogo";
+import StudioBotanical from "@/components/StudioBotanical";
 
 type LoginView = "menu" | "email" | "otp";
 
@@ -95,7 +96,7 @@ export default function LandingPage() {
     return (
         <div className="min-h-svh overflow-x-hidden bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)]">
             <main className="relative isolate mx-auto flex min-h-svh max-w-lg flex-col overflow-hidden px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:30px_30px]" />
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_18%_54%,var(--studio-accent-bg)_0%,transparent_46%),radial-gradient(ellipse_at_92%_10%,var(--studio-coral-bg)_0%,transparent_34%)] opacity-[0.08]" />
                 <header className="relative flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                         <StudioLogo className="h-9 w-9 bg-[var(--studio-accent-bg)]" />
@@ -118,12 +119,8 @@ export default function LandingPage() {
                 </section>
 
                 <div aria-hidden="true" className="pointer-events-none relative my-3 min-h-20 flex-1 overflow-hidden [@media(max-height:650px)]:min-h-10">
-                    <svg viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet" className="absolute bottom-[-10%] left-[-8%] h-full w-full max-h-56 text-[var(--studio-accent-bg)]">
-                        <path d="M-20 177 C90 26 218 206 380 2" fill="none" stroke="currentColor" strokeOpacity=".35" strokeWidth="2" />
-                        <path d="M-20 198 C99 48 226 217 380 24" fill="none" stroke="currentColor" strokeOpacity=".22" strokeWidth="2" />
-                        <circle cx="297" cy="70" r="50" fill="var(--studio-coral-bg)" />
-                    </svg>
-                    <StudioLogo className="absolute bottom-[-2rem] left-2 h-40 w-40 rotate-[-13deg] bg-[var(--studio-accent-bg)]" />
+                    <StudioBotanical className="studio-botanical-drift absolute -bottom-8 -left-12 h-full max-h-64 w-[115%] text-[var(--studio-accent-text)]/75" />
+                    <StudioLogo className="absolute -bottom-8 left-3 h-28 w-28 rotate-[-13deg] bg-[var(--studio-accent-bg)]/35" />
                 </div>
 
                 <div className="relative">
