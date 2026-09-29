@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Copy, Check, ExternalLink, X } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
@@ -22,6 +22,7 @@ export default function PaymentModal({
     tierDisplay
 }: PaymentModalProps) {
     const [copied, setCopied] = useState(false);
+    const reduceMotion = useReducedMotion();
 
     // Generate description: "Name - Tier - Month"
     // Example: "נהוראי - פרימיום - ינואר"
@@ -54,7 +55,7 @@ export default function PaymentModal({
                         {/* Modal */}
                         <motion.div
                             key="modal"
-                            initial={{ opacity: 0, y: "100%" }}
+                            initial={reduceMotion ? false : { opacity: 0, y: "100%" }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: "100%" }}
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -62,20 +63,20 @@ export default function PaymentModal({
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="payment-title"
-                            className="pointer-events-auto relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] border border-border bg-card pb-[env(safe-area-inset-bottom)] text-foreground shadow-2xl"
+                            className="pointer-events-auto relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] pb-[env(safe-area-inset-bottom)] text-[#162218] shadow-2xl"
                         >
                             {/* Close Button */}
                             <button
                                 onClick={onClose}
                                 type="button"
                                 aria-label="סגירה"
-                                className="absolute left-5 top-5 z-10 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-card transition-colors active:bg-muted/40"
+                                className="absolute left-5 top-5 z-10 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[#162218]/20 transition-colors active:bg-[#162218]/10"
                             >
                                 <X aria-hidden="true" className="h-5 w-5" />
                             </button>
 
                             {/* Header Section */}
-                            <div className="border-b border-border px-6 pb-5 pt-7">
+                            <div className="border-b border-[#162218]/15 px-6 pb-5 pt-7">
                                 <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00b0ba]/10">
                                         <Image
                                             src="/Bit_logo.svg"
@@ -85,43 +86,44 @@ export default function PaymentModal({
                                             className="h-11 w-11"
                                         />
                                 </div>
-                                <h3 id="payment-title" className="text-2xl font-bold">לפני שעוברים לביט</h3>
-                                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">את הסכום וסיבת ההעברה ממלאים באפליקציית ביט.</p>
+                                <p className="mb-1 text-xs font-bold text-[#68794f]">עוד רגע ממשיכים</p>
+                                <h3 id="payment-title" className="max-w-[16rem] text-[2rem] font-bold leading-tight">לפני שעוברים לביט.</h3>
+                                <p className="mt-2 text-sm leading-relaxed text-[#5d6958]">את הסכום וסיבת ההעברה ממלאים באפליקציית ביט.</p>
                             </div>
 
                             {/* Body Section */}
                             <div className="space-y-5 p-6">
 
                                 {/* Amount Display */}
-                                <div className="flex items-center justify-between rounded-2xl bg-muted/50 p-4">
-                                    <span className="text-sm font-medium text-muted-foreground">סכום ההעברה</span>
-                                    <span className="text-2xl font-bold tabular-nums">{amount} ₪</span>
+                                <div className="flex items-center justify-between rounded-[1.5rem] bg-[#162218] p-5 text-[#f6f6ed]">
+                                    <span className="text-sm font-medium text-[#b8c7ae]">סכום ההעברה</span>
+                                    <span className="text-3xl font-bold tabular-nums text-[#dce780]">{amount} ₪</span>
                                 </div>
 
                                 {/* Explanation Text */}
-                                <div className="rounded-2xl border border-primary/20 bg-primary/10 p-4 text-xs leading-relaxed">
+                                <div className="rounded-2xl bg-[#dce780]/50 p-4 text-xs leading-relaxed">
                                     האימונים יתווספו ליתרה שלך אחרי שטליה תאשר את ההעברה.
                                 </div>
 
                                 {/* Description Copy Section */}
                                 <div>
-                                    <p className="mb-2 text-xs font-bold text-muted-foreground">סיבת ההעברה · כדאי להעתיק</p>
+                                    <p className="mb-2 text-xs font-bold text-[#5d6958]">סיבת ההעברה · כדאי להעתיק</p>
                                     <button
                                         type="button"
                                         onClick={handleCopy}
-                                        className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3 text-start transition-colors active:bg-muted/40"
+                                        className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#162218]/15 bg-[#f6f6ed] p-3 text-start transition-colors active:bg-[#dce780]/20"
                                     >
                                         <span className="min-w-0 break-words px-2 text-sm font-medium">
                                             {paymentDescription}
                                         </span>
                                         <div className={cn(
                                             "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors",
-                                            copied ? "bg-primary/15 text-primary" : "bg-muted text-foreground"
+                                            copied ? "bg-[#dce780] text-[#162218]" : "bg-[#e9eadc] text-[#162218]"
                                         )}>
                                             {copied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
                                         </div>
                                     </button>
-                                    {copied && <p className="mt-1 text-xs text-primary">הועתק</p>}
+                                    {copied && <p className="mt-1 text-xs text-[#4e652c]">הועתק</p>}
                                 </div>
 
                                 {/* Action Buttons */}
@@ -129,7 +131,7 @@ export default function PaymentModal({
                                     <button
                                         type="button"
                                         onClick={onConfirm}
-                                        className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1b251c] px-4 text-sm font-bold text-[#f6f6ed] transition-colors active:bg-[#334436]"
+                                        className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-[#162218] px-4 text-sm font-bold text-[#dce780] transition-colors active:bg-[#334436]"
                                     >
                                         <span>להמשך באפליקציית ביט</span>
                                         <ExternalLink aria-hidden="true" className="h-4 w-4" />
@@ -138,7 +140,7 @@ export default function PaymentModal({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="min-h-11 w-full rounded-full text-xs font-bold text-muted-foreground transition-colors active:bg-muted/40"
+                                        className="min-h-11 w-full rounded-full text-xs font-bold text-[#5d6958] transition-colors active:bg-[#162218]/10"
                                     >
                                         ביטול
                                     </button>

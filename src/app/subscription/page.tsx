@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, ChevronRight } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
 import PaymentModal from "@/components/subscription/PaymentModal";
+import StudioLogo from "@/components/StudioLogo";
 
 const TIERS = [
     {
@@ -52,6 +54,7 @@ const TIERS = [
 
 export default function SubscriptionPage() {
     const router = useRouter();
+    const reduceMotion = useReducedMotion();
     const { profile } = useGymStore();
     const { toast } = useToast();
     const [selectedTierId, setSelectedTierId] = useState(2);
@@ -107,7 +110,7 @@ export default function SubscriptionPage() {
     };
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
+        <div className="min-h-dvh overflow-x-hidden bg-[#e9eadc] text-[#162218]">
             <PaymentModal
                 isOpen={isPaymentModalOpen}
                 onClose={() => setIsPaymentModalOpen(false)}
@@ -117,19 +120,25 @@ export default function SubscriptionPage() {
                 userName={profile?.full_name || "מתאמנת"}
             />
 
-            <main className="mx-auto max-w-lg pb-[calc(10.5rem+env(safe-area-inset-bottom))] pt-5">
-                <header className="px-5 sm:px-7">
-                    <button type="button" onClick={() => router.back()} aria-label="חזרה" className="mb-10 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-card transition-colors active:bg-muted/40">
+            <main className="mx-auto max-w-lg pb-[calc(10.5rem+env(safe-area-inset-bottom))]">
+                <header className="relative isolate overflow-hidden bg-[#f28c69] px-5 pb-20 pt-5 sm:px-7">
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#162218_1px,transparent_1px),linear-gradient(90deg,#162218_1px,transparent_1px)] [background-size:28px_28px]" />
+                    <StudioLogo className="pointer-events-none absolute -bottom-16 -left-12 h-64 w-64 bg-[#162218]/10" />
+                    <button type="button" onClick={() => router.back()} aria-label="חזרה" className="relative mb-12 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[#162218]/30 transition-colors active:bg-[#162218]/10">
                         <ChevronRight aria-hidden="true" className="h-5 w-5" />
                     </button>
-                    <p className="mb-2 text-xs font-bold text-primary">המסלולים בסטודיו / 03</p>
-                    <h1 className="text-[clamp(2.7rem,11vw,4rem)] font-bold leading-[1.08] tracking-tight">בקצב<br />שלך<span className="text-primary">.</span></h1>
-                    <p className="mt-4 max-w-[19rem] text-sm leading-relaxed text-muted-foreground">בחרי כמה פעמים תרצי להגיע החודש. את הקצב אנחנו משאירים לך.</p>
+                    <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
+                        <p className="mb-4 flex items-center gap-2 text-xs font-bold"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#dce780]" />המסלולים בסטודיו</p>
+                        <h1 className="text-[clamp(3.8rem,16vw,5.5rem)] font-bold leading-[0.9] tracking-[-0.06em]">בקצב<br /><span className="text-[#f6f6ed]">שלך.</span></h1>
+                        <p className="mt-5 max-w-[19rem] text-sm leading-relaxed text-[#513329]">כמה פעמים תרצי להגיע החודש? בחרי את הקצב שלך.</p>
+                    </motion.div>
                 </header>
 
-                <div className="mb-4 mt-10 flex items-end justify-between border-b border-border px-5 pb-3 sm:px-7">
-                    <h2 className="text-base font-bold">בחירת מסלול</h2>
-                    <span className="text-xs text-muted-foreground">החליקי כדי לראות עוד</span>
+                <div className="relative -mt-8 rounded-t-[2rem] bg-[#e9eadc] px-5 pt-8 sm:px-7">
+                    <div className="mb-4 border-b border-[#162218]/25 pb-4">
+                        <div className="flex items-center justify-between gap-3 text-[10px] font-bold text-[#68794f]"><p>המסלול שלך / 03</p><span>החליקי לעוד מסלולים</span></div>
+                        <h2 className="mt-2 text-[1.65rem] font-bold leading-tight">בוחרים קצב.</h2>
+                    </div>
                 </div>
 
                 <div ref={carouselRef} onScroll={handleScroll} className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-4 scrollbar-hide sm:px-7">
@@ -141,49 +150,50 @@ export default function SubscriptionPage() {
                                 type="button"
                                 onClick={(event) => {
                                     setSelectedTierId(tier.id);
-                                    event.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                                    event.currentTarget.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", inline: "center", block: "nearest" });
                                 }}
                                 aria-pressed={isSelected}
-                                className={`relative flex min-h-[25rem] w-[min(82vw,21rem)] shrink-0 snap-center flex-col overflow-hidden rounded-[1.85rem] border p-5 text-start transition-colors ${isSelected ? "border-[#1b251c] bg-[#1b251c] text-[#f6f6ed]" : "border-border bg-card text-foreground"}`}
+                                className={`relative flex min-h-[27rem] w-[min(82vw,21rem)] shrink-0 snap-center flex-col overflow-hidden rounded-[1.85rem] border p-5 text-start transition-colors duration-300 ${isSelected ? "border-[#162218] bg-[#162218] text-[#f6f6ed]" : "border-[#162218]/10 bg-[#f6f6ed] text-[#162218]"}`}
                             >
-                                <span aria-hidden="true" className={`pointer-events-none absolute -left-20 -top-16 h-56 w-56 rounded-full border-[32px] ${isSelected ? "border-[#dce780]/10" : "border-primary/10"}`} />
+                                <StudioLogo className={`pointer-events-none absolute -bottom-14 -left-12 h-56 w-56 ${isSelected ? "bg-[#dce780]/10" : "bg-[#162218]/5"}`} />
                                 <span className="relative mb-8 flex min-h-6 items-center justify-between gap-2">
-                                    <span className={`text-[11px] font-bold ${isSelected ? "text-[#dce780]" : "text-primary"}`}>מסלול {String(tier.id).padStart(2, "0")}</span>
-                                    {"popular" in tier && tier.popular && <span className="rounded-full bg-[#dce780] px-3 py-1 text-[11px] font-bold text-[#1b251c]">הכי נבחר</span>}
+                                    <span className={`text-[11px] font-bold ${isSelected ? "text-[#dce780]" : "text-[#68794f]"}`}>מסלול {String(tier.id).padStart(2, "0")}</span>
+                                    {"popular" in tier && tier.popular && <span className="rounded-full bg-[#dce780] px-3 py-1 text-[11px] font-bold text-[#162218]">הכי נבחר</span>}
                                 </span>
-                                <span className="relative text-[1.75rem] font-bold leading-tight">{tier.displayName}</span>
+                                <span className="relative mb-1 text-[4.5rem] font-bold leading-none tracking-[-0.08em]">{tier.sessions}<span className={`ms-2 text-sm tracking-normal ${isSelected ? "text-[#dce780]" : "text-[#68794f]"}`}>אימונים</span></span>
+                                <span className="relative mt-2 text-[1.75rem] font-bold leading-tight">{tier.displayName}</span>
                                 <span className="relative mt-1 flex items-baseline gap-1">
                                     <span className="text-[3.5rem] font-bold leading-none tabular-nums">{tier.price}</span>
                                     <span className="text-lg">₪</span>
-                                    <span className={`ms-1 text-xs ${isSelected ? "text-[#cbd4c5]" : "text-muted-foreground"}`}>לחודש</span>
+                                    <span className={`ms-1 text-xs ${isSelected ? "text-[#b8c7ae]" : "text-[#5d6958]"}`}>לחודש</span>
                                 </span>
-                                <span className={`relative mt-5 block w-full border-t pt-4 text-sm font-bold ${isSelected ? "border-white/20" : "border-border"}`}>{tier.sessions} אימונים בחודש</span>
+                                <span className={`relative mt-5 block w-full border-t pt-4 text-sm font-bold ${isSelected ? "border-white/20" : "border-[#162218]/10"}`}>{tier.sessions} אימונים בחודש</span>
                                 <span className="relative mt-3 flex flex-col gap-2.5">
                                     {tier.features.slice(1).map((feature) => (
-                                        <span key={feature} className={`flex items-start gap-2 text-xs leading-relaxed ${isSelected ? "text-[#dce4d6]" : "text-muted-foreground"}`}>
-                                            <Check aria-hidden="true" className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${isSelected ? "text-[#dce780]" : "text-primary"}`} />
+                                        <span key={feature} className={`flex items-start gap-2 text-xs leading-relaxed ${isSelected ? "text-[#dce4d6]" : "text-[#5d6958]"}`}>
+                                            <Check aria-hidden="true" className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${isSelected ? "text-[#dce780]" : "text-[#68794f]"}`} />
                                             {feature}
                                         </span>
                                     ))}
                                 </span>
-                                <span className={`relative mt-auto pt-5 text-xs font-bold ${isSelected ? "text-[#dce780]" : "text-primary"}`}>{isSelected ? "המסלול שבחרת" : "לצפייה במסלול"}</span>
+                                <span className={`relative mt-auto pt-5 text-xs font-bold ${isSelected ? "text-[#dce780]" : "text-[#68794f]"}`}>{isSelected ? "המסלול שבחרת" : "לצפייה במסלול"}</span>
                             </button>
                         );
                     })}
                 </div>
             </main>
 
-            <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl">
+            <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#162218]/15 bg-[#e9eadc]/95 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl">
                 <div className="mx-auto flex max-w-lg items-center gap-4">
                     <div className="min-w-0 shrink-0">
-                        <p className="text-[11px] text-muted-foreground">{activeTier.displayName} · {activeTier.sessions} אימונים</p>
+                        <p className="text-[11px] text-[#5d6958]">{activeTier.displayName} · {activeTier.sessions} אימונים</p>
                         <p className="text-lg font-bold tabular-nums">{activeTier.price} ₪</p>
                     </div>
                     <button
                         type="button"
                         onClick={() => setIsPaymentModalOpen(true)}
                         disabled={purchasing}
-                        className="flex min-h-14 min-w-0 flex-1 items-center justify-between gap-2 rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] transition-colors active:bg-[#334436] disabled:opacity-50"
+                        className="flex min-h-14 min-w-0 flex-1 items-center justify-between gap-2 rounded-full bg-[#162218] px-5 text-sm font-bold text-[#dce780] transition-colors active:bg-[#334436] disabled:opacity-50"
                     >
                         {purchasing ? "מעבירים אותך..." : "לתשלום"}
                         <ArrowLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
