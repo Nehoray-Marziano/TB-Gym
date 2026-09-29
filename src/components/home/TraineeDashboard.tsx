@@ -77,7 +77,8 @@ export default function TraineeDashboard({ userId }: { userId: string }) {
         router.prefetch("/book");
         router.prefetch("/profile");
         router.prefetch("/subscription");
-    }, [router]);
+        if (profile?.role === "administrator") router.prefetch("/admin");
+    }, [router, profile?.role]);
 
     const firstName = profile?.full_name?.trim().split(/\s+/)[0] || "אלופה";
     const today = new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
@@ -109,7 +110,7 @@ export default function TraineeDashboard({ userId }: { userId: string }) {
                         <p className="text-xs font-bold text-[var(--studio-subtle)]">טוב לראות אותך שוב</p>
                         <h1 className="mt-1 truncate text-[clamp(2.6rem,11vw,3.6rem)] font-bold leading-[1.05] tracking-[-0.06em]">{loading ? "בוקר טוב" : `היי, ${firstName}`}<span className="text-[var(--studio-coral-text)]">.</span></h1>
                     </div>
-                    {profile?.role === "administrator" && <Link href="/admin/schedule" className="mb-1 shrink-0 rounded-full border border-[var(--studio-ink)]/20 px-3 py-2 text-[11px] font-bold">ניהול</Link>}
+                    {profile?.role === "administrator" && <Link href="/admin" className="mb-1 shrink-0 rounded-full border border-[var(--studio-ink)]/20 px-3 py-2 text-[11px] font-bold">ניהול</Link>}
                 </div>
 
                 <section aria-labelledby="next-class" className="relative isolate overflow-hidden rounded-[2rem] bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)] shadow-[0_22px_48px_-30px_rgba(12,25,13,0.65)]">

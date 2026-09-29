@@ -2,115 +2,81 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CalendarDays, Ticket, UsersRound, type LucideIcon } from "lucide-react";
-import StudioLogo from "@/components/StudioLogo";
-import { motion, useReducedMotion } from "framer-motion";
+import { ArrowLeft, CalendarDays, UsersRound } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import StudioLogo from "@/components/StudioLogo";
 
-type StudioStats = {
-    activeUsers: number;
-    sessionsToday: number;
-    openBookings: number;
-};
+type Overview = { today: number; upcoming: number; trainees: number };
 
 export default function AdminDashboardPage() {
     const supabase = getSupabaseClient();
-    const reduceMotion = useReducedMotion();
-    const [stats, setStats] = useState<StudioStats>({ activeUsers: 0, sessionsToday: 0, openBookings: 0 });
-    const [isLoading, setIsLoading] = useState(true);
+    const [overview, setOverview] = useState<Overview | null>(null);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         let active = true;
-        const fetchStats = async () => {
-            const today = new Date().toISOString().split("T")[0];
-            const [users, sessions, bookings] = await Promise.all([
-                supabase.from("profiles").select("*", { count: "exact", head: true }),
-                supabase.from("gym_sessions").select("*", { count: "exact", head: true })
-                    .gte("start_time", `${today}T00:00:00`).lte("start_time", `${today}T23:59:59`),
-                supabase.from("bookings").select("*", { count: "exact", head: true }),
+        const load = async () => {
+            const now = new Date();
+            const start = new Date(now);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(now);
+            end.setHours(23, 59, 59, 999);
+            const [trainees, today, upcoming] = await Promise.all([
+                supabase.from("profiles").select("id", { count: "exact", head: true }).neq("role", "administrator"),
+                supabase.from("gym_sessions").select("id", { count: "exact", head: true }).gte("start_time", start.toISOString()).lte("start_time", end.toISOString()),
+                supabase.from("gym_sessions").select("id", { count: "exact", head: true }).gte("start_time", now.toISOString()),
             ]);
-
             if (!active) return;
-            setStats({
-                activeUsers: users.count || 0,
-                sessionsToday: sessions.count || 0,
-                openBookings: bookings.count || 0,
-            });
-            setIsLoading(false);
+            if (trainees.error || today.error || upcoming.error) {
+                setError(true);
+                return;
+            }
+            setOverview({ trainees: trainees.count || 0, today: today.count || 0, upcoming: upcoming.count || 0 });
         };
-        fetchStats();
+        void load();
         return () => { active = false; };
     }, [supabase]);
 
     return (
-        <div className="space-y-9">
-            <header className="relative isolate overflow-hidden border-b border-white/15 pb-9">
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
-                <StudioLogo className="pointer-events-none absolute -bottom-14 -left-12 h-56 w-56 bg-[var(--studio-accent-bg)]/10" />
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <StudioLogo className="h-9 w-9 bg-[var(--studio-accent-bg)]" />
-                        <span className="border-s border-white/20 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
-                    </div>
-                    <span className="rounded-full border border-[#dce780]/25 px-3 py-1.5 text-[11px] font-bold text-[var(--studio-accent-text)]">אזור הניהול</span>
+        <div className="text-[var(--studio-deep-contrast)]">
+            <header className="flex items-center gap-3">
+                <StudioLogo className="h-10 w-10 shrink-0 bg-[var(--studio-accent-bg)]" />
+                <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-[var(--studio-accent-text)]">סטודיו טליה</p>
+                    <h1 className="text-[1.9rem] font-bold leading-tight tracking-tight">תמונת מצב<span className="text-[var(--studio-coral-text)]">.</span></h1>
                 </div>
-                <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
-                    <p className="mt-12 flex items-center gap-2 text-xs font-bold text-[var(--studio-accent-text)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-bg)]" />הסטודיו שלך</p>
-                    <h1 className="mt-4 max-w-[20rem] text-[clamp(3.3rem,13vw,5rem)] font-bold leading-[0.92] tracking-[-0.055em]">טליה, הכול<br /><span className="text-[var(--studio-accent-text)]">מול העיניים.</span></h1>
-                    <p className="mt-6 max-w-[19rem] text-sm leading-relaxed text-[#aebbad]">האימונים, המתאמנות וההרשמות. הכול כאן.</p>
-                </motion.div>
             </header>
 
-            <section aria-labelledby="overview-heading">
-                <div className="mb-4 flex items-center justify-between">
-                    <h2 id="overview-heading" className="text-lg font-bold">תמונת מצב</h2>
-                    <span className="text-xs text-[#aebbad]">מה קורה בסטודיו</span>
-                </div>
-
-                <div className="relative overflow-hidden rounded-[2rem] bg-[var(--studio-accent-bg)] p-6 text-[var(--studio-ink)]">
+            <section aria-label="הפעילות בסטודיו" className="mt-6">
+                <div className="relative isolate overflow-hidden rounded-[1.65rem] bg-[var(--studio-accent-bg)] p-5 text-[var(--studio-ink)]">
                     <StudioLogo className="pointer-events-none absolute -bottom-14 -left-10 h-52 w-52 bg-[var(--studio-deep)]/10" />
-                    <div className="relative flex items-start justify-between">
-                        <span className="flex items-center gap-2 text-sm font-bold"><CalendarDays aria-hidden="true" className="h-5 w-5" />אימונים היום</span>
-                        <span className="text-xs font-medium">ביומן הסטודיו</span>
+                    <div className="relative flex items-start justify-between gap-3">
+                        <div>
+                            <p className="text-xs font-bold">אימונים היום</p>
+                            <p className="mt-3 text-[4.5rem] font-bold leading-none tabular-nums" aria-busy={!overview && !error}>{overview?.today ?? "—"}</p>
+                        </div>
+                        <CalendarDays aria-hidden="true" className="h-6 w-6" />
                     </div>
-                    <p className="relative mt-7 text-[5.5rem] font-bold leading-none tabular-nums" aria-label={isLoading ? "טוענים" : `${stats.sessionsToday} אימונים היום`}>{isLoading ? "—" : stats.sessionsToday}</p>
+                    <Link href="/admin/schedule" className="relative mt-3 flex min-h-11 items-center justify-between border-t border-[var(--studio-ink)]/20 pt-2 text-xs font-bold">ללוח האימונים <ArrowLeft aria-hidden="true" className="h-4 w-4" /></Link>
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-3">
-                    <StatCard icon={UsersRound} label="משתמשות במערכת" value={isLoading ? "—" : stats.activeUsers} />
-                    <StatCard icon={Ticket} label="סך ההרשמות" value={isLoading ? "—" : stats.openBookings} />
+                    <div className="rounded-[1.35rem] border border-white/10 bg-[#202c21] p-4">
+                        <p className="text-xs text-[#aebbad]">אימונים קרובים</p>
+                        <p className="mt-3 text-[2.4rem] font-bold leading-none tabular-nums text-[var(--studio-accent-text)]">{overview?.upcoming ?? "—"}</p>
+                    </div>
+                    <div className="rounded-[1.35rem] border border-white/10 bg-[#202c21] p-4">
+                        <p className="text-xs text-[#aebbad]">מתאמנות</p>
+                        <p className="mt-3 text-[2.4rem] font-bold leading-none tabular-nums text-[var(--studio-accent-text)]">{overview?.trainees ?? "—"}</p>
+                    </div>
                 </div>
+                {error && <p role="alert" className="mt-3 text-xs text-[var(--studio-coral-text)]">לא הצלחנו לטעון את הנתונים כרגע.</p>}
             </section>
 
-            <section aria-labelledby="next-heading">
-                <div className="mb-4 border-b border-white/15 pb-3">
-                    <h2 id="next-heading" className="text-lg font-bold">ממשיכים מכאן</h2>
-                </div>
-                <div className="space-y-3">
-                    <AdminLink href="/admin/schedule" icon={CalendarDays} title="יומן האימונים" description="אימונים, שעות ומקומות פנויים" />
-                    <AdminLink href="/admin/trainees" icon={UsersRound} title="המתאמנות שלך" description="פרטים, כרטיסיות ויתרות" />
-                </div>
-            </section>
+            <nav aria-label="פעולות ניהול" className="mt-7 space-y-2">
+                <Link href="/admin/schedule" className="flex min-h-14 items-center gap-3 rounded-[1.2rem] border border-white/10 bg-[#202c21] px-4 text-sm font-bold transition-colors active:bg-[#2b392c]"><CalendarDays aria-hidden="true" className="h-5 w-5 text-[var(--studio-accent-text)]" /><span className="flex-1">יומן האימונים</span><ArrowLeft aria-hidden="true" className="h-4 w-4" /></Link>
+                <Link href="/admin/trainees" className="flex min-h-14 items-center gap-3 rounded-[1.2rem] border border-white/10 bg-[#202c21] px-4 text-sm font-bold transition-colors active:bg-[#2b392c]"><UsersRound aria-hidden="true" className="h-5 w-5 text-[var(--studio-accent-text)]" /><span className="flex-1">המתאמנות</span><ArrowLeft aria-hidden="true" className="h-4 w-4" /></Link>
+            </nav>
         </div>
-    );
-}
-
-function StatCard({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number | string }) {
-    return (
-        <div className="min-h-40 rounded-[1.5rem] border border-white/10 bg-[#202c21] p-5">
-            <Icon aria-hidden="true" className="h-5 w-5 text-[var(--studio-accent-text)]" />
-            <p className="mt-5 text-[2.5rem] font-bold leading-none tabular-nums">{value}</p>
-            <p className="mt-2 text-xs leading-snug text-[#aebbad]">{label}</p>
-        </div>
-    );
-}
-
-function AdminLink({ href, icon: Icon, title, description }: { href: string; icon: LucideIcon; title: string; description: string }) {
-    return (
-        <Link href={href} className="flex min-h-24 items-center gap-4 rounded-[1.5rem] border border-white/10 bg-[#202c21] p-4 transition-colors active:bg-[#2b392c]">
-            <span className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-accent-bg)]/15 text-[var(--studio-accent-text)]"><Icon aria-hidden="true" className="h-6 w-6" /></span>
-            <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{title}</span><span className="mt-1 block text-xs text-[#aebbad]">{description}</span></span>
-            <ArrowLeft aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--studio-accent-text)]" />
-        </Link>
     );
 }
