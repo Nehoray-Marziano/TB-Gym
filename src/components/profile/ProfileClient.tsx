@@ -4,9 +4,10 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, Moon, Sun, Palette } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
+import StudioLogo from "@/components/StudioLogo";
 
 
 type UserProfile = {
@@ -43,6 +44,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     const [health, setHealth] = useState<HealthDeclaration>(initialHealth);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const reduceMotion = useReducedMotion();
 
     const { setTheme, resolvedTheme } = useTheme();
 
@@ -107,15 +109,17 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     if (!profile) return null; // Should not happen with server data, but safety check
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
-            <main className="mx-auto max-w-lg px-5 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-5 sm:px-7">
-            <header className="mb-10">
+        <div className="min-h-dvh overflow-x-hidden bg-[#e9eadc] text-[#162218]">
+            <main className="mx-auto max-w-lg pb-[calc(4rem+env(safe-area-inset-bottom))]">
+            <header className="relative isolate overflow-hidden bg-[#162218] px-5 pb-20 pt-5 text-[#f6f6ed] sm:px-7">
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
+                <StudioLogo className="pointer-events-none absolute -bottom-14 -left-12 h-64 w-64 bg-[#dce780]/10" />
                 <div className="mb-9 flex items-center justify-between gap-3">
                     <button
                         type="button"
                         onClick={() => router.back()}
                         aria-label="חזרה"
-                        className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-card transition-colors active:bg-muted/40"
+                        className="relative flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/25 text-[#dce780] transition-colors active:bg-white/10"
                     >
                         <ChevronRight aria-hidden="true" className="h-5 w-5" />
                     </button>
@@ -124,18 +128,22 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     type="button"
                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                     disabled={loading}
-                    className={`flex min-h-11 items-center gap-2 rounded-full px-4 text-xs font-bold transition-colors disabled:opacity-50 ${isEditing ? "bg-primary text-primary-foreground" : "border border-border bg-card text-foreground active:bg-muted/40"}`}
+                    className={`relative flex min-h-11 items-center gap-2 rounded-full px-4 text-xs font-bold transition-colors disabled:opacity-50 ${isEditing ? "bg-[#dce780] text-[#162218]" : "border border-white/25 text-[#f6f6ed] active:bg-white/10"}`}
                 >
                     {loading ? <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : isEditing ? <Check aria-hidden="true" className="h-4 w-4" /> : <Edit2 aria-hidden="true" className="h-4 w-4" />}
                     {loading ? "שומרת..." : isEditing ? "שמירה" : "עריכה"}
                 </button>
                 </div>
-                <p className="mb-2 text-xs font-bold text-primary">האזור שלי / 04</p>
-                <h1 className="text-[clamp(2.7rem,11vw,4rem)] font-bold leading-[1.08] tracking-tight">הפרופיל<br />שלי<span className="text-primary">.</span></h1>
+                <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
+                    <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#f28c69]" />האזור שלי</p>
+                    <h1 className="text-[clamp(3.5rem,15vw,5rem)] font-bold leading-[0.9] tracking-[-0.06em]">הפרופיל<br /><span className="text-[#dce780]">שלי.</span></h1>
+                </motion.div>
             </header>
 
+            <div className="relative -mt-8 rounded-t-[2rem] bg-[#e9eadc] px-5 pt-8 sm:px-7">
+
             <div className="mb-7 flex items-center gap-4">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.4rem] bg-[#1b251c] text-[2.5rem] font-bold text-[#dce780]">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.4rem] bg-[#f28c69] text-[2.5rem] font-bold text-[#162218]">
                     {formData.full_name?.charAt(0) || "?"}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -144,25 +152,25 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         aria-label="שם מלא"
                         value={formData.full_name}
                         onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                        className="w-full min-h-11 border-b border-primary bg-transparent text-xl font-bold outline-none"
+                        className="w-full min-h-11 border-b border-[#68794f] bg-transparent text-xl font-bold outline-none"
                         placeholder="שם מלא"
                     />
                 ) : (
                     <h2 className="break-words text-xl font-bold leading-tight">{profile?.full_name || "אורחת"}</h2>
                 )}
-                <p className="mt-1 text-xs text-muted-foreground">{profile?.role === 'administrator' ? 'מנהלת הסטודיו' : 'מתאמנת בסטודיו'}</p>
+                <p className="mt-1 text-xs text-[#5d6958]">{profile?.role === 'administrator' ? 'מנהלת הסטודיו' : 'מתאמנת בסטודיו'}</p>
                 </div>
             </div>
 
             {!isEditing && (
-                <div className="relative mb-10 overflow-hidden rounded-[1.85rem] bg-[#1b251c] p-6 text-[#f6f6ed]">
-                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-16 h-56 w-56 rounded-full border-[30px] border-[#dce780]/10" />
+                <div className="relative mb-10 overflow-hidden rounded-[1.85rem] bg-[#dce780] p-6 text-[#162218]">
+                    <StudioLogo className="pointer-events-none absolute -bottom-12 -left-10 h-48 w-48 bg-[#162218]/10" />
                     <div className="relative flex items-center justify-between gap-3">
                         <div>
-                            <p className="mb-1 text-xs text-[#cbd4c5]">יתרת האימונים שלך</p>
-                            <h3 className="text-4xl font-bold tabular-nums">{profile?.balance} <span className="text-base font-medium text-[#cbd4c5]">אימונים</span></h3>
+                            <p className="mb-3 text-xs font-bold">יתרת האימונים שלך</p>
+                            <h3 className="text-6xl font-bold leading-none tabular-nums">{profile?.balance} <span className="text-base font-medium">אימונים</span></h3>
                         </div>
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#dce780]/15 text-[#dce780]">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#162218] text-[#dce780]">
                             <Zap aria-hidden="true" className="h-5 w-5" />
                         </div>
                     </div>
@@ -171,26 +179,26 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
             {/* Details List */}
             <section className="mb-10">
-                <h3 className="mb-4 border-b border-border pb-3 text-base font-bold">פרטים אישיים</h3>
+                <h3 className="mb-4 border-b border-[#162218]/25 pb-3 text-[1.65rem] font-bold">פרטים אישיים.</h3>
 
                 {/* Phone */}
-                <div className="overflow-hidden rounded-[1.75rem] border border-border bg-card">
-                    <div className="flex items-center gap-4 border-b border-border p-5">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+                <div className="overflow-hidden rounded-[1.75rem] border border-[#162218]/10 bg-[#f6f6ed]">
+                    <div className="flex items-center gap-4 border-b border-[#162218]/10 p-5">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e9eadc] text-[#68794f]">
                             <Phone aria-hidden="true" className="h-5 w-5" />
                         </div>
                         <div className="flex-1">
-                            <p className="text-sm text-muted-foreground font-medium">מספר נייד</p>
+                            <p className="text-sm font-medium text-[#5d6958]">מספר נייד</p>
                             {isEditing ? (
                                 <input
                                     value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                     type="tel"
                                     aria-label="מספר נייד"
-                                    className="min-h-11 w-full rounded-xl border border-border bg-background px-3 font-bold text-foreground outline-none focus:border-primary"
+                                    className="min-h-11 w-full rounded-xl border border-[#162218]/15 bg-[#e9eadc] px-3 font-bold text-[#162218] outline-none focus:border-[#68794f]"
                                 />
                             ) : (
-                                <p className="font-bold text-foreground" dir="ltr">{profile?.phone || "לא הוזן"}</p>
+                                <p className="font-bold text-[#162218]" dir="ltr">{profile?.phone || "לא הוזן"}</p>
                             )}
                         </div>
                     </div>
@@ -198,30 +206,30 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     {/* Health Declaration */}
                     <div className="flex flex-col gap-2 p-5">
                         <div className="flex items-center gap-4">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e9eadc] text-[#68794f]">
                                 <Shield aria-hidden="true" className="h-5 w-5" />
                             </div>
                             <div className="flex-1">
-                                <p className="text-sm text-muted-foreground font-medium">הצהרת בריאות</p>
+                                <p className="text-sm font-medium text-[#5d6958]">הצהרת בריאות</p>
                                 {isEditing ? (
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, is_healthy: true })}
-                                            className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${formData.is_healthy ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground"}`}
+                                            className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${formData.is_healthy ? "border-[#68794f] bg-[#dce780] text-[#162218]" : "border-[#162218]/15 text-[#5d6958]"}`}
                                         >
                                             תקינה
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, is_healthy: false })}
-                                            className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${!formData.is_healthy ? "border-[#a53d35] bg-[#a53d35]/10 text-[#a53d35]" : "border-border text-muted-foreground"}`}
+                                            className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${!formData.is_healthy ? "border-[#a53d35] bg-[#a53d35]/10 text-[#a53d35]" : "border-[#162218]/15 text-[#5d6958]"}`}
                                         >
                                             יש מגבלות
                                         </button>
                                     </div>
                                 ) : (
-                                    <p className={`font-bold ${health.is_healthy ? "text-primary" : "text-[#a53d35]"}`}>
+                                    <p className={`font-bold ${health.is_healthy ? "text-[#4e652c]" : "text-[#a53d35]"}`}>
                                         {health.is_healthy ? "תקינה" : "קיימות מגבלות רפואיות"}
                                     </p>
                                 )}
@@ -232,7 +240,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         <AnimatePresence>
                             {(!formData.is_healthy || (!isEditing && !health.is_healthy)) && (
                                 <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
+                                    initial={reduceMotion ? false : { height: 0, opacity: 0 }}
                                     animate={{ height: "auto", opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
                                     className="mt-3 overflow-hidden"
@@ -241,11 +249,11 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                         <textarea
                                             value={formData.medical_conditions}
                                             onChange={e => setFormData({ ...formData, medical_conditions: e.target.value })}
-                                            className="min-h-24 w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground outline-none focus:border-primary"
+                                            className="min-h-24 w-full rounded-xl border border-[#162218]/15 bg-[#e9eadc] p-3 text-sm text-[#162218] outline-none focus:border-[#68794f]"
                                             placeholder="פרטי את המגבלות..."
                                         />
                                     ) : (
-                                        <p className="rounded-xl bg-muted/40 p-3 text-sm text-muted-foreground">
+                                        <p className="rounded-xl bg-[#e9eadc] p-3 text-sm text-[#5d6958]">
                                             {health.medical_conditions}
                                         </p>
                                     )}
@@ -257,13 +265,13 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             </section>
 
             <section className="space-y-3">
-                <h3 className="mb-4 border-b border-border pb-3 text-base font-bold">העדפות</h3>
-                <div className="space-y-4 rounded-[1.75rem] border border-border bg-card p-5">
+                <h3 className="mb-4 border-b border-[#162218]/25 pb-3 text-[1.65rem] font-bold">העדפות.</h3>
+                <div className="space-y-4 rounded-[1.75rem] border border-[#162218]/10 bg-[#f6f6ed] p-5">
                     <div className="flex items-center gap-4">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e9eadc] text-[#68794f]">
                             <Palette aria-hidden="true" className="h-5 w-5" />
                         </div>
-                        <span className="font-bold text-foreground">ערכת נושא</span>
+                        <span className="font-bold text-[#162218]">ערכת נושא</span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
@@ -272,7 +280,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             type="button"
                             aria-pressed={resolvedTheme === 'dark'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('dark'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'dark' ? 'border-primary' : 'border-border'}`}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'dark' ? 'border-[#68794f]' : 'border-[#162218]/15'}`}
                             style={{ background: '#0A0A0A' }}
                         >
                             <Moon className="w-5 h-5 text-white" />
@@ -286,7 +294,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             type="button"
                             aria-pressed={resolvedTheme === 'classic'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('classic'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'classic' ? 'border-[#8c9070]' : 'border-border'}`}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'classic' ? 'border-[#8c9070]' : 'border-[#162218]/15'}`}
                             style={{ background: '#F5F5F7' }}
                         >
                             <Palette className="w-5 h-5 text-black" />
@@ -300,7 +308,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             type="button"
                             aria-pressed={resolvedTheme === 'light'}
                             onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('light'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'light' ? 'border-[#CCDB38]' : 'border-border'}`}
+                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${resolvedTheme === 'light' ? 'border-[#CCDB38]' : 'border-[#162218]/15'}`}
                             style={{ background: '#ffffff' }}
                         >
                             <Sun className="w-5 h-5 text-black" />
@@ -353,15 +361,15 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             }
                         }
                     }}
-                    className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-border bg-card p-5 text-start transition-colors active:bg-muted/40"
+                    className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-[#162218]/10 bg-[#f6f6ed] p-5 text-start transition-colors active:bg-[#dce780]/20"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#dce780] text-[#162218]">
                             <Bell aria-hidden="true" className="h-5 w-5" />
                         </div>
                         <span className="text-sm font-bold">הפעלת התראות</span>
                     </div>
-                    <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#5d6958]" />
                 </button>
 
                 <button
@@ -392,10 +400,10 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                             alert("שירות ההתראות לא נטען. נסי לרענן את העמוד.");
                         }
                     }}
-                    className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-border bg-card p-5 text-start transition-colors active:bg-muted/40"
+                    className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-[#162218]/10 bg-[#f6f6ed] p-5 text-start transition-colors active:bg-[#dce780]/20"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e9eadc] text-[#68794f]">
                             <Zap aria-hidden="true" className="h-5 w-5" />
                         </div>
                         <span className="text-sm font-bold">סנכרון התראות לבדיקה</span>
@@ -412,7 +420,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 </button>
             </section>
 
-            <p className="mt-12 text-center text-xs text-muted-foreground">סטודיו טליה</p>
+            <p className="mt-12 text-center text-xs text-[#5d6958]">סטודיו טליה</p>
+            </div>
             </main>
         </div>
     );
