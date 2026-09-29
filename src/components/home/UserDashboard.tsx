@@ -90,12 +90,14 @@ export default function UserDashboard({ user }: { user: User }) {
                 description: "הכרטיסים נוספו לחשבון שלך בהצלחה.",
                 type: "success",
             });
-            import("canvas-confetti").then(({ default: confetti }) => {
-                confetti({ particleCount: 90, spread: 65, origin: { y: 0.65 }, colors: ["#dce780", "#8c9070", "#ffffff"] });
-            });
+            if (!reduceMotion) {
+                import("canvas-confetti").then(({ default: confetti }) => {
+                    confetti({ particleCount: 90, spread: 65, origin: { y: 0.65 }, colors: ["#dce780", "#8c9070", "#ffffff"] });
+                });
+            }
         }
         localStorage.setItem("talia_tickets_count", String(current));
-    }, [tickets, loading, toast]);
+    }, [tickets, loading, toast, reduceMotion]);
 
     useEffect(() => {
         router.prefetch("/subscription");

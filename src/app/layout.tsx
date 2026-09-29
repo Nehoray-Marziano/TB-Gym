@@ -9,6 +9,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import PWAInstallGate from "@/components/PWAInstallGate";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 import DebugNotificationPanel from "@/components/DebugNotificationPanel";
+import MotionProvider from "@/components/MotionProvider";
 
 
 // Only load the Hebrew font we actually use
@@ -64,15 +65,17 @@ export default function RootLayout({
           disableTransitionOnChange
           themes={["light", "dark", "classic"]}
         >
-          <ToastProvider>
-            <GymStoreProvider>
-              <ConnectedOneSignalProvider />
-              <DebugNotificationPanel />
-              <PWAInstallGate>
-                {children}
-              </PWAInstallGate>
-            </GymStoreProvider>
-          </ToastProvider>
+          <MotionProvider>
+            <ToastProvider>
+              <GymStoreProvider>
+                <ConnectedOneSignalProvider />
+                <DebugNotificationPanel />
+                <PWAInstallGate>
+                  {children}
+                </PWAInstallGate>
+              </GymStoreProvider>
+            </ToastProvider>
+          </MotionProvider>
         </ThemeProvider>
       </body >
     </html >
