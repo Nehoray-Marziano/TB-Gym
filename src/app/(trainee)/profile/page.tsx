@@ -1,17 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import ProfileClient from "@/components/profile/ProfileClient";
-
-const CACHE_KEYS = {
-    profile: "talia_profile_full",
-    health: "talia_health",
-    timestamp: "talia_profile_timestamp"
-};
-
-// NOTE: Cache is ONLY used for instant initial render, data is always fetched fresh
+import { useGymStore } from "@/providers/GymStoreProvider";
+import { useTraineeUserId } from "@/components/TraineeIdentity";
 
 type UserProfile = {
     id: string;
@@ -28,30 +21,24 @@ type HealthDeclaration = {
 };
 
 export default function ProfilePage() {
-    const router = useRouter();
     const supabase = getSupabaseClient();
+    const userId = useTraineeUserId();
+    const { profile: summary, tickets } = useGymStore();
 
     const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [health, setHealth] = useState<HealthDeclaration>({ is_healthy: true, medical_conditions: "" });
+    const [health, setHealth] = useState<HealthDeclaration>({ is_healthy: null, medical_conditions: "" });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-
-                if (!user) {
-                    router.push("/auth/login");
-                    return;
-                }
-
                 console.log("[Profile] Fetching fresh data from network");
 
                 // Fetch all data in parallel
                 const [profileRes, ticketRes, healthRes] = await Promise.all([
-                    supabase.from("profiles").select("*").eq("id", user.id).single(),
-                    supabase.rpc("get_available_tickets", { p_user_id: user.id }),
-                    supabase.from("health_declarations").select("*").eq("id", user.id).single()
+                    supabase.from("profiles").select("*").eq("id", userId).single(),
+                    supabase.rpc("get_available_tickets", { p_user_id: userId }),
+                    supabase.from("health_declarations").select("*").eq("id", userId).single()
                 ]);
 
                 const profileData = profileRes.data;
@@ -62,7 +49,7 @@ export default function ProfilePage() {
                     setProfile({
                         id: profileData.id,
                         full_name: profileData.full_name,
-                        email: user.email || "",
+                        email: summary?.email || "",
                         phone: profileData.phone,
                         balance: ticketCount ?? 0,
                         role: profileData.role,
@@ -72,7 +59,7 @@ export default function ProfilePage() {
                     console.warn("Profile fetch failed but tickets loaded");
                 }
 
-                setHealth(healthData || { is_healthy: true, medical_conditions: "" });
+                setHealth(healthData || { is_healthy: null, medical_conditions: "" });
 
             } catch (error) {
                 console.error("Error fetching profile data:", error);
@@ -82,48 +69,26 @@ export default function ProfilePage() {
         };
 
         fetchData();
-    }, [supabase, router]);
+    }, [supabase, userId, summary?.email]);
 
     // Show loading skeleton only if we don't have cached data
-    if (loading && !profile) {
+    if (loading && !profile && !summary) {
         return <ProfileSkeleton />;
     }
 
-    // Render with cached data (will update when fresh data arrives)
-    return <ProfileClient initialProfile={profile} initialHealth={health} />;
+    const initialProfile = profile ?? (summary ? { id: summary.id, full_name: summary.full_name, email: summary.email || "", phone: "", balance: tickets, role: summary.role } : null);
+    return <ProfileClient initialProfile={initialProfile} initialHealth={health} />;
 }
 
 // Inline skeleton component for faster initial render
 function ProfileSkeleton() {
     return (
-        <div className="min-h-screen bg-background p-6 pb-20 space-y-8 overflow-hidden">
-            {/* Header Skeleton */}
-            <div className="flex justify-between items-center mb-8 sticky top-0 py-4 bg-background/80 backdrop-blur-md z-10">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-muted/20 rounded-full animate-pulse" />
-                    <div className="h-8 w-32 bg-muted/20 rounded-xl animate-pulse" />
-                </div>
-                <div className="w-24 h-10 bg-muted/20 rounded-full animate-pulse" />
-            </div>
-
-            {/* Profile Avatar Skeleton */}
-            <div className="flex flex-col items-center mb-10">
-                <div className="w-32 h-32 bg-muted/20 blur-[50px] rounded-full absolute top-20" />
-                <div className="w-28 h-28 bg-muted/20 rounded-[2rem] border-2 border-muted/10 animate-pulse relative z-10 mb-4" />
-                <div className="h-8 w-40 bg-muted/20 rounded-xl animate-pulse mb-2" />
-                <div className="h-6 w-24 bg-muted/20 rounded-full animate-pulse" />
-            </div>
-
-            {/* Details Skeleton */}
-            <div className="space-y-4">
-                <div className="bg-card/50 border border-border rounded-3xl p-1 h-32 animate-pulse" />
-                <div className="bg-card/50 border border-border rounded-3xl p-1 h-24 animate-pulse" />
-            </div>
-
-            {/* Actions Skeleton */}
-            <div className="space-y-3">
-                <div className="w-full h-20 bg-muted/10 rounded-3xl animate-pulse" />
-                <div className="w-full h-20 bg-muted/10 rounded-3xl animate-pulse" />
+        <div className="min-h-dvh bg-[var(--studio-canvas)] px-5 pt-5" aria-busy="true">
+            <div className="mx-auto max-w-lg animate-pulse">
+                <div className="h-10 w-44 rounded-xl bg-[var(--studio-card)]" />
+                <div className="mt-8 h-12 w-48 rounded-xl bg-[var(--studio-card)]" />
+                <div className="mt-6 h-32 rounded-[1.5rem] bg-[var(--studio-deep)]/20" />
+                <div className="mt-4 h-14 rounded-[1.5rem] bg-[var(--studio-card)]" />
             </div>
         </div>
     );

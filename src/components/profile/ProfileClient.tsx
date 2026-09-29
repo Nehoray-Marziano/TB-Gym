@@ -1,13 +1,15 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, Moon, Sun, Palette } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, Moon, Sun, Palette } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
 import StudioLogo from "@/components/StudioLogo";
+import { useGymStore } from "@/providers/GymStoreProvider";
 
 
 type UserProfile = {
@@ -59,6 +61,24 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     const router = useRouter();
     const supabase = getSupabaseClient();
     const { toast } = useToast();
+    const { subscription, isDevMode, refreshData } = useGymStore();
+    const appliedProfile = useRef<UserProfile | null>(null);
+    const appliedHealth = useRef<HealthDeclaration | null>(null);
+
+    useEffect(() => {
+        if (!isEditing && initialProfile && (appliedProfile.current !== initialProfile || appliedHealth.current !== initialHealth)) {
+            appliedProfile.current = initialProfile;
+            appliedHealth.current = initialHealth;
+            setProfile(initialProfile);
+            setHealth(initialHealth);
+            setFormData({
+                full_name: initialProfile.full_name || "",
+                phone: initialProfile.phone || "",
+                is_healthy: initialHealth.is_healthy ?? true,
+                medical_conditions: initialHealth.medical_conditions || "",
+            });
+        }
+    }, [initialProfile, initialHealth, isEditing]);
 
     const handleSave = async () => {
         if (!profile) return;
@@ -68,31 +88,30 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
         if (navigator.vibrate) navigator.vibrate(10);
 
         try {
-            // Update Profile
-            await supabase.from("profiles").update({
-                full_name: formData.full_name,
-                phone: formData.phone,
-                updated_at: new Date().toISOString()
-            }).eq("id", profile.id);
-
-            // Update Health
-            await supabase.from("health_declarations").upsert({
-                id: profile.id,
-                is_healthy: formData.is_healthy,
-                medical_conditions: formData.is_healthy ? null : formData.medical_conditions
-            });
+            const [profileResult, healthResult] = await Promise.all([
+                supabase.from("profiles").update({
+                    full_name: formData.full_name,
+                    phone: formData.phone,
+                    updated_at: new Date().toISOString()
+                }).eq("id", profile.id),
+                supabase.from("health_declarations").upsert({
+                    id: profile.id,
+                    is_healthy: formData.is_healthy,
+                    medical_conditions: formData.is_healthy ? null : formData.medical_conditions
+                }),
+            ]);
+            if (profileResult.error || healthResult.error) throw profileResult.error || healthResult.error;
 
             // Refresh Local State
             setProfile(prev => prev ? ({ ...prev, full_name: formData.full_name, phone: formData.phone }) : null);
             setHealth({ is_healthy: formData.is_healthy, medical_conditions: formData.medical_conditions });
             setIsEditing(false);
+            void refreshData(true, profile.id);
 
             // Success haptic
             if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
             toast({ title: "הפרטים עודכנו! ✨", type: "success" });
 
-            // Optional: Refresh server data to ensure consistency on navigation
-            router.refresh();
         } catch (error) {
             console.error(error);
             toast({ title: "שגיאה בעדכון פרטים", description: "אנא נסי שוב מאוחר יותר", type: "error" });
@@ -110,40 +129,20 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
 
     return (
         <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
-            <main className="mx-auto max-w-lg pb-[calc(4rem+env(safe-area-inset-bottom))]">
-            <header className="relative isolate overflow-hidden bg-[var(--studio-deep)] px-5 pb-20 pt-5 text-[var(--studio-deep-contrast)] sm:px-7">
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
-                <StudioLogo className="pointer-events-none absolute -bottom-14 -left-12 h-64 w-64 bg-[var(--studio-accent-bg)]/10" />
-                <div className="mb-9 flex items-center justify-between gap-3">
-                    <button
-                        type="button"
-                        onClick={() => router.back()}
-                        aria-label="חזרה"
-                        className="relative flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/25 text-[var(--studio-accent-text)] transition-colors active:bg-white/10"
-                    >
-                        <ChevronRight aria-hidden="true" className="h-5 w-5" />
-                    </button>
-
-                <button
-                    type="button"
-                    onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                    disabled={loading}
-                    className={`relative flex min-h-11 items-center gap-2 rounded-full px-4 text-xs font-bold transition-colors disabled:opacity-50 ${isEditing ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "border border-white/25 text-[var(--studio-deep-contrast)] active:bg-white/10"}`}
-                >
-                    {loading ? <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : isEditing ? <Check aria-hidden="true" className="h-4 w-4" /> : <Edit2 aria-hidden="true" className="h-4 w-4" />}
-                    {loading ? "שומרת..." : isEditing ? "שמירה" : "עריכה"}
-                </button>
+            <main className="mx-auto max-w-lg px-5 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+            <header className="flex items-center justify-between gap-3">
+                <div>
+                    <p className="text-xs font-bold text-[var(--studio-subtle)]">סטודיו טליה</p>
+                    <h1 className="mt-1 text-[clamp(2.4rem,11vw,3.3rem)] font-bold leading-none tracking-[-0.06em]">החשבון שלי<span className="text-[var(--studio-coral-text)]">.</span></h1>
                 </div>
-                <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
-                    <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[var(--studio-accent-text)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-bg)]" />האזור שלי</p>
-                    <h1 className="text-[clamp(3.5rem,15vw,5rem)] font-bold leading-[0.9] tracking-[-0.06em]">הפרופיל<br /><span className="text-[var(--studio-accent-text)]">שלי.</span></h1>
-                </motion.div>
+                <button type="button" onClick={() => isEditing ? handleSave() : setIsEditing(true)} disabled={loading} className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-[var(--studio-ink)]/15 px-3 text-xs font-bold disabled:opacity-50">
+                    {loading ? <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : isEditing ? <Check aria-hidden="true" className="h-4 w-4" /> : <Edit2 aria-hidden="true" className="h-4 w-4" />}
+                    {loading ? "שומרת" : isEditing ? "שמירה" : "עריכה"}
+                </button>
             </header>
 
-            <div className="relative -mt-8 rounded-t-[2rem] bg-[var(--studio-canvas)] px-5 pt-8 sm:px-7">
-
-            <div className="mb-7 flex items-center gap-4">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.4rem] bg-[var(--studio-coral-bg)] text-[2.5rem] font-bold text-[var(--studio-ink)]">
+            <div className="mt-6 flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-coral-bg)] text-2xl font-bold text-[var(--studio-ink)]">
                     {formData.full_name?.charAt(0) || "?"}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -158,28 +157,24 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 ) : (
                     <h2 className="break-words text-xl font-bold leading-tight">{profile?.full_name || "אורחת"}</h2>
                 )}
-                <p className="mt-1 text-xs text-[var(--studio-muted)]">{profile?.role === 'administrator' ? 'מנהלת הסטודיו' : 'מתאמנת בסטודיו'}</p>
+                <p className="mt-0.5 text-xs text-[var(--studio-muted)]">{profile?.role === 'administrator' ? 'מנהלת הסטודיו' : 'מתאמנת בסטודיו'}</p>
                 </div>
             </div>
 
             {!isEditing && (
-                <div className="relative mb-10 overflow-hidden rounded-[1.85rem] bg-[var(--studio-accent-bg)] p-6 text-[var(--studio-ink)]">
-                    <StudioLogo className="pointer-events-none absolute -bottom-12 -left-10 h-48 w-48 bg-[var(--studio-deep)]/10" />
-                    <div className="relative flex items-center justify-between gap-3">
-                        <div>
-                            <p className="mb-3 text-xs font-bold">יתרת האימונים שלך</p>
-                            <h3 className="text-6xl font-bold leading-none tabular-nums">{profile?.balance} <span className="text-base font-medium">אימונים</span></h3>
-                        </div>
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-deep)] text-[var(--studio-accent-text)]">
-                            <Zap aria-hidden="true" className="h-5 w-5" />
-                        </div>
+                <Link href="/subscription" className="relative mb-4 mt-6 flex min-h-32 items-center gap-4 overflow-hidden rounded-[1.5rem] bg-[var(--studio-deep)] p-5 text-[var(--studio-deep-contrast)]">
+                    <StudioLogo className="pointer-events-none absolute -bottom-14 -left-10 h-44 w-44 bg-[var(--studio-accent-bg)]/10" />
+                    <div className="relative flex-1">
+                        <p className="text-xs font-bold text-[var(--studio-accent-text)]">יתרת האימונים</p>
+                        <p className="mt-2 text-xs">{subscription?.is_active ? subscription.tier_display_name : "בחירת מנוי"} <ArrowLeft aria-hidden="true" className="inline h-3.5 w-3.5" /></p>
                     </div>
-                </div>
+                    <span className="relative text-[4.5rem] font-bold leading-none tabular-nums text-[var(--studio-accent-text)]">{profile.balance}</span>
+                </Link>
             )}
 
             {/* Details List */}
-            <section className="mb-10">
-                <h3 className="mb-4 border-b border-[#162218]/25 pb-3 text-[1.65rem] font-bold">פרטים אישיים.</h3>
+            <details className="group mb-3 overflow-hidden rounded-[1.5rem] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)]">
+                <summary className="flex min-h-14 cursor-pointer items-center justify-between px-5 text-sm font-bold">פרטים אישיים והצהרת בריאות <ChevronRight aria-hidden="true" className="h-4 w-4 transition-transform group-open:rotate-90" /></summary>
 
                 {/* Phone */}
                 <div className="overflow-hidden rounded-[1.75rem] border border-[#162218]/10 bg-[var(--studio-card)]">
@@ -229,8 +224,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                         </button>
                                     </div>
                                 ) : (
-                                    <p className={`font-bold ${health.is_healthy ? "text-[var(--studio-subtle)]" : "text-[var(--studio-danger)]"}`}>
-                                        {health.is_healthy ? "תקינה" : "קיימות מגבלות רפואיות"}
+                                    <p className={`font-bold ${health.is_healthy === false ? "text-[var(--studio-danger)]" : "text-[var(--studio-subtle)]"}`}>
+                                        {health.is_healthy === null ? "עוד לא עודכנה" : health.is_healthy ? "תקינה" : "קיימות מגבלות רפואיות"}
                                     </p>
                                 )}
                             </div>
@@ -262,10 +257,10 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         </AnimatePresence>
                     </div>
                 </div>
-            </section>
+            </details>
 
             <section className="space-y-3">
-                <h3 className="mb-4 border-b border-[#162218]/25 pb-3 text-[1.65rem] font-bold">העדפות.</h3>
+                <h3 className="mb-3 mt-7 text-[1.35rem] font-bold">העדפות</h3>
                 <div className="space-y-4 rounded-[1.75rem] border border-[#162218]/10 bg-[var(--studio-card)] p-5">
                     <div className="flex items-center gap-4">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
@@ -372,7 +367,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--studio-muted)]" />
                 </button>
 
-                <button
+                {isDevMode && <button
                     type="button"
                     onClick={async () => {
                         if (navigator.vibrate) navigator.vibrate(10);
@@ -408,7 +403,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         </div>
                         <span className="text-sm font-bold">סנכרון התראות לבדיקה</span>
                     </div>
-                </button>
+                </button>}
 
                 <button
                     type="button"
@@ -421,7 +416,6 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             </section>
 
             <p className="mt-12 text-center text-xs text-[var(--studio-muted)]">סטודיו טליה</p>
-            </div>
             </main>
         </div>
     );
