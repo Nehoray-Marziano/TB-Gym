@@ -152,7 +152,7 @@ export default function LandingPage() {
 
             <AnimatePresence>
                 {isLoginOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-end justify-center">
+                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-end justify-center">
                         <motion.button
                             type="button"
                             aria-label="סגירה"
@@ -166,7 +166,7 @@ export default function LandingPage() {
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="login-title"
-                            initial={{ y: "100%" }}
+                            initial={reduceMotion ? false : { y: "100%" }}
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 28, stiffness: 300 }}
@@ -213,7 +213,7 @@ export default function LandingPage() {
 
                             {authError && <p role="alert" className="mt-4 rounded-2xl bg-[#a53d35]/10 p-3 text-sm text-[#a53d35]">{authError}</p>}
                         </motion.div>
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
