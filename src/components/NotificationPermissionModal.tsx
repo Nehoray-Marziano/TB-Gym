@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Bell, BellRing, X, Sparkles } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { Bell, BellRing, X } from "lucide-react";
+import StudioLogo from "@/components/StudioLogo";
 
-declare global {
-    interface Window {
-        OneSignal?: any;
-    }
-}
+type BrowserOneSignal = { Notifications: { requestPermission: () => Promise<void> } };
+
+const STORAGE_COOLDOWN_KEY = "talia_notification_cooldown_timestamp";
+const COOLDOWN_PERIOD_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface NotificationPermissionModalProps {
     onComplete?: () => void;
@@ -17,19 +17,13 @@ interface NotificationPermissionModalProps {
 export default function NotificationPermissionModal({ onComplete }: NotificationPermissionModalProps) {
     const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [hasChecked, setHasChecked] = useState(false);
-
-    // Key for storing the LAST time the user dismissed or interacted with the prompt
-    // We no longer use "versioned" keys. We use a cooldown strategy.
-    const STORAGE_COOLDOWN_KEY = "talia_notification_cooldown_timestamp";
-    const COOLDOWN_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 7 Days in milliseconds
+    const reduceMotion = useReducedMotion();
 
     useEffect(() => {
         // Check if we should show the modal
-        const checkPermission = async () => {
+        const checkPermission = () => {
             // Check if Notification API is available
             if (!("Notification" in window)) {
-                setHasChecked(true);
                 return; // Notifications not supported
             }
 
@@ -41,7 +35,6 @@ export default function NotificationPermissionModal({ onComplete }: Notification
 
                 // If cooldown hasn't expired yet, skip
                 if (now - lastInteraction < COOLDOWN_PERIOD_MS) {
-                    setHasChecked(true);
                     return; // EXIT: Cooldown active
                 }
             }
@@ -51,22 +44,22 @@ export default function NotificationPermissionModal({ onComplete }: Notification
 
             // If already granted or denied, no need to show modal
             if (nativePermission === "granted" || nativePermission === "denied") {
-                setHasChecked(true);
                 return;
             }
 
             // Permission is "default" - we CAN show the modal
             // But wait a moment to let the dashboard load first
-            setTimeout(() => {
+            const timeout = setTimeout(() => {
                 // Double-check we're still in a valid state
                 if (Notification.permission === "default") {
                     setIsVisible(true);
                 }
-                setHasChecked(true);
             }, 2000); // 2 second delay for better UX
+            return timeout;
         };
 
-        checkPermission();
+        const timeout = checkPermission();
+        return () => { if (timeout) clearTimeout(timeout); };
     }, []);
 
 
@@ -74,9 +67,10 @@ export default function NotificationPermissionModal({ onComplete }: Notification
         setIsLoading(true);
 
         try {
-            if (window.OneSignal && window.OneSignal.Notifications) {
+            const oneSignal = (window as Window & { OneSignal?: BrowserOneSignal }).OneSignal;
+            if (oneSignal?.Notifications) {
                 // Use OneSignal to request permission (preferred - handles subscription)
-                await window.OneSignal.Notifications.requestPermission();
+                await oneSignal.Notifications.requestPermission();
             } else {
                 // Fallback to native API if OneSignal hasn't loaded yet
                 console.log("[NotificationModal] OneSignal not ready, using native API");
@@ -105,11 +99,9 @@ export default function NotificationPermissionModal({ onComplete }: Notification
         onComplete?.();
     };
 
-    if (!isVisible) return null;
-
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4">
+            {isVisible && <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-end justify-center">
                 {/* Backdrop */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -121,90 +113,63 @@ export default function NotificationPermissionModal({ onComplete }: Notification
 
                 {/* Modal */}
                 <motion.div
-                    initial={{ translateY: "100%", opacity: 0 }}
-                    animate={{ translateY: "0%", opacity: 1 }}
-                    exit={{ translateY: "100%", opacity: 0 }}
-                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="relative w-full max-w-sm bg-card border border-border rounded-3xl p-8 shadow-2xl overflow-hidden"
+                    initial={reduceMotion ? false : { y: "100%" }}
+                    animate={{ y: 0 }}
+                    exit={{ y: "100%" }}
+                    transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="notification-permission-title"
+                    className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[#162218]"
                 >
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[50px] pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full blur-[40px] pointer-events-none" />
+                    <StudioLogo className="pointer-events-none absolute -bottom-10 -left-10 h-48 w-48 bg-[#162218]/5" />
 
                     {/* Close button */}
                     <button
                         onClick={handleDismiss}
-                        className="absolute top-4 left-4 w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all"
+                        type="button"
+                        aria-label="סגירה"
+                        className="absolute left-5 top-6 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#162218]/15 transition-colors active:bg-[#162218]/10"
                     >
-                        <X className="w-4 h-4" />
+                        <X aria-hidden="true" className="h-5 w-5" />
                     </button>
 
                     {/* Content */}
-                    <div className="flex flex-col items-center text-center relative z-10">
-                        {/* Animated bell icon */}
-                        <motion.div
-                            initial={{ scale: 0, rotate: -20 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ type: "spring", delay: 0.2, stiffness: 200 }}
-                            className="w-20 h-20 bg-gradient-to-br from-primary to-[#c8d64a] rounded-3xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30 relative"
-                        >
-                            <BellRing className="w-10 h-10 text-black" />
-                            {/* Sparkle */}
-                            <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
-                        </motion.div>
-
-                        <motion.h2
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className="text-2xl font-bold text-foreground mb-3"
-                        >
-                            קבלי התראות! 🔔
-                        </motion.h2>
-
-                        <motion.p
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="text-muted-foreground text-sm leading-relaxed mb-8 px-4"
-                        >
-                            נשלח לך עדכונים על אימונים חדשים, תזכורות ועוד.
-                            <br />
-                            <span className="text-primary font-bold">את תמיד יכולה לבטל בהגדרות.</span>
-                        </motion.p>
+                    <div className="relative z-10">
+                        <span className="mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#dce780] text-[#162218]"><BellRing aria-hidden="true" className="h-8 w-8" /></span>
+                        <p className="mb-2 text-xs font-bold text-[#68794f]">נשארות מעודכנות</p>
+                        <h2 id="notification-permission-title" className="max-w-[17rem] text-[2rem] font-bold leading-tight">לשמוע כשיש אימון חדש?</h2>
+                        <p className="mb-8 mt-3 max-w-[18rem] text-sm leading-relaxed text-[#5d6958]">נעדכן אותך כשהלו״ז משתנה או כשמתפנה מקום באימון. אפשר לכבות את ההתראות בכל רגע.</p>
 
                         {/* Buttons */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                            className="w-full space-y-3"
-                        >
+                        <div className="w-full space-y-2">
                             <button
+                                type="button"
                                 onClick={handleAllow}
                                 disabled={isLoading}
-                                className="w-full py-4 bg-primary text-black font-bold text-lg rounded-2xl shadow-lg shadow-primary/30 active:scale-[0.98] transition-all hover:shadow-primary/50 disabled:opacity-70 flex items-center justify-center gap-2"
+                                className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-[#162218] px-4 text-sm font-bold text-[#dce780] transition-colors active:bg-[#334436] disabled:opacity-70"
                             >
                                 {isLoading ? (
-                                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                    <div aria-label="טוענים" className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
                                 ) : (
                                     <>
-                                        <Bell className="w-5 h-5" />
-                                        כן, אני רוצה לקבל התראות
+                                        <Bell aria-hidden="true" className="h-5 w-5" />
+                                        כן, אשמח לעדכונים
                                     </>
                                 )}
                             </button>
 
                             <button
+                                type="button"
                                 onClick={handleDismiss}
-                                className="w-full py-3 text-muted-foreground font-medium text-sm hover:text-foreground transition-colors"
+                                className="min-h-11 w-full rounded-full text-xs font-bold text-[#5d6958] transition-colors active:bg-[#162218]/10"
                             >
                                 אולי אחר כך
                             </button>
-                        </motion.div>
+                        </div>
                     </div>
                 </motion.div>
-            </div>
+            </motion.div>}
         </AnimatePresence>
     );
 }
