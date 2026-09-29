@@ -42,7 +42,7 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-[#111a12] text-[#f6f6ed]">
+        <div className="min-h-dvh overflow-x-hidden bg-[#111a12] text-[var(--studio-deep-contrast)]">
             <main className="mx-auto max-w-lg px-5 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-6 sm:px-7">
                 {children}
             </main>
@@ -60,7 +60,7 @@ export default function AdminLayout({
 
 function NavIcon({ href, icon: Icon, label, isActive }: { href: string; icon: LucideIcon; label: string; isActive?: boolean }) {
     return (
-        <Link href={href} aria-current={isActive ? "page" : undefined} className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-bold transition-colors ${isActive ? "bg-[#dce780] text-[#1b251c]" : "text-[#aebbad] active:bg-white/10"}`}>
+        <Link href={href} aria-current={isActive ? "page" : undefined} className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-bold transition-colors ${isActive ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "text-[#aebbad] active:bg-white/10"}`}>
             <Icon aria-hidden="true" className="h-5 w-5" />
             {label}
         </Link>

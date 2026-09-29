@@ -138,7 +138,7 @@ export function MuiTimePickerWrapper({ value, onChange, className }: MuiTimePick
                         type="button"
                         onClick={() => setOpen(true)}
                         className={cn(
-                            "flex h-14 w-full items-center justify-between rounded-2xl border border-[#1b251c]/20 bg-white px-3 text-sm font-medium text-[#1b251c] transition-colors focus:border-[#829044]",
+                            "flex h-14 w-full items-center justify-between rounded-2xl border border-[#1b251c]/20 bg-white px-3 text-sm font-medium text-[var(--studio-ink)] transition-colors focus:border-[#829044]",
                             open && "border-[#829044]"
                         )}
                     >

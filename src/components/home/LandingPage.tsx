@@ -93,45 +93,45 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-[#e9eadc] text-[#1b251c]">
+        <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
             <main className="mx-auto max-w-lg">
-                <section className="relative isolate overflow-hidden bg-[#162218] px-5 pb-5 pt-4 text-[#f6f6ed] sm:px-7" aria-labelledby="landing-title">
+                <section className="relative isolate overflow-hidden bg-[var(--studio-deep)] px-5 pb-5 pt-4 text-[var(--studio-deep-contrast)] sm:px-7" aria-labelledby="landing-title">
                     <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
                     <header className="relative flex items-center justify-between border-b border-white/20 pb-3">
                         <div className="flex items-center gap-3">
-                            <StudioLogo className="h-9 w-9 bg-[#dce780]" />
+                            <StudioLogo className="h-9 w-9 bg-[var(--studio-accent-bg)]" />
                             <span className="border-s border-white/25 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
                         </div>
                         <span className="text-[11px] font-bold text-[#bac9ae]">האזור שלך בסטודיו</span>
                     </header>
 
                     <div className="relative pt-6">
-                        <motion.p initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-3 flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#f28c69]" />לוח האימונים של טליה</motion.p>
+                        <motion.p initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-3 flex items-center gap-2 text-xs font-bold text-[var(--studio-accent-text)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-bg)]" />לוח האימונים של טליה</motion.p>
                         <motion.h1 id="landing-title" initial={reduceMotion ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }} className="relative z-10 font-bold leading-[0.83] tracking-[-0.065em]">
                             <span className="block text-[clamp(3.3rem,13vw,5rem)]">יש לך</span>
-                            <span className="block text-[clamp(5.5rem,23vw,8rem)] text-[#dce780]">מקום</span>
-                            <span className="block text-[clamp(4.4rem,18vw,6.7rem)]">לזוז<span className="text-[#f28c69]">.</span></span>
+                            <span className="block text-[clamp(5.5rem,23vw,8rem)] text-[var(--studio-accent-text)]">מקום</span>
+                            <span className="block text-[clamp(4.4rem,18vw,6.7rem)]">לזוז<span className="text-[var(--studio-coral-text)]">.</span></span>
                         </motion.h1>
                     </div>
 
-                    <motion.div initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.16, ease: [0.22, 1, 0.36, 1] }} aria-label="איור של סטודיו טליה" className="relative mt-5 h-[clamp(9rem,42vw,12rem)] overflow-hidden border-y border-[#dce780]/50 bg-[#dce780] text-[#162218]">
+                    <motion.div initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.16, ease: [0.22, 1, 0.36, 1] }} aria-label="איור של סטודיו טליה" className="relative mt-5 h-[clamp(9rem,42vw,12rem)] overflow-hidden border-y border-[#dce780]/50 bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]">
                         <div aria-hidden="true" className="absolute inset-0 opacity-20 [background-image:repeating-linear-gradient(-25deg,transparent_0,transparent_26px,#1b251c_27px,#1b251c_28px)]" />
                         <div aria-hidden="true" className="absolute -left-11 -top-14 h-[18rem] w-[18rem] rotate-[-13deg] rounded-full border-[1.75rem] border-[#162218]/15" />
-                        <div aria-hidden="true" className="studio-artwork-orb absolute -left-5 bottom-0 h-16 w-16 rounded-full bg-[#f28c69]" />
-                        <StudioLogo className="studio-artwork-mark absolute -bottom-12 -left-4 h-[clamp(12rem,52vw,16rem)] w-[clamp(12rem,52vw,16rem)] bg-[#162218]" />
-                        <div className="absolute right-5 top-5 flex flex-col items-start gap-1 text-[10px] font-bold"><span>טליה / אימונים</span><span className="h-px w-14 bg-[#162218]/40" /></div>
+                        <div aria-hidden="true" className="studio-artwork-orb absolute -left-5 bottom-0 h-16 w-16 rounded-full bg-[var(--studio-coral-bg)]" />
+                        <StudioLogo className="studio-artwork-mark absolute -bottom-12 -left-4 h-[clamp(12rem,52vw,16rem)] w-[clamp(12rem,52vw,16rem)] bg-[var(--studio-deep)]" />
+                        <div className="absolute right-5 top-5 flex flex-col items-start gap-1 text-[10px] font-bold"><span>טליה / אימונים</span><span className="h-px w-14 bg-[var(--studio-deep)]/40" /></div>
                         <span className="absolute bottom-4 right-5 border-t border-[#162218]/50 pt-1 text-[11px] font-bold">לבחור. להירשם. להגיע.</span>
                     </motion.div>
 
                     <p className="relative mt-4 max-w-[19rem] text-sm leading-relaxed text-[#c4d0bd]">האימונים הקרובים, המקום ששמרת והיתרה שלך. הכול כאן, לפני שיוצאים לסטודיו.</p>
-                    <button id="main-signin-button" type="button" onClick={() => setIsLoginOpen(true)} className="relative mt-4 flex min-h-14 w-full items-center justify-between rounded-full bg-[#dce780] px-6 text-sm font-bold text-[#162218] transition-transform active:scale-[0.98]">
+                    <button id="main-signin-button" type="button" onClick={() => setIsLoginOpen(true)} className="relative mt-4 flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-accent-bg)] px-6 text-sm font-bold text-[var(--studio-ink)] transition-transform active:scale-[0.98]">
                         כניסה לאזור שלי <ArrowLeft aria-hidden="true" className="h-5 w-5" />
                     </button>
                     <div className="relative mt-5 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-bold text-[#b8c7ae]"><span>סטודיו טליה</span><span>פשוט להגיע לאימון.</span></div>
                 </section>
 
                 <section className="px-5 pb-14 pt-14 sm:px-7" aria-labelledby="what-is-here">
-                    <p className="mb-3 text-xs font-bold text-[#68794f]">כאן מתחיל האימון הבא</p>
+                    <p className="mb-3 text-xs font-bold text-[var(--studio-subtle)]">כאן מתחיל האימון הבא</p>
                     <h2 id="what-is-here" className="max-w-[18rem] text-[clamp(2.3rem,10vw,3.4rem)] font-bold leading-[1.02] tracking-tight">כל מה שצריך.<br /><span className="text-[#829044]">במקום אחד.</span></h2>
                     <div className="mt-9 border-t border-[#1b251c]/25">
                         {[
@@ -141,7 +141,7 @@ export default function LandingPage() {
                         ].map(([number, title, description]) => (
                             <div key={number} className="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-[#1b251c]/25 py-6">
                                 <span className="pt-1 text-xs font-bold text-[#829044]">{number}</span>
-                                <div><h3 className="text-lg font-bold">{title}</h3><p className="mt-1 text-xs leading-relaxed text-[#5d6958]">{description}</p></div>
+                                <div><h3 className="text-lg font-bold">{title}</h3><p className="mt-1 text-xs leading-relaxed text-[var(--studio-muted)]">{description}</p></div>
                             </div>
                         ))}
                     </div>
@@ -170,20 +170,20 @@ export default function LandingPage() {
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                            className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[#1b251c]"
+                            className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
                         >
                             <button type="button" onClick={resetLoginState} aria-label="סגירה" className="absolute left-6 top-7 flex h-11 w-11 items-center justify-center rounded-full border border-[#1b251c]/15"><X aria-hidden="true" className="h-5 w-5" /></button>
                             <p className="mb-2 text-xs font-bold text-[#5c6d2e]">סטודיו טליה</p>
                             <h2 id="login-title" className="max-w-[15rem] text-[2rem] font-bold leading-tight">
                                 {loginView === "menu" ? "איך נוח לך להיכנס?" : loginView === "email" ? "נשלח לך קוד למייל" : "הקוד בדרך אלייך"}
                             </h2>
-                            <p className="mb-7 mt-3 max-w-[18rem] text-sm leading-relaxed text-[#5d6958]">
+                            <p className="mb-7 mt-3 max-w-[18rem] text-sm leading-relaxed text-[var(--studio-muted)]">
                                 {loginView === "menu" ? "בחרי את הדרך שמתאימה לך." : loginView === "email" ? "כתבי את הכתובת שלך ונשלח קוד חד־פעמי." : "הזיני את הקוד שקיבלת במייל כדי להיכנס."}
                             </p>
 
                             {loginView === "menu" && (
                                 <div className="space-y-3">
-                                    <button id="google-signin-button" type="button" onClick={handleGoogleLogin} disabled={isLoading} className="flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] disabled:opacity-50">
+                                    <button id="google-signin-button" type="button" onClick={handleGoogleLogin} disabled={isLoading} className="flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-[var(--studio-deep-contrast)] disabled:opacity-50">
                                         {isLoading ? <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <GoogleMark />}
                                         המשך עם גוגל
                                     </button>
@@ -197,8 +197,8 @@ export default function LandingPage() {
                                 <form onSubmit={(event) => { event.preventDefault(); handleSendCode(); }} className="space-y-3">
                                     <label htmlFor="login-email" className="block text-xs font-bold">כתובת המייל שלך</label>
                                     <input id="login-email" type="email" inputMode="email" autoComplete="email" required dir="ltr" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="כתובת המייל שלך" className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-sm outline-none focus:border-[#829044]" />
-                                    <button type="submit" disabled={isLoading || !email} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] disabled:opacity-50">{isLoading ? "שולחים..." : "שלחי לי קוד"}<ArrowLeft aria-hidden="true" className="h-4 w-4" /></button>
-                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("menu"); }} className="flex min-h-11 items-center gap-2 text-xs font-bold text-[#5d6958]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה לאפשרויות</button>
+                                    <button type="submit" disabled={isLoading || !email} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-[var(--studio-deep-contrast)] disabled:opacity-50">{isLoading ? "שולחים..." : "שלחי לי קוד"}<ArrowLeft aria-hidden="true" className="h-4 w-4" /></button>
+                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("menu"); }} className="flex min-h-11 items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה לאפשרויות</button>
                                 </form>
                             )}
 
@@ -206,8 +206,8 @@ export default function LandingPage() {
                                 <form onSubmit={(event) => { event.preventDefault(); handleVerifyCode(); }} className="space-y-3">
                                     <label htmlFor="login-code" className="block text-xs font-bold">הקוד שקיבלת</label>
                                     <input id="login-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={10} required dir="ltr" value={otpCode} onChange={(event) => setOtpCode(event.target.value)} placeholder="••••••" className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-white px-4 text-center text-xl tracking-[0.35em] outline-none focus:border-[#829044]" />
-                                    <button type="submit" disabled={isLoading || otpCode.length < 6} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[#1b251c] px-5 text-sm font-bold text-[#f6f6ed] disabled:opacity-50">{isLoading ? "בודקים..." : "אימות וכניסה"}<ArrowLeft aria-hidden="true" className="h-4 w-4" /></button>
-                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); }} className="flex min-h-11 items-center gap-2 text-xs font-bold text-[#5d6958]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה לכתובת המייל</button>
+                                    <button type="submit" disabled={isLoading || otpCode.length < 6} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-[var(--studio-deep-contrast)] disabled:opacity-50">{isLoading ? "בודקים..." : "אימות וכניסה"}<ArrowLeft aria-hidden="true" className="h-4 w-4" /></button>
+                                    <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); }} className="flex min-h-11 items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה לכתובת המייל</button>
                                 </form>
                             )}
 

@@ -27,33 +27,33 @@ function Calendar({
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
                 month: "space-y-4",
                 caption: "flex justify-center pt-1 relative items-center",
-                caption_label: "text-sm font-bold text-[#1b251c]",
+                caption_label: "text-sm font-bold text-[var(--studio-ink)]",
                 nav: "space-x-1 flex items-center",
                 nav_button: cn(
                     buttonVariants({ variant: "outline" }),
-                    "h-7 w-7 border-[#1b251c]/15 bg-white p-0 text-[#1b251c] hover:bg-[#dfe6bd]"
+                    "h-7 w-7 border-[#1b251c]/15 bg-white p-0 text-[var(--studio-ink)] hover:bg-[#dfe6bd]"
                 ),
                 nav_button_previous: "absolute left-1",
                 nav_button_next: "absolute right-1",
                 table: "w-full border-collapse space-y-1",
                 head_row: "flex",
                 head_cell:
-                    "w-9 rounded-md text-[0.8rem] font-normal text-[#5d6958]",
+                    "w-9 rounded-md text-[0.8rem] font-normal text-[var(--studio-muted)]",
                 row: "flex w-full mt-2",
                 cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                 day: cn(
                     buttonVariants({ variant: "ghost" }),
-                    "h-9 w-9 p-0 font-normal text-[#1b251c] aria-selected:opacity-100 hover:bg-[#dfe6bd] hover:text-[#1b251c]"
+                    "h-9 w-9 p-0 font-normal text-[var(--studio-ink)] aria-selected:opacity-100 hover:bg-[#dfe6bd] hover:text-[var(--studio-ink)]"
                 ),
                 day_range_end: "day-range-end",
                 day_selected:
-                    "bg-[#1b251c] text-white font-bold hover:bg-[#1b251c] hover:text-white focus:bg-[#1b251c] focus:text-white",
-                day_today: "border border-[#829044] bg-[#dfe6bd] font-bold text-[#1b251c]",
+                    "bg-[var(--studio-deep)] text-white font-bold hover:bg-[var(--studio-deep)] hover:text-white focus:bg-[var(--studio-deep)] focus:text-white",
+                day_today: "border border-[#829044] bg-[#dfe6bd] font-bold text-[var(--studio-ink)]",
                 day_outside:
-                    "day-outside text-[#5d6958] opacity-50 aria-selected:bg-[#dfe6bd] aria-selected:opacity-30",
-                day_disabled: "text-[#5d6958] opacity-50",
+                    "day-outside text-[var(--studio-muted)] opacity-50 aria-selected:bg-[#dfe6bd] aria-selected:opacity-30",
+                day_disabled: "text-[var(--studio-muted)] opacity-50",
                 day_range_middle:
-                    "aria-selected:bg-[#dfe6bd] aria-selected:text-[#1b251c]",
+                    "aria-selected:bg-[#dfe6bd] aria-selected:text-[var(--studio-ink)]",
                 day_hidden: "invisible",
                 ...classNames,
             }}

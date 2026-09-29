@@ -32,103 +32,135 @@
 
 /* LIGHT MODE (Default) */
 :root {
-  --background: #F5F5F7;
-  /* iOS Light Gray */
-  --foreground: #000000;
+  --studio-canvas: #f6f7f5;
+  --studio-deep: #203447;
+  --studio-deep-contrast: #f7faf8;
+  --studio-ink: #203447;
+  --studio-card: #ffffff;
+  --studio-sheet: #ffffff;
+  --studio-accent-bg: #b7e8dc;
+  --studio-accent-text: #c8f1e8;
+  --studio-coral-bg: #f7a48b;
+  --studio-coral-text: #f7a48b;
+  --studio-coral-ink: #50362f;
+  --studio-muted: #52646c;
+  --studio-subtle: #52666a;
+  --background: #f6f7f5;
+  --foreground: #203447;
 
   --card: #FFFFFF;
-  --card-foreground: #000000;
+  --card-foreground: #203447;
 
   --popover: #FFFFFF;
-  --popover-foreground: #000000;
+  --popover-foreground: #203447;
 
-  --primary: #CCDB38;
-  /* Slightly darker neon for light mode contrast */
-  --primary-foreground: #000000;
+  --primary: #b7e8dc;
+  --primary-foreground: #203447;
 
-  --secondary: #E5E5EA;
-  /* Light gray secondary */
-  --secondary-foreground: #000000;
+  --secondary: #e9f0ed;
+  --secondary-foreground: #203447;
 
-  --muted: #D1D1D6;
-  --muted-foreground: #636366;
+  --muted: #dae8e4;
+  --muted-foreground: #52666a;
 
-  --accent: #E2F163;
-  /* Keep neon as accent */
-  --accent-foreground: #000000;
+  --accent: #b7e8dc;
+  --accent-foreground: #203447;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #D1D1D6;
-  --input: #E5E5EA;
-  --ring: #CCDB38;
+  --border: #cddad5;
+  --input: #e9f0ed;
+  --ring: #488780;
 }
 
 /* CLASSIC MODE - User Requested #8c9070 */
 .classic {
-  --background: #F5F5F7;
-  --foreground: #000000;
+  --studio-canvas: #e9eadc;
+  --studio-deep: #162218;
+  --studio-deep-contrast: #f6f6ed;
+  --studio-ink: #162218;
+  --studio-card: #f6f6ed;
+  --studio-sheet: #f1f0e8;
+  --studio-accent-bg: #dce780;
+  --studio-accent-text: #dce780;
+  --studio-coral-bg: #f28c69;
+  --studio-coral-text: #f28c69;
+  --studio-coral-ink: #513329;
+  --studio-muted: #5d6958;
+  --studio-subtle: #68794f;
+  --background: #e9eadc;
+  --foreground: #162218;
 
-  --card: #FFFFFF;
-  --card-foreground: #000000;
+  --card: #f6f6ed;
+  --card-foreground: #162218;
 
-  --popover: #FFFFFF;
-  --popover-foreground: #000000;
+  --popover: #f6f6ed;
+  --popover-foreground: #162218;
 
-  --primary: #8c9070;
-  /* Olive Green (Classic) */
-  --primary-foreground: #FFFFFF;
+  --primary: #dce780;
+  --primary-foreground: #162218;
 
-  --secondary: #E5E5EA;
-  --secondary-foreground: #000000;
+  --secondary: #dde2cc;
+  --secondary-foreground: #162218;
 
-  --muted: #D1D1D6;
-  --muted-foreground: #636366;
+  --muted: #d5dac8;
+  --muted-foreground: #5d6958;
 
-  --accent: #8c9070;
-  --accent-foreground: #FFFFFF;
+  --accent: #dce780;
+  --accent-foreground: #162218;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #D1D1D6;
-  --input: #E5E5EA;
-  --ring: #8c9070;
+  --border: #b9c5ad;
+  --input: #f6f6ed;
+  --ring: #829044;
 }
 
 /* DARK MODE */
 .dark {
-  --background: #0A0A0A;
-  /* Deep Black */
-  --foreground: #EDEDED;
+  color-scheme: dark;
+  --studio-canvas: #101a18;
+  --studio-deep: #1a2a25;
+  --studio-deep-contrast: #f2f4ec;
+  --studio-ink: #f2f4ec;
+  --studio-card: #26352d;
+  --studio-sheet: #27382f;
+  --studio-accent-bg: #3e603c;
+  --studio-accent-text: #d1e78d;
+  --studio-coral-bg: #884d3a;
+  --studio-coral-text: #f6a285;
+  --studio-coral-ink: #f9dfd4;
+  --studio-muted: #c0cabc;
+  --studio-subtle: #bdd39b;
+  --background: #101a18;
+  --foreground: #f2f4ec;
 
-  --card: #131512;
-  /* Darker card */
-  --card-foreground: #EDEDED;
+  --card: #26352d;
+  --card-foreground: #f2f4ec;
 
-  --popover: #131512;
-  --popover-foreground: #EDEDED;
+  --popover: #26352d;
+  --popover-foreground: #f2f4ec;
 
-  --primary: #E2F163;
-  /* Neon Green */
-  --primary-foreground: #000000;
+  --primary: #d1e78d;
+  --primary-foreground: #101a18;
 
-  --secondary: #1A1C19;
-  --secondary-foreground: #EDEDED;
+  --secondary: #304239;
+  --secondary-foreground: #f2f4ec;
 
-  --muted: #2C302B;
-  --muted-foreground: #A3B1A0;
+  --muted: #304239;
+  --muted-foreground: #c0cabc;
 
-  --accent: #E2F163;
-  --accent-foreground: #000000;
+  --accent: #d1e78d;
+  --accent-foreground: #101a18;
 
   --destructive: #7f1d1d;
   --destructive-foreground: #fef2f2;
 
-  --border: #2C302B;
-  --input: #2C302B;
-  --ring: #9CA986;
+  --border: #405348;
+  --input: #304239;
+  --ring: #d1e78d;
 }
 
 /* ===== PWA NATIVE FEEL ===== */
@@ -182,6 +214,12 @@ a,
 
 .studio-artwork-orb {
   animation: studio-orbit 7s ease-in-out infinite alternate;
+}
+
+.studio-plan-carousel {
+  padding-inline: max(1.25rem, calc((100% - min(82vw, 20rem)) / 2));
+  scroll-padding-inline: max(1.25rem, calc((100% - min(82vw, 20rem)) / 2));
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes studio-orbit {

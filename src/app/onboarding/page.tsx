@@ -86,35 +86,35 @@ export default function OnboardingPage() {
         }
     };
 
-    const fieldClass = "min-h-16 w-full rounded-[1.25rem] border border-[#1b251c]/20 bg-white px-5 text-xl font-bold text-[#1b251c] outline-none placeholder:font-normal placeholder:text-[#899284] focus:border-[#829044]";
+    const fieldClass = "min-h-16 w-full rounded-[1.25rem] border border-[#1b251c]/20 bg-white px-5 text-xl font-bold text-[var(--studio-ink)] outline-none placeholder:font-normal placeholder:text-[#899284] focus:border-[#829044]";
 
     return (
-        <main className="min-h-dvh bg-[#f1f0e8] text-[#1b251c]">
+        <main className="min-h-dvh bg-[var(--studio-sheet)] text-[var(--studio-ink)]">
             <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-7">
                 <header className="flex items-center justify-between border-b border-[#1b251c]/15 pb-5">
                     <div className="flex items-center gap-3">
-                        <StudioLogo className="h-9 w-9 bg-[#1b251c]" />
+                        <StudioLogo className="h-9 w-9 bg-[var(--studio-deep)]" />
                         <span className="border-s border-[#1b251c]/20 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
                     </div>
-                    <span className="text-xs font-bold text-[#5d6958]">נעים להכיר</span>
+                    <span className="text-xs font-bold text-[var(--studio-muted)]">נעים להכיר</span>
                 </header>
 
                 {loading ? (
                     <div className="flex flex-1 flex-col justify-center py-10">
                         <span className="mb-5 inline-flex h-3 w-3 animate-pulse rounded-full bg-[#829044]" />
                         <h1 className="text-[clamp(3rem,13vw,4.5rem)] font-bold leading-[1.02] tracking-tight">כמעט<br /><span className="text-[#829044]">מוכנות.</span></h1>
-                        <p className="mt-5 text-sm text-[#5d6958]">מסדרות לך מקום בסטודיו...</p>
+                        <p className="mt-5 text-sm text-[var(--studio-muted)]">מסדרות לך מקום בסטודיו...</p>
                     </div>
                 ) : (
                     <>
                         <div className="pt-7">
                             <div className="mb-3 flex items-center justify-between text-xs font-bold">
                                 <span>קצת עלייך</span>
-                                <span className="text-[#5d6958]">{step} מתוך {STEPS.length}</span>
+                                <span className="text-[var(--studio-muted)]">{step} מתוך {STEPS.length}</span>
                             </div>
                             <div aria-label={`שלב ${step} מתוך ${STEPS.length}`} className="flex gap-1.5">
                                 {STEPS.map((_, index) => (
-                                    <span key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? "bg-[#829044]" : "bg-[#1b251c]/15"}`} />
+                                    <span key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? "bg-[#829044]" : "bg-[var(--studio-deep)]/15"}`} />
                                 ))}
                             </div>
                         </div>
@@ -127,9 +127,9 @@ export default function OnboardingPage() {
                             aria-labelledby="onboarding-title"
                             className="flex-1 pb-10 pt-11"
                         >
-                            <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[#5d6958]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#829044]" />הפרטים שלך בסטודיו</p>
+                            <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[var(--studio-muted)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#829044]" />הפרטים שלך בסטודיו</p>
                             <h1 id="onboarding-title" className="max-w-[18rem] text-[clamp(2.8rem,12vw,4.1rem)] font-bold leading-[1.03] tracking-tight">{STEPS[step - 1].title}</h1>
-                            <p className="mt-4 text-sm leading-relaxed text-[#5d6958]">{STEPS[step - 1].description}</p>
+                            <p className="mt-4 text-sm leading-relaxed text-[var(--studio-muted)]">{STEPS[step - 1].description}</p>
 
                             <div className="mt-12">
                                 {step === 1 && (
@@ -191,19 +191,19 @@ export default function OnboardingPage() {
                                             type="button"
                                             aria-pressed={formData.isHealthy === true}
                                             onClick={() => setFormData({ ...formData, isHealthy: true, medicalConditions: "" })}
-                                            className={`flex min-h-20 w-full items-center justify-between rounded-[1.25rem] border px-5 text-right text-sm font-bold ${formData.isHealthy === true ? "border-[#829044] bg-[#dce780]" : "border-[#1b251c]/15 bg-white"}`}
+                                            className={`flex min-h-20 w-full items-center justify-between rounded-[1.25rem] border px-5 text-right text-sm font-bold ${formData.isHealthy === true ? "border-[#829044] bg-[var(--studio-accent-bg)]" : "border-[#1b251c]/15 bg-white"}`}
                                         >
                                             אין משהו מיוחד שצריך לדעת
-                                            <span aria-hidden="true" className={`h-5 w-5 shrink-0 rounded-full border-2 ${formData.isHealthy === true ? "border-[#1b251c] bg-[#1b251c] shadow-[inset_0_0_0_4px_#dce780]" : "border-[#1b251c]/30"}`} />
+                                            <span aria-hidden="true" className={`h-5 w-5 shrink-0 rounded-full border-2 ${formData.isHealthy === true ? "border-[#1b251c] bg-[var(--studio-deep)] shadow-[inset_0_0_0_4px_#dce780]" : "border-[#1b251c]/30"}`} />
                                         </button>
                                         <button
                                             type="button"
                                             aria-pressed={formData.isHealthy === false}
                                             onClick={() => setFormData({ ...formData, isHealthy: false })}
-                                            className={`flex min-h-20 w-full items-center justify-between rounded-[1.25rem] border px-5 text-right text-sm font-bold ${formData.isHealthy === false ? "border-[#829044] bg-[#dce780]" : "border-[#1b251c]/15 bg-white"}`}
+                                            className={`flex min-h-20 w-full items-center justify-between rounded-[1.25rem] border px-5 text-right text-sm font-bold ${formData.isHealthy === false ? "border-[#829044] bg-[var(--studio-accent-bg)]" : "border-[#1b251c]/15 bg-white"}`}
                                         >
                                             יש משהו שחשוב שתדעו
-                                            <span aria-hidden="true" className={`h-5 w-5 shrink-0 rounded-full border-2 ${formData.isHealthy === false ? "border-[#1b251c] bg-[#1b251c] shadow-[inset_0_0_0_4px_#dce780]" : "border-[#1b251c]/30"}`} />
+                                            <span aria-hidden="true" className={`h-5 w-5 shrink-0 rounded-full border-2 ${formData.isHealthy === false ? "border-[#1b251c] bg-[var(--studio-deep)] shadow-[inset_0_0_0_4px_#dce780]" : "border-[#1b251c]/30"}`} />
                                         </button>
                                         {formData.isHealthy === false && (
                                             <div className="pt-3">
@@ -224,13 +224,13 @@ export default function OnboardingPage() {
 
                         <footer className="flex items-center gap-3 border-t border-[#1b251c]/15 pt-5">
                             {step > 1 && (
-                                <button type="button" onClick={() => setStep((current) => current - 1)} className="flex min-h-14 items-center gap-1 rounded-full px-3 text-sm font-bold text-[#5d6958]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה</button>
+                                <button type="button" onClick={() => setStep((current) => current - 1)} className="flex min-h-14 items-center gap-1 rounded-full px-3 text-sm font-bold text-[var(--studio-muted)]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה</button>
                             )}
                             <button
                                 type="button"
                                 onClick={handleNext}
                                 disabled={!isStepValid()}
-                                className="flex min-h-14 flex-1 items-center justify-between rounded-full bg-[#1b251c] px-6 text-sm font-bold text-[#f6f6ed] disabled:opacity-40"
+                                className="flex min-h-14 flex-1 items-center justify-between rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)] disabled:opacity-40"
                             >
                                 {step === STEPS.length ? "סיום" : "המשך"}
                                 <ArrowLeft aria-hidden="true" className="h-5 w-5" />

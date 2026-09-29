@@ -62,9 +62,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
     const bgColors = {
-        success: "bg-[#dce780] text-[#162218] border-[#dce780]",
+        success: "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] border-[#dce780]",
         error: "bg-[#a53d35] text-white border-[#a53d35]",
-        info: "bg-[#162218] text-[#f6f6ed] border-[#162218]"
+        info: "bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)] border-[#162218]"
     }
 
     const icons = {

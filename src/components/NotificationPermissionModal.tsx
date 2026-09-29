@@ -120,26 +120,26 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="notification-permission-title"
-                    className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[#162218]"
+                    className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
                 >
-                    <StudioLogo className="pointer-events-none absolute -bottom-10 -left-10 h-48 w-48 bg-[#162218]/5" />
+                    <StudioLogo className="pointer-events-none absolute -bottom-10 -left-10 h-48 w-48 bg-[var(--studio-deep)]/5" />
 
                     {/* Close button */}
                     <button
                         onClick={handleDismiss}
                         type="button"
                         aria-label="סגירה"
-                        className="absolute left-5 top-6 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#162218]/15 transition-colors active:bg-[#162218]/10"
+                        className="absolute left-5 top-6 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#162218]/15 transition-colors active:bg-[var(--studio-deep)]/10"
                     >
                         <X aria-hidden="true" className="h-5 w-5" />
                     </button>
 
                     {/* Content */}
                     <div className="relative z-10">
-                        <span className="mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#dce780] text-[#162218]"><BellRing aria-hidden="true" className="h-8 w-8" /></span>
-                        <p className="mb-2 text-xs font-bold text-[#68794f]">נשארות מעודכנות</p>
+                        <span className="mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]"><BellRing aria-hidden="true" className="h-8 w-8" /></span>
+                        <p className="mb-2 text-xs font-bold text-[var(--studio-subtle)]">נשארות מעודכנות</p>
                         <h2 id="notification-permission-title" className="max-w-[17rem] text-[2rem] font-bold leading-tight">לשמוע כשיש אימון חדש?</h2>
-                        <p className="mb-8 mt-3 max-w-[18rem] text-sm leading-relaxed text-[#5d6958]">נעדכן אותך כשהלו״ז משתנה או כשמתפנה מקום באימון. אפשר לכבות את ההתראות בכל רגע.</p>
+                        <p className="mb-8 mt-3 max-w-[18rem] text-sm leading-relaxed text-[var(--studio-muted)]">נעדכן אותך כשהלו״ז משתנה או כשמתפנה מקום באימון. אפשר לכבות את ההתראות בכל רגע.</p>
 
                         {/* Buttons */}
                         <div className="w-full space-y-2">
@@ -147,7 +147,7 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                                 type="button"
                                 onClick={handleAllow}
                                 disabled={isLoading}
-                                className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-[#162218] px-4 text-sm font-bold text-[#dce780] transition-colors active:bg-[#334436] disabled:opacity-70"
+                                className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-[var(--studio-deep)] px-4 text-sm font-bold text-[var(--studio-accent-text)] transition-colors active:bg-[#334436] disabled:opacity-70"
                             >
                                 {isLoading ? (
                                     <div aria-label="טוענים" className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -162,7 +162,7 @@ export default function NotificationPermissionModal({ onComplete }: Notification
                             <button
                                 type="button"
                                 onClick={handleDismiss}
-                                className="min-h-11 w-full rounded-full text-xs font-bold text-[#5d6958] transition-colors active:bg-[#162218]/10"
+                                className="min-h-11 w-full rounded-full text-xs font-bold text-[var(--studio-muted)] transition-colors active:bg-[var(--studio-deep)]/10"
                             >
                                 אולי אחר כך
                             </button>

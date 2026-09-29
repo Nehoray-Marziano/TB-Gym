@@ -165,36 +165,36 @@ export default function BookingPage() {
     };
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-[#e9eadc] text-[#162218]">
+        <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
             <div className="mx-auto max-w-lg pb-[calc(3rem+env(safe-area-inset-bottom))]">
-                <header className="relative isolate overflow-hidden bg-[#162218] px-5 pb-20 pt-5 text-[#f6f6ed] sm:px-7">
+                <header className="relative isolate overflow-hidden bg-[var(--studio-deep)] px-5 pb-20 pt-5 text-[var(--studio-deep-contrast)] sm:px-7">
                     <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
-                    <StudioLogo className="pointer-events-none absolute -bottom-8 -left-14 h-56 w-56 bg-[#dce780]/10" />
+                    <StudioLogo className="pointer-events-none absolute -bottom-8 -left-14 h-56 w-56 bg-[var(--studio-accent-bg)]/10" />
                     <button
                         type="button"
                         onClick={() => router.back()}
                         aria-label="חזרה"
-                        className="relative mb-11 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/25 text-[#dce780] transition-colors active:bg-white/10"
+                        className="relative mb-11 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/25 text-[var(--studio-accent-text)] transition-colors active:bg-white/10"
                     >
                         <ChevronRight aria-hidden="true" className="h-5 w-5" />
                     </button>
                     <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
-                        <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#f28c69]" />האימונים בסטודיו</p>
-                        <h1 className="max-w-[20rem] text-[clamp(3.2rem,14vw,5rem)] font-bold leading-[0.95] tracking-[-0.055em]">איזה אימון<br /><span className="text-[#dce780]">מתאים לך</span><span className="text-[#f28c69]">?</span></h1>
+                        <p className="mb-4 flex items-center gap-2 text-xs font-bold text-[var(--studio-accent-text)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-bg)]" />האימונים בסטודיו</p>
+                        <h1 className="max-w-[20rem] text-[clamp(3.2rem,14vw,5rem)] font-bold leading-[0.95] tracking-[-0.055em]">איזה אימון<br /><span className="text-[var(--studio-accent-text)]">מתאים לך</span><span className="text-[var(--studio-coral-text)]">?</span></h1>
                         <p className="mt-5 max-w-[18rem] text-sm leading-relaxed text-[#b8c7ae]">בחרי אימון, ואנחנו נשמור לך מקום.</p>
                     </motion.div>
                 </header>
 
-                <div className="relative -mt-8 rounded-t-[2rem] bg-[#e9eadc] px-5 pt-8 sm:px-7">
+                <div className="relative -mt-8 rounded-t-[2rem] bg-[var(--studio-canvas)] px-5 pt-8 sm:px-7">
                     <div className="mb-5 border-b border-[#162218]/25 pb-4">
-                        <div className="flex items-center justify-between gap-3 text-[10px] font-bold text-[#68794f]"><p>לוח האימונים / 01</p>{!loading && <span>{sessions.length} {sessions.length === 1 ? "אימון" : "אימונים"}</span>}</div>
+                        <div className="flex items-center justify-between gap-3 text-[10px] font-bold text-[var(--studio-subtle)]"><p>לוח האימונים / 01</p>{!loading && <span>{sessions.length} {sessions.length === 1 ? "אימון" : "אימונים"}</span>}</div>
                         <h2 className="mt-2 text-[1.65rem] font-bold leading-tight">האימונים הקרובים.</h2>
                     </div>
 
                 {loading ? (
                     <div className="space-y-3" aria-busy="true">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-52 animate-pulse rounded-[1.75rem] bg-[#f6f6ed] p-5">
+                            <div key={i} className="h-52 animate-pulse rounded-[1.75rem] bg-[var(--studio-card)] p-5">
                                 <div className="mb-5 h-5 w-24 rounded-full bg-muted/40" />
                                 <div className="mb-3 h-7 w-2/3 rounded-lg bg-muted/40" />
                                 <div className="h-4 w-1/2 rounded-lg bg-muted/40" />
@@ -202,9 +202,9 @@ export default function BookingPage() {
                         ))}
                     </div>
                 ) : sessions.length === 0 ? (
-                    <div className="relative overflow-hidden rounded-[1.75rem] bg-[#162218] px-6 py-8 text-[#f6f6ed]">
-                        <StudioLogo className="pointer-events-none absolute -bottom-12 -left-10 h-52 w-52 bg-[#dce780]/15" />
-                        <p className="relative mb-9 text-xs font-bold text-[#dce780]">היומן עוד שקט</p>
+                    <div className="relative overflow-hidden rounded-[1.75rem] bg-[var(--studio-deep)] px-6 py-8 text-[var(--studio-deep-contrast)]">
+                        <StudioLogo className="pointer-events-none absolute -bottom-12 -left-10 h-52 w-52 bg-[var(--studio-accent-bg)]/15" />
+                        <p className="relative mb-9 text-xs font-bold text-[var(--studio-accent-text)]">היומן עוד שקט</p>
                         <h3 className="relative mb-3 max-w-[15rem] text-[1.7rem] font-bold leading-tight">אין כרגע אימונים קרובים.</h3>
                         <p className="relative max-w-[17rem] text-sm leading-relaxed text-[#b8c7ae]">כשהלו״ז יתעדכן, תוכלי לבחור כאן את האימון הבא שלך.</p>
                     </div>
@@ -263,33 +263,33 @@ END:VCALENDAR`;
                         };
 
                         return (
-                            <article key={session.id} className={`overflow-hidden rounded-[1.75rem] border bg-[#f6f6ed] ${session.isRegistered ? "border-[#829044]" : "border-[#162218]/10"}`}>
+                            <article key={session.id} className={`overflow-hidden rounded-[1.75rem] border bg-[var(--studio-card)] ${session.isRegistered ? "border-[#829044]" : "border-[#162218]/10"}`}>
                                 <div className="p-5">
                                     <div className="mb-5 flex items-start justify-between gap-3">
-                                        <div className={`flex h-[4.5rem] w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-[1.1rem] ${session.isRegistered ? "bg-[#dce780] text-[#162218]" : "bg-[#162218] text-[#dce780]"}`}>
+                                        <div className={`flex h-[4.5rem] w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-[1.1rem] ${session.isRegistered ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "bg-[var(--studio-deep)] text-[var(--studio-accent-text)]"}`}>
                                             <span className="text-[1.85rem] font-bold leading-none tabular-nums">{date.day}</span>
                                             <span className="mt-1 text-xs font-bold">{date.month}</span>
                                         </div>
-                                        <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${session.isRegistered ? "bg-[#dce780] text-[#162218]" : isFull ? "bg-[#e1e3db] text-[#596252]" : isAlmostFull ? "bg-[#f4e6cd] text-[#754d16]" : "bg-[#e8ecd5] text-[#4e652c]"}`}>
+                                        <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${session.isRegistered ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : isFull ? "bg-[#e1e3db] text-[#596252]" : isAlmostFull ? "bg-[#f4e6cd] text-[#754d16]" : "bg-[#e8ecd5] text-[#4e652c]"}`}>
                                             {session.isRegistered ? "המקום שלך שמור" : isFull ? "האימון מלא" : isAlmostFull ? `נשארו ${spotsLeft} מקומות` : "אפשר להירשם"}
                                         </span>
                                     </div>
 
                                     <h3 className="mb-2 break-words text-[1.55rem] font-bold leading-snug">{session.title}</h3>
-                                    <p className="flex items-center gap-2 text-sm font-medium text-[#5d6958]">
+                                    <p className="flex items-center gap-2 text-sm font-medium text-[var(--studio-muted)]">
                                         <Clock3 aria-hidden="true" className="h-4 w-4 shrink-0" />
                                         {date.weekday} · {date.time}
                                     </p>
-                                    <p className="mt-3 text-xs text-[#5d6958]">{getRelativeTimeHebrew(session.start_time)} · {session.current_bookings || 0} מתוך {session.max_capacity} מקומות תפוסים</p>
-                                    <div role="meter" aria-label={`תפוסה באימון ${session.title}`} aria-valuemin={0} aria-valuemax={session.max_capacity} aria-valuenow={session.current_bookings || 0} className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#162218]/10"><span className="block h-full rounded-full bg-[#829044]" style={{ width: `${occupancy}%` }} /></div>
+                                    <p className="mt-3 text-xs text-[var(--studio-muted)]">{getRelativeTimeHebrew(session.start_time)} · {session.current_bookings || 0} מתוך {session.max_capacity} מקומות תפוסים</p>
+                                    <div role="meter" aria-label={`תפוסה באימון ${session.title}`} aria-valuemin={0} aria-valuemax={session.max_capacity} aria-valuenow={session.current_bookings || 0} className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--studio-deep)]/10"><span className="block h-full rounded-full bg-[#829044]" style={{ width: `${occupancy}%` }} /></div>
                                 </div>
 
                                 {session.isRegistered ? (
                                     <div className="flex border-t border-[#162218]/10">
-                                        <button type="button" onClick={addToCalendar} className="flex min-h-12 flex-1 items-center justify-center gap-2 px-2 text-xs font-bold transition-colors active:bg-[#dce780]/30">
+                                        <button type="button" onClick={addToCalendar} className="flex min-h-12 flex-1 items-center justify-center gap-2 px-2 text-xs font-bold transition-colors active:bg-[var(--studio-accent-bg)]/30">
                                             <CalendarPlus aria-hidden="true" className="h-4 w-4" /> הוספה ליומן
                                         </button>
-                                        <div className="w-px bg-[#162218]/10" />
+                                        <div className="w-px bg-[var(--studio-deep)]/10" />
                                         <button type="button" onClick={handleCancelClick} className="flex min-h-12 flex-1 items-center justify-center gap-2 px-2 text-xs font-bold text-[#a53d35] transition-colors active:bg-[#a53d35]/10">
                                             <X aria-hidden="true" className="h-4 w-4" /> ביטול הרשמה
                                         </button>
@@ -299,7 +299,7 @@ END:VCALENDAR`;
                                         type="button"
                                         onClick={() => !isFull && handleBook(session.id)}
                                         disabled={bookingId === session.id || isFull}
-                                        className={`flex min-h-14 w-full items-center justify-between border-t px-5 text-sm font-bold transition-colors ${isFull ? "border-[#162218]/10 bg-[#e1e3db] text-[#596252]" : "border-[#dce780] bg-[#dce780] text-[#162218] active:bg-[#e8f29a]"}`}
+                                        className={`flex min-h-14 w-full items-center justify-between border-t px-5 text-sm font-bold transition-colors ${isFull ? "border-[#162218]/10 bg-[#e1e3db] text-[#596252]" : "border-[#dce780] bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] active:bg-[#e8f29a]"}`}
                                     >
                                         {bookingId === session.id ? "רושמים אותך..." : isFull ? "האימון מלא" : "שמרי לי מקום"}
                                         {!isFull && (bookingId === session.id ? <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <ArrowLeft aria-hidden="true" className="h-4 w-4" />)}
@@ -331,18 +331,18 @@ END:VCALENDAR`;
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="cancel-booking-title"
-                            className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#f1f0e8] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[#162218]"
+                            className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
                         >
                             <button type="button" onClick={() => setSessionToCancel(null)} aria-label="סגירה" className="absolute left-5 top-6 flex h-11 w-11 items-center justify-center rounded-full border border-[#162218]/15"><X aria-hidden="true" className="h-5 w-5" /></button>
                             <p className="mb-2 text-xs font-bold text-[#8b3e36]">ההרשמה שלך</p>
                             <h3 id="cancel-booking-title" className="max-w-[16rem] text-[2rem] font-bold leading-tight">לבטל את ההרשמה?</h3>
-                            <div className="mt-7 rounded-[1.5rem] bg-[#162218] p-5 text-[#f6f6ed]">
-                                <p className="text-xs font-bold text-[#dce780]">האימון שיתפנה</p>
+                            <div className="mt-7 rounded-[1.5rem] bg-[var(--studio-deep)] p-5 text-[var(--studio-deep-contrast)]">
+                                <p className="text-xs font-bold text-[var(--studio-accent-text)]">האימון שיתפנה</p>
                                 <p className="mt-2 break-words text-xl font-bold">{sessionToCancel.title}</p>
                             </div>
-                            <p className="mt-5 text-sm leading-relaxed text-[#5d6958]">המקום שלך יתפנה, והאימון יוחזר ליתרה שלך.</p>
+                            <p className="mt-5 text-sm leading-relaxed text-[var(--studio-muted)]">המקום שלך יתפנה, והאימון יוחזר ליתרה שלך.</p>
                             <div className="mt-7 grid grid-cols-2 gap-3">
-                                <button type="button" onClick={() => setSessionToCancel(null)} className="min-h-12 rounded-full bg-[#162218] px-3 text-sm font-bold text-[#f6f6ed] transition-colors active:bg-[#334436]">להישאר רשומה</button>
+                                <button type="button" onClick={() => setSessionToCancel(null)} className="min-h-12 rounded-full bg-[var(--studio-deep)] px-3 text-sm font-bold text-[var(--studio-deep-contrast)] transition-colors active:bg-[#334436]">להישאר רשומה</button>
                                 <button type="button" onClick={confirmCancel} className="min-h-12 rounded-full border border-[#a53d35]/40 px-3 text-sm font-bold text-[#a53d35] transition-colors active:bg-[#a53d35]/10">כן, לבטל</button>
                             </div>
                         </motion.div>

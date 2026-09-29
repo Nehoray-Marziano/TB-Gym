@@ -72,7 +72,7 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                className="relative z-10 flex h-[94dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[2rem] bg-[#f1f0e8] text-[#1b251c]"
+                className="relative z-10 flex h-[94dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[2rem] bg-[var(--studio-sheet)] text-[var(--studio-ink)]"
             >
                 {/* Header */}
                 <div className="border-b border-[#1b251c]/10 px-5 pb-5 pt-7">
@@ -85,7 +85,7 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
 
                     {/* Search */}
                     <div className="relative">
-                        <Search aria-hidden="true" className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5d6958]" />
+                        <Search aria-hidden="true" className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--studio-muted)]" />
                         <input
                             type="text"
                             aria-label="חיפוש מתאמנת"
@@ -104,7 +104,7 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                     ) : fetchError ? (
                         <div role="alert" className="p-4 text-center text-sm font-bold text-[#a53d35]">{fetchError}</div>
                     ) : filtered.length === 0 ? (
-                        <div className="p-8 text-center text-sm text-[#5d6958]">לא נמצאו מתאמנות.</div>
+                        <div className="p-8 text-center text-sm text-[var(--studio-muted)]">לא נמצאו מתאמנות.</div>
                     ) : (
                         filtered.map(trainee => {
                             const isSelected = selectedTrainees.some(t => t.id === trainee.id);
@@ -123,7 +123,7 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                                 >
                                     <div className={cn(
                                         "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                                        isSelected ? "bg-[#1b251c] text-white" : "bg-[#dfe6bd] text-[#1b251c]"
+                                        isSelected ? "bg-[var(--studio-deep)] text-white" : "bg-[#dfe6bd] text-[var(--studio-ink)]"
                                     )}>
                                         {trainee.full_name?.[0] || <User aria-hidden="true" className="h-5 w-5" />}
                                     </div>
@@ -131,11 +131,11 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                                         <p className="truncate text-sm font-bold">
                                             {trainee.full_name || "ללא שם"}
                                         </p>
-                                        <p dir="ltr" className="mt-1 truncate text-xs text-[#5d6958]">{trainee.phone}</p>
+                                        <p dir="ltr" className="mt-1 truncate text-xs text-[var(--studio-muted)]">{trainee.phone}</p>
                                     </div>
                                     <div className={cn(
                                         "flex h-6 w-6 items-center justify-center rounded-full border",
-                                        isSelected ? "border-[#1b251c] bg-[#1b251c]" : "border-[#1b251c]/30"
+                                        isSelected ? "border-[#1b251c] bg-[var(--studio-deep)]" : "border-[#1b251c]/30"
                                     )}>
                                         {isSelected && <Check aria-hidden="true" className="h-3.5 w-3.5 text-white" />}
                                     </div>
@@ -146,14 +146,14 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between gap-3 border-t border-[#1b251c]/10 bg-[#f1f0e8] px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
-                    <span className="text-xs font-bold text-[#5d6958]">
+                <div className="flex items-center justify-between gap-3 border-t border-[#1b251c]/10 bg-[var(--studio-sheet)] px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
+                    <span className="text-xs font-bold text-[var(--studio-muted)]">
                         נבחרו {selectedTrainees.length}
                     </span>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="min-h-12 rounded-full bg-[#1b251c] px-6 text-sm font-bold text-white"
+                        className="min-h-12 rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-white"
                     >
                         סיימתי
                     </button>
