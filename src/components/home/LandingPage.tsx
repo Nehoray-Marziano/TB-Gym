@@ -95,9 +95,9 @@ export default function LandingPage() {
     return (
         <div className="min-h-dvh overflow-x-hidden bg-[#e9eadc] text-[#1b251c]">
             <main className="mx-auto max-w-lg">
-                <section className="relative isolate overflow-hidden bg-[#162218] px-5 pb-7 pt-6 text-[#f6f6ed] sm:px-7" aria-labelledby="landing-title">
+                <section className="relative isolate overflow-hidden bg-[#162218] px-5 pb-5 pt-4 text-[#f6f6ed] sm:px-7" aria-labelledby="landing-title">
                     <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
-                    <header className="relative flex items-center justify-between border-b border-white/20 pb-5">
+                    <header className="relative flex items-center justify-between border-b border-white/20 pb-3">
                         <div className="flex items-center gap-3">
                             <StudioLogo className="h-9 w-9 bg-[#dce780]" />
                             <span className="border-s border-white/25 ps-3 text-xs font-bold leading-tight">סטודיו<br />טליה</span>
@@ -105,8 +105,8 @@ export default function LandingPage() {
                         <span className="text-[11px] font-bold text-[#bac9ae]">האזור שלך בסטודיו</span>
                     </header>
 
-                    <div className="relative pt-9">
-                        <motion.p initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-4 flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#f28c69]" />לוח האימונים של טליה</motion.p>
+                    <div className="relative pt-6">
+                        <motion.p initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-3 flex items-center gap-2 text-xs font-bold text-[#dce780]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#f28c69]" />לוח האימונים של טליה</motion.p>
                         <motion.h1 id="landing-title" initial={reduceMotion ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }} className="relative z-10 font-bold leading-[0.83] tracking-[-0.065em]">
                             <span className="block text-[clamp(3.3rem,13vw,5rem)]">יש לך</span>
                             <span className="block text-[clamp(5.5rem,23vw,8rem)] text-[#dce780]">מקום</span>
@@ -114,20 +114,20 @@ export default function LandingPage() {
                         </motion.h1>
                     </div>
 
-                    <motion.div initial={reduceMotion ? false : { opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} aria-label="סטודיו טליה" className="relative mt-8 h-[clamp(12rem,33dvh,18rem)] overflow-hidden rounded-[1.75rem] bg-[#dce780] text-[#162218]">
+                    <motion.div initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.16, ease: [0.22, 1, 0.36, 1] }} aria-label="איור של סטודיו טליה" className="relative mt-5 h-[clamp(9rem,42vw,12rem)] overflow-hidden border-y border-[#dce780]/50 bg-[#dce780] text-[#162218]">
                         <div aria-hidden="true" className="absolute inset-0 opacity-20 [background-image:repeating-linear-gradient(-25deg,transparent_0,transparent_26px,#1b251c_27px,#1b251c_28px)]" />
                         <div aria-hidden="true" className="absolute -left-11 -top-14 h-[18rem] w-[18rem] rotate-[-13deg] rounded-full border-[1.75rem] border-[#162218]/15" />
                         <div aria-hidden="true" className="studio-artwork-orb absolute -left-5 bottom-0 h-16 w-16 rounded-full bg-[#f28c69]" />
-                        <StudioLogo className="studio-artwork-mark absolute -bottom-10 -left-6 h-[clamp(15rem,61vw,20rem)] w-[clamp(15rem,61vw,20rem)] bg-[#162218]" />
+                        <StudioLogo className="studio-artwork-mark absolute -bottom-12 -left-4 h-[clamp(12rem,52vw,16rem)] w-[clamp(12rem,52vw,16rem)] bg-[#162218]" />
                         <div className="absolute right-5 top-5 flex flex-col items-start gap-1 text-[10px] font-bold"><span>טליה / אימונים</span><span className="h-px w-14 bg-[#162218]/40" /></div>
-                        <span className="absolute bottom-5 right-5 rounded-full bg-[#162218] px-4 py-2 text-[11px] font-bold text-[#dce780]">לבחור. להירשם. להגיע.</span>
+                        <span className="absolute bottom-4 right-5 border-t border-[#162218]/50 pt-1 text-[11px] font-bold">לבחור. להירשם. להגיע.</span>
                     </motion.div>
 
-                    <p className="relative mt-6 max-w-[19rem] text-sm leading-relaxed text-[#c4d0bd]">האימונים הקרובים, המקום ששמרת והיתרה שלך. הכול כאן, לפני שיוצאים לסטודיו.</p>
-                    <button id="main-signin-button" type="button" onClick={() => setIsLoginOpen(true)} className="relative mt-6 flex min-h-14 w-full items-center justify-between rounded-full bg-[#dce780] px-6 text-sm font-bold text-[#162218] transition-transform active:scale-[0.98]">
+                    <p className="relative mt-4 max-w-[19rem] text-sm leading-relaxed text-[#c4d0bd]">האימונים הקרובים, המקום ששמרת והיתרה שלך. הכול כאן, לפני שיוצאים לסטודיו.</p>
+                    <button id="main-signin-button" type="button" onClick={() => setIsLoginOpen(true)} className="relative mt-4 flex min-h-14 w-full items-center justify-between rounded-full bg-[#dce780] px-6 text-sm font-bold text-[#162218] transition-transform active:scale-[0.98]">
                         כניסה לאזור שלי <ArrowLeft aria-hidden="true" className="h-5 w-5" />
                     </button>
-                    <div className="relative mt-7 flex items-center justify-between border-t border-white/20 pt-4 text-[11px] font-bold text-[#b8c7ae]"><span>סטודיו טליה</span><span>פשוט להגיע לאימון.</span></div>
+                    <div className="relative mt-5 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-bold text-[#b8c7ae]"><span>סטודיו טליה</span><span>פשוט להגיע לאימון.</span></div>
                 </section>
 
                 <section className="px-5 pb-14 pt-14 sm:px-7" aria-labelledby="what-is-here">
