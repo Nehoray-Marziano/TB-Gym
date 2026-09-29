@@ -38,7 +38,7 @@ export default function PaymentModal({
     return (
         <AnimatePresence>
             {isOpen && (
-                <>
+                <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     {/* Backdrop - Independent Layer */}
                     <motion.div
                         key="backdrop"
@@ -148,7 +148,7 @@ export default function PaymentModal({
                             </div>
                         </motion.div>
                     </div>
-                </>
+                </motion.div>
             )}
         </AnimatePresence>
     );
