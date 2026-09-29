@@ -17,6 +17,7 @@ import { MuiTimePickerWrapper } from "@/components/ui/time-picker-mui";
 import { Button } from "@/components/ui/button";
 import { TraineeSelector, type Trainee } from "@/components/admin/trainee-selector";
 import StudioLogo from "@/components/StudioLogo";
+import { useToast } from "@/components/ui/use-toast";
 
 type Session = {
     id: string;
@@ -43,12 +44,39 @@ type Booking = {
 
 export default function AdminSchedulePage() {
     const supabase = getSupabaseClient();
+    const { toast } = useToast();
     const reduceMotion = useReducedMotion();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [notifyConfirmOpen, setNotifyConfirmOpen] = useState(false);
+    const [notifySending, setNotifySending] = useState(false);
+
+    const notifyTrainees = async () => {
+        if (notifySending) return;
+        setNotifySending(true);
+        try {
+            const response = await fetch("/api/notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: "לוח האימונים התעדכן",
+                    message: "האימונים החדשים כבר בלוח. בואי לבחור לך מקום.",
+                    targetRole: "trainee"
+                }),
+            });
+            if (!response.ok) throw new Error(`Notification failed: ${response.status}`);
+            setNotifyConfirmOpen(false);
+            toast({ title: "העדכון נשלח למתאמנות", type: "success" });
+        } catch (error) {
+            console.error(error);
+            toast({ title: "לא הצלחנו לשלוח את העדכון", type: "error" });
+        } finally {
+            setNotifySending(false);
+        }
+    };
 
     // View Bookings State
     const [viewBookingsSession, setViewBookingsSession] = useState<Session | null>(null);
@@ -233,61 +261,40 @@ export default function AdminSchedulePage() {
     const displayedSessions = activeTab === 'upcoming' ? upcomingSessions : pastSessions;
 
     return (
-        <div className="space-y-7 text-[var(--studio-deep-contrast)]">
+        <div className="space-y-4 text-[var(--studio-deep-contrast)]">
             {/* Header */}
-            <header className="relative isolate overflow-hidden border-b border-white/15 pb-7">
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(#e9f2ce_1px,transparent_1px),linear-gradient(90deg,#e9f2ce_1px,transparent_1px)] [background-size:28px_28px]" />
-                <StudioLogo className="pointer-events-none absolute -bottom-12 -left-14 h-56 w-56 bg-[var(--studio-accent-bg)]/10" />
-                <div className="mb-8 flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-xs font-bold text-[var(--studio-accent-text)]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--studio-accent-bg)]" />ניהול הסטודיו</span>
-                    <span className="text-xs text-[#aebbad]">יומן האימונים</span>
+            <header className="flex items-center gap-3 border-b border-white/15 pb-4">
+                <StudioLogo className="h-10 w-10 shrink-0 bg-[var(--studio-accent-bg)]" />
+                <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-bold text-[var(--studio-accent-text)]">ניהול הסטודיו</p>
+                    <h1 className="text-[1.9rem] font-bold leading-tight tracking-tight">יומן האימונים</h1>
                 </div>
-                <motion.div initial={reduceMotion ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="relative">
-                    <h1 className="text-[clamp(3.3rem,13vw,5rem)] font-bold leading-[0.92] tracking-[-0.055em]">האימונים<br /><span className="text-[var(--studio-accent-text)]">שלך.</span></h1>
-                    <p className="mt-5 text-sm leading-relaxed text-[#aebbad]">יוצרים אימונים, רואים מי נרשמה ושומרים על הלוח מסודר.</p>
-                </motion.div>
-                <div className="relative mt-7 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-accent-bg)] px-5 text-sm font-bold text-[var(--studio-ink)] transition-colors active:bg-[#e9f19e]"
+                        aria-label="אימון חדש"
+                        className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] transition-transform active:scale-95"
                     >
-                        <span>אימון חדש</span>
                         <Plus aria-hidden="true" className="h-5 w-5" />
                     </button>
                     <button
-                        onClick={async () => {
-                            if (confirm("לשלוח התראה לכל המתאמנות שהלוז מוכן?")) {
-                                try {
-                                    const res = await fetch("/api/notifications", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                            title: "מערכת שעות חדשה! 📅",
-                                            message: "הלוז לשבוע הבא התעדכן. היכנסי לשריין מקום!",
-                                            targetRole: "trainee"
-                                        })
-                                    });
-                                    await res.json();
-                                    alert("ההודעה נשלחה בהצלחה!");
-                                } catch {
-                                    alert("שגיאה בשליחה");
-                                }
-                            }
-                        }}
-                        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-xs font-bold text-[var(--studio-deep-contrast)] transition-colors active:bg-white/10"
+                        type="button"
+                        aria-label="להודיע למתאמנות שהלוח עודכן"
+                        onClick={() => setNotifyConfirmOpen(true)}
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-[var(--studio-accent-text)] transition-colors active:bg-white/10"
                     >
-                        <Bell aria-hidden="true" className="h-4 w-4" />להודיע למתאמנות שהלוח עודכן
+                        <Bell aria-hidden="true" className="h-5 w-5" />
                     </button>
                 </div>
             </header>
 
             {/* Tabs */}
-            <div className="grid grid-cols-2 gap-2 rounded-[1.25rem] border border-white/10 bg-[#202c21] p-1.5">
+            <div className="grid grid-cols-2 gap-1 rounded-[1.1rem] border border-white/10 bg-[#202c21] p-1">
                 <button
                     onClick={() => setActiveTab('upcoming')}
                     aria-pressed={activeTab === 'upcoming'}
                     className={cn(
-                        "flex min-h-12 items-center justify-center gap-2 rounded-[0.9rem] px-2 text-xs font-bold transition-colors",
+                        "flex min-h-11 items-center justify-center gap-2 rounded-[0.85rem] px-2 text-xs font-bold transition-colors",
                         activeTab === 'upcoming' ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "text-[#aebbad]"
                     )}
                 >
@@ -303,7 +310,7 @@ export default function AdminSchedulePage() {
                     onClick={() => setActiveTab('past')}
                     aria-pressed={activeTab === 'past'}
                     className={cn(
-                        "flex min-h-12 items-center justify-center gap-2 rounded-[0.9rem] px-2 text-xs font-bold transition-colors",
+                        "flex min-h-11 items-center justify-center gap-2 rounded-[0.85rem] px-2 text-xs font-bold transition-colors",
                         activeTab === 'past' ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "text-[#aebbad]"
                     )}
                 >
@@ -321,33 +328,31 @@ export default function AdminSchedulePage() {
             {loading ? (
                 <div aria-label="טוענים אימונים" className="space-y-3">
                     {Array.from({ length: 2 }).map((_, i) => (
-                        <div key={i} className="h-48 animate-pulse rounded-[1.75rem] bg-[#202c21]" />
+                        <div key={i} className="h-36 animate-pulse rounded-[1.35rem] bg-[#202c21]" />
                     ))}
                 </div>
             ) : (
                 <div className="space-y-3">
-                    <AnimatePresence mode="wait">
-                        {displayedSessions.map((session, index) => {
+                        {displayedSessions.map((session) => {
                             const count = session.current_bookings || 0;
                             const fillPercent = Math.min((count / session.max_capacity) * 100, 100);
                             const isFull = count >= session.max_capacity;
 
                             return (
-                                <motion.div
+                                <div
                                     key={session.id}
-                                    initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -12 }} transition={{ delay: Math.min(index * 0.06, 0.24), duration: 0.4 }}
-                                    className="rounded-[1.75rem] bg-[var(--studio-sheet)] p-5 text-[var(--studio-ink)]"
+                                    className="rounded-[1.35rem] bg-[var(--studio-sheet)] p-4 text-[var(--studio-ink)]"
                                 >
                                     {/* Top Metadata */}
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
-                                            <h3 className="text-xl font-bold leading-tight">{session.title}</h3>
-                                            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--studio-muted)]">
-                                                <span className="flex min-h-8 items-center gap-1.5 rounded-full bg-[var(--studio-canvas)] px-3">
+                                            <h3 className="text-lg font-bold leading-tight">{session.title}</h3>
+                                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--studio-muted)]">
+                                                <span className="flex items-center gap-1.5">
                                                     <CalendarIcon aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-subtle)]" />
                                                     {new Date(session.start_time).toLocaleDateString("he-IL", { day: 'numeric', month: 'numeric' })}
                                                 </span>
-                                                <span className="flex min-h-8 items-center gap-1.5 rounded-full bg-[var(--studio-canvas)] px-3">
+                                                <span className="flex items-center gap-1.5">
                                                     <Clock aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-subtle)]" />
                                                     {new Date(session.start_time).toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
@@ -364,7 +369,7 @@ export default function AdminSchedulePage() {
                                     </div>
 
                                     {/* Progress Bar */}
-                                    <div className="mt-6">
+                                    <div className="mt-3">
                                         <div className="mb-2 flex items-baseline justify-between text-xs">
                                             <span dir="ltr" className={isFull ? "font-bold tabular-nums text-[var(--studio-danger)]" : "font-bold tabular-nums text-[var(--studio-subtle)]"}>
                                                 {count} / {session.max_capacity}
@@ -386,15 +391,14 @@ export default function AdminSchedulePage() {
                                             setViewBookingsSession(session);
                                             fetchBookings(session.id);
                                         }}
-                                        className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--studio-deep)] text-sm font-bold text-[var(--studio-accent-text)] transition-colors active:bg-[#334436]"
+                                        className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--studio-deep)] text-xs font-bold text-[var(--studio-accent-text)] transition-colors active:bg-[#334436]"
                                     >
                                         <Users aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)]" />
                                         ניהול נרשמות
                                     </button>
-                                </motion.div>
+                                </div>
                             )
                         })}
-                    </AnimatePresence>
                 </div>
             )}
 
@@ -412,6 +416,23 @@ export default function AdminSchedulePage() {
                     </p>
                 </div>
             )}
+
+            <AnimatePresence>
+                {notifyConfirmOpen && (
+                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] flex items-end justify-center">
+                        <button type="button" aria-label="סגירה" onClick={() => !notifySending && setNotifyConfirmOpen(false)} className="absolute inset-0 bg-black/65" />
+                        <motion.div role="dialog" aria-modal="true" aria-labelledby="notify-title" initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={reduceMotion ? undefined : { y: "100%" }} transition={{ type: "spring", stiffness: 350, damping: 35 }} className="relative w-full max-w-lg rounded-t-[2rem] bg-[var(--studio-sheet)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]">
+                            <p className="text-xs font-bold text-[var(--studio-subtle)]">עדכון לוח האימונים</p>
+                            <h2 id="notify-title" className="mt-2 text-[1.7rem] font-bold leading-tight">לשלוח התראה למתאמנות?</h2>
+                            <p className="mt-3 text-sm leading-relaxed text-[var(--studio-muted)]">נשלח עדכון שהלוח החדש מוכן ושאפשר להירשם.</p>
+                            <div className="mt-7 grid grid-cols-2 gap-3">
+                                <button type="button" disabled={notifySending} onClick={() => setNotifyConfirmOpen(false)} className="min-h-12 rounded-full border border-[var(--studio-ink)]/15 text-sm font-bold">לא עכשיו</button>
+                                <button type="button" disabled={notifySending} onClick={notifyTrainees} className="min-h-12 rounded-full bg-[var(--studio-deep)] text-sm font-bold text-[var(--studio-accent-text)] disabled:opacity-50">{notifySending ? "שולחות..." : "שלחי עדכון"}</button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* CREATE MODAL */}
             <AnimatePresence>
