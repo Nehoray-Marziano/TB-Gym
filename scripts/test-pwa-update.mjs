@@ -6,6 +6,9 @@ import ts from 'typescript';
 const source = await readFile(new URL('../src/lib/activatePWAUpdate.ts', import.meta.url), 'utf8');
 const javascript = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;
 const { activatePWAUpdate } = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString('base64')}`);
+const versionSource = await readFile(new URL('../src/lib/checkPWAAppVersion.ts', import.meta.url), 'utf8');
+const versionJavascript = ts.transpileModule(versionSource, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;
+const { checkPWAAppVersion } = await import(`data:text/javascript;base64,${Buffer.from(versionJavascript).toString('base64')}`);
 
 class FakeWorker extends EventTarget {
   state = 'installed';
@@ -67,4 +70,20 @@ test('ignores an activation that was cancelled on unmount', async () => {
   const promise = activatePWAUpdate(worker, new FakeServiceWorkers(), abort.signal, 100);
   abort.abort();
   await assert.rejects(promise, /cancelled/);
+});
+
+test('only a different deployed app build produces an update prompt', async () => {
+  const fetchVersion = async (url, options) => {
+    assert.equal(url, '/api/app-version');
+    assert.equal(options.cache, 'no-store');
+    return Response.json({ version: 'deployed-build' });
+  };
+  assert.equal(await checkPWAAppVersion('old-build', fetchVersion), true);
+  assert.equal(await checkPWAAppVersion('deployed-build', fetchVersion), false);
+});
+
+test('missing or invalid version information cannot produce an update prompt', async () => {
+  assert.equal(await checkPWAAppVersion('unknown', async () => { throw new Error('should not fetch'); }), false);
+  assert.equal(await checkPWAAppVersion('old-build', async () => new Response(null, { status: 503 })), false);
+  assert.equal(await checkPWAAppVersion('old-build', async () => Response.json({ version: null })), false);
 });

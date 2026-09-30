@@ -1,5 +1,29 @@
 import type { NextConfig } from "next";
 import withPWAInit from "@ducanh2912/next-pwa";
+import { createHash } from "node:crypto";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+function getAppBuildId() {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA;
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
+  // A deterministic fallback also works when the deployment omits Git metadata.
+  const hash = createHash("sha256");
+  const addDirectory = (directory: string) => {
+    for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const file = join(directory, entry.name);
+      if (entry.isDirectory()) addDirectory(file);
+      else if (entry.isFile() && !/^(sw\.js(\.map)?|workbox-.*|fallback-.*\.js)$/.test(entry.name)) {
+        hash.update(file.slice(process.cwd().length));
+        hash.update(readFileSync(file));
+      }
+    }
+  };
+  addDirectory(join(process.cwd(), "src"));
+  addDirectory(join(process.cwd(), "public"));
+  for (const file of ["next.config.ts", "package-lock.json"]) hash.update(readFileSync(join(process.cwd(), file)));
+  return hash.digest("hex");
+}
 
 const withPWA = withPWAInit({
   dest: "public",
@@ -51,6 +75,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   turbopack: {},
   distDir: process.env.TALIA_BUILD_DIR || ".next",
+  env: { APP_BUILD_ID: getAppBuildId() },
   async headers() {
     return [{
       source: "/sw.js",

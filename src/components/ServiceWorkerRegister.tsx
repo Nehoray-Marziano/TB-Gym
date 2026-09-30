@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { activatePWAUpdate } from "@/lib/activatePWAUpdate";
+import { checkPWAAppVersion } from "@/lib/checkPWAAppVersion";
 
 type UpdateStatus = "hidden" | "ready" | "applying" | "error";
 
@@ -45,13 +46,22 @@ export default function ServiceWorkerRegister() {
             window.location.reload();
         };
 
-        const showWaiting = () => {
+        const showWaiting = async () => {
             if (!mounted || applying || !navigator.serviceWorker.controller) return;
-            if (registration?.waiting && !dismissed) setStatus("ready");
+            const worker = registration?.waiting;
+            if (!worker || dismissed) return;
+            let newerAppAvailable = false;
+            try {
+                newerAppAvailable = await checkPWAAppVersion(process.env.APP_BUILD_ID ?? "");
+            } catch {
+                // A network error cannot establish that a new app was deployed.
+            }
+            if (!mounted || applying || registration?.waiting !== worker) return;
+            setStatus(newerAppAvailable ? "ready" : "hidden");
         };
 
         const onInstallingStateChange = () => {
-            if (installing?.state === "installed") queueMicrotask(showWaiting);
+            if (installing?.state === "installed") queueMicrotask(() => void showWaiting());
         };
 
         const onUpdateFound = () => {
@@ -69,7 +79,7 @@ export default function ServiceWorkerRegister() {
             updateInFlight = true;
             try {
                 await registration.update();
-                showWaiting();
+                void showWaiting();
             } catch {
                 // A transient network failure should not interrupt the app.
             } finally {
@@ -123,7 +133,6 @@ export default function ServiceWorkerRegister() {
                 registration = result;
                 registration.addEventListener("updatefound", onUpdateFound);
                 if (registration.installing) onUpdateFound();
-                showWaiting();
                 void checkForUpdate();
             } catch (error) {
                 console.error("Service worker registration failed", error);
