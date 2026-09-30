@@ -2,7 +2,6 @@
 
 import { useGymStore } from "@/providers/GymStoreProvider";
 import OneSignalProvider from "@/providers/OneSignalProvider";
-import { useEffect, useState } from "react";
 
 export default function ConnectedOneSignalProvider() {
     const { profile } = useGymStore();

@@ -43,7 +43,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Notification service not configured" }, { status: 500 });
         }
 
-        const notificationPayload: any = {
+        const notificationPayload: {
+            app_id: string;
+            headings: { en: string; he: string };
+            contents: { en: string; he: string };
+            include_aliases?: { external_id: string[] };
+            target_channel?: "push";
+            filters?: { field: "tag"; key: string; relation: "="; value: string }[];
+            url?: string;
+        } = {
             app_id: ONESIGNAL_APP_ID,
             headings: { en: title, he: title },
             contents: { en: message, he: message },
@@ -96,8 +104,8 @@ export async function POST(request: NextRequest) {
             recipients: result.recipients || 0
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Notification API error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Unexpected error" }, { status: 500 });
     }
 }

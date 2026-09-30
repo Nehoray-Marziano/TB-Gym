@@ -1,5 +1,4 @@
 import { createBrowserClient } from '@supabase/ssr'
-import { useEffect, useState, useMemo } from 'react'
 
 // Singleton pattern managed by @supabase/ssr with isSingleton option
 let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null;
@@ -12,7 +11,7 @@ export function getSupabaseClient() {
     if (typeof window === 'undefined') {
         // During SSR, return a placeholder that will be replaced on client
         console.warn('[Supabase] getSupabaseClient called during SSR - returning placeholder');
-        return null as any;
+        return null;
     }
 
     if (!supabaseInstance) {
@@ -56,25 +55,6 @@ export function getSupabaseClient() {
     }
 
     return supabaseInstance;
-}
-
-/**
- * React hook for safely using Supabase in client components.
- * Returns null during SSR, then the real client after hydration.
- */
-export function useSupabase() {
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
-    const client = useMemo(() => {
-        if (!isClient) return null;
-        return getSupabaseClient();
-    }, [isClient]);
-
-    return client;
 }
 
 // Re-export for backward compatibility during migration

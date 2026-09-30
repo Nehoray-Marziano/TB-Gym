@@ -27,9 +27,6 @@ type GymStoreContextType = {
     loading: boolean;
     refreshData: (force?: boolean, userId?: string) => Promise<void>;
     cancelBooking: (sessionId: string) => Promise<{ success: boolean; message: string }>;
-    // Developer Mode
-    isDevMode: boolean;
-    toggleDevMode: (force?: boolean) => void;
 };
 
 const GymStoreContext = createContext<GymStoreContextType>({
@@ -39,40 +36,20 @@ const GymStoreContext = createContext<GymStoreContextType>({
     loading: true,
     refreshData: async () => { },
     cancelBooking: async () => ({ success: false, message: "Not implemented" }),
-    isDevMode: false,
-    toggleDevMode: () => { },
 });
 
 export const useGymStore = () => useContext(GymStoreContext);
 
 
-// NOTE: We do NOT cache data freshness anymore - data must always be fresh
-// LocalStorage is ONLY used for instant initial render (optimistic UI) - DEPRECATED: Now we don't use it at all.
-
 export function GymStoreProvider({ children }: { children: React.ReactNode }) {
-    // Start as loading - no caching
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [tickets, setTickets] = useState<number>(0);
     const [subscription, setSubscription] = useState<Subscription | null>(null);
-    const [isDevMode, setIsDevMode] = useState(false);
     const fetchedRef = useRef(false);
     const inFlightFetchRef = useRef<Promise<void> | null>(null);
-
-    // Dev Mode Persistence
-    useEffect(() => {
-        const stored = localStorage.getItem("talia_dev_mode");
-        if (stored === "true") setIsDevMode(true);
-    }, []);
-
-    const toggleDevMode = useCallback((force?: boolean) => {
-        setIsDevMode(prev => {
-            const next = force !== undefined ? force : !prev;
-            if (next) localStorage.setItem("talia_dev_mode", "true");
-            else localStorage.removeItem("talia_dev_mode");
-            return next;
-        });
-    }, []);
+    const requestVersionRef = useRef(0);
+    const currentUserRef = useRef<string | null>(null);
 
     // Lazy-initialize supabase client only when needed (client-side only)
     const getClient = useCallback(() => {
@@ -86,10 +63,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         setTickets(prev => prev + 1);
 
         try {
-            console.log("Calling RPC cancel_booking with:", sessionId);
             const { data, error } = await supabase.rpc("cancel_booking", { p_session_id: sessionId });
-
-            console.log("RPC Response:", { data, error });
 
             if (error) throw error;
 
@@ -111,14 +85,14 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         // navigation. Share that request instead of repeating the three RPCs.
         if (!force && inFlightFetchRef.current) return inFlightFetchRef.current;
 
-        const request = (async () => {
-            // ALWAYS fetch from network - data must be fresh (no caching)
-            console.log("[GymStore] Fetching fresh data from network (caching disabled)");
+        const requestVersion = ++requestVersionRef.current;
+        const isCurrent = () => requestVersionRef.current === requestVersion;
 
+        const request = (async () => {
             const supabase = getClient();
             if (!supabase) {
                 console.error("[GymStore] Supabase client is not available (check env vars)");
-                setLoading(false);
+                if (isCurrent()) setLoading(false);
                 return;
             }
 
@@ -129,48 +103,47 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
                 if (!uid) {
                     const { data: { user }, error: authError } = await supabase.auth.getUser();
                     if (authError || !user) {
-                        console.log("[GymStore] No user found directly or error:", authError);
-                        setLoading(false);
+                        if (isCurrent()) {
+                            currentUserRef.current = null;
+                            setProfile(null);
+                            setTickets(0);
+                            setSubscription(null);
+                        }
                         return;
                     }
                     uid = user.id;
                     authenticatedEmail = user.email || "";
                 }
 
-                console.log("[GymStore] Fetching fresh data from network for:", uid);
-
-                // PARALLEL FETCHING: Fire essential user data requests
                 const [profileRes, ticketRes, subRes] = await Promise.all([
                     supabase.from("profiles").select("id, full_name, role").eq("id", uid).single(),
                     supabase.rpc("get_available_tickets", { p_user_id: uid }),
                     supabase.rpc("get_user_subscription", { p_user_id: uid }),
                 ]);
 
+                if (!isCurrent()) return;
+                currentUserRef.current = uid ?? null;
+
                 if (profileRes.data) {
                     let userEmail = authenticatedEmail;
                     if (!userEmail) {
                         const { data: { user } } = await supabase.auth.getUser();
+                        if (!isCurrent()) return;
                         userEmail = user?.email || "";
                     }
 
                     setProfile({ ...profileRes.data, email: userEmail });
+                } else {
+                    setProfile(null);
                 }
 
-                // 2. Set Tickets (new system)
-                if (ticketRes.data !== null) {
-                    setTickets(ticketRes.data);
-                }
-
-                // 3. Set Subscription
-                if (subRes.data) {
-                    const subData = subRes.data.is_active ? subRes.data : null;
-                    setSubscription(subData);
-                }
+                setTickets(ticketRes.data ?? 0);
+                setSubscription(subRes.data?.is_active ? subRes.data : null);
 
             } catch (error) {
                 console.error("Error refreshing gym data:", error);
             } finally {
-                setLoading(false);
+                if (isCurrent()) setLoading(false);
             }
         })();
 
@@ -192,18 +165,16 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
 
             const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: AuthSession | null) => {
                 if (event === 'SIGNED_OUT') {
+                    requestVersionRef.current += 1;
+                    inFlightFetchRef.current = null;
+                    currentUserRef.current = null;
                     setProfile(null);
                     setTickets(0);
                     setSubscription(null);
-                    localStorage.removeItem("talia_profile");
-                    localStorage.removeItem("talia_tickets");
-                    localStorage.removeItem("talia_subscription");
-                    localStorage.removeItem("talia_cache_timestamp");
                     setLoading(false);
                 } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                    // If we have a session but empty profile, fetch data
-                    if (session?.user && !profile) {
-                        fetchData(true, session.user.id);
+                    if (session?.user && currentUserRef.current !== session.user.id) {
+                        void fetchData(true, session.user.id);
                     }
                 }
             });
@@ -214,7 +185,7 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error("[GymStore] Error in auth listener:", error);
         }
-    }, [getClient, fetchData, profile]);
+    }, [getClient, fetchData]);
 
     useEffect(() => {
         // Prevent double-fetch in strict mode
@@ -233,8 +204,6 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
             loading,
             refreshData: fetchData,
             cancelBooking,
-            isDevMode,
-            toggleDevMode
         }}>
             {children}
         </GymStoreContext.Provider>

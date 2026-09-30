@@ -10,9 +10,7 @@ export async function createClient() {
         {
             cookies: {
                 getAll() {
-                    const allCookies = cookieStore.getAll()
-                    console.log("[ServerClient] Cookie count:", allCookies.length, "Names:", allCookies.map(c => c.name))
-                    return allCookies
+                    return cookieStore.getAll()
                 },
                 setAll(cookiesToSet) {
                     try {

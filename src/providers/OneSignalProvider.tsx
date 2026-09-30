@@ -1,11 +1,27 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
+
+type OneSignalClient = {
+    init: (options: Record<string, unknown>) => Promise<void>;
+    login: (externalId: string) => Promise<void>;
+    logout: () => Promise<void>;
+    User: {
+        addTag: (key: string, value: string) => Promise<void>;
+        addEmail: (email: string) => Promise<void>;
+    };
+    Notifications: {
+        addEventListener: (event: "foregroundWillDisplay", listener: (event: {
+            notification: { title?: string; body?: string };
+        }) => void) => void;
+    };
+};
 
 declare global {
     interface Window {
-        OneSignalDeferred?: Array<(OneSignal: any) => void>;
-        OneSignal?: any;
+        OneSignalDeferred?: Array<(client: OneSignalClient) => void | Promise<void>>;
+        OneSignal?: OneSignalClient;
     }
 }
 
@@ -15,111 +31,69 @@ interface OneSignalProviderProps {
     userEmail?: string;
 }
 
-import { useToast } from "@/components/ui/use-toast";
+let sdkRequested = false;
+let sdkInitialized = false;
 
 export default function OneSignalProvider({ userId, userRole, userEmail }: OneSignalProviderProps) {
-    const initialized = useRef(false);
     const { toast } = useToast();
 
-    // Effect 1: Initialize OneSignal (Run Once)
     useEffect(() => {
-        if (process.env.NODE_ENV === "development") return;
-        if (initialized.current) return;
-        if (typeof window === "undefined") return;
+        if (process.env.NODE_ENV === "development" || !userId) return;
 
-        initialized.current = true;
+        window.OneSignalDeferred ||= [];
+        if (!sdkRequested) {
+            sdkRequested = true;
+            const script = document.createElement("script");
+            script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+            script.defer = true;
+            document.head.appendChild(script);
+        }
 
-        // Load OneSignal SDK
-        const script = document.createElement("script");
-        script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
-        script.defer = true;
-        document.head.appendChild(script);
-
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        window.OneSignalDeferred.push(async function (OneSignal: any) {
-            await OneSignal.init({
-                appId: "2e5776b6-3487-4a5d-bca0-04570c82d150",
-                welcomeNotification: {
-                    disable: true // We let the Dashboard handle this via Push, avoid client-side conflict
-                },
-                notifyButton: {
-                    enable: false, // We'll use our own UI
-                },
-                allowLocalhostAsSecureOrigin: true, // For development
-                // CRITICAL: Use the same SW as the PWA to avoid conflicts
-                serviceWorkerParam: { scope: "/" },
-                serviceWorkerPath: "sw.js",
-                // IMPORTANT: Disable ALL automatic prompts - we use our custom beautiful modal instead
-                autoResubscribe: true, // Re-subscribe returning users automatically
-                autoRegister: false,   // Don't auto-register, let us control the flow
-            });
-
-
-            // Enable foreground notifications to appear
-            OneSignal.Notifications.addEventListener('foregroundWillDisplay', function (event: any) {
-                console.log("[OneSignal] Foreground notification received", event);
-                // 1. Prevent native display to avoid double notifications (optional, but cleaner)
-                // event.preventDefault(); 
-
-                // 2. Trigger our beautiful In-App Toast
-                // We need to access the store/hook outside the component scope? 
-                // No, we are inside a React component, but inside an async callback.
-                // We should bubble this up or use a static toast method if available.
-                // Since this is a Client Component, we can dispatch a custom event or check if we can pass a callback.
-
-                // Simpler: Just rely on preventing default? No, user says it DOESN'T pop up.
-                // We will use the custom event pattern to trigger the toast from the layout or just import verify if useToast works here.
-                // Actually, since we are inside useEffect, we can't use hooks directly in the callback easily unless we capture the `toast` function from the render scope.
-
-                // We will capture `toast` from the hook in the component scope.
-                const notif = event.notification;
-                toast({
-                    title: notif.title || "New Message",
-                    description: notif.body,
-                    type: "info"
+        window.OneSignalDeferred.push(async (client) => {
+            if (sdkInitialized) return;
+            sdkInitialized = true;
+            try {
+                await client.init({
+                    appId: "2e5776b6-3487-4a5d-bca0-04570c82d150",
+                    welcomeNotification: { disable: true },
+                    notifyButton: { enable: false },
+                    serviceWorkerParam: { scope: "/" },
+                    serviceWorkerPath: "sw.js",
+                    autoResubscribe: true,
+                    autoRegister: false,
                 });
-            });
-
-            console.log("OneSignal initialized core");
+                client.Notifications.addEventListener("foregroundWillDisplay", (event) => {
+                    toast({
+                        title: event.notification.title || "הודעה חדשה",
+                        description: event.notification.body,
+                        type: "info",
+                    });
+                });
+            } catch (error) {
+                sdkInitialized = false;
+                console.error("OneSignal initialization failed:", error);
+            }
         });
-    }, []); // Empty dependency array = true singleton init
+    }, [userId, toast]);
 
-
-    // Effect 2: Manage User Identity (Run on change)
     useEffect(() => {
-        if (process.env.NODE_ENV === "development") return;
-        if (typeof window === "undefined") return;
-
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        window.OneSignalDeferred.push(async function (OneSignal: any) {
-            // Only convert user if initialized
-            if (!OneSignal.User) return;
-
-            console.log("OneSignal Syncing User:", { userId, userRole, userEmail });
-
-            if (userId) {
-                console.log(`[OneSignal] Logging in user: ${userId}`);
-                await OneSignal.login(userId);
-
-                // Add tags/email only after login
-                if (userRole) {
-                    console.log(`[OneSignal] Setting role tag: ${userRole.toLowerCase()}`);
-                    // Normalize role to lowercase for consistent targeting
-                    await OneSignal.User.addTag("role", userRole.toLowerCase());
-                } else {
-                    console.log("[OneSignal] No userRole provided, skipping role tag.");
+        if (process.env.NODE_ENV === "development" || !sdkRequested) return;
+        window.OneSignalDeferred ||= [];
+        window.OneSignalDeferred.push(async (client) => {
+            if (!client.User) return;
+            try {
+                if (!userId) {
+                    await client.logout();
+                    return;
                 }
-                if (userEmail) {
-                    await OneSignal.User.addEmail(userEmail);
-                }
-            } else {
-                // If userId becomes null (logout), we might want to logout from OneSignal too
-                // OneSignal.logout(); 
-                // However, for this app, we might want to keep the device registered as guest.
-                // Leaving as is for now unless explicit logout requested.
+                await client.login(userId);
+                if (userRole) await client.User.addTag("role", userRole.toLowerCase());
+                if (userEmail) await client.User.addEmail(userEmail);
+            } catch (error) {
+                console.error("OneSignal identity sync failed:", error);
             }
         });
     }, [userId, userRole, userEmail]);
 
-    return null; // This component doesn't render anything
+    return null;
 }

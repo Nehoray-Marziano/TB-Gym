@@ -4,7 +4,7 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, LogOut, Phone, Zap, Bell, Shield, Edit2, Check, Moon, Sun, Palette } from "lucide-react";
+import { ArrowLeft, ChevronRight, LogOut, Phone, Bell, Shield, Edit2, Check, Moon, Sun, Palette } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
@@ -34,12 +34,6 @@ type ProfileClientProps = {
 
 type BrowserOneSignal = {
     Notifications: { requestPermission: () => Promise<void> };
-    login: (userId: string) => Promise<void>;
-    User: {
-        addTag: (key: string, value: string) => Promise<void>;
-        addEmail: (email: string) => Promise<void>;
-        PushSubscription: { optedIn: boolean; id: string | null };
-    };
 };
 
 export default function ProfileClient({ initialProfile, initialHealth }: ProfileClientProps) {
@@ -62,7 +56,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     const router = useRouter();
     const supabase = getSupabaseClient();
     const { toast } = useToast();
-    const { subscription, isDevMode, refreshData } = useGymStore();
+    const { subscription, refreshData } = useGymStore();
     const appliedProfile = useRef<UserProfile | null>(null);
     const appliedHealth = useRef<HealthDeclaration | null>(null);
 
@@ -365,44 +359,6 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     </div>
                     <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--studio-muted)]" />
                 </button>
-
-                {isDevMode && <button
-                    type="button"
-                    onClick={async () => {
-                        if (navigator.vibrate) navigator.vibrate(10);
-                        const oneSignal = (window as Window & { OneSignal?: BrowserOneSignal }).OneSignal;
-                        if (oneSignal) {
-                            try {
-                                const userId = profile?.id;
-                                const role = profile?.role || "trainee";
-
-                                if (userId) {
-                                    await oneSignal.login(userId);
-                                    await oneSignal.User.addTag("role", role.toLowerCase());
-                                    if (profile?.email) await oneSignal.User.addEmail(profile.email);
-
-                                    const pushSub = oneSignal.User.PushSubscription;
-                                    alert(`ההתראות סונכרנו.\nמזהה משתמש: ${userId}\nתפקיד: ${role === "administrator" ? "מנהלת" : "מתאמנת"}\nהתראות פעילות: ${pushSub.optedIn ? "כן" : "לא"}\nמזהה הרשמה: ${pushSub.id}`);
-                                } else {
-                                    alert("שגיאה: פרטי משתמש חסרים");
-                                }
-                            } catch (e) {
-                                console.error("Sync error:", e);
-                                alert("לא הצלחנו לסנכרן את ההתראות.");
-                            }
-                        } else {
-                            alert("שירות ההתראות לא נטען. נסי לרענן את העמוד.");
-                        }
-                    }}
-                    className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-[#162218]/10 bg-[var(--studio-card)] p-5 text-start transition-colors active:bg-[var(--studio-accent-bg)]/20"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
-                            <Zap aria-hidden="true" className="h-5 w-5" />
-                        </div>
-                        <span className="text-sm font-bold">סנכרון התראות לבדיקה</span>
-                    </div>
-                </button>}
 
                 <button
                     type="button"

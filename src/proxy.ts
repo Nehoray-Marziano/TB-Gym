@@ -3,7 +3,6 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
-    console.log("[Proxy] Hit:", request.nextUrl.pathname);
     let response = NextResponse.next({
         request: {
             headers: request.headers,
@@ -46,8 +45,7 @@ export async function proxy(request: NextRequest) {
 
     // Verifies the access token and refreshes it when necessary. With an
     // asymmetric signing key this avoids a remote user lookup on each route.
-    const { error } = await supabase.auth.getClaims();
-    if (error) console.log("[Proxy] Auth verification failed:", error.message);
+    await supabase.auth.getClaims();
 
     return response;
 }
