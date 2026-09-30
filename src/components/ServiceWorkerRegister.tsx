@@ -1,79 +1,64 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-/**
- * ServiceWorkerRegister - Handles SW registration and update prompts
- * 
- * IMPORTANT: This component should NOT show any UI on first install.
- * The banner should ONLY appear when there's a genuine update to an
- * already-installed service worker.
- */
 export default function ServiceWorkerRegister() {
-    const hasShownBanner = useRef(false);
+    const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
+    const [dismissed, setDismissed] = useState(false);
+    const refreshing = useRef(false);
 
     useEffect(() => {
-        if (process.env.NODE_ENV === "development") return;
-        if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
-            return;
-        }
+        if (process.env.NODE_ENV === "development" || !("serviceWorker" in navigator)) return;
 
-        // Don't do anything on first page load - let the SW install quietly
-        // Only check for updates after user has been using the app
-        const registerAndListen = async () => {
-            try {
-                // GHOST BUSTER: Find and unregister the old conflicting OneSignal worker
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (const reg of registrations) {
-                    // Check if this is the "Ghost" worker
-                    if (reg.active?.scriptURL.includes("OneSignalSDKWorker.js") ||
-                        reg.waiting?.scriptURL.includes("OneSignalSDKWorker.js")) {
-                        console.log("[SW] Found ghost worker! Exorcising...", reg.scope);
-                        await reg.unregister();
-                    }
-                }
+        let active = true;
+        let registration: ServiceWorkerRegistration | null = null;
+        let installing: ServiceWorker | null = null;
+        let updateTimer: ReturnType<typeof setTimeout> | null = null;
 
-                const registration = await navigator.serviceWorker.register("/sw.js");
-                console.log("[SW] Registered:", registration.scope);
-
-                // ONLY check for updates after 30 seconds of app usage
-                // This prevents showing banners on fresh installs
-                setTimeout(() => {
-                    registration.update().catch(() => { });
-                }, 30000);
-
-                // Listen for updates that happen AFTER initial registration
-                registration.addEventListener("updatefound", () => {
-                    const newWorker = registration.installing;
-                    if (!newWorker) return;
-
-                    // Wait for the new worker to be installed
-                    newWorker.addEventListener("statechange", () => {
-                        if (
-                            newWorker.state === "installed" &&
-                            navigator.serviceWorker.controller && // There was an existing SW
-                            registration.active && // And there's an active SW
-                            !hasShownBanner.current
-                        ) {
-                            // This is a genuine update - show a simple console message
-                            // We deliberately do NOT show a banner anymore to avoid false positives
-                            console.log("[SW] New version available. Refresh to update.");
-                            hasShownBanner.current = true;
-                        }
-                    });
-                });
-
-            } catch (error) {
-                console.error("[SW] Registration failed:", error);
+        const onControllerChange = () => {
+            if (refreshing.current) window.location.reload();
+        };
+        const onStateChange = () => {
+            if (active && installing?.state === "installed" && navigator.serviceWorker.controller && registration?.waiting) {
+                setWaiting(registration.waiting);
             }
         };
+        const onUpdateFound = () => {
+            installing?.removeEventListener("statechange", onStateChange);
+            installing = registration?.installing ?? null;
+            installing?.addEventListener("statechange", onStateChange);
+        };
 
-        registerAndListen();
+        navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+        const register = async () => {
+            try {
+                registration = await navigator.serviceWorker.register("/sw.js");
+                if (!active) return;
+                if (registration.waiting && navigator.serviceWorker.controller) setWaiting(registration.waiting);
+                registration.addEventListener("updatefound", onUpdateFound);
+                updateTimer = setTimeout(() => { void registration?.update().catch(() => undefined); }, 30000);
+            } catch (error) {
+                console.error("Service worker registration failed", error);
+            }
+        };
+        void register();
 
-        // No need for periodic update checks - browser does this automatically
+        return () => {
+            active = false;
+            if (updateTimer) clearTimeout(updateTimer);
+            registration?.removeEventListener("updatefound", onUpdateFound);
+            installing?.removeEventListener("statechange", onStateChange);
+            navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+        };
     }, []);
 
-    // Return null - no UI component. Updates will be silent.
-    // Users will get updates on next app restart.
-    return null;
+    if (!waiting || dismissed) return null;
+
+    return (
+        <div role="status" className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[90] mx-auto flex max-w-md items-center gap-3 rounded-[1.25rem] bg-[var(--studio-deep)] p-3 text-[var(--studio-deep-contrast)] shadow-xl">
+            <p className="min-w-0 flex-1 text-xs font-bold">יש עדכון לסטודיו טליה</p>
+            <button type="button" onClick={() => { refreshing.current = true; waiting.postMessage({ type: "SKIP_WAITING" }); }} className="min-h-11 rounded-full bg-[var(--studio-accent-bg)] px-4 text-xs font-bold text-[var(--studio-ink)]">לעדכן</button>
+            <button type="button" onClick={() => setDismissed(true)} className="min-h-11 px-2 text-xs text-[var(--studio-deep-contrast)]/75">אחר כך</button>
+        </div>
+    );
 }

@@ -9,8 +9,8 @@ import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import StudioLogo from "@/components/StudioLogo";
 import StudioBotanical from "@/components/StudioBotanical";
-import NotificationPermissionModal from "@/components/NotificationPermissionModal";
 import { useToast } from "@/components/ui/use-toast";
+import InstallAppButton from "@/components/profile/InstallAppButton";
 
 type UpcomingSession = { id: string; title: string; start_time: string };
 
@@ -20,10 +20,9 @@ const format = (date: string, options: Intl.DateTimeFormatOptions) =>
 export default function TraineeDashboard({ userId }: { userId: string }) {
     const router = useRouter();
     const { toast } = useToast();
-    const { profile, tickets, subscription, loading, refreshData, toggleDevMode } = useGymStore();
+    const { profile, tickets, subscription, loading, refreshData } = useGymStore();
     const [nextClass, setNextClass] = useState<UpcomingSession | null>(null);
     const [classLoading, setClassLoading] = useState(true);
-    const [logoTaps, setLogoTaps] = useState(0);
 
     useEffect(() => {
         void refreshData(false, userId);
@@ -88,21 +87,10 @@ export default function TraineeDashboard({ userId }: { userId: string }) {
         <div className="min-h-dvh bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
             <main className="mx-auto max-w-lg px-5 pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
                 <header className="flex min-h-11 items-center justify-between gap-3">
-                    <button
-                        type="button"
-                        aria-label="סטודיו טליה"
-                        onClick={() => {
-                            if (logoTaps === 9) {
-                                toggleDevMode(true);
-                                toast({ title: "מצב פיתוח הופעל", type: "success" });
-                                setLogoTaps(0);
-                            } else setLogoTaps(logoTaps + 1);
-                        }}
-                        className="flex items-center gap-2.5"
-                    >
+                    <div className="flex items-center gap-2.5">
                         <StudioLogo className="h-9 w-9 bg-[var(--studio-deep)]" />
                         <span className="text-start text-[11px] font-bold leading-[1.05] tracking-tight">טליה<br />סטודיו</span>
-                    </button>
+                    </div>
                     <span className="text-xs font-medium text-[var(--studio-muted)]">{today}</span>
                 </header>
 
@@ -160,8 +148,8 @@ export default function TraineeDashboard({ userId }: { userId: string }) {
                 <Link href="/book" className="mt-4 flex min-h-12 items-center justify-between border-b border-[var(--studio-ink)]/15 text-sm font-bold">
                     ללוח האימונים <ArrowLeft aria-hidden="true" className="h-4 w-4" />
                 </Link>
+                <InstallAppButton home />
             </main>
-            <NotificationPermissionModal />
         </div>
     );
 }

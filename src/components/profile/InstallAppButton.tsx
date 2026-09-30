@@ -1,16 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Download, MoreVertical, Share2, Smartphone, X } from "lucide-react";
 import { useInstallApp } from "@/components/PWAInstallProvider";
 
-export default function InstallAppButton() {
+const DISMISS_KEY = "talia_install_nudge_dismissed";
+const DISMISS_MS = 30 * 24 * 60 * 60 * 1000;
+
+export default function InstallAppButton({ home = false }: { home?: boolean }) {
     const { isStandalone, isIOS, canInstall, promptInstall } = useInstallApp();
     const [instructionsOpen, setInstructionsOpen] = useState(false);
+    const [showHome, setShowHome] = useState(false);
     const reduceMotion = useReducedMotion();
 
-    if (isStandalone) return null;
+    useEffect(() => {
+        if (!home) return;
+        if (isStandalone || (!canInstall && !isIOS)) {
+            queueMicrotask(() => setShowHome(false));
+            return;
+        }
+        const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) || 0);
+        queueMicrotask(() => setShowHome(!dismissedAt || Date.now() - dismissedAt >= DISMISS_MS));
+    }, [home, isStandalone, canInstall, isIOS]);
+
+    if (isStandalone || (home && !showHome)) return null;
+
+    const dismiss = () => {
+        localStorage.setItem(DISMISS_KEY, String(Date.now()));
+        setShowHome(false);
+    };
 
     const handleClick = async () => {
         if (canInstall) {
@@ -22,10 +41,13 @@ export default function InstallAppButton() {
 
     return (
         <>
-            <button type="button" onClick={handleClick} className="flex min-h-16 w-full items-center gap-3 rounded-[1.5rem] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] px-5 text-start transition-colors active:bg-[var(--studio-accent-bg)]/20">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]"><Download aria-hidden="true" className="h-5 w-5" /></span>
-                <span className="min-w-0 flex-1"><span className="block text-sm font-bold">להוסיף למסך הבית</span><span className="mt-0.5 block text-xs text-[var(--studio-muted)]">כניסה מהירה בלי לפתוח דפדפן</span></span>
-            </button>
+            <div className={home ? "relative mt-4" : ""}>
+                <button type="button" onClick={handleClick} className="flex min-h-16 w-full items-center gap-3 rounded-[1.5rem] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] px-5 text-start transition-colors active:bg-[var(--studio-accent-bg)]/20">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]"><Download aria-hidden="true" className="h-5 w-5" /></span>
+                    <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{home ? "הסטודיו איתך, בלחיצה" : "להוסיף למסך הבית"}</span><span className="mt-0.5 block text-xs text-[var(--studio-muted)]">{home ? "להוסיף למסך הבית לחוויה הכי נוחה" : "כניסה מהירה בלי לפתוח דפדפן"}</span></span>
+                </button>
+                {home && <button type="button" onClick={dismiss} aria-label="לא עכשיו" className="absolute left-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-[var(--studio-muted)]"><X aria-hidden="true" className="h-4 w-4" /></button>}
+            </div>
 
             <AnimatePresence>
                 {instructionsOpen && (
@@ -39,7 +61,7 @@ export default function InstallAppButton() {
                             <div className="mt-6 space-y-3">
                                 {isIOS ? (
                                     <>
-                                        <p className="flex items-center gap-3 text-sm"><Share2 aria-hidden="true" className="h-5 w-5 text-[var(--studio-subtle)]" />פתחי את תפריט השיתוף בדפדפן.</p>
+                                        <p className="flex items-center gap-3 text-sm"><Share2 aria-hidden="true" className="h-5 w-5 text-[var(--studio-subtle)]" />פתחי את האתר בספארי ואז את תפריט השיתוף.</p>
                                         <p className="flex items-center gap-3 text-sm"><Download aria-hidden="true" className="h-5 w-5 text-[var(--studio-subtle)]" />בחרי ״הוספה למסך הבית״.</p>
                                     </>
                                 ) : (

@@ -5,14 +5,14 @@ export default function manifest(): MetadataRoute.Manifest {
         name: "סטודיו טליה",
         short_name: "טליה",
         description: "האימונים, ההרשמות והיתרה שלך במקום אחד.",
+        lang: "he",
+        dir: "rtl",
         start_url: "/dashboard",
         scope: "/",
         id: "/",
         display: "standalone",
-        display_override: ["standalone"],
-        // CRITICAL: These are needed for proper PWA display
-        background_color: "#0A0A0A",
-        theme_color: "#0A0A0A", // Same as background for seamless header
+        background_color: "#162218",
+        theme_color: "#162218",
         orientation: "portrait",
         icons: [
             {
@@ -22,19 +22,13 @@ export default function manifest(): MetadataRoute.Manifest {
                 purpose: "any"
             },
             {
-                src: "/pwa-icon-192.png",
-                sizes: "192x192",
-                type: "image/png",
-                purpose: "maskable"
-            },
-            {
                 src: "/pwa-icon-512.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "any"
             },
             {
-                src: "/pwa-icon-512.png",
+                src: "/pwa-icon-maskable-512.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable"

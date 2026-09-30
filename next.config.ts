@@ -93,6 +93,7 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   reactCompiler: true,
   turbopack: {},
+  distDir: process.env.TALIA_BUILD_DIR || ".next",
 };
 
 export default withPWA(nextConfig);

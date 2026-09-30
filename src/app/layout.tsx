@@ -8,7 +8,6 @@ import { GymStoreProvider } from "@/providers/GymStoreProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { PWAInstallProvider } from "@/components/PWAInstallProvider";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
-import DebugNotificationPanel from "@/components/DebugNotificationPanel";
 import MotionProvider from "@/components/MotionProvider";
 
 
@@ -31,13 +30,13 @@ export const metadata: Metadata = {
   icons: {
     icon: "/pwa-icon-192.png",
     shortcut: "/pwa-icon-192.png",
-    apple: "/apple-icon.jpg",
+    apple: "/pwa-icon-512.png",
   },
 
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0A0A",
+  themeColor: "#162218",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -69,7 +68,6 @@ export default function RootLayout({
             <ToastProvider>
               <GymStoreProvider>
                 <ConnectedOneSignalProvider />
-                <DebugNotificationPanel />
                 <PWAInstallProvider>
                   {children}
                 </PWAInstallProvider>
