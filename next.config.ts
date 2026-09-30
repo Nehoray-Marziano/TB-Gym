@@ -4,88 +4,41 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   disable: false,
-  // Disable aggressive features that cause issues
-  cacheOnFrontEndNav: false, // Was causing navigation issues
+  cacheOnFrontEndNav: false,
   aggressiveFrontEndNavCaching: false,
-  reloadOnOnline: false, // Was causing restarts
-  dynamicStartUrl: false,
+  reloadOnOnline: false,
+  // The home page redirects according to the signed-in user. Never precache it.
+  cacheStartUrl: false,
   // Fallback for offline pages
   fallbacks: {
     document: '/~offline',
   },
-  extendDefaultRuntimeCaching: true,
+  // The default routes cache pages, RSC payloads and API responses. Those can
+  // contain another user's booking, balance or profile after an account switch.
+  extendDefaultRuntimeCaching: false,
   workboxOptions: {
     disableDevLogs: true,
-    // Activate updates in the background, but keep open pages on their
-    // current worker until they reload or navigate away.
-    skipWaiting: true,
+    // Let the in-app update prompt activate the new worker at a safe moment.
+    skipWaiting: false,
     clientsClaim: false,
-    importScripts: ["https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js"],
+    importScripts: ["/pwa-cache-cleanup.js", "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js"],
     runtimeCaching: [
+      // Authenticated HTML and Next.js RSC requests always come from the
+      // network. The precached offline page handles failed navigations.
       {
-        // Auth pages - NEVER cache
-        urlPattern: /\/auth\/.*/i,
-        handler: "NetworkOnly",
-        options: {
-          cacheName: "auth-pages-no-cache",
-        },
-      },
-      {
-        // Never replay personalized HTML or RSC payloads across accounts.
-        urlPattern: /\/(?:dashboard|book|my-bookings|profile|subscription|onboarding|admin)(?:\/|\?|$)/i,
+        urlPattern: ({ request, url }) => url.origin === self.location.origin && request.mode === "navigate",
         handler: "NetworkOnly",
       },
       {
-        // Supabase API - NEVER cache
-        urlPattern: /^https:\/\/[^/]+\.supabase\.co\/rest\/v1\/.*/i,
+        urlPattern: ({ request, url }) => url.origin === self.location.origin && request.headers.get("RSC") === "1",
         handler: "NetworkOnly",
-        options: {
-          cacheName: "supabase-api-no-cache",
-        },
       },
+      // Keep only immutable build assets available offline. User data and API
+      // responses are never placed in Cache Storage.
       {
-        // Supabase Auth - NEVER cache
-        urlPattern: /^https:\/\/[^/]+\.supabase\.co\/auth\/.*/i,
-        handler: "NetworkOnly",
-        options: {
-          cacheName: "supabase-auth-no-cache",
-        },
-      },
-      {
-        // Static Images
-        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+        urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/_next/static/"),
         handler: "CacheFirst",
-        options: {
-          cacheName: "image-cache",
-          expiration: {
-            maxEntries: 100,
-            maxAgeSeconds: 60 * 60 * 24 * 30,
-          },
-        },
-      },
-      {
-        // JS/CSS Assets
-        urlPattern: /\.(?:js|css)$/i,
-        handler: "StaleWhileRevalidate",
-        options: {
-          cacheName: "static-assets",
-          expiration: {
-            maxEntries: 32,
-            maxAgeSeconds: 60 * 60 * 24,
-          },
-        },
-      },
-      {
-        // Google Fonts
-        urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
-        handler: "CacheFirst",
-        options: {
-          cacheName: "google-fonts",
-          expiration: {
-            maxEntries: 4,
-            maxAgeSeconds: 60 * 60 * 24 * 365,
-          },
-        },
+        options: { cacheName: "next-static-v1", expiration: { maxEntries: 128, maxAgeSeconds: 60 * 60 * 24 * 30 } },
       },
     ],
   },

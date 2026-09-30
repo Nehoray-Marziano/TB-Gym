@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/ui/use-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GymStoreProvider } from "@/providers/GymStoreProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import ConnectionStatus from "@/components/ConnectionStatus";
 import { PWAInstallProvider } from "@/components/PWAInstallProvider";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 import MotionProvider from "@/components/MotionProvider";
@@ -28,9 +29,9 @@ export const metadata: Metadata = {
     title: "סטודיו טליה",
   },
   icons: {
-    icon: "/pwa-icon-192.png",
-    shortcut: "/pwa-icon-192.png",
-    apple: "/pwa-icon-512.png",
+    icon: "/pwa-icon-v2-192.png",
+    shortcut: "/pwa-icon-v2-192.png",
+    apple: "/apple-touch-icon-v2.png",
   },
 
 };
@@ -39,8 +40,6 @@ export const viewport: Viewport = {
   themeColor: "#162218",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
 };
 
@@ -57,6 +56,7 @@ export default function RootLayout({
       >
 
         <ServiceWorkerRegister />
+        <ConnectionStatus />
         <ThemeProvider
           attribute="class"
           defaultTheme="classic"
