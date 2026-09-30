@@ -4,6 +4,8 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   disable: false,
+  // ServiceWorkerRegister owns registration and the update lifecycle.
+  register: false,
   cacheOnFrontEndNav: false,
   aggressiveFrontEndNavCaching: false,
   reloadOnOnline: false,
@@ -20,7 +22,8 @@ const withPWA = withPWAInit({
     disableDevLogs: true,
     // Let the in-app update prompt activate the new worker at a safe moment.
     skipWaiting: false,
-    clientsClaim: false,
+    // Also lets the previously deployed update button receive controllerchange.
+    clientsClaim: true,
     importScripts: ["/pwa-cache-cleanup.js", "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js"],
     runtimeCaching: [
       // Authenticated HTML and Next.js RSC requests always come from the
@@ -48,6 +51,12 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   turbopack: {},
   distDir: process.env.TALIA_BUILD_DIR || ".next",
+  async headers() {
+    return [{
+      source: "/sw.js",
+      headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+    }];
+  },
 };
 
 export default withPWA(nextConfig);

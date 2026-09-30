@@ -7,6 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "test:pwa": "node --test scripts/test-pwa-update.mjs",
     "stress:bookings": "node scripts/stress-bookings.mjs",
     "stress:edge": "node scripts/edge-cases.mjs",
     "stress:admin": "node scripts/admin-schedule.mjs"
