@@ -16,9 +16,10 @@ const withPWA = withPWAInit({
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
-    // CRITICAL: Both false to prevent aggressive takeover
-    skipWaiting: false,
-    clientsClaim: false, // Changed from true - this was causing issues!
+    // Activate updates in the background, but keep open pages on their
+    // current worker until they reload or navigate away.
+    skipWaiting: true,
+    clientsClaim: false,
     importScripts: ["https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js"],
     runtimeCaching: [
       {
