@@ -26,7 +26,6 @@ export default function ServiceWorkerRegister() {
         let applying = false;
         let reloading = false;
         let dismissed = false;
-        const initialController = navigator.serviceWorker.controller;
 
         try {
             dismissed = sessionStorage.getItem(DISMISSED_KEY) === "1";
@@ -78,13 +77,6 @@ export default function ServiceWorkerRegister() {
             }
         };
 
-        const onControllerChange = () => {
-            if (applying) reloadOnce();
-            else if (initialController && navigator.serviceWorker.controller !== initialController && !dismissed) {
-                setStatus("ready");
-            }
-        };
-
         const onVisibilityChange = () => {
             if (document.visibilityState === "visible") void checkForUpdate();
         };
@@ -107,7 +99,7 @@ export default function ServiceWorkerRegister() {
             setStatus("applying");
             try { sessionStorage.removeItem(DISMISSED_KEY); } catch { /* Storage is optional. */ }
             activationAbort = new AbortController();
-            void activatePWAUpdate(worker, registration, activationAbort.signal)
+            void activatePWAUpdate(worker, navigator.serviceWorker, activationAbort.signal)
                 .then(reloadOnce)
                 .catch(() => {
                     if (!mounted || reloading) return;
@@ -130,7 +122,6 @@ export default function ServiceWorkerRegister() {
                 if (!mounted) return;
                 registration = result;
                 registration.addEventListener("updatefound", onUpdateFound);
-                navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
                 if (registration.installing) onUpdateFound();
                 showWaiting();
                 void checkForUpdate();
@@ -152,7 +143,6 @@ export default function ServiceWorkerRegister() {
             clearInterval(interval);
             registration?.removeEventListener("updatefound", onUpdateFound);
             installing?.removeEventListener("statechange", onInstallingStateChange);
-            navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
             window.removeEventListener("online", checkForUpdate);
             document.removeEventListener("visibilitychange", onVisibilityChange);
         };

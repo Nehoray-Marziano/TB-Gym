@@ -21,27 +21,42 @@ class FakeWorker extends EventTarget {
   }
 }
 
-test('asks the waiting worker to activate and waits before completing', async () => {
+class FakeServiceWorkers extends EventTarget {
+  controller = null;
+
+  claim(worker) {
+    this.controller = worker;
+    this.dispatchEvent(new Event('controllerchange'));
+  }
+}
+
+test('asks the waiting worker to activate and waits until it controls the page', async () => {
   const worker = new FakeWorker();
-  const registration = { active: null };
-  const promise = activatePWAUpdate(worker, registration, new AbortController().signal, 100);
+  const serviceWorkers = new FakeServiceWorkers();
+  const promise = activatePWAUpdate(worker, serviceWorkers, new AbortController().signal, 100);
+  let completed = false;
+  void promise.then(() => { completed = true; });
   assert.deepEqual(worker.messages, [{ type: 'SKIP_WAITING' }]);
   worker.transition('activating');
   worker.transition('activated');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(completed, false, 'activation alone must not reload the page');
+  serviceWorkers.claim(worker);
   await promise;
+  assert.equal(completed, true);
 });
 
 test('reports activation failure so the UI can offer a retry', async () => {
   const worker = new FakeWorker();
   await assert.rejects(
-    activatePWAUpdate(worker, { active: null }, new AbortController().signal, 5),
+    activatePWAUpdate(worker, new FakeServiceWorkers(), new AbortController().signal, 5),
     /timed out/,
   );
 });
 
 test('rejects a worker superseded by another update', async () => {
   const worker = new FakeWorker();
-  const promise = activatePWAUpdate(worker, { active: null }, new AbortController().signal, 100);
+  const promise = activatePWAUpdate(worker, new FakeServiceWorkers(), new AbortController().signal, 100);
   worker.transition('redundant');
   await assert.rejects(promise, /redundant/);
 });
@@ -49,7 +64,7 @@ test('rejects a worker superseded by another update', async () => {
 test('ignores an activation that was cancelled on unmount', async () => {
   const worker = new FakeWorker();
   const abort = new AbortController();
-  const promise = activatePWAUpdate(worker, { active: null }, abort.signal, 100);
+  const promise = activatePWAUpdate(worker, new FakeServiceWorkers(), abort.signal, 100);
   abort.abort();
   await assert.rejects(promise, /cancelled/);
 });
