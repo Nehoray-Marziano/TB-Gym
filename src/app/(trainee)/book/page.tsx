@@ -31,6 +31,7 @@ export default function BookingPage() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [bookingId, setBookingId] = useState<string | null>(null);
+    const [loadError, setLoadError] = useState(false);
     const reduceMotion = useReducedMotion();
 
     const fetchSessions = useCallback(async () => {
@@ -39,6 +40,9 @@ export default function BookingPage() {
                 supabase.from("gym_sessions_with_counts").select("*").gte("start_time", new Date().toISOString()).order("start_time", { ascending: true }),
                 supabase.from("bookings").select("session_id").eq("user_id", userId).eq("status", "confirmed")
             ]);
+            if (sessionRes.error || bookingsRes.error) {
+                throw sessionRes.error || bookingsRes.error;
+            }
 
             const sessionData = sessionRes.data;
             const myBookings = bookingsRes.data;
@@ -51,9 +55,11 @@ export default function BookingPage() {
                 }));
                 setSessions(sessionsWithStatus);
                 sessionStorage.setItem(`talia_sessions_${userId}`, JSON.stringify(sessionsWithStatus));
+                setLoadError(false);
             }
         } catch (error) {
             console.error("Error fetching sessions:", error);
+            setLoadError(true);
         } finally {
             setLoading(false);
         }
@@ -171,6 +177,7 @@ export default function BookingPage() {
 
                 <div className="px-5 pt-4">
                     <p className="mb-3 text-xs font-medium text-[var(--studio-muted)]">בחרי את השעה שלך. מקום פנוי מחכה לך.</p>
+                    {loadError && <div role="alert" className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-[var(--studio-warning-bg)] p-3 text-sm text-[var(--studio-warning-ink)]"><span>לא הצלחנו לעדכן את רשימת האימונים.</span><button type="button" onClick={() => void fetchSessions()} className="min-h-11 shrink-0 font-bold underline">נסי שוב</button></div>}
 
                 {loading ? (
                     <div className="space-y-3" aria-busy="true">
@@ -210,8 +217,8 @@ export default function BookingPage() {
                             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
 
                             if (isIOS) {
-                                const startStr = start.toISOString().replace(/-|:|\.\\d+/g, "");
-                                const endStr = end.toISOString().replace(/-|:|\.\\d+/g, "");
+                                const startStr = start.toISOString().replace(/[-:]|\.\d{3}/g, "");
+                                const endStr = end.toISOString().replace(/[-:]|\.\d{3}/g, "");
                                 const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
@@ -229,8 +236,9 @@ END:VCALENDAR`;
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
+                                window.setTimeout(() => window.URL.revokeObjectURL(link.href), 1000);
                             } else {
-                                const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\\d+/g, "");
+                                const formatDate = (date: Date) => date.toISOString().replace(/[-:]|\.\d{3}/g, "");
                                 const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
                                 window.open(url, '_blank');
                             }
@@ -271,8 +279,8 @@ END:VCALENDAR`;
                                 ) : (
                                     <button
                                         type="button"
-                                        onClick={() => !isFull && handleBook(session.id)}
-                                        disabled={bookingId === session.id || isFull}
+                                        onClick={() => !isFull && !loadError && !bookingId && handleBook(session.id)}
+                                        disabled={Boolean(bookingId) || isFull || loadError}
                                         className={`flex min-h-11 w-full items-center justify-between border-t px-4 text-xs font-bold transition-colors ${isFull ? "border-[var(--studio-ink)]/10 bg-[var(--studio-neutral-bg)] text-[var(--studio-muted)]" : "border-[var(--studio-ink)]/10 bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] active:brightness-95"}`}
                                     >
                                         {bookingId === session.id ? "רושמים אותך..." : isFull ? "האימון מלא" : "שמרי לי מקום"}
