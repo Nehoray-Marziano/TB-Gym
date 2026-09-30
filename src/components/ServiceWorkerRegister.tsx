@@ -20,6 +20,10 @@ export default function ServiceWorkerRegister() {
             if (waiting.state === "activated") window.location.reload();
         });
         waiting.postMessage({ type: "SKIP_WAITING" });
+        setWaiting(null);
+        // Some older installed workers do not claim the current tab. A reload
+        // also gives the new worker a chance to control the next navigation.
+        window.setTimeout(() => window.location.reload(), 1500);
     };
 
     useEffect(() => {
