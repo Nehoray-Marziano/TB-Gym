@@ -7,6 +7,21 @@ export default function ServiceWorkerRegister() {
     const [dismissed, setDismissed] = useState(false);
     const refreshing = useRef(false);
 
+    const applyUpdate = () => {
+        if (!waiting || refreshing.current) return;
+        refreshing.current = true;
+        // clientsClaim is deliberately off: an activated worker does not take
+        // over an open tab, so controllerchange alone is insufficient here.
+        if (waiting.state === "activated") {
+            window.location.reload();
+            return;
+        }
+        waiting.addEventListener("statechange", () => {
+            if (waiting.state === "activated") window.location.reload();
+        });
+        waiting.postMessage({ type: "SKIP_WAITING" });
+    };
+
     useEffect(() => {
         if (process.env.NODE_ENV === "development" || !("serviceWorker" in navigator)) return;
 
@@ -57,7 +72,7 @@ export default function ServiceWorkerRegister() {
     return (
         <div role="status" className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[90] mx-auto flex max-w-md items-center gap-3 rounded-[1.25rem] bg-[var(--studio-deep)] p-3 text-[var(--studio-deep-contrast)] shadow-xl">
             <p className="min-w-0 flex-1 text-xs font-bold">יש עדכון לסטודיו טליה</p>
-            <button type="button" onClick={() => { refreshing.current = true; waiting.postMessage({ type: "SKIP_WAITING" }); }} className="min-h-11 rounded-full bg-[var(--studio-accent-bg)] px-4 text-xs font-bold text-[var(--studio-ink)]">לעדכן</button>
+            <button type="button" onClick={applyUpdate} className="min-h-11 rounded-full bg-[var(--studio-accent-bg)] px-4 text-xs font-bold text-[var(--studio-ink)]">לעדכן</button>
             <button type="button" onClick={() => setDismissed(true)} className="min-h-11 px-2 text-xs text-[var(--studio-deep-contrast)]/75">אחר כך</button>
         </div>
     );
