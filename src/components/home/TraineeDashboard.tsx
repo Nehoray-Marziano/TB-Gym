@@ -127,9 +127,9 @@ export default function TraineeDashboard({
                 className="pointer-events-none absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]"
             />
 
-            <main className="relative mx-auto max-w-lg px-4 sm:px-6 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] space-y-4 sm:space-y-4.5">
+            <main className="relative mx-auto max-w-lg px-4 sm:px-6 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[max(0.35rem,env(safe-area-inset-top))] space-y-2.5 sm:space-y-3">
                 {/* Header: Studio Brand Emblem & Date / Admin Badge */}
-                <header className="flex min-h-[4.25rem] items-center justify-between gap-3 pt-0.5">
+                <header className="flex min-h-[3rem] items-center justify-between gap-3 pt-0">
                     <Link
                         href="/dashboard"
                         className="group flex items-center transition-transform active:scale-95"
@@ -139,7 +139,7 @@ export default function TraineeDashboard({
                         <img
                             src="/studio_logo_crisp.svg"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-16 sm:h-[4.5rem] w-auto text-[#142217] object-contain drop-shadow-[0_2px_10px_rgba(20,32,22,0.18)] transition-transform group-hover:scale-[1.03]"
+                            className="h-11 sm:h-13 w-auto text-[#142217] object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.16)] transition-transform group-hover:scale-[1.02]"
                         />
                     </Link>
 
@@ -147,41 +147,41 @@ export default function TraineeDashboard({
                         {profile?.role === "administrator" && (
                             <Link
                                 href="/admin"
-                                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--studio-deep)] px-3 py-1.5 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-sm transition-transform active:scale-95"
+                                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--studio-deep)] px-3 py-1 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-sm transition-transform active:scale-95"
                             >
                                 <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
                                 <span>ניהול</span>
                             </Link>
                         )}
-                        <div className="flex items-center gap-1.5 rounded-full border border-[#8b9978] bg-white px-3.5 py-1.5 text-[11px] sm:text-xs font-bold text-[#142217] shadow-[0_2px_8px_rgba(20,32,22,0.08)] whitespace-nowrap shrink-0">
-                            <CalendarDays aria-hidden="true" className="h-4 w-4 text-[#1e2e1c]" strokeWidth={2.4} />
+                        <div className="flex items-center gap-1.5 rounded-full border border-[#8b9978] bg-white px-3 py-1 text-[11px] sm:text-xs font-bold text-[#142217] shadow-[0_2px_6px_rgba(20,32,22,0.06)] whitespace-nowrap shrink-0">
+                            <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 text-[#1e2e1c]" strokeWidth={2.4} />
                             <span>{today}</span>
                         </div>
                     </div>
                 </header>
 
                 {/* Personal Greeting with Terracotta Sun & High-Contrast Botanical Art */}
-                <div className="relative isolate flex min-h-[13.5rem] sm:min-h-[15rem] items-center py-3 sm:py-4">
-                    {/* Terracotta sun circles & botanical watermark */}
-                    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-[46%] select-none">
-                        <div className="absolute left-6 top-5 h-20 w-20 rounded-full bg-[var(--studio-coral-bg)]/80 sm:h-24 sm:w-24 shadow-sm" />
-                        <div className="absolute left-3 top-2 h-26 w-26 rounded-full border-2 border-[var(--studio-coral-bg)]/60 sm:h-30 sm:w-30" />
-                        {/* High-contrast botanical branch - fully framed without cropping */}
+                <div className="relative isolate flex min-h-[9rem] sm:min-h-[10.5rem] items-center py-1 sm:py-2">
+                    {/* Terracotta sun circles & botanical watermark positioned higher without pushing page down */}
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-[44%] select-none">
+                        <div className="absolute left-5 -top-1 h-18 w-18 rounded-full bg-[var(--studio-coral-bg)]/80 sm:h-22 sm:w-22 shadow-sm" />
+                        <div className="absolute left-2 -top-4 h-24 w-24 rounded-full border-2 border-[var(--studio-coral-bg)]/60 sm:h-28 sm:w-28" />
+                        {/* High-contrast botanical branch reaching upward naturally without cropping */}
                         <img
                             src="/user_leaves_branch_dark.png"
                             alt=""
-                            className="absolute bottom-1 left-1 h-[12.5rem] sm:h-[14rem] w-auto max-w-none -rotate-6 object-contain opacity-95 drop-shadow-[0_2px_6px_rgba(20,32,22,0.18)]"
+                            className="absolute -top-6 left-0 h-44 sm:h-48 w-auto max-w-none -rotate-6 object-contain opacity-95 drop-shadow-[0_2px_4px_rgba(20,32,22,0.15)]"
                         />
                     </div>
 
-                    <div className="w-[72%]">
-                        <p className="mb-1.5 text-xs sm:text-sm font-bold tracking-wide text-[#223320]">
+                    <div className="w-[74%]">
+                        <p className="mb-1 text-xs sm:text-sm font-bold tracking-wide text-[#223320]">
                             ✦ {greeting} · {nextClass ? "טוב לראות אותך" : "איזה כיף שבאת"}
                         </p>
                         <h1 className="break-words font-bold leading-[1.08] tracking-[-0.04em] text-[#142217]">
                             <span className="block text-xl sm:text-2xl">{loading ? "שלום לך" : "היי,"}</span>
                             {!loading && (
-                                <span className="mt-0.5 block text-[clamp(2.4rem,10vw,3.6rem)]">
+                                <span className="mt-0.5 block text-[clamp(2.3rem,9.5vw,3.4rem)]">
                                     {firstName}<span className="text-[#96422d]">.</span>
                                 </span>
                             )}
@@ -193,7 +193,7 @@ export default function TraineeDashboard({
                 <section
                     aria-labelledby="next-class"
                     aria-busy={classLoading}
-                    className="relative isolate overflow-hidden rounded-[30px_30px_10px_30px] border-2 border-[var(--studio-brand)]/40 bg-gradient-to-br from-[#1c2c1f] via-[#142217] to-[#0c140e] p-5 sm:p-6 text-white shadow-[0_20px_44px_-16px_rgba(12,22,14,0.7)]"
+                    className="relative isolate overflow-hidden rounded-[28px_28px_10px_28px] border-2 border-[var(--studio-brand)]/40 bg-gradient-to-br from-[#1c2c1f] via-[#142217] to-[#0c140e] p-4.5 sm:p-5 text-white shadow-[0_16px_36px_-12px_rgba(12,22,14,0.7)]"
                 >
                     {/* Atmospheric corner glow & botanical leaf artwork inside card */}
                     <div
@@ -226,7 +226,7 @@ export default function TraineeDashboard({
                         )}
                     </div>
 
-                    <div className="relative flex min-h-40 flex-col pt-4">
+                    <div className="relative flex min-h-[8.5rem] flex-col pt-3.5">
                         {classLoading ? (
                             <div className="flex flex-1 items-center justify-center" role="status">
                                 <p className="text-sm font-semibold text-white animate-pulse">טוענים את האימון הבא…</p>
@@ -239,12 +239,12 @@ export default function TraineeDashboard({
                                             לא הצלחנו לעדכן את האימון הבא.
                                         </p>
                                     ) : nextClass ? (
-                                        <div className="flex flex-col-reverse items-start gap-3.5 min-[380px]:flex-row">
+                                        <div className="flex flex-col-reverse items-start gap-3 min-[380px]:flex-row">
                                             <div className="min-w-0 flex-1">
-                                                <h3 dir="auto" className="break-words text-[clamp(1.5rem,5.8vw,1.95rem)] font-bold leading-tight text-white drop-shadow-sm">
+                                                <h3 dir="auto" className="break-words text-[clamp(1.4rem,5.5vw,1.85rem)] font-bold leading-tight text-white drop-shadow-sm">
                                                     {nextClass.title}
                                                 </h3>
-                                                <time dateTime={nextClass.start_time} className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/95">
+                                                <time dateTime={nextClass.start_time} className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/95">
                                                     <span className="font-bold text-white">{format(nextClass.start_time, { weekday: "long" })}</span>
                                                     <span aria-hidden="true" className="text-white/60">·</span>
                                                     <span dir="ltr" className="inline-flex items-center gap-1 font-bold text-white">
@@ -258,17 +258,17 @@ export default function TraineeDashboard({
                                                 aria-hidden="true"
                                                 className="flex shrink-0 items-center gap-2 text-center text-[#d8e0b5] min-[380px]:block min-[380px]:border-r min-[380px]:border-white/20 min-[380px]:pr-3.5"
                                             >
-                                                <span className="block text-3xl font-bold leading-none tracking-tight tabular-nums text-white min-[380px]:text-[3.1rem]">
+                                                <span className="block text-3xl font-bold leading-none tracking-tight tabular-nums text-white min-[380px]:text-[3rem]">
                                                     {format(nextClass.start_time, { day: "2-digit" })}
                                                 </span>
-                                                <span className="block text-xs font-bold text-[#d8e0b5] min-[380px]:mt-1.5">
+                                                <span className="block text-xs font-bold text-[#d8e0b5] min-[380px]:mt-1">
                                                     {format(nextClass.start_time, { month: "long" })}
                                                 </span>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-1.5">
-                                            <p className="text-[clamp(1.65rem,6.8vw,2.15rem)] font-bold leading-[1.14] tracking-tight text-white">
+                                        <div className="space-y-1">
+                                            <p className="text-[clamp(1.55rem,6.5vw,2.05rem)] font-bold leading-[1.12] tracking-tight text-white">
                                                 קצת זמן<br />
                                                 <span className="text-[#d8e0b5]">בשבילך.</span>
                                             </p>
@@ -282,21 +282,21 @@ export default function TraineeDashboard({
                                 {nextClass || classError ? (
                                     <Link
                                         href="/my-bookings"
-                                        className="mt-5 flex min-h-11 items-center justify-between gap-3 rounded-xl border-t border-white/20 pt-3 text-sm font-bold text-white transition-colors hover:text-[#d8e0b5] active:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d8e0b5]"
+                                        className="mt-4 flex min-h-10 items-center justify-between gap-3 rounded-xl border-t border-white/20 pt-2.5 text-sm font-bold text-white transition-colors hover:text-[#d8e0b5] active:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d8e0b5]"
                                     >
                                         <span>לפרטי האימון וביטולים</span>
-                                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#d8e0b5] text-[#142016] shadow-sm transition-transform hover:-translate-x-1">
-                                            <ArrowLeft aria-hidden="true" className="h-4.5 w-4.5" strokeWidth={2.4} />
+                                        <span className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-full bg-[#d8e0b5] text-[#142016] shadow-sm transition-transform hover:-translate-x-1">
+                                            <ArrowLeft aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
                                         </span>
                                     </Link>
                                 ) : (
                                     <Link
                                         href="/book"
-                                        className="mt-5 flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#dbe5b8] via-[#cbd3aa] to-[#bed09e] px-4 py-2.5 text-sm font-bold text-[#111c13] shadow-[0_12px_28px_-6px_rgba(203,211,170,0.65),0_0_0_1px_rgba(255,255,255,0.4)] transition-all hover:brightness-105 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#cbd3aa]"
+                                        className="mt-4 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#dbe5b8] via-[#cbd3aa] to-[#bed09e] px-4 py-2 text-sm font-bold text-[#111c13] shadow-[0_10px_24px_-6px_rgba(203,211,170,0.65),0_0_0_1px_rgba(255,255,255,0.4)] transition-all hover:brightness-105 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#cbd3aa]"
                                     >
-                                        <CalendarDays aria-hidden="true" className="h-4.5 w-4.5 shrink-0" strokeWidth={2.4} />
+                                        <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2.4} />
                                         <span>למערכת השעות ושריון מקום</span>
-                                        <ArrowLeft aria-hidden="true" className="h-4.5 w-4.5 shrink-0" strokeWidth={2.4} />
+                                        <ArrowLeft aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2.4} />
                                     </Link>
                                 )}
                             </>
@@ -304,16 +304,16 @@ export default function TraineeDashboard({
                     </div>
                 </section>
 
-                {/* Member Status & Balance Row (High contrast, clearly bordered card) */}
-                <div className="flex min-h-[4.75rem] flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[22px] border-2 border-[#8b9978] bg-white p-4 sm:p-5 shadow-[0_8px_24px_-8px_rgba(20,32,22,0.12)]">
+                {/* Member Status & Balance Row (Compact, high contrast) */}
+                <div className="flex min-h-[4.25rem] flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[20px] border-2 border-[#8b9978] bg-white p-3.5 sm:p-4 shadow-[0_6px_20px_-8px_rgba(20,32,22,0.1)]">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#142217] text-[#d8e0b5] shadow-sm">
-                            <Ticket aria-hidden="true" className="h-5 w-5 text-[#d8e0b5]" strokeWidth={2.4} />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#142217] text-[#d8e0b5] shadow-sm">
+                            <Ticket aria-hidden="true" className="h-4.5 w-4.5 text-[#d8e0b5]" strokeWidth={2.4} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
                                 <span
-                                    className="text-2xl sm:text-3xl font-bold leading-none tabular-nums text-[#142217]"
+                                    className="text-2xl font-bold leading-none tabular-nums text-[#142217]"
                                     aria-busy={loading}
                                 >
                                     {loading ? "–" : tickets}
@@ -334,7 +334,7 @@ export default function TraineeDashboard({
 
                     <Link
                         href="/subscription"
-                        className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border-2 border-[#142217] bg-[#f2f4e8] px-3.5 py-1.5 text-xs font-bold text-[#142217] shadow-sm transition-all hover:bg-[#142217] hover:text-white active:bg-[#142217] active:text-white"
+                        className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border-2 border-[#142217] bg-[#f2f4e8] px-3 py-1.5 text-xs font-bold text-[#142217] shadow-sm transition-all hover:bg-[#142217] hover:text-white active:bg-[#142217] active:text-white"
                     >
                         <span>{tickets > 0 ? "המנוי שלי" : "רכישת מנוי"}</span>
                         <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
