@@ -120,14 +120,14 @@ export default function TraineeDashboard({
     const today = new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
     return (
-        <div className="relative min-h-dvh overflow-x-hidden bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
+        <div className="relative h-dvh max-h-dvh overflow-hidden bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
             {/* Ambient atmospheric lighting */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]"
             />
 
-            <main className="relative mx-auto flex h-dvh max-w-md flex-col justify-between px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5">
+            <main className="relative mx-auto flex h-full max-w-md flex-col justify-between px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[max(0.85rem,env(safe-area-inset-top))] sm:px-5">
                 {/* 1. Header: Studio Brand Emblem & Date / Admin Badge */}
                 <header className="flex shrink-0 items-center justify-between gap-3">
                     <Link
