@@ -40,4 +40,4 @@ The workout card uses three 30px corners and one 10px corner, echoing the studio
 - Keep one workout-related action inside the home card.
 - Keep balance legible without turning it into another competing card.
 - Do not add quick-action tiles that repeat the card or bottom navigation.
-- Do not add decorative animation or additional welcome messages to the home page.
+- A static studio etiquette note (grip socks, water bottle, arriving 5m early) provides new member reassurance without navigational distraction.

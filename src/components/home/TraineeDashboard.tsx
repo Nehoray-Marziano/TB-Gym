@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarDays, Clock3, Sparkles, Ticket } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, HeartHandshake, Sparkles, Ticket } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
-import InstallAppButton from "@/components/profile/InstallAppButton";
 
 export type UpcomingSession = { id: string; title: string; start_time: string };
 
@@ -44,13 +43,14 @@ export default function TraineeDashboard({
     const tickets = previewTickets !== undefined ? previewTickets : storeTickets;
     const loading = previewTickets !== undefined ? false : storeLoading;
 
-    const [nextClass, setNextClass] = useState<UpcomingSession | null>(previewNextClass ?? null);
-    const [classLoading, setClassLoading] = useState(previewNextClass === undefined);
+    const [loadedClass, setNextClass] = useState<UpcomingSession | null>(null);
+    const [classError, setClassError] = useState(false);
+    const [isClassLoading, setClassLoading] = useState(true);
+    const nextClass = previewNextClass !== undefined ? previewNextClass : loadedClass;
+    const classLoading = previewNextClass === undefined && isClassLoading;
 
     useEffect(() => {
         if (previewNextClass !== undefined) {
-            setNextClass(previewNextClass);
-            setClassLoading(false);
             return;
         }
 
@@ -63,7 +63,7 @@ export default function TraineeDashboard({
                 const previous = JSON.parse(cached) as UpcomingSession | null;
                 queueMicrotask(() => {
                     if (!active) return;
-                    setNextClass(previous);
+                    setNextClass(previous && new Date(previous.start_time) > new Date() ? previous : null);
                     setClassLoading(false);
                 });
             }
@@ -78,6 +78,7 @@ export default function TraineeDashboard({
                 .eq("user_id", userId)
                 .eq("status", "confirmed");
             if (!active) return;
+            setClassError(Boolean(error));
             if (!error && data) {
                 const upcoming = (data as unknown as { session: UpcomingSession | null }[])
                     .map(({ session }) => session)
@@ -88,7 +89,11 @@ export default function TraineeDashboard({
             }
             setClassLoading(false);
         };
-        void load();
+        void load().catch(() => {
+            if (!active) return;
+            setClassError(true);
+            setClassLoading(false);
+        });
         return () => { active = false; };
     }, [userId, refreshData, previewNextClass]);
 
@@ -116,273 +121,259 @@ export default function TraineeDashboard({
 
     return (
         <div className="relative min-h-dvh overflow-x-hidden bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
-            {/* High-contrast botanical branch drifting on the page background */}
+            {/* Ambient atmospheric lighting */}
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -right-20 top-6 h-[560px] w-auto max-w-none overflow-hidden select-none"
-            >
-                {/* Dark botanical branch for light theme with high contrast */}
-                <img
-                    src="/user_leaves_branch_dark.png"
-                    alt=""
-                    className="h-[560px] w-auto object-contain opacity-30 rotate-[15deg] mix-blend-multiply drop-shadow-sm dark:hidden"
-                />
-                {/* White botanical branch for dark theme */}
-                <img
-                    src="/user_leaves_branch.png"
-                    alt=""
-                    className="h-[560px] w-auto object-contain opacity-18 rotate-[15deg] mix-blend-screen hidden dark:block"
-                />
-            </div>
-
-            {/* Subtle atmospheric ambient glow at top */}
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.28)_0%,transparent_70%)]"
+                className="pointer-events-none absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]"
             />
 
-            <main className="relative mx-auto max-w-lg px-4 sm:px-5 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] space-y-4 sm:space-y-4.5">
-                {/* Header: Prominent Brand Logo & High-Contrast Date Badge */}
-                <header className="flex min-h-[4.75rem] items-center justify-between gap-3 pt-0.5">
+            <main className="relative mx-auto max-w-lg px-4 sm:px-6 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] space-y-4 sm:space-y-4.5">
+                {/* Header: Studio Brand Emblem & Date / Admin Badge */}
+                <header className="flex min-h-[4.25rem] items-center justify-between gap-3 pt-0.5">
                     <Link
                         href="/dashboard"
                         className="group flex items-center transition-transform active:scale-95"
                         aria-label="סטודיו טליה - תזונה • אימונים"
                     >
-                        {/* High-res dark studio emblem with crisp readable text for light theme */}
+                        {/* High-contrast dark studio emblem for light & classic theme */}
                         <img
                             src="/studio_emblem_dark.png"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-[4.75rem] sm:h-20 w-auto object-contain drop-shadow-[0_2px_10px_rgba(20,32,22,0.12)] transition-transform group-hover:scale-[1.03] dark:hidden"
+                            className="h-16 sm:h-[4.5rem] w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] transition-transform group-hover:scale-[1.02] dark:hidden"
                         />
-                        {/* High-res white studio emblem for dark theme */}
+                        {/* Crisp white studio emblem for dark theme */}
                         <img
                             src="/studio_emblem_clean.png"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-[4.75rem] sm:h-20 w-auto object-contain drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-[1.03] hidden dark:block"
+                            className="h-16 sm:h-[4.5rem] w-auto object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-[1.02] hidden dark:block"
                         />
                     </Link>
 
-                    <div className="flex items-center gap-1.5 rounded-full border border-[#cbd2bc] bg-white/95 px-3 py-1.5 text-[11px] sm:text-xs font-bold text-[var(--studio-ink)] shadow-[0_2px_8px_rgba(20,32,22,0.06)] backdrop-blur-md whitespace-nowrap shrink-0">
-                        <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-brand)]" />
-                        <span>{today}</span>
+                    <div className="flex items-center gap-2">
+                        {profile?.role === "administrator" && (
+                            <Link
+                                href="/admin"
+                                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--studio-deep)] px-3 py-1.5 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-sm transition-transform active:scale-95"
+                            >
+                                <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
+                                <span>ניהול</span>
+                            </Link>
+                        )}
+                        <div className="flex items-center gap-1.5 rounded-full border border-[#cbd2bc] bg-white/95 dark:bg-[var(--studio-card)]/90 px-3 py-1.5 text-[11px] sm:text-xs font-bold text-[var(--studio-ink)] shadow-[0_2px_6px_rgba(20,32,22,0.05)] backdrop-blur-md whitespace-nowrap shrink-0">
+                            <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-brand)]" />
+                            <span>{today}</span>
+                        </div>
                     </div>
                 </header>
 
-                {/* Greeting & Headline */}
-                <div className="pt-0.5 flex items-end justify-between gap-3">
-                    <div className="min-w-0">
-                        <p className="text-xs font-bold tracking-wide text-[var(--studio-subtle)]">
-                            ✦ {greeting} · טוב לראות אותך
+                {/* Personal Greeting with Terracotta Sun & High-Contrast Botanical Art */}
+                <div className="relative isolate flex min-h-36 sm:min-h-44 items-center py-2 sm:py-3">
+                    {/* Terracotta sun circles & botanical watermark */}
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-[42%] overflow-hidden select-none">
+                        <div className="absolute left-5 top-4 h-16 w-16 rounded-full bg-[var(--studio-coral-bg)]/60 sm:h-20 sm:w-20" />
+                        <div className="absolute left-2 top-2 h-22 w-22 rounded-full border border-[var(--studio-coral-bg)]/35 sm:h-26 sm:w-26" />
+                        {/* High-contrast botanical branch for light theme */}
+                        <img
+                            src="/user_leaves_branch_dark.png"
+                            alt=""
+                            className="absolute -bottom-8 left-0 h-48 w-auto max-w-none -rotate-12 object-contain opacity-85 mix-blend-multiply drop-shadow-sm dark:hidden"
+                        />
+                        {/* Sage botanical branch for dark theme */}
+                        <img
+                            src="/user_leaves_branch_sage.png"
+                            alt=""
+                            className="absolute -bottom-8 left-0 h-48 w-auto max-w-none -rotate-12 object-contain opacity-75 hidden dark:block"
+                        />
+                    </div>
+
+                    <div className="w-[74%]">
+                        <p className="mb-1 text-xs font-bold tracking-wide text-[var(--studio-subtle)]">
+                            ✦ {greeting} · {nextClass ? "טוב לראות אותך" : "איזה כיף שבאת"}
                         </p>
-                        <h1 className="mt-1 truncate text-[clamp(2.3rem,9vw,3.1rem)] font-bold leading-[1.08] tracking-[-0.04em] text-[var(--studio-ink)]">
-                            {loading ? "שלום לך" : `היי, ${firstName}`}
-                            <span className="text-[var(--studio-coral-text)]">.</span>
+                        <h1 className="break-words font-bold leading-[1.08] tracking-[-0.04em] text-[var(--studio-ink)]">
+                            <span className="block text-xl sm:text-2xl">{loading ? "שלום לך" : "היי,"}</span>
+                            {!loading && (
+                                <span className="mt-0.5 block text-[clamp(2.4rem,10vw,3.6rem)]">
+                                    {firstName}<span className="text-[var(--studio-coral-ink)]">.</span>
+                                </span>
+                            )}
                         </h1>
                     </div>
-                    {profile?.role === "administrator" && (
-                        <Link
-                            href="/admin"
-                            className="mb-1 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--studio-deep)] px-3.5 py-1.5 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-md transition-transform active:scale-95"
-                        >
-                            <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
-                            <span>ניהול</span>
-                        </Link>
-                    )}
                 </div>
 
-                {/* Hero Card: Upcoming Workout (Deep Luxury Dark Canvas) */}
+                {/* Hero Workout Stage: Contextual, Asymmetric Studio Squircle */}
                 <section
                     aria-labelledby="next-class"
-                    className="group relative isolate overflow-hidden rounded-[26px] border border-white/15 bg-gradient-to-br from-[#1c2c1f] via-[#152217] to-[#0c140e] p-5 sm:p-6 text-[var(--studio-deep-contrast)] shadow-[0_22px_48px_-16px_rgba(12,22,14,0.65)] transition-all"
+                    aria-busy={classLoading}
+                    className="relative isolate overflow-hidden rounded-[30px_30px_10px_30px] border border-[var(--studio-brand)]/25 bg-gradient-to-br from-[#1c2c1f] via-[#142217] to-[#0c140e] p-5 sm:p-6 text-[var(--studio-deep-contrast)] shadow-[0_20px_44px_-16px_rgba(12,22,14,0.6)]"
                 >
-                    {/* Atmospheric glow and high-contrast white botanical watermark */}
+                    {/* Atmospheric corner glow & botanical leaf artwork inside card */}
                     <div
                         aria-hidden="true"
-                        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--studio-accent-bg)]/20 blur-2xl"
+                        className="pointer-events-none absolute -left-20 -top-32 h-72 w-72 rounded-full border border-[var(--studio-accent-text)]/10 bg-[radial-gradient(circle,var(--studio-brand),transparent_70%)] opacity-35"
                     />
                     <img
                         src="/user_leaves_branch.png"
                         alt=""
                         aria-hidden="true"
-                        className="pointer-events-none absolute -bottom-14 -left-10 h-56 w-auto origin-bottom-left rotate-[-12deg] object-contain opacity-35 drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
+                        className="pointer-events-none absolute -bottom-14 -left-10 h-56 w-auto origin-bottom-left rotate-[-12deg] object-contain opacity-25 drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
                     />
 
-                    {/* Card Top Pill */}
+                    {/* Card Top Label */}
                     <div className="relative flex items-center justify-between gap-3">
                         <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold text-[var(--studio-accent-text)] backdrop-blur-md">
                             <span className="relative flex h-2 w-2">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--studio-coral-bg)] opacity-75" />
-                                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--studio-coral-bg)]" />
+                                <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${nextClass ? "bg-[var(--studio-coral-bg)]" : "bg-[var(--studio-accent-text)]"}`} />
+                                <span className={`relative inline-flex h-2 w-2 rounded-full ${nextClass ? "bg-[var(--studio-coral-bg)]" : "bg-[var(--studio-accent-text)]"}`} />
                             </span>
-                            <span>{nextClass ? "האימון הבא שלך" : "האימון הבא"}</span>
+                            <h2 id="next-class" className="text-[11px] font-bold">
+                                {nextClass ? "האימון הבא שלך" : "האימון הבא שלך בסטודיו"}
+                            </h2>
                         </div>
-                        <Link
-                            href="/my-bookings"
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--studio-accent-text)] hover:text-white transition-colors"
-                        >
-                            <span>כל האימונים</span>
-                            <ArrowLeft aria-hidden="true" className="h-3 w-3" />
-                        </Link>
+
+                        {nextClass && (
+                            <span className="text-[11px] font-semibold text-[var(--studio-accent-text)]/90">
+                                {getRelativeTimeHebrew(nextClass.start_time)}
+                            </span>
+                        )}
                     </div>
 
-                    {/* Card Main Body */}
-                    {classLoading ? (
-                        <div className="mt-5 h-24 animate-pulse rounded-2xl border border-white/5 bg-white/5" aria-busy="true" />
-                    ) : nextClass ? (
-                        <div className="relative mt-4">
-                            <div className="flex items-start justify-between gap-3.5">
-                                <div className="min-w-0 flex-1">
-                                    <span className="inline-block text-xs font-bold text-[var(--studio-coral-text)]">
-                                        {format(nextClass.start_time, { weekday: "long" })}
-                                    </span>
-                                    <h2
-                                        id="next-class"
-                                        dir="auto"
-                                        className="mt-1 text-[clamp(1.65rem,6.2vw,2.15rem)] font-bold leading-tight tracking-tight text-white drop-shadow-sm"
+                    <div className="relative flex min-h-40 flex-col pt-4">
+                        {classLoading ? (
+                            <div className="flex flex-1 items-center justify-center" role="status">
+                                <p className="text-sm font-medium text-white/80 animate-pulse">טוענים את האימון הבא…</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex-1">
+                                    {classError ? (
+                                        <p role="status" className="text-base leading-relaxed text-white">
+                                            לא הצלחנו לעדכן את האימון הבא.
+                                        </p>
+                                    ) : nextClass ? (
+                                        <div className="flex flex-col-reverse items-start gap-3.5 min-[380px]:flex-row">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 dir="auto" className="break-words text-[clamp(1.5rem,5.8vw,1.95rem)] font-bold leading-tight text-white drop-shadow-sm">
+                                                    {nextClass.title}
+                                                </h3>
+                                                <time dateTime={nextClass.start_time} className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[var(--studio-deep-contrast)]/90">
+                                                    <span className="font-bold text-white">{format(nextClass.start_time, { weekday: "long" })}</span>
+                                                    <span aria-hidden="true">·</span>
+                                                    <span dir="ltr" className="inline-flex items-center gap-1 font-bold text-white">
+                                                        <Clock3 aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-accent-text)]" />
+                                                        <span>{format(nextClass.start_time, { hour: "2-digit", minute: "2-digit" })}</span>
+                                                    </span>
+                                                    <span className="sr-only">{format(nextClass.start_time, { day: "numeric", month: "long" })}</span>
+                                                </time>
+                                            </div>
+                                            <div
+                                                aria-hidden="true"
+                                                className="flex shrink-0 items-center gap-2 text-center text-[var(--studio-accent-text)] min-[380px]:block min-[380px]:border-r min-[380px]:border-[var(--studio-accent-text)]/25 min-[380px]:pr-3.5"
+                                            >
+                                                <span className="block text-3xl font-bold leading-none tracking-tight tabular-nums min-[380px]:text-[3.1rem]">
+                                                    {format(nextClass.start_time, { day: "2-digit" })}
+                                                </span>
+                                                <span className="block text-xs font-bold min-[380px]:mt-1.5">
+                                                    {format(nextClass.start_time, { month: "long" })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1.5">
+                                            <p className="text-[clamp(1.65rem,6.8vw,2.15rem)] font-bold leading-[1.14] tracking-tight text-white">
+                                                קצת זמן<br />
+                                                <span className="text-[var(--studio-accent-text)]">בשבילך.</span>
+                                            </p>
+                                            <p className="text-xs sm:text-sm leading-relaxed text-[var(--studio-deep-contrast)]/85">
+                                                לוח האימונים פתוח לשריון מקום. בואי נבחר את השעה המושלמת עבורך.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {nextClass || classError ? (
+                                    <Link
+                                        href="/my-bookings"
+                                        className="mt-5 flex min-h-11 items-center justify-between gap-3 rounded-xl border-t border-white/15 pt-3 text-sm font-bold text-white transition-colors hover:text-[var(--studio-accent-text)] active:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--studio-accent-text)]"
                                     >
-                                        {nextClass.title}
-                                    </h2>
-                                    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[var(--studio-deep-contrast)]/90">
-                                        <span className="inline-flex items-center gap-1.5 font-bold text-white" dir="ltr">
-                                            <Clock3 aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)]" />
-                                            <span>{format(nextClass.start_time, { hour: "2-digit", minute: "2-digit" })}</span>
+                                        <span>לפרטי האימון וביטולים</span>
+                                        <span className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-full bg-[var(--studio-accent-text)] text-[var(--studio-deep)] transition-transform hover:-translate-x-1">
+                                            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
                                         </span>
-                                        <span className="text-white/30">·</span>
-                                        <span className="inline-flex items-center rounded-md border border-[var(--studio-accent-text)]/20 bg-[var(--studio-accent-text)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--studio-accent-text)]">
-                                            {getRelativeTimeHebrew(nextClass.start_time)}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex min-w-[3.6rem] shrink-0 flex-col items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-b from-white/20 to-white/5 px-3 py-2 text-center shadow-lg backdrop-blur-md">
-                                    <span className="block text-3xl font-bold leading-none tracking-tight text-white tabular-nums">
-                                        {format(nextClass.start_time, { day: "numeric" })}
-                                    </span>
-                                    <span className="mt-1 text-[11px] font-bold text-[var(--studio-accent-text)]">
-                                        {format(nextClass.start_time, { month: "short" })}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="mt-5 border-t border-white/15 pt-3.5">
-                                <Link
-                                    href="/my-bookings"
-                                    className="flex items-center justify-between text-sm font-bold text-white transition-opacity hover:opacity-90 active:opacity-75"
-                                >
-                                    <span>לצפייה בפרטי האימון וביטולים</span>
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 transition-transform group-hover:-translate-x-1">
-                                        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="relative mt-4 space-y-3.5">
-                            <div>
-                                <h2 id="next-class" className="text-[clamp(1.55rem,5.8vw,1.95rem)] font-bold leading-[1.14] tracking-tight text-white">
-                                    יש מקום פנוי<br />
-                                    <span className="text-[var(--studio-accent-text)]">לאימון הבא שלך.</span>
-                                </h2>
-                                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[var(--studio-deep-contrast)]/80">
-                                    בואי נשריין לך שעה שמתאימה בלוח האימונים השבועי.
-                                </p>
-                            </div>
-
-                            <div className="pt-1">
-                                <Link
-                                    href="/book"
-                                    className="group/btn relative flex min-h-[3.25rem] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#d9e2b8] via-[#cbd3aa] to-[#bcc89a] px-5 py-3 text-sm font-bold text-[#142016] shadow-[0_12px_28px_-6px_rgba(203,211,170,0.55),0_0_0_1px_rgba(255,255,255,0.35)] transition-all hover:brightness-105 active:scale-[0.98]"
-                                >
-                                    <span>למציאת אימון ושריון מקום</span>
-                                    <ArrowLeft aria-hidden="true" className="h-4 w-4 transition-transform group-hover/btn:-translate-x-1" />
-                                </Link>
-                            </div>
-                        </div>
-                    )}
+                                    </Link>
+                                ) : (
+                                    <Link
+                                        href="/book"
+                                        className="mt-5 flex min-h-[3.15rem] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#d9e2b8] via-[#cbd3aa] to-[#bcc89a] px-4 py-2.5 text-sm font-bold text-[#142016] shadow-[0_12px_28px_-6px_rgba(203,211,170,0.55),0_0_0_1px_rgba(255,255,255,0.35)] transition-all hover:brightness-105 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--studio-accent-text)]"
+                                    >
+                                        <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0" />
+                                        <span>למערכת השעות ושריון מקום</span>
+                                        <ArrowLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
+                                    </Link>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </section>
 
-                {/* Membership & Ticket Balance Tile (Crisp High-Contrast VIP Card) */}
-                <Link
-                    href="/subscription"
-                    className="group relative flex items-center justify-between overflow-hidden rounded-[24px] border border-[#ced5be] bg-gradient-to-l from-white via-white to-[#f7f8f0] p-4.5 sm:p-5 shadow-[0_12px_32px_-12px_rgba(20,32,22,0.1),0_2px_6px_rgba(20,32,22,0.04)] transition-all hover:border-[var(--studio-brand)]/40 hover:shadow-[0_16px_36px_-12px_rgba(20,32,22,0.16)] active:scale-[0.99]"
-                >
-                    {/* Sage decorative accent strip */}
-                    <div aria-hidden="true" className="absolute right-0 inset-y-0 w-1.5 bg-gradient-to-b from-[var(--studio-brand)] to-[#a4a984]" />
-
-                    <div className="flex min-w-0 items-center gap-3.5 pr-1">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1e2d21] to-[#121c14] text-[var(--studio-accent-text)] shadow-md transition-transform group-hover:scale-105">
-                            <Ticket aria-hidden="true" className="h-6 w-6 text-[#d8e0b5]" />
+                {/* Member Status & Balance Row (Serene, uncluttered, distinct) */}
+                <div className="flex min-h-[4.5rem] flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[22px] border border-[#ced5be] bg-white/80 p-3.5 sm:p-4.5 shadow-[0_8px_24px_-10px_rgba(20,32,22,0.06)] backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-deep)] text-[var(--studio-accent-text)] shadow-sm">
+                            <Ticket aria-hidden="true" className="h-4.5 w-4.5 text-[#d8e0b5]" />
                         </div>
-                        <div className="min-w-0">
+                        <div>
                             <div className="flex items-center gap-2">
-                                <p className="text-xs font-bold text-[var(--studio-ink)]">יתרת אימונים</p>
-                                <span className="rounded-full bg-[var(--studio-brand)]/15 border border-[var(--studio-brand)]/25 px-2 py-0.5 text-[10px] font-bold text-[var(--studio-brand)]">
-                                    {subscription?.is_active ? "מנוי פעיל" : "לצפייה במנויים"}
+                                <span
+                                    className="text-2xl font-bold leading-none tabular-nums text-[var(--studio-ink)]"
+                                    aria-busy={loading}
+                                >
+                                    {loading ? "–" : tickets}
+                                </span>
+                                <span className="text-xs font-bold text-[var(--studio-ink)]">
+                                    {tickets === 1 ? "אימון זמין ביתרה" : "אימונים זמינים ביתרה"}
                                 </span>
                             </div>
-                            <p className="mt-0.5 truncate text-xs font-medium text-[var(--studio-muted)]">
-                                {subscription?.is_active ? subscription.tier_display_name : "לרכישת כרטיסייה או מנוי חודשי"}
+                            <p className="mt-0.5 text-[11px] font-medium text-[var(--studio-muted)]">
+                                {subscription?.is_active
+                                    ? subscription.tier_display_name
+                                    : tickets > 0
+                                    ? "כרטיסיית אימונים תקפה"
+                                    : "לרכישת כרטיסייה או מנוי חודשי"}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-3">
-                        <div className="text-center">
-                            <span
-                                className="block text-[2.5rem] font-bold leading-none tabular-nums text-[var(--studio-ink)] tracking-tight"
-                                aria-label={`${tickets} אימונים זמינים`}
-                            >
-                                {loading ? "–" : tickets}
-                            </span>
-                            <span className="block text-[10px] font-bold text-[var(--studio-muted)]">אימונים</span>
-                        </div>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--studio-ink)]/5 text-[var(--studio-muted)] transition-transform group-hover:-translate-x-1 group-hover:bg-[var(--studio-brand)] group-hover:text-white">
-                            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-                        </div>
-                    </div>
-                </Link>
-
-                {/* Quick Actions Grid (Vibrant Boutique Tiles) */}
-                <div className="grid grid-cols-2 gap-3">
                     <Link
-                        href="/book"
-                        className="group relative flex flex-col justify-between overflow-hidden rounded-[22px] border border-[#ced5be] bg-white p-4 shadow-[0_10px_28px_-10px_rgba(20,32,22,0.08),0_2px_6px_rgba(20,32,22,0.04)] transition-all hover:border-[var(--studio-brand)]/40 hover:shadow-[0_14px_32px_-10px_rgba(20,32,22,0.14)] active:scale-[0.98]"
+                        href="/subscription"
+                        className="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-[var(--studio-ink)]/5 px-3 py-1.5 text-xs font-bold text-[var(--studio-ink)] transition-colors hover:bg-[var(--studio-brand)] hover:text-white active:bg-[var(--studio-brand)]"
                     >
-                        <div className="flex items-center justify-between">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#243427] to-[#152018] text-[#d8e0b5] shadow-sm transition-transform group-hover:scale-105">
-                                <CalendarDays aria-hidden="true" className="h-5 w-5" />
-                            </div>
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--studio-ink)]/5 text-[var(--studio-muted)] transition-transform group-hover:-translate-x-1 group-hover:bg-[var(--studio-brand)] group-hover:text-white">
-                                <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
-                            </div>
-                        </div>
-                        <div className="mt-3.5">
-                            <span className="block text-sm font-bold text-[var(--studio-ink)]">לוח אימונים</span>
-                            <span className="mt-0.5 block text-[11px] font-medium text-[var(--studio-muted)]">שריון מקום לשבוע הקרוב</span>
-                        </div>
-                    </Link>
-
-                    <Link
-                        href="/my-bookings"
-                        className="group relative flex flex-col justify-between overflow-hidden rounded-[22px] border border-[#ced5be] bg-white p-4 shadow-[0_10px_28px_-10px_rgba(20,32,22,0.08),0_2px_6px_rgba(20,32,22,0.04)] transition-all hover:border-[var(--studio-coral-bg)]/40 hover:shadow-[0_14px_32px_-10px_rgba(20,32,22,0.14)] active:scale-[0.98]"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#c37a61] to-[#9d5842] text-white shadow-sm transition-transform group-hover:scale-105">
-                                <Clock3 aria-hidden="true" className="h-5 w-5" />
-                            </div>
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--studio-ink)]/5 text-[var(--studio-muted)] transition-transform group-hover:-translate-x-1 group-hover:bg-[var(--studio-coral-bg)] group-hover:text-white">
-                                <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
-                            </div>
-                        </div>
-                        <div className="mt-3.5">
-                            <span className="block text-sm font-bold text-[var(--studio-ink)]">האימונים שלי</span>
-                            <span className="mt-0.5 block text-[11px] font-medium text-[var(--studio-muted)]">מעקב הרשמות וביטולים</span>
-                        </div>
+                        <span>{tickets > 0 ? "המנוי שלי" : "רכישת מנוי"}</span>
+                        <ArrowLeft aria-hidden="true" className="h-3 w-3" />
                     </Link>
                 </div>
 
-                {/* App Installation Nudge */}
-                <InstallAppButton home />
+                {/* Boutique Welcome & Studio Note (Reassurance & Identity for New/Returning Trainees) */}
+                <div className="rounded-[20px] border border-[#d6dcce] bg-gradient-to-br from-white/90 to-[#f5f7ed]/90 p-3.5 sm:p-4 text-[var(--studio-ink)] shadow-[0_6px_20px_-8px_rgba(20,32,22,0.05)]">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--studio-brand)]">
+                        <HeartHandshake aria-hidden="true" className="h-4 w-4" />
+                        <span>טיפ קטן לאימון מושלם בסטודיו</span>
+                    </div>
+                    <ul className="mt-2 space-y-1.5 text-xs text-[var(--studio-muted)]">
+                        <li className="flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-text)] shrink-0" />
+                            <span>מומלץ להגיע כ-5 דקות לפני תחילת השיעור</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--studio-brand)] shrink-0" />
+                            <span>לאימוני פילאטיס מכשירים יש להצטייד בגרבי אחיזה</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-text)] shrink-0" />
+                            <span>בקבוק מים אישי ומגבת אישית לשמירה על היגיינה</span>
+                        </li>
+                    </ul>
+                </div>
             </main>
         </div>
     );
