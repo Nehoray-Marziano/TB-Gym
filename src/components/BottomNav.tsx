@@ -35,11 +35,11 @@ export function MemberNavigation({ pathname }: { pathname: string }) {
                             href={href}
                             prefetch
                             aria-current={active ? pathname === href ? "page" : "location" : undefined}
-                            className={`relative isolate flex min-h-[3.75rem] cursor-pointer flex-col items-center justify-center gap-1 rounded-full px-1 py-2 text-[11px] font-bold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[var(--studio-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--studio-card)] ${active ? "studio-navigation-selected" : "text-[var(--studio-muted)] hover:bg-[var(--studio-ink)]/5 hover:text-[var(--studio-ink)] active:bg-[var(--studio-ink)]/10"}`}
+                            className={`relative isolate flex min-h-[3.75rem] cursor-pointer flex-col items-center justify-center gap-1 rounded-full px-1 py-2 text-[11px] font-bold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[var(--studio-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--studio-card)] ${active ? "studio-navigation-selected" : "text-[#182816] hover:bg-[#182816]/10 active:bg-[#182816]/15"}`}
                         >
                             {active && <motion.span aria-hidden="true" layoutId="selected-tab" className="studio-navigation-highlight absolute inset-0 -z-10 rounded-full" transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 36 }} />}
-                            <Icon aria-hidden="true" className="h-[1.3rem] w-[1.3rem]" strokeWidth={active ? 2.2 : 1.7} />
-                            <span className="leading-4">{label}</span>
+                            <Icon aria-hidden="true" className="h-[1.35rem] w-[1.35rem]" strokeWidth={active ? 2.5 : 2.2} />
+                            <span className="leading-4 font-bold">{label}</span>
                         </Link>
                     );
                 })}

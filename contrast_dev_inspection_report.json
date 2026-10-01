@@ -1,0 +1,517 @@
+[
+  {
+    "state": "New User Onboarding",
+    "items": [
+      {
+        "name": "Studio Logo Header Emblem",
+        "text": "TB תזונה • אימונים (Vector SVG)",
+        "fg": "rgb(17, 26, 18)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "15.40",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Date Badge Text",
+        "text": "יום חמישי, 1 באוקטובר",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Date Badge Calendar Icon",
+        "text": "CalendarDays (2.4px stroke)",
+        "fg": "rgb(30, 46, 28)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "14.36",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Greeting Subtitle",
+        "text": "✦ לילה טוב · איזה כיף שבאת",
+        "fg": "rgb(34, 51, 32)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "11.63",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Trainee Name Greeting",
+        "text": "היי,שירה.",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "14.30",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Top Pill Badge Text",
+        "text": "האימון הבא שלך בסטודיו",
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Main Title",
+        "text": "קצת זמןבשבילך.",
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "16.52",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Subtitle / Class Time",
+        "text": "לוח האימונים פתוח לשריון מקום. בואי נבחר את השעה המושלמת עבורך.",
+        "fg": "rgb(244, 246, 234)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "15.12",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Booking CTA Button",
+        "text": "למערכת השעות ושריון מקום",
+        "fg": "rgb(17, 28, 19)",
+        "bg": "rgb(203, 211, 170)",
+        "ratio": "11.20",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Count Number",
+        "text": "0",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Label Text",
+        "text": "אימונים זמינים ביתרה",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Subtitle / Plan Details",
+        "text": "לרכישת כרטיסייה או מנוי חודשי",
+        "fg": "rgb(40, 56, 36)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "12.49",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Subscription Action Button",
+        "text": "רכישת מנוי",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(242, 244, 232)",
+        "ratio": "14.86",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Active Tab (בית)",
+        "text": "בית",
+        "fg": "rgb(246, 246, 237)",
+        "bg": "rgb(22, 34, 24)",
+        "ratio": "15.14",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Inactive Tab (לוח אימונים)",
+        "text": "לוח אימונים",
+        "fg": "rgb(24, 40, 22)",
+        "bg": "rgb(246, 246, 237)",
+        "ratio": "14.27",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Inactive Tab (חשבון)",
+        "text": "חשבון",
+        "fg": "rgb(24, 40, 22)",
+        "bg": "rgb(246, 246, 237)",
+        "ratio": "14.27",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      }
+    ]
+  },
+  {
+    "state": "Member with Tickets",
+    "items": [
+      {
+        "name": "Studio Logo Header Emblem",
+        "text": "TB תזונה • אימונים (Vector SVG)",
+        "fg": "rgb(17, 26, 18)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "15.40",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Date Badge Text",
+        "text": "יום חמישי, 1 באוקטובר",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Date Badge Calendar Icon",
+        "text": "CalendarDays (2.4px stroke)",
+        "fg": "rgb(30, 46, 28)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "14.36",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Greeting Subtitle",
+        "text": "✦ לילה טוב · איזה כיף שבאת",
+        "fg": "rgb(34, 51, 32)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "11.63",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Trainee Name Greeting",
+        "text": "היי,שירה.",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "14.30",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Top Pill Badge Text",
+        "text": "האימון הבא שלך בסטודיו",
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Main Title",
+        "text": "קצת זמןבשבילך.",
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "16.52",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Subtitle / Class Time",
+        "text": "לוח האימונים פתוח לשריון מקום. בואי נבחר את השעה המושלמת עבורך.",
+        "fg": "rgb(244, 246, 234)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "15.12",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Booking CTA Button",
+        "text": "למערכת השעות ושריון מקום",
+        "fg": "rgb(17, 28, 19)",
+        "bg": "rgb(203, 211, 170)",
+        "ratio": "11.20",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Count Number",
+        "text": "8",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Label Text",
+        "text": "אימונים זמינים ביתרה",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Subtitle / Plan Details",
+        "text": "כרטיסיית אימונים תקפה",
+        "fg": "rgb(40, 56, 36)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "12.49",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Subscription Action Button",
+        "text": "המנוי שלי",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(242, 244, 232)",
+        "ratio": "14.86",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Active Tab (בית)",
+        "text": "בית",
+        "fg": "rgb(246, 246, 237)",
+        "bg": "rgb(22, 34, 24)",
+        "ratio": "15.14",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Inactive Tab (לוח אימונים)",
+        "text": "לוח אימונים",
+        "fg": "rgb(24, 40, 22)",
+        "bg": "rgb(246, 246, 237)",
+        "ratio": "14.27",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Inactive Tab (חשבון)",
+        "text": "חשבון",
+        "fg": "rgb(24, 40, 22)",
+        "bg": "rgb(246, 246, 237)",
+        "ratio": "14.27",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      }
+    ]
+  },
+  {
+    "state": "Active Booked Trainee",
+    "items": [
+      {
+        "name": "Studio Logo Header Emblem",
+        "text": "TB תזונה • אימונים (Vector SVG)",
+        "fg": "rgb(17, 26, 18)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "15.40",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Date Badge Text",
+        "text": "יום חמישי, 1 באוקטובר",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Date Badge Calendar Icon",
+        "text": "CalendarDays (2.4px stroke)",
+        "fg": "rgb(30, 46, 28)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "14.36",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Greeting Subtitle",
+        "text": "✦ לילה טוב · טוב לראות אותך",
+        "fg": "rgb(34, 51, 32)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "11.63",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Trainee Name Greeting",
+        "text": "היי,מיכל.",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(238, 240, 224)",
+        "ratio": "14.30",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Top Pill Badge Text",
+        "text": "האימון הבא שלך",
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Main Title",
+        "text": "פילאטיס מכשירים - חיזוק וליבה",
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "16.52",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Subtitle / Class Time",
+        "text": "יום ראשון·01:394 באוקטובר",
+        "fg": "rgb(244, 246, 234)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "15.12",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Booked Date Day Number",
+        "text": "04",
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "16.52",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Booked Date Month Name",
+        "text": "אוקטובר",
+        "fg": "rgb(216, 224, 181)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "12.00",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Hero Session Details CTA Link",
+        "text": "לפרטי האימון וביטולים",
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 34, 23)",
+        "ratio": "16.52",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Count Number",
+        "text": "7",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Label Text",
+        "text": "אימונים זמינים ביתרה",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "16.52",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Tickets Subtitle / Plan Details",
+        "text": "כרטיסיית אימונים תקפה",
+        "fg": "rgb(40, 56, 36)",
+        "bg": "rgb(255, 255, 255)",
+        "ratio": "12.49",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Subscription Action Button",
+        "text": "המנוי שלי",
+        "fg": "rgb(20, 34, 23)",
+        "bg": "rgb(242, 244, 232)",
+        "ratio": "14.86",
+        "required": "4.5:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Active Tab (בית)",
+        "text": "בית",
+        "fg": "rgb(246, 246, 237)",
+        "bg": "rgb(22, 34, 24)",
+        "ratio": "15.14",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Inactive Tab (לוח אימונים)",
+        "text": "לוח אימונים",
+        "fg": "rgb(24, 40, 22)",
+        "bg": "rgb(246, 246, 237)",
+        "ratio": "14.27",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      },
+      {
+        "name": "Bottom Nav Inactive Tab (חשבון)",
+        "text": "חשבון",
+        "fg": "rgb(24, 40, 22)",
+        "bg": "rgb(246, 246, 237)",
+        "ratio": "14.27",
+        "required": "3.0:1",
+        "status": "PASS AAA",
+        "pass": true
+      }
+    ]
+  }
+]
