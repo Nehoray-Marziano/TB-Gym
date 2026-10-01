@@ -31,9 +31,7 @@
 }
 
 /* CANONICAL GREEN-BROWN BOUTIQUE THEME (#8c9070 / #e9eadc) */
-:root,
-.classic,
-.dark {
+:root {
   --studio-brand: #8b8e6f;
   --studio-canvas: #e9eadc;
   --studio-deep: #162218;

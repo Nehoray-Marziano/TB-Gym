@@ -12,8 +12,7 @@ export function ThemeProvider({
         try {
             // Clean up any stale theme preference from past sessions to ensure complete stability
             localStorage.removeItem("theme");
-            document.documentElement.classList.remove("dark", "light");
-            document.documentElement.classList.add("classic");
+            document.documentElement.classList.remove("dark", "light", "classic");
         } catch {}
     }, []);
 
