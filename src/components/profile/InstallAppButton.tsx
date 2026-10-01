@@ -41,12 +41,34 @@ export default function InstallAppButton({ home = false }: { home?: boolean }) {
 
     return (
         <>
-            <div className={home ? "relative mt-4" : ""}>
-                <button type="button" onClick={handleClick} className="flex min-h-16 w-full items-center gap-3 rounded-[1.5rem] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] px-5 text-start transition-colors active:bg-[var(--studio-accent-bg)]/20">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]"><Download aria-hidden="true" className="h-5 w-5" /></span>
-                    <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{home ? "הסטודיו איתך, בלחיצה" : "להוסיף למסך הבית"}</span><span className="mt-0.5 block text-xs text-[var(--studio-muted)]">{home ? "להוסיף למסך הבית לחוויה הכי נוחה" : "כניסה מהירה בלי לפתוח דפדפן"}</span></span>
+            <div className={home ? "relative" : ""}>
+                <button
+                    type="button"
+                    onClick={handleClick}
+                    className="flex min-h-16 w-full items-center gap-3.5 rounded-[22px] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] px-5 text-start shadow-[0_4px_16px_-6px_rgba(22,34,24,0.05)] transition-all hover:border-[var(--studio-ink)]/20 active:bg-[var(--studio-accent-bg)]/20 active:scale-[0.99]"
+                >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] shadow-sm">
+                        <Download aria-hidden="true" className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-[var(--studio-ink)]">
+                            {home ? "הסטודיו איתך, בלחיצה אחת" : "להוסיף למסך הבית"}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-[var(--studio-muted)]">
+                            {home ? "הוסיפי למסך הבית לחוויה המהירה והנוחה ביותר" : "כניסה מהירה בלי לפתוח דפדפן"}
+                        </span>
+                    </span>
                 </button>
-                {home && <button type="button" onClick={dismiss} aria-label="לא עכשיו" className="absolute left-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-[var(--studio-muted)]"><X aria-hidden="true" className="h-4 w-4" /></button>}
+                {home && (
+                    <button
+                        type="button"
+                        onClick={dismiss}
+                        aria-label="לא עכשיו"
+                        className="absolute left-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-[var(--studio-muted)] hover:text-[var(--studio-ink)] transition-colors"
+                    >
+                        <X aria-hidden="true" className="h-4 w-4" />
+                    </button>
+                )}
             </div>
 
             <AnimatePresence>
