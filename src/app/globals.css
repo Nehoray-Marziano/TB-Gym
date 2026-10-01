@@ -151,7 +151,7 @@ a,
 }
 
 @keyframes studio-page-enter {
-  from { opacity: .8; transform: translate3d(0, 16px, 0) scale(.985); }
+  from { opacity: .85; transform: scale(.988); }
   to { opacity: 1; transform: none; }
 }
 

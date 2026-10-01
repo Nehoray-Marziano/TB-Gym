@@ -217,7 +217,7 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="relative min-h-svh w-full overflow-hidden bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
+        <div className="relative h-dvh max-h-dvh w-full overflow-hidden bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
             {/* Background Layer: Botanical Branch, Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
                 {/* Velvety atmospheric green-brownish earthy gradient */}
@@ -286,21 +286,21 @@ export default function LandingPage() {
             </div>
 
             {/* Foreground Content */}
-            <main className="relative z-10 mx-auto flex min-h-svh max-w-lg flex-col justify-between px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(2.25rem,calc(env(safe-area-inset-top)+1.25rem))] [@media(max-height:650px)]:pt-4 [@media(max-height:650px)]:pb-2">
-                {/* Header: Centered Studio Emblem with generous clearance and commanding presence */}
-                <header className="relative flex w-full items-center justify-center pt-2 pb-2 sm:pt-3 sm:pb-3">
+            <main className="relative z-10 mx-auto flex h-full max-h-dvh w-full max-w-md flex-col justify-between px-5 pt-[max(0.85rem,calc(env(safe-area-inset-top)+0.5rem))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                {/* Header: Centered Studio Emblem */}
+                <header className="flex shrink-0 items-center justify-center pt-1 pb-0.5">
                     <motion.button
                         type="button"
                         onClick={handleEmblemTap}
                         whileTap={reduceMotion ? undefined : { scale: 0.92 }}
                         whileHover={reduceMotion ? undefined : { scale: 1.04 }}
                         transition={{ type: "spring", stiffness: 450, damping: 20 }}
-                        className="group relative flex items-center justify-center cursor-pointer select-none rounded-3xl p-2 outline-none touch-manipulation focus-visible:ring-2 focus-visible:ring-white/40"
+                        className="group relative flex items-center justify-center cursor-pointer select-none rounded-2xl p-1 outline-none touch-manipulation focus-visible:ring-2 focus-visible:ring-white/40"
                         aria-label="סטודיו טליה - תזונה • אימונים"
                     >
                         {/* Animated ambient touch halo ring */}
                         <motion.div
-                            className="absolute inset-0 -z-10 rounded-full bg-[var(--studio-accent-bg)]/35 blur-2xl pointer-events-none"
+                            className="absolute inset-0 -z-10 rounded-full bg-[var(--studio-accent-bg)]/35 blur-xl pointer-events-none"
                             animate={isEmblemPressed ? { scale: [1, 1.45, 1.2], opacity: [0.3, 0.85, 0.4] } : { scale: 1, opacity: 0.15 }}
                             transition={{ duration: 0.45 }}
                         />
@@ -308,145 +308,88 @@ export default function LandingPage() {
                         <img
                             src="/studio_emblem_clean.png"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-[7.25rem] sm:h-32 w-auto object-contain drop-shadow-[0_6px_24px_rgba(0,0,0,0.7)] transition-all duration-150 group-active:brightness-125 [@media(max-height:650px)]:h-20"
+                            className="h-18 sm:h-22 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-150 group-active:brightness-125 [@media(max-height:680px)]:h-14"
                         />
                     </motion.button>
                 </header>
 
                 {/* Main Hero Section: Bold Editorial Hebrew Typography */}
-                <section aria-labelledby="landing-title" className="relative my-auto py-2 [@media(max-height:650px)]:py-1">
+                <section aria-labelledby="landing-title" className="my-auto flex flex-col justify-center py-1">
                     {/* Eyebrow badge */}
-                    <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--studio-accent-bg)]/30 bg-[var(--studio-accent-bg)]/12 px-3 py-1 text-xs font-bold tracking-wide text-[var(--studio-accent-text)] backdrop-blur-xs [@media(max-height:650px)]:mb-0.5 [@media(max-height:650px)]:text-[11px]">
-                        <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
-                        <span>האימון הבא מתחיל כאן</span>
-                    </div>
+                    <p className="mb-1 text-xs sm:text-sm font-bold tracking-wide text-[var(--studio-accent-text)]">
+                        ✦ האימון הבא מתחיל כאן
+                    </p>
 
                     {/* Headline: Editorial typography with balanced line wrapping */}
                     <h1
                         id="landing-title"
                         style={{ textWrap: "balance" }}
-                        className="font-bold leading-[0.9] tracking-[-0.055em]"
+                        className="font-bold leading-[0.92] tracking-[-0.05em]"
                     >
-                        <span className="block text-[clamp(2.75rem,11.5vw,4.2rem)] text-[var(--studio-deep-contrast)]">
+                        <span className="block text-[clamp(2.2rem,8.5vw,3.2rem)] text-[var(--studio-deep-contrast)]">
                             יש לך
                         </span>
-                        <span className="relative inline-block text-[clamp(5rem,21vw,7.4rem)] text-[var(--studio-accent-text)]">
+                        <span className="relative inline-block text-[clamp(3.8rem,15vw,5.4rem)] text-[var(--studio-accent-text)]">
                             מקום
                             {/* Animated wavy underline drawing RTL */}
-                            <svg aria-hidden="true" viewBox="0 0 240 20" preserveAspectRatio="none" className="absolute -bottom-3.5 right-0 h-4 w-full overflow-visible text-[var(--studio-coral-bg)]">
+                            <svg aria-hidden="true" viewBox="0 0 240 20" preserveAspectRatio="none" className="absolute -bottom-2.5 right-0 h-3.5 w-full overflow-visible text-[var(--studio-coral-bg)]">
                                 <motion.path
                                     d="M236 4 C175 14 120 8 70 4 S14 12 4 15"
                                     fill="none"
                                     stroke="currentColor"
-                                    strokeWidth="4.5"
+                                    strokeWidth="4"
                                     strokeLinecap="round"
                                     initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
                                     animate={{ pathLength: 1, opacity: 1 }}
                                     transition={reduceMotion ? undefined : {
-                                        pathLength: { duration: 0.85, delay: 0.25, ease: "easeOut" },
-                                        opacity: { duration: 0.05, delay: 0.25 },
+                                        pathLength: { duration: 0.85, delay: 0.2, ease: "easeOut" },
+                                        opacity: { duration: 0.05, delay: 0.2 },
                                     }}
                                 />
                             </svg>
                         </span>
-                        <span className="mt-1 block text-[clamp(3.8rem,15.5vw,5.5rem)] text-[var(--studio-deep-contrast)]">
+                        <span className="mt-0.5 block text-[clamp(3rem,11.5vw,4.2rem)] text-[var(--studio-deep-contrast)]">
                             לזוז<span className="text-[var(--studio-coral-text)]">.</span>
                         </span>
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="mt-3.5 max-w-[22rem] text-base leading-relaxed text-[var(--studio-deep-contrast)]/90 [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:text-xs">
+                    <p className="mt-2 sm:mt-2.5 max-w-[20rem] text-xs sm:text-sm leading-relaxed text-[var(--studio-deep-contrast)]/85">
                         האימונים, ההרשמות והיתרה שלך — הכול מחכה לך כאן במקום אחד.
                     </p>
 
-                    {/* Interactive Feature Cards (Sleek boutique glass rows) */}
-                    <div
-                        role="region"
-                        aria-label="יתרונות הסטודיו"
-                        className="mt-3 space-y-1.5 [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:space-y-1"
-                    >
-                        {STUDIO_FEATURES.map((item) => {
-                            const isExpanded = activeFeature === item.id;
-                            const IconComponent = item.icon;
-
-                            return (
-                                <motion.div
-                                    key={item.id}
-                                    onClick={() => toggleFeature(item.id)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter" || e.key === " ") {
-                                            e.preventDefault();
-                                            toggleFeature(item.id);
-                                        }
-                                    }}
-                                    tabIndex={0}
-                                    role="button"
-                                    aria-expanded={isExpanded}
-                                    whileHover={reduceMotion ? undefined : { y: -1 }}
-                                    whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-                                    className={`group cursor-pointer select-none rounded-xl border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
-                                        isExpanded
-                                            ? "border-[var(--studio-accent-bg)]/50 bg-white/[0.08] shadow-md"
-                                            : "border-white/[0.07] bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
-                                    } px-2.5 py-1.5 backdrop-blur-xs`}
-                                >
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--studio-accent-bg)]/20 text-[var(--studio-accent-text)] group-hover:bg-[var(--studio-accent-bg)]/30 transition-colors">
-                                                <IconComponent className="h-3.5 w-3.5" />
-                                            </div>
-                                            <div>
-                                                <div className="text-xs sm:text-sm font-bold text-[var(--studio-deep-contrast)]">
-                                                    {item.title}
-                                                </div>
-                                                <div className="text-[11px] text-[var(--studio-deep-contrast)]/75 [@media(max-height:650px)]:hidden">
-                                                    {item.desc}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <span className="shrink-0 rounded-full border border-[var(--studio-coral-bg)]/30 bg-[var(--studio-coral-bg)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--studio-coral-text)]">
-                                            {item.badge}
-                                        </span>
-                                    </div>
-
-                                    {/* Expandable micro-detail on tap */}
-                                    <AnimatePresence>
-                                        {isExpanded && (
-                                            <motion.div
-                                                initial={reduceMotion ? false : { opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: "auto" }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                                transition={{ duration: 0.2 }}
-                                                className="overflow-hidden"
-                                            >
-                                                <div className="mt-1.5 border-t border-white/10 pt-1.5 text-xs leading-relaxed text-[var(--studio-accent-text)]">
-                                                    {item.detail}
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
+                    {/* Studio Features: Compact boutique leaf list */}
+                    <ul className="mt-2.5 sm:mt-3 space-y-1.5 text-xs sm:text-sm font-semibold text-[var(--studio-deep-contrast)]/90">
+                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
+                            <UserLeafIcon className="h-4 w-4 text-[var(--studio-accent-text)] shrink-0 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
+                            <span>לוח אימונים גמיש ומעודכן</span>
+                        </motion.li>
+                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
+                            <UserLeafIcon className="h-4 w-4 text-[var(--studio-accent-text)] shrink-0 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
+                            <span>קבוצות בוטיק אינטימיות (עד 8 מתאמנות)</span>
+                        </motion.li>
+                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
+                            <UserLeafIcon className="h-4 w-4 text-[var(--studio-accent-text)] shrink-0 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
+                            <span>מעקב כרטיסיות ומנוי בזמן אמת</span>
+                        </motion.li>
+                    </ul>
                 </section>
 
                 {/* Bottom Action Area: True iOS Liquid Frosted Glass */}
-                <div className="relative mt-auto w-full pt-3 [@media(max-height:650px)]:pt-1">
+                <div className="relative mt-auto shrink-0 w-full pt-1.5 pb-0.5">
                     {/* Radiant Ambient Backlight */}
                     <div
                         aria-hidden="true"
-                        className="pointer-events-none absolute -bottom-4 inset-x-2 h-32 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(139,142,111,0.38)_0%,rgba(195,122,97,0.22)_45%,transparent_75%)] blur-2xl -z-10"
+                        className="pointer-events-none absolute -bottom-2 inset-x-2 h-24 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(139,142,111,0.32)_0%,rgba(195,122,97,0.18)_45%,transparent_75%)] blur-xl -z-10"
                     />
 
                     {authError && (
                         <div
                             role="alert"
                             aria-live="assertive"
-                            className="mb-2 flex items-center gap-2 rounded-xl border border-[var(--studio-danger)]/30 bg-[var(--studio-danger)]/15 px-3 py-2 text-xs font-bold text-[var(--studio-coral-text)]"
+                            className="mb-2 flex items-center gap-2 rounded-xl border border-[var(--studio-danger)]/30 bg-[var(--studio-danger)]/15 px-3 py-1.5 text-xs font-bold text-[var(--studio-coral-text)]"
                         >
-                            <AlertCircle className="h-4 w-4 shrink-0 text-[var(--studio-coral-text)]" />
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                             <span>{authError}</span>
                         </div>
                     )}
@@ -458,21 +401,21 @@ export default function LandingPage() {
                         onClick={handleGoogleLogin}
                         disabled={isLoading}
                         aria-busy={isLoading}
-                        radius={18}
+                        radius={16}
                         blur={1}
-                        refraction={45}
-                        bezel={11}
+                        refraction={40}
+                        bezel={10}
                         frost={0.35}
                         specular={0.7}
                         profile="squircle"
                         elevated={true}
                         className="w-full"
                     >
-                        <div className="flex min-h-[3.5rem] w-full items-center justify-center gap-3 px-6 text-white [@media(max-height:650px)]:min-h-12 [@media(max-height:650px)]:px-4">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform group-active:scale-95">
-                                <GoogleMark className="h-4 w-4" />
+                        <div className="flex min-h-[3.25rem] w-full items-center justify-center gap-3 px-5 text-white">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform group-active:scale-95">
+                                <GoogleMark className="h-3.5 w-3.5" />
                             </span>
-                            <span className="text-[16px] font-semibold tracking-[-0.01em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] [@media(max-height:650px)]:text-sm">
+                            <span className="text-[15px] font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                                 {isLoading ? "מחברות אותך..." : "ממשיכות עם גוגל"}
                             </span>
                         </div>
@@ -486,24 +429,24 @@ export default function LandingPage() {
                             setLoginView("email");
                             setIsLoginOpen(true);
                         }}
-                        radius={16}
+                        radius={14}
                         blur={1}
-                        refraction={38}
-                        bezel={9}
-                        frost={0.3}
+                        refraction={35}
+                        bezel={8}
+                        frost={0.28}
                         specular={0.5}
                         profile="squircle"
                         elevated={false}
-                        className="mt-2.5 w-full [@media(max-height:650px)]:mt-1.5"
+                        className="mt-2 w-full"
                     >
-                        <div className="flex min-h-[2.85rem] w-full items-center justify-center gap-2 px-4 text-sm font-medium text-white/95 [@media(max-height:650px)]:min-h-10 [@media(max-height:650px)]:text-xs">
-                            <Mail aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)] opacity-95 transition-transform group-hover:scale-105" />
+                        <div className="flex min-h-[2.65rem] w-full items-center justify-center gap-2 px-4 text-xs sm:text-sm font-medium text-white/90">
+                            <Mail aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-accent-text)] opacity-95 transition-transform group-hover:scale-105" />
                             <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">כניסה עם קוד במייל</span>
                         </div>
                     </LiquidGlassButton>
 
                     {/* Reassurance Micro-Copy */}
-                    <p className="mt-2 text-center text-[11px] font-medium text-white/50 [@media(max-height:650px)]:hidden">
+                    <p className="mt-1.5 text-center text-[10px] font-medium text-white/45">
                         כניסה מאובטחת ללא סיסמה • הפרטים שלך שמורים
                     </p>
                 </div>
