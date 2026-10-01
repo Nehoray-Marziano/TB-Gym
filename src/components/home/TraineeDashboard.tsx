@@ -3,25 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarDays, Clock3, Sparkles, Ticket } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
-import InstallAppButton from "@/components/profile/InstallAppButton";
 
 export type UpcomingSession = { id: string; title: string; start_time: string };
 
 const format = (date: string, options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat("he-IL", options).format(new Date(date));
-
-function getDayGreeting() {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "בוקר טוב";
-    if (hour >= 12 && hour < 17) return "צהריים טובים";
-    if (hour >= 17 && hour < 21) return "ערב טוב";
-    return "לילה טוב";
-}
 
 export type TraineeDashboardProps = {
     userId: string;
@@ -38,19 +28,20 @@ export default function TraineeDashboard({
 }: TraineeDashboardProps) {
     const router = useRouter();
     const { toast } = useToast();
-    const { profile: storeProfile, tickets: storeTickets, subscription, loading: storeLoading, refreshData } = useGymStore();
+    const { profile: storeProfile, tickets: storeTickets, loading: storeLoading, refreshData } = useGymStore();
 
     const profile = previewProfile ?? storeProfile;
     const tickets = previewTickets !== undefined ? previewTickets : storeTickets;
     const loading = previewTickets !== undefined ? false : storeLoading;
 
-    const [nextClass, setNextClass] = useState<UpcomingSession | null>(previewNextClass ?? null);
-    const [classLoading, setClassLoading] = useState(previewNextClass === undefined);
+    const [loadedClass, setNextClass] = useState<UpcomingSession | null>(null);
+    const [classError, setClassError] = useState(false);
+    const [isClassLoading, setClassLoading] = useState(true);
+    const nextClass = previewNextClass !== undefined ? previewNextClass : loadedClass;
+    const classLoading = previewNextClass === undefined && isClassLoading;
 
     useEffect(() => {
         if (previewNextClass !== undefined) {
-            setNextClass(previewNextClass);
-            setClassLoading(false);
             return;
         }
 
@@ -63,7 +54,7 @@ export default function TraineeDashboard({
                 const previous = JSON.parse(cached) as UpcomingSession | null;
                 queueMicrotask(() => {
                     if (!active) return;
-                    setNextClass(previous);
+                    setNextClass(previous && new Date(previous.start_time) > new Date() ? previous : null);
                     setClassLoading(false);
                 });
             }
@@ -78,6 +69,7 @@ export default function TraineeDashboard({
                 .eq("user_id", userId)
                 .eq("status", "confirmed");
             if (!active) return;
+            setClassError(Boolean(error));
             if (!error && data) {
                 const upcoming = (data as unknown as { session: UpcomingSession | null }[])
                     .map(({ session }) => session)
@@ -88,7 +80,11 @@ export default function TraineeDashboard({
             }
             setClassLoading(false);
         };
-        void load();
+        void load().catch(() => {
+            if (!active) return;
+            setClassError(true);
+            setClassLoading(false);
+        });
         return () => { active = false; };
     }, [userId, refreshData, previewNextClass]);
 
@@ -111,257 +107,78 @@ export default function TraineeDashboard({
     }, [router, profile?.role]);
 
     const firstName = profile?.full_name?.trim().split(/\s+/)[0] || "אלופה";
-    const greeting = getDayGreeting();
     const today = new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
     return (
-        <div className="relative min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
-            {/* Subtle atmospheric ambient glow at top */}
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.18)_0%,transparent_70%)]"
-            />
-
-            <main className="relative mx-auto max-w-lg px-4 sm:px-5 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] space-y-4 sm:space-y-4.5">
-                {/* Header: Studio Mark & Refined Date Badge */}
+        <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
+            <main className="mx-auto max-w-lg px-5 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6">
                 <header className="flex min-h-11 items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-deep)] p-1.5 shadow-sm">
-                            <img
-                                src="/studio_emblem_clean.png"
-                                alt="סטודיו טליה"
-                                className="h-full w-full object-contain brightness-110"
-                            />
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-deep)] p-1.5">
+                            <img src="/studio_emblem_clean.png" alt="" width={24} height={24} className="h-full w-full object-contain" />
                         </div>
-                        <div className="flex flex-col text-start">
-                            <span className="text-sm font-bold leading-tight tracking-tight text-[var(--studio-ink)]">
-                                סטודיו טליה
-                            </span>
-                            <span className="text-[10px] font-medium leading-none text-[var(--studio-muted)]">
-                                תזונה • אימונים
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 rounded-full border border-[var(--studio-ink)]/10 bg-[var(--studio-card)]/80 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold text-[var(--studio-muted)] shadow-[0_2px_8px_rgba(0,0,0,0.03)] backdrop-blur-sm whitespace-nowrap shrink-0">
-                        <CalendarDays aria-hidden="true" className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[var(--studio-brand)]" />
-                        <span>{today}</span>
-                    </div>
-                </header>
-
-                {/* Greeting & Headline */}
-                <div className="pt-1 flex items-end justify-between gap-3">
-                    <div className="min-w-0">
-                        <p className="text-xs font-bold tracking-wide text-[var(--studio-subtle)]">
-                            ✦ {greeting} · טוב לראות אותך
-                        </p>
-                        <h1 className="mt-1 truncate text-[clamp(2.3rem,9vw,3.1rem)] font-bold leading-[1.08] tracking-[-0.04em] text-[var(--studio-ink)]">
-                            {loading ? "שלום לך" : `היי, ${firstName}`}
-                            <span className="text-[var(--studio-coral-text)]">.</span>
-                        </h1>
+                        <span className="text-sm font-bold">סטודיו טליה</span>
                     </div>
                     {profile?.role === "administrator" && (
-                        <Link
-                            href="/admin"
-                            className="mb-1 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--studio-deep)] px-3.5 py-1.5 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-sm transition-transform active:scale-95"
-                        >
-                            <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
-                            <span>ניהול</span>
-                        </Link>
+                        <Link href="/admin" className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-bold text-[var(--studio-muted)] transition-colors hover:bg-[var(--studio-ink)]/5 active:bg-[var(--studio-ink)]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--studio-brand)]">ניהול</Link>
                     )}
+                </header>
+
+                <div className="pb-7 pt-8">
+                    <h1 className="break-words text-[clamp(2rem,8vw,2.75rem)] font-bold leading-tight tracking-tight">
+                        {loading ? "שלום לך" : `היי, ${firstName}`}
+                        <span className="text-[var(--studio-coral-text)]">.</span>
+                    </h1>
+                    <p className="mt-2 text-sm text-[var(--studio-muted)]">{today}</p>
                 </div>
 
-                {/* Hero Card: Upcoming Workout */}
-                <section
-                    aria-labelledby="next-class"
-                    className="group relative isolate overflow-hidden rounded-[26px] border border-white/10 bg-gradient-to-br from-[#1c2a1e] via-[#162218] to-[#0e1610] p-5 sm:p-6 text-[var(--studio-deep-contrast)] shadow-[0_20px_45px_-18px_rgba(14,24,16,0.5)] transition-all"
-                >
-                    {/* Atmospheric glow and botanical watermark */}
-                    <div
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--studio-accent-bg)]/15 blur-2xl"
-                    />
-                    <img
-                        src="/user_leaves_branch_sage.png"
-                        alt=""
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -bottom-14 -left-10 h-56 w-auto origin-bottom-left rotate-[-12deg] object-contain opacity-12 mix-blend-screen drop-shadow-md"
-                    />
-
-                    {/* Card Top Pill */}
-                    <div className="relative flex items-center justify-between gap-3">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold text-[var(--studio-accent-text)] backdrop-blur-md">
-                            <span className="relative flex h-2 w-2">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--studio-coral-bg)] opacity-75" />
-                                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--studio-coral-bg)]" />
-                            </span>
-                            <span>{nextClass ? "האימון הבא שלך" : "האימון הבא"}</span>
-                        </div>
-                        <Link
-                            href="/my-bookings"
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--studio-accent-text)]/80 hover:text-white transition-colors"
-                        >
-                            <span>כל האימונים</span>
-                            <ArrowLeft aria-hidden="true" className="h-3 w-3" />
-                        </Link>
+                <section aria-labelledby="next-class" aria-busy={classLoading} className="relative isolate overflow-hidden rounded-[26px] bg-[var(--studio-deep)] p-5 text-[var(--studio-deep-contrast)] shadow-[0_12px_30px_-18px_rgba(14,24,16,0.35)] sm:p-6">
+                    <img src="/user_leaves_branch_sage.png" alt="" aria-hidden="true" className="pointer-events-none absolute -bottom-14 -left-10 h-56 w-auto rotate-[-12deg] object-contain opacity-10 mix-blend-screen" />
+                    <h2 id="next-class" className="relative text-sm font-medium text-[var(--studio-accent-text)]">האימון הבא שלך</h2>
+                    <div className="relative flex min-h-44 flex-col pt-5">
+                        {classLoading ? (
+                            <p role="status" className="flex flex-1 items-center text-sm">טוענים את האימון הבא…</p>
+                        ) : (
+                            <>
+                                <div className="flex-1">
+                                    {classError ? (
+                                        <p role="status" className="text-lg leading-relaxed">לא הצלחנו לעדכן את האימון הבא.</p>
+                                    ) : nextClass ? (
+                                        <>
+                                            <h3 dir="auto" className="break-words text-[clamp(1.6rem,6.2vw,2rem)] font-bold leading-tight">{nextClass.title}</h3>
+                                            <time dateTime={nextClass.start_time} className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                                                <span>{format(nextClass.start_time, { weekday: "long", day: "numeric", month: "long" })}</span>
+                                                <span aria-hidden="true">·</span>
+                                                <span dir="ltr">{format(nextClass.start_time, { hour: "2-digit", minute: "2-digit" })}</span>
+                                            </time>
+                                        </>
+                                    ) : (
+                                        <p className="text-xl font-bold leading-relaxed">עוד לא קבעת את האימון הבא שלך.</p>
+                                    )}
+                                </div>
+                                {nextClass || classError ? (
+                                    <Link href="/my-bookings" className="mt-5 flex min-h-11 items-center justify-between gap-3 rounded-lg border-t border-white/15 pt-3 text-sm font-bold transition-colors hover:text-[var(--studio-accent-text)] active:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--studio-accent-text)]">
+                                        האימונים שלי <ArrowLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
+                                    </Link>
+                                ) : (
+                                    <Link href="/book" className="mt-5 flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--studio-accent-text)] px-4 py-3 text-sm font-bold text-[var(--studio-deep)] transition-opacity hover:opacity-90 active:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--studio-accent-text)]">
+                                        למציאת אימון <ArrowLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
+                                    </Link>
+                                )}
+                            </>
+                        )}
                     </div>
-
-                    {/* Card Main Body */}
-                    {classLoading ? (
-                        <div className="mt-5 h-24 animate-pulse rounded-2xl border border-white/5 bg-white/5" aria-busy="true" />
-                    ) : nextClass ? (
-                        <div className="relative mt-4">
-                            <div className="flex items-start justify-between gap-3.5">
-                                <div className="min-w-0 flex-1">
-                                    <span className="inline-block text-xs font-bold text-[var(--studio-coral-text)]">
-                                        {format(nextClass.start_time, { weekday: "long" })}
-                                    </span>
-                                    <h2
-                                        id="next-class"
-                                        dir="auto"
-                                        className="mt-1 text-[clamp(1.65rem,6.2vw,2.15rem)] font-bold leading-tight tracking-tight text-white drop-shadow-sm"
-                                    >
-                                        {nextClass.title}
-                                    </h2>
-                                    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[var(--studio-deep-contrast)]/90">
-                                        <span className="inline-flex items-center gap-1.5 font-bold text-white" dir="ltr">
-                                            <Clock3 aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)]" />
-                                            <span>{format(nextClass.start_time, { hour: "2-digit", minute: "2-digit" })}</span>
-                                        </span>
-                                        <span className="text-white/30">·</span>
-                                        <span className="inline-flex items-center rounded-md border border-[var(--studio-accent-text)]/20 bg-[var(--studio-accent-text)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--studio-accent-text)]">
-                                            {getRelativeTimeHebrew(nextClass.start_time)}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex min-w-[3.6rem] shrink-0 flex-col items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-b from-white/15 to-white/5 px-3 py-2 text-center shadow-inner backdrop-blur-md">
-                                    <span className="block text-3xl font-bold leading-none tracking-tight text-white tabular-nums">
-                                        {format(nextClass.start_time, { day: "numeric" })}
-                                    </span>
-                                    <span className="mt-1 text-[11px] font-bold text-[var(--studio-accent-text)]">
-                                        {format(nextClass.start_time, { month: "short" })}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="mt-5 border-t border-white/10 pt-3.5">
-                                <Link
-                                    href="/my-bookings"
-                                    className="flex items-center justify-between text-sm font-bold text-white transition-opacity hover:opacity-90 active:opacity-75"
-                                >
-                                    <span>לצפייה בפרטי האימון וביטולים</span>
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/10 transition-transform group-hover:-translate-x-1">
-                                        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="relative mt-4 space-y-3.5">
-                            <div>
-                                <h2 id="next-class" className="text-[clamp(1.55rem,5.8vw,1.95rem)] font-bold leading-[1.14] tracking-tight text-white">
-                                    יש מקום פנוי<br />
-                                    <span className="text-[var(--studio-accent-text)]">לאימון הבא שלך.</span>
-                                </h2>
-                                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[var(--studio-deep-contrast)]/80">
-                                    בואי נשריין לך שעה שמתאימה בלוח האימונים השבועי.
-                                </p>
-                            </div>
-
-                            <div className="pt-1">
-                                <Link
-                                    href="/book"
-                                    className="group/btn relative flex min-h-[3rem] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#d2d9b3] via-[#cbd3aa] to-[#bcc79b] px-5 py-3 text-sm font-bold text-[#141f16] shadow-[0_8px_24px_-6px_rgba(203,211,170,0.4)] transition-all hover:brightness-105 active:scale-[0.98]"
-                                >
-                                    <span>למציאת אימון ושריון מקום</span>
-                                    <ArrowLeft aria-hidden="true" className="h-4 w-4 transition-transform group-hover/btn:-translate-x-1" />
-                                </Link>
-                            </div>
-                        </div>
-                    )}
                 </section>
 
-                {/* Membership & Ticket Balance Tile */}
-                <Link
-                    href="/subscription"
-                    className="group relative flex items-center justify-between overflow-hidden rounded-[24px] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] p-4 sm:p-5 shadow-[0_8px_24px_-12px_rgba(22,34,24,0.08)] transition-all hover:border-[var(--studio-ink)]/20 active:scale-[0.99]"
-                >
-                    <div className="flex min-w-0 items-center gap-3.5">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-deep)] text-[var(--studio-accent-text)] shadow-sm transition-transform group-hover:scale-105">
-                            <Ticket aria-hidden="true" className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                                <p className="text-xs font-bold text-[var(--studio-subtle)]">יתרת אימונים</p>
-                                {subscription?.is_active && (
-                                    <span className="rounded-full bg-[var(--studio-brand)]/15 px-2 py-0.5 text-[10px] font-bold text-[var(--studio-brand)]">
-                                        מנוי פעיל
-                                    </span>
-                                )}
-                            </div>
-                            <p className="mt-0.5 truncate text-xs font-semibold text-[var(--studio-ink)]">
-                                {subscription?.is_active ? subscription.tier_display_name : "לצפייה ורכישת מנוי או כרטיסייה"}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-3">
-                        <div className="text-center">
-                            <span
-                                className="block text-[2.4rem] font-bold leading-none tabular-nums text-[var(--studio-ink)]"
-                                aria-label={`${tickets} אימונים זמינים`}
-                            >
-                                {loading ? "–" : tickets}
-                            </span>
-                            <span className="block text-[10px] font-bold text-[var(--studio-muted)]">אימונים</span>
-                        </div>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--studio-ink)]/5 text-[var(--studio-muted)] transition-transform group-hover:-translate-x-1 group-hover:bg-[var(--studio-accent-bg)]/20 group-hover:text-[var(--studio-ink)]">
-                            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-                        </div>
-                    </div>
-                </Link>
-
-                {/* Quick Actions Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                    <Link
-                        href="/book"
-                        className="group relative flex flex-col justify-between overflow-hidden rounded-[22px] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] p-4 shadow-[0_4px_16px_-6px_rgba(22,34,24,0.05)] transition-all hover:border-[var(--studio-ink)]/20 active:scale-[0.98]"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--studio-brand)]/15 text-[var(--studio-deep)] transition-transform group-hover:scale-105">
-                                <CalendarDays aria-hidden="true" className="h-4.5 w-4.5" />
-                            </div>
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--studio-ink)]/5 text-[var(--studio-muted)] transition-transform group-hover:-translate-x-1">
-                                <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
-                            </div>
-                        </div>
-                        <div className="mt-3">
-                            <span className="block text-sm font-bold text-[var(--studio-ink)]">לוח אימונים</span>
-                            <span className="mt-0.5 block text-[11px] text-[var(--studio-muted)]">שריון מקום לשבוע הקרוב</span>
-                        </div>
-                    </Link>
-
-                    <Link
-                        href="/my-bookings"
-                        className="group relative flex flex-col justify-between overflow-hidden rounded-[22px] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] p-4 shadow-[0_4px_16px_-6px_rgba(22,34,24,0.05)] transition-all hover:border-[var(--studio-ink)]/20 active:scale-[0.98]"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--studio-coral-bg)]/15 text-[var(--studio-coral-ink)] transition-transform group-hover:scale-105">
-                                <Clock3 aria-hidden="true" className="h-4.5 w-4.5" />
-                            </div>
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--studio-ink)]/5 text-[var(--studio-muted)] transition-transform group-hover:-translate-x-1">
-                                <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
-                            </div>
-                        </div>
-                        <div className="mt-3">
-                            <span className="block text-sm font-bold text-[var(--studio-ink)]">האימונים שלי</span>
-                            <span className="mt-0.5 block text-[11px] text-[var(--studio-muted)]">מעקב הרשמות וביטולים</span>
-                        </div>
+                <div className="mt-3 flex min-h-16 flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 py-2 text-sm">
+                    <p aria-busy={loading}>
+                        <span className="font-bold tabular-nums">{loading ? "–" : tickets}</span>{" "}
+                        <span className="text-[var(--studio-muted)]">אימונים ביתרה</span>
+                    </p>
+                    <Link href="/subscription" className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-bold transition-colors hover:bg-[var(--studio-ink)]/5 active:bg-[var(--studio-ink)]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--studio-brand)]">
+                        המנוי שלי <ArrowLeft aria-hidden="true" className="h-4 w-4" />
                     </Link>
                 </div>
-
-                {/* App Installation Nudge */}
-                <InstallAppButton home />
             </main>
         </div>
     );

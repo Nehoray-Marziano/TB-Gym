@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { CalendarDays, House, UserRound } from "lucide-react";
 
 const items = [
-    { href: "/dashboard", label: "היום", icon: House },
-    { href: "/book", label: "אימונים", icon: CalendarDays },
+    { href: "/dashboard", label: "בית", icon: House },
+    { href: "/book", label: "לוח אימונים", icon: CalendarDays },
     { href: "/profile", label: "חשבון", icon: UserRound },
 ] as const;
 
