@@ -49,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" suppressHydrationWarning>
+    <html lang="he" dir="rtl" className="classic" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={`${varelaRound.variable} antialiased font-sans`}
@@ -57,13 +57,7 @@ export default function RootLayout({
 
         <ServiceWorkerRegister />
         <ConnectionStatus />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="classic"
-          enableSystem
-          disableTransitionOnChange
-          themes={["light", "dark", "classic"]}
-        >
+        <ThemeProvider>
           <MotionProvider>
             <ToastProvider>
               <GymStoreProvider>

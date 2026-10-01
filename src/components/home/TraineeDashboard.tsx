@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarDays, Clock3, HeartHandshake, Sparkles, Ticket } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, Sparkles, Ticket } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
@@ -135,17 +135,11 @@ export default function TraineeDashboard({
                         className="group flex items-center transition-transform active:scale-95"
                         aria-label="סטודיו טליה - תזונה • אימונים"
                     >
-                        {/* High-contrast dark studio emblem for light & classic theme */}
+                        {/* High-contrast studio emblem */}
                         <img
                             src="/studio_emblem_dark.png"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-16 sm:h-[4.5rem] w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] transition-transform group-hover:scale-[1.02] dark:hidden"
-                        />
-                        {/* Crisp white studio emblem for dark theme */}
-                        <img
-                            src="/studio_emblem_clean.png"
-                            alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-16 sm:h-[4.5rem] w-auto object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-[1.02] hidden dark:block"
+                            className="h-16 sm:h-[4.5rem] w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] transition-transform group-hover:scale-[1.02]"
                         />
                     </Link>
 
@@ -159,7 +153,7 @@ export default function TraineeDashboard({
                                 <span>ניהול</span>
                             </Link>
                         )}
-                        <div className="flex items-center gap-1.5 rounded-full border border-[#cbd2bc] bg-white/95 dark:bg-[var(--studio-card)]/90 px-3 py-1.5 text-[11px] sm:text-xs font-bold text-[var(--studio-ink)] shadow-[0_2px_6px_rgba(20,32,22,0.05)] backdrop-blur-md whitespace-nowrap shrink-0">
+                        <div className="flex items-center gap-1.5 rounded-full border border-[#cbd2bc] bg-white/95 px-3 py-1.5 text-[11px] sm:text-xs font-bold text-[var(--studio-ink)] shadow-[0_2px_6px_rgba(20,32,22,0.05)] backdrop-blur-md whitespace-nowrap shrink-0">
                             <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-brand)]" />
                             <span>{today}</span>
                         </div>
@@ -172,17 +166,11 @@ export default function TraineeDashboard({
                     <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-[42%] overflow-hidden select-none">
                         <div className="absolute left-5 top-4 h-16 w-16 rounded-full bg-[var(--studio-coral-bg)]/60 sm:h-20 sm:w-20" />
                         <div className="absolute left-2 top-2 h-22 w-22 rounded-full border border-[var(--studio-coral-bg)]/35 sm:h-26 sm:w-26" />
-                        {/* High-contrast botanical branch for light theme */}
+                        {/* High-contrast botanical branch */}
                         <img
                             src="/user_leaves_branch_dark.png"
                             alt=""
-                            className="absolute -bottom-8 left-0 h-48 w-auto max-w-none -rotate-12 object-contain opacity-85 mix-blend-multiply drop-shadow-sm dark:hidden"
-                        />
-                        {/* Sage botanical branch for dark theme */}
-                        <img
-                            src="/user_leaves_branch_sage.png"
-                            alt=""
-                            className="absolute -bottom-8 left-0 h-48 w-auto max-w-none -rotate-12 object-contain opacity-75 hidden dark:block"
+                            className="absolute -bottom-8 left-0 h-48 w-auto max-w-none -rotate-12 object-contain opacity-85 mix-blend-multiply drop-shadow-sm"
                         />
                     </div>
 
@@ -351,28 +339,6 @@ export default function TraineeDashboard({
                         <span>{tickets > 0 ? "המנוי שלי" : "רכישת מנוי"}</span>
                         <ArrowLeft aria-hidden="true" className="h-3 w-3" />
                     </Link>
-                </div>
-
-                {/* Boutique Welcome & Studio Note (Reassurance & Identity for New/Returning Trainees) */}
-                <div className="rounded-[20px] border border-[#d6dcce] bg-gradient-to-br from-white/90 to-[#f5f7ed]/90 p-3.5 sm:p-4 text-[var(--studio-ink)] shadow-[0_6px_20px_-8px_rgba(20,32,22,0.05)]">
-                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--studio-brand)]">
-                        <HeartHandshake aria-hidden="true" className="h-4 w-4" />
-                        <span>טיפ קטן לאימון מושלם בסטודיו</span>
-                    </div>
-                    <ul className="mt-2 space-y-1.5 text-xs text-[var(--studio-muted)]">
-                        <li className="flex items-center gap-2">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-text)] shrink-0" />
-                            <span>מומלץ להגיע כ-5 דקות לפני תחילת השיעור</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--studio-brand)] shrink-0" />
-                            <span>לאימוני פילאטיס מכשירים יש להצטייד בגרבי אחיזה</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--studio-coral-text)] shrink-0" />
-                            <span>בקבוק מים אישי ומגבת אישית לשמירה על היגיינה</span>
-                        </li>
-                    </ul>
                 </div>
             </main>
         </div>

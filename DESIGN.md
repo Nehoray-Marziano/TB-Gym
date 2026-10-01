@@ -8,7 +8,7 @@ The home direction (October 1, 2026) keeps one prominent workout card, a balance
 
 ## Colors
 
-Runtime ownership remains in `src/app/globals.css`: the light, classic, and dark theme selectors define the canonical `--studio-*` values. This document does not generate or duplicate palette values. The home uses `--studio-canvas` and `--studio-ink` for the page, `--studio-deep` and `--studio-deep-contrast` for its focal card, `--studio-accent-text` for the card label and empty-state action, and `--studio-muted` for secondary text. No new global tokens were introduced.
+Runtime ownership remains in `src/app/globals.css`: the single canonical green-brownish boutique palette defines the `--studio-*` values (`#e9eadc` canvas, `#162218` deep ink, `#8b8e6f` brand, `#cbd3aa` accent text, `#c37a61` terracotta coral). Theme switching has been removed to guarantee rock-solid visual stability across all devices. The home uses `--studio-canvas` and `--studio-ink` for the page, `--studio-deep` and `--studio-deep-contrast` for its focal card, `--studio-accent-text` for the card label and empty-state action, and `--studio-muted` for secondary text. No extraneous color overrides are permitted.
 
 ## Typography
 
@@ -40,4 +40,4 @@ The workout card uses three 30px corners and one 10px corner, echoing the studio
 - Keep one workout-related action inside the home card.
 - Keep balance legible without turning it into another competing card.
 - Do not add quick-action tiles that repeat the card or bottom navigation.
-- A static studio etiquette note (grip socks, water bottle, arriving 5m early) provides new member reassurance without navigational distraction.
+- Keep the member home strictly zero-scroll on standard mobile viewports; omit bottom tips/notes that cause scrolling.

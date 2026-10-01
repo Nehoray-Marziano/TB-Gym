@@ -4,10 +4,9 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, LogOut, Phone, Bell, Shield, Edit2, Check, Moon, Sun, Palette } from "lucide-react";
+import { ArrowLeft, ChevronRight, LogOut, Phone, Bell, Shield, Edit2, Check } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
-import { useTheme } from "next-themes";
 import StudioBotanical from "@/components/StudioBotanical";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import InstallAppButton from "@/components/profile/InstallAppButton";
@@ -42,8 +41,6 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const reduceMotion = useReducedMotion();
-
-    const { setTheme, theme } = useTheme();
 
     // Form State
     const [formData, setFormData] = useState({
@@ -257,55 +254,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
             <section className="space-y-3">
                 <h3 className="mb-3 mt-7 text-[1.35rem] font-bold">העדפות</h3>
                 <InstallAppButton />
-                <div className="space-y-4 rounded-[1.75rem] border border-[#162218]/10 bg-[var(--studio-card)] p-5">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
-                            <Palette aria-hidden="true" className="h-5 w-5" />
-                        </div>
-                        <span className="font-bold text-[var(--studio-ink)]">ערכת נושא</span>
-                    </div>
 
-                    <div className="grid grid-cols-3 gap-3">
-                        {/* Dark Theme */}
-                        <button
-                            type="button"
-                            aria-pressed={theme === 'dark'}
-                            onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('dark'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'dark' ? 'border-[#8b8e6f]' : 'border-[#162218]/15'}`}
-                            style={{ background: '#101a18' }}
-                        >
-                            <Moon className="w-5 h-5 text-white" />
-                            <span className="text-xs font-bold text-white">כהה</span>
-                            <div className="absolute bottom-0 w-full h-1 bg-[#8b8e6f]" />
-                        </button>
-
-                        {/* Classic Theme */}
-                        <button
-                            type="button"
-                            aria-pressed={theme === 'classic'}
-                            onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('classic'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'classic' ? 'border-[#8b8e6f]' : 'border-[#162218]/15'}`}
-                            style={{ background: '#e9eadc' }}
-                        >
-                            <Palette className="w-5 h-5 text-black" />
-                            <span className="text-xs font-bold text-black">קלאסי</span>
-                            <div className="absolute bottom-0 w-full h-1 bg-[#8b8e6f]" />
-                        </button>
-
-                        {/* Light Theme */}
-                        <button
-                            type="button"
-                            aria-pressed={theme === 'light'}
-                            onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setTheme('light'); }}
-                            className={`relative flex min-h-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 transition-colors ${theme === 'light' ? 'border-[#8b8e6f]' : 'border-[#162218]/15'}`}
-                            style={{ background: '#faf9f2' }}
-                        >
-                            <Sun className="w-5 h-5 text-black" />
-                            <span className="text-xs font-bold text-black">בהיר</span>
-                            <div className="absolute bottom-0 w-full h-1 bg-[#8b8e6f]" />
-                        </button>
-                    </div>
-                </div>
 
                 <button
                     type="button"

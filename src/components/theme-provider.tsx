@@ -1,11 +1,21 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
+import * as React from "react";
 
 export function ThemeProvider({
     children,
-    ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
-    return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+}: {
+    children: React.ReactNode;
+    [key: string]: unknown;
+}) {
+    React.useEffect(() => {
+        try {
+            // Clean up any stale theme preference from past sessions to ensure complete stability
+            localStorage.removeItem("theme");
+            document.documentElement.classList.remove("dark", "light");
+            document.documentElement.classList.add("classic");
+        } catch {}
+    }, []);
+
+    return <>{children}</>;
 }
