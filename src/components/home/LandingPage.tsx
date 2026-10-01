@@ -286,30 +286,21 @@ export default function LandingPage() {
             </div>
 
             {/* Foreground Content */}
-            <main className="relative z-10 mx-auto flex min-h-svh max-w-lg flex-col justify-between px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] [@media(max-height:650px)]:py-2.5">
-                {/* Header: Centered Studio Emblem & Boutique Tag */}
-                <header className="relative flex w-full flex-col items-center justify-center pt-0 -mt-2 [@media(max-height:650px)]:-mt-1">
-                    {/* Subtle boutique live indicator */}
-                    <div className="mb-1.5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-0.5 text-[11px] font-medium text-[var(--studio-accent-text)] backdrop-blur-xs [@media(max-height:650px)]:hidden">
-                        <span className="relative flex h-2 w-2">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--studio-accent-bg)] opacity-75" />
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--studio-accent-bg)]" />
-                        </span>
-                        <span>סטודיו בוטיק לתנועה ותזונה</span>
-                    </div>
-
+            <main className="relative z-10 mx-auto flex min-h-svh max-w-lg flex-col justify-between px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(2.25rem,calc(env(safe-area-inset-top)+1.25rem))] [@media(max-height:650px)]:pt-4 [@media(max-height:650px)]:pb-2">
+                {/* Header: Centered Studio Emblem with generous clearance and commanding presence */}
+                <header className="relative flex w-full items-center justify-center pt-2 pb-2 sm:pt-3 sm:pb-3">
                     <motion.button
                         type="button"
                         onClick={handleEmblemTap}
                         whileTap={reduceMotion ? undefined : { scale: 0.92 }}
                         whileHover={reduceMotion ? undefined : { scale: 1.04 }}
                         transition={{ type: "spring", stiffness: 450, damping: 20 }}
-                        className="group relative flex items-center justify-center cursor-pointer select-none rounded-3xl p-1.5 outline-none touch-manipulation focus-visible:ring-2 focus-visible:ring-white/40"
+                        className="group relative flex items-center justify-center cursor-pointer select-none rounded-3xl p-2 outline-none touch-manipulation focus-visible:ring-2 focus-visible:ring-white/40"
                         aria-label="סטודיו טליה - תזונה • אימונים"
                     >
                         {/* Animated ambient touch halo ring */}
                         <motion.div
-                            className="absolute inset-0 -z-10 rounded-full bg-[var(--studio-accent-bg)]/30 blur-2xl pointer-events-none"
+                            className="absolute inset-0 -z-10 rounded-full bg-[var(--studio-accent-bg)]/35 blur-2xl pointer-events-none"
                             animate={isEmblemPressed ? { scale: [1, 1.45, 1.2], opacity: [0.3, 0.85, 0.4] } : { scale: 1, opacity: 0.15 }}
                             transition={{ duration: 0.45 }}
                         />
@@ -317,13 +308,13 @@ export default function LandingPage() {
                         <img
                             src="/studio_emblem_clean.png"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-[6.5rem] w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.7)] transition-all duration-150 group-active:brightness-125 [@media(max-height:650px)]:h-18"
+                            className="h-[7.25rem] sm:h-32 w-auto object-contain drop-shadow-[0_6px_24px_rgba(0,0,0,0.7)] transition-all duration-150 group-active:brightness-125 [@media(max-height:650px)]:h-20"
                         />
                     </motion.button>
                 </header>
 
                 {/* Main Hero Section: Bold Editorial Hebrew Typography */}
-                <section aria-labelledby="landing-title" className="relative my-auto py-2.5 [@media(max-height:650px)]:py-1">
+                <section aria-labelledby="landing-title" className="relative my-auto py-2 [@media(max-height:650px)]:py-1">
                     {/* Eyebrow badge */}
                     <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--studio-accent-bg)]/30 bg-[var(--studio-accent-bg)]/12 px-3 py-1 text-xs font-bold tracking-wide text-[var(--studio-accent-text)] backdrop-blur-xs [@media(max-height:650px)]:mb-0.5 [@media(max-height:650px)]:text-[11px]">
                         <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
@@ -368,11 +359,11 @@ export default function LandingPage() {
                         האימונים, ההרשמות והיתרה שלך — הכול מחכה לך כאן במקום אחד.
                     </p>
 
-                    {/* Interactive Feature Cards (UI/UX Pro Max upgrade from static bullets) */}
+                    {/* Interactive Feature Cards (Sleek boutique glass rows) */}
                     <div
                         role="region"
                         aria-label="יתרונות הסטודיו"
-                        className="mt-4 space-y-2 [@media(max-height:650px)]:mt-2 [@media(max-height:650px)]:space-y-1.5"
+                        className="mt-3 space-y-1.5 [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:space-y-1"
                     >
                         {STUDIO_FEATURES.map((item) => {
                             const isExpanded = activeFeature === item.id;
@@ -393,22 +384,22 @@ export default function LandingPage() {
                                     aria-expanded={isExpanded}
                                     whileHover={reduceMotion ? undefined : { y: -1 }}
                                     whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-                                    className={`group cursor-pointer select-none rounded-2xl border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+                                    className={`group cursor-pointer select-none rounded-xl border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
                                         isExpanded
-                                            ? "border-[var(--studio-accent-bg)]/50 bg-white/[0.08] shadow-lg shadow-black/20"
-                                            : "border-white/[0.08] bg-white/[0.035] hover:border-white/20 hover:bg-white/[0.06]"
-                                    } p-2.5 backdrop-blur-xs [@media(max-height:650px)]:p-2`}
+                                            ? "border-[var(--studio-accent-bg)]/50 bg-white/[0.08] shadow-md"
+                                            : "border-white/[0.07] bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
+                                    } px-2.5 py-1.5 backdrop-blur-xs`}
                                 >
                                     <div className="flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-accent-bg)]/20 text-[var(--studio-accent-text)] group-hover:bg-[var(--studio-accent-bg)]/30 transition-colors [@media(max-height:650px)]:h-7 [@media(max-height:650px)]:w-7">
-                                                <IconComponent className="h-4 w-4 [@media(max-height:650px)]:h-3.5 [@media(max-height:650px)]:w-3.5" />
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--studio-accent-bg)]/20 text-[var(--studio-accent-text)] group-hover:bg-[var(--studio-accent-bg)]/30 transition-colors">
+                                                <IconComponent className="h-3.5 w-3.5" />
                                             </div>
                                             <div>
-                                                <div className="text-sm font-bold text-[var(--studio-deep-contrast)] [@media(max-height:650px)]:text-xs">
+                                                <div className="text-xs sm:text-sm font-bold text-[var(--studio-deep-contrast)]">
                                                     {item.title}
                                                 </div>
-                                                <div className="text-xs text-[var(--studio-deep-contrast)]/75 [@media(max-height:650px)]:hidden">
+                                                <div className="text-[11px] text-[var(--studio-deep-contrast)]/75 [@media(max-height:650px)]:hidden">
                                                     {item.desc}
                                                 </div>
                                             </div>
@@ -429,7 +420,7 @@ export default function LandingPage() {
                                                 transition={{ duration: 0.2 }}
                                                 className="overflow-hidden"
                                             >
-                                                <div className="mt-2 border-t border-white/10 pt-2 text-xs leading-relaxed text-[var(--studio-accent-text)]">
+                                                <div className="mt-1.5 border-t border-white/10 pt-1.5 text-xs leading-relaxed text-[var(--studio-accent-text)]">
                                                     {item.detail}
                                                 </div>
                                             </motion.div>
@@ -438,24 +429,6 @@ export default function LandingPage() {
                                 </motion.div>
                             );
                         })}
-                    </div>
-
-                    {/* Boutique Trust Strip */}
-                    <div className="mt-3 flex items-center justify-around rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-[11px] font-medium text-[var(--studio-deep-contrast)]/70 [@media(max-height:650px)]:hidden">
-                        <span className="flex items-center gap-1.5">
-                            <UserLeafIcon className="h-3.5 w-3.5 text-[var(--studio-accent-text)]" />
-                            יחס אישי מותאם
-                        </span>
-                        <span className="text-white/20">•</span>
-                        <span className="flex items-center gap-1.5">
-                            <Sparkles className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
-                            מרחב נשי מעצים
-                        </span>
-                        <span className="text-white/20">•</span>
-                        <span className="flex items-center gap-1.5">
-                            <ShieldCheck className="h-3.5 w-3.5 text-[var(--studio-accent-text)]" />
-                            גמישות מלאה
-                        </span>
                     </div>
                 </section>
 
