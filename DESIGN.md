@@ -16,7 +16,11 @@ Runtime ownership remains in `src/app/globals.css`: the single canonical green-b
 
 ## Layout
 
-Member home is a single natural-height column, max-width `max-w-lg`, with 20px mobile gutters and safe-area-aware top and bottom padding. The fixed bottom navigation owns Home, Schedule, and Account. The card owns one contextual action: My workouts when booked, Find a workout when empty. Membership is a compact secondary link beside the balance. Installation stays in Account. Administrators retain a small header link.
+The introduction and member home each own a `100dvh` viewport. `src/components/home/home-layout.css` implements their sizing: a three-row grid reserves the header and actions/balance, and the middle row uses the remaining height. The introduction is at most 544px wide; member home is at most 608px wide, with adaptive 20–32px gutters. Their main elements are size-query containers, so typography, emblems, controls, and spacing respond to usable height and content width rather than phone width alone. The workout card has no fixed maximum height. Keep body text at least 14px and primary touch targets at least 44px. Long names and titles must wrap without widening the grid or being clipped.
+
+Safe-area padding is part of the available-height calculation. Member home reserves 96px plus the bottom safe area for the shared 72px navigation dock and its clearance. Wide screens with heights of 540px or less use two columns so landscape can fit without reducing every element. Other routes retain their existing scroll ownership. Verify text bounds, section overlap, navigation clearance, and actual document scrolling with `node scripts/check-home-layout.mjs` against a local development server.
+
+The fixed bottom navigation owns Home, Schedule, and Account. The card owns one contextual action: My workouts when booked, Find a workout when empty. Membership is a compact secondary link beside the balance. Installation stays in Account. Administrators retain a small header link.
 
 ## Elevation & Depth
 

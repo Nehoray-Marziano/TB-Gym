@@ -1,4 +1,5 @@
 // Run against `next dev`: node scripts/check-home-layout.mjs [http://127.0.0.1:3100]
+// Add --safe-areas to check notch and home-indicator clearance.
 // The temporary route renders the real home and dock with synthetic data only.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -11,7 +12,8 @@ assert(["127.0.0.1", "localhost"].includes(new URL(baseUrl).hostname), "Use a lo
 const output = await mkdtemp(join(tmpdir(), "talia-home-layout-"));
 const fixtureDir = new URL("../src/app/home-layout-check/", import.meta.url);
 const fixtureFile = new URL("page.tsx", fixtureDir);
-const viewports = [[320, 568], [360, 640], [375, 667], [390, 664], [390, 844], [412, 915], [430, 932], [768, 1024], [1366, 768], [1920, 1080], [667, 375], [844, 390], [915, 412]];
+const safeAreas = process.argv.includes("--safe-areas");
+const viewports = safeAreas ? [[320, 568], [390, 844]] : [[320, 568], [360, 640], [375, 667], [390, 664], [390, 844], [412, 915], [430, 932], [768, 1024], [1366, 768], [1920, 1080], [667, 375], [844, 390], [915, 412]];
 const states = ["welcome", "empty", "booked", "long", "admin", "loading", "error"];
 const fixture = `"use client";
 import { Suspense } from "react";
@@ -25,7 +27,7 @@ function Preview() {
   return <><TraineeDashboard userId="00000000-0000-0000-0000-000000000000"
     previewProfile={{ full_name: state === "long" ? "אלכסנדרהמשהישראלי בדיקה" : "נועה בדיקה", role: state === "admin" ? "administrator" : "trainee" }}
     previewTickets={state === "empty" ? 0 : 12}
-    {...(live ? {} : { previewNextClass: booked ? { id: "layout-fixture", title: state === "long" ? "אימון כוח וחיטוב לכל הגוף בקבוצת הבוקר המתקדמת" : "אימון כוח וחיטוב", start_time: new Date(Date.now() + 5 * 86400000).toISOString() } : null })}
+    {...(live ? {} : { previewNextClass: booked ? { id: "layout-fixture", title: state === "long" ? "אימון כוח וחיטוב לכל הגוף בקבוצת הבוקר המתקדמת" : "אימון כוח וחיטוב", start_time: ${JSON.stringify(new Date(Date.now() + 5 * 86400000).toISOString())} } : null })}
   /><MemberNavigation pathname="/dashboard" /></>;
 }
 export default function LayoutCheck() { return <Suspense><Preview /></Suspense>; }
@@ -80,6 +82,9 @@ try {
   await call("Runtime.enable");
   await call("Network.enable");
   await call("Network.setBlockedURLs", { urls: ["*onesignal.com*"] });
+  if (safeAreas) {
+    await call("Emulation.setSafeAreaInsetsOverride", { insets: { top: 47, bottom: 34, left: 0, right: 0 } });
+  }
   await call("Page.addScriptToEvaluateOnNewDocument", { source: `
     const nativeFetch = window.fetch.bind(window);
     window.fetch = (input, options) => {
@@ -164,5 +169,13 @@ try {
 } finally {
   ws?.close();
   chrome?.kill();
-  if (created) { await unlink(fixtureFile).catch(() => {}); await rmdir(fixtureDir); }
+  if (created) {
+    await unlink(fixtureFile).catch(() => {});
+    await rmdir(fixtureDir);
+    // Webpack dev can leave a route checker after its source route is removed.
+    for (const directory of [".next", ".next-qa"]) {
+      const generatedType = new URL(`../${directory}/dev/types/app/home-layout-check/page.ts`, import.meta.url);
+      await unlink(generatedType).catch(error => { if (error.code !== "ENOENT") throw error; });
+    }
+  }
 }

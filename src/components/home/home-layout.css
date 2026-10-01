@@ -108,6 +108,41 @@
   .studio-home-ticket-icon { display: none; }
 }
 
+@media (max-height: 640px) {
+  .studio-home-main { gap: 8px; }
+  .studio-home-heading { gap: 8px; }
+  .studio-home-name { font-size: 26px; }
+  .studio-home-workout { padding: 12px; }
+  .studio-home-workout-content { gap: 6px; padding-top: 4px; }
+  .studio-home-workout-content > div > .flex { gap: 6px; }
+}
+
+/* Notches and browser chrome can leave less room than the device height implies. */
+@container (max-height: 420px) {
+  .studio-home-emblem { height: 44px; }
+  .studio-home-heading { gap: 4px; }
+  .studio-home-heading header > div { flex-wrap: nowrap; }
+  .studio-home-heading header > div > div {
+    min-width: 0;
+    flex-shrink: 1;
+    padding-inline: 8px;
+    white-space: normal;
+    line-height: 1.25;
+  }
+  .studio-home-botanical { width: 56px; height: 56px; }
+  .studio-home-name { font-size: 20px; }
+  .studio-home-hello { font-size: 14px; }
+  .studio-home-workout-label { padding-block: 1px; }
+  .studio-home-workout-title { font-size: 18px; }
+  .studio-home-workout-day { font-size: 24px; }
+  .studio-home-workout-content > div > .flex { gap: 4px; }
+  .studio-home-empty-title { font-size: 24px; }
+  .studio-home-empty-title br { display: none; }
+  .studio-home-empty-title br + span::before { content: " "; }
+  .studio-home-empty-description { line-height: 1.4; }
+  .studio-home-workout-action { padding-block: 4px; }
+}
+
 /* Wide, short screens use their width instead of shrinking a portrait column. */
 @media (min-width: 600px) and (max-height: 540px) {
   .studio-welcome-main {
