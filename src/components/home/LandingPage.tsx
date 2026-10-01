@@ -1,13 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Mail, X } from "lucide-react";
+import {
+    AlertCircle,
+    ArrowLeft,
+    ArrowRight,
+    CalendarDays,
+    CheckCircle2,
+    Mail,
+    ShieldCheck,
+    Sparkles,
+    Ticket,
+    X,
+} from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import StudioLogo from "@/components/StudioLogo";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlass";
 
 type LoginView = "email" | "otp";
+
+interface StudioFeature {
+    id: string;
+    icon: typeof CalendarDays;
+    title: string;
+    desc: string;
+    badge: string;
+    detail: string;
+}
+
+const STUDIO_FEATURES: StudioFeature[] = [
+    {
+        id: "schedule",
+        icon: CalendarDays,
+        title: "לוח אימונים גמיש",
+        desc: "שריון מקום מהיר לפי הימים והשעות שלך",
+        badge: "מתעדכן",
+        detail: "שיעורי בוקר, ערב וסופי שבוע בקצב שמתאים לשגרה שלך.",
+    },
+    {
+        id: "intimate",
+        icon: Sparkles,
+        title: "קבוצות בוטיק אינטימיות",
+        desc: "עד 8 מתאמנות עם יחס אישי ומדויק",
+        badge: "אינטימי",
+        detail: "תשומת לב מלאה לכל תנועה, דיוק בטכניקה והתאמה אישית.",
+    },
+    {
+        id: "tickets",
+        icon: Ticket,
+        title: "כרטיסיות ומעקב חכם",
+        desc: "מעקב יתרה, תוקף מנוי וביטול עצמאי",
+        badge: "בזמן אמת",
+        detail: "שקיפות מלאה ללא אותיות קטנות — כל המידע זמין לך מיד.",
+    },
+];
 
 function GoogleMark({ className = "h-4 w-4 shrink-0" }: { className?: string }) {
     return (
@@ -54,15 +100,52 @@ export default function LandingPage() {
     const [otpCode, setOtpCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [authError, setAuthError] = useState("");
+    const [resendSuccess, setResendSuccess] = useState(false);
     const [isEmblemPressed, setIsEmblemPressed] = useState(false);
+    const [activeFeature, setActiveFeature] = useState<string | null>(null);
+
+    const emailInputRef = useRef<HTMLInputElement>(null);
+    const otpInputRef = useRef<HTMLInputElement>(null);
+
     const supabase = getSupabaseClient();
     const reduceMotion = useReducedMotion();
+
+    // Keyboard accessibility: Close login modal on Escape key
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && isLoginOpen) {
+                resetLoginState();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isLoginOpen]);
+
+    // Auto-focus input when sheet opens or view changes
+    useEffect(() => {
+        if (!isLoginOpen) return;
+        const timer = setTimeout(() => {
+            if (loginView === "email") {
+                emailInputRef.current?.focus();
+            } else {
+                otpInputRef.current?.focus();
+            }
+        }, 120);
+        return () => clearTimeout(timer);
+    }, [isLoginOpen, loginView]);
 
     const handleEmblemTap = () => {
         setIsEmblemPressed(true);
         setTimeout(() => setIsEmblemPressed(false), 450);
         if (typeof navigator !== "undefined" && navigator.vibrate) {
-            navigator.vibrate(20);
+            navigator.vibrate(15);
+        }
+    };
+
+    const toggleFeature = (id: string) => {
+        setActiveFeature((prev) => (prev === id ? null : id));
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate(10);
         }
     };
 
@@ -72,6 +155,7 @@ export default function LandingPage() {
         setEmail("");
         setOtpCode("");
         setAuthError("");
+        setResendSuccess(false);
         setIsLoading(false);
     };
 
@@ -92,6 +176,7 @@ export default function LandingPage() {
     const handleSendCode = async () => {
         if (!email) return;
         setAuthError("");
+        setResendSuccess(false);
         setIsLoading(true);
         const { error } = await supabase.auth.signInWithOtp({
             email,
@@ -104,6 +189,8 @@ export default function LandingPage() {
             setAuthError("לא הצלחנו לשלוח קוד. בדקי את הכתובת ונסי שוב.");
         } else {
             setLoginView("otp");
+            setResendSuccess(true);
+            setTimeout(() => setResendSuccess(false), 4000);
         }
     };
 
@@ -113,7 +200,7 @@ export default function LandingPage() {
         setIsLoading(true);
         const { data, error } = await supabase.auth.verifyOtp({
             email,
-            token: otpCode,
+            token: otpCode.trim(),
             type: "magiclink",
         });
 
@@ -130,18 +217,18 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="relative min-h-svh w-full overflow-hidden bg-[#181611] text-[var(--studio-deep-contrast)]">
-            {/* Background Layer: Animated Botanical Branch, Pulsing Terracotta Sun, and Atmospheric Light */}
+        <div className="relative min-h-svh w-full overflow-hidden bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
+            {/* Background Layer: Botanical Branch, Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
                 {/* Velvety atmospheric green-brownish earthy gradient */}
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_30%,#2a251b_0%,#1a1711_55%,#100e0a_100%)] opacity-95" />
 
                 {/* Warm terracotta sun with expanding and retracting halo & shadow */}
                 <motion.div
-                    className="absolute -left-10 top-20 h-52 w-52 rounded-full bg-[var(--studio-coral-bg)]/25 blur-3xl [@media(max-height:650px)]:top-12"
+                    className="absolute -left-10 top-20 h-56 w-56 rounded-full bg-[var(--studio-coral-bg)]/20 blur-3xl [@media(max-height:650px)]:top-12"
                     animate={reduceMotion ? undefined : {
                         scale: [1, 1.25, 1],
-                        opacity: [0.2, 0.45, 0.2],
+                        opacity: [0.18, 0.4, 0.18],
                     }}
                     transition={{
                         duration: 5.5,
@@ -180,9 +267,9 @@ export default function LandingPage() {
                 </motion.div>
 
                 {/* Ambient sage glow */}
-                <div className="absolute bottom-16 right-0 h-64 w-64 rounded-full bg-[var(--studio-accent-bg)]/12 blur-3xl" />
+                <div className="absolute bottom-16 right-0 h-72 w-72 rounded-full bg-[var(--studio-accent-bg)]/14 blur-3xl" />
 
-                {/* User's 5-leaf botanical branch gently tilting from side to side (subtle watermark opacity for maximum text legibility) */}
+                {/* User's 5-leaf botanical branch gently tilting */}
                 <motion.img
                     src="/user_leaves_branch_sage.png"
                     alt=""
@@ -199,15 +286,24 @@ export default function LandingPage() {
             </div>
 
             {/* Foreground Content */}
-            <main className="relative z-10 mx-auto flex min-h-svh max-w-lg flex-col justify-between px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] [@media(max-height:650px)]:py-3">
-                {/* Header: Centered Studio Emblem placed higher and sized larger for commanding brand presence */}
-                <header className="relative flex w-full items-center justify-center pt-0 -mt-2 [@media(max-height:650px)]:-mt-1">
+            <main className="relative z-10 mx-auto flex min-h-svh max-w-lg flex-col justify-between px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] [@media(max-height:650px)]:py-2.5">
+                {/* Header: Centered Studio Emblem & Boutique Tag */}
+                <header className="relative flex w-full flex-col items-center justify-center pt-0 -mt-2 [@media(max-height:650px)]:-mt-1">
+                    {/* Subtle boutique live indicator */}
+                    <div className="mb-1.5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-0.5 text-[11px] font-medium text-[var(--studio-accent-text)] backdrop-blur-xs [@media(max-height:650px)]:hidden">
+                        <span className="relative flex h-2 w-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--studio-accent-bg)] opacity-75" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--studio-accent-bg)]" />
+                        </span>
+                        <span>סטודיו בוטיק לתנועה ותזונה</span>
+                    </div>
+
                     <motion.button
                         type="button"
                         onClick={handleEmblemTap}
-                        whileTap={reduceMotion ? undefined : { scale: 0.90 }}
+                        whileTap={reduceMotion ? undefined : { scale: 0.92 }}
                         whileHover={reduceMotion ? undefined : { scale: 1.04 }}
-                        transition={{ type: "spring", stiffness: 450, damping: 18 }}
+                        transition={{ type: "spring", stiffness: 450, damping: 20 }}
                         className="group relative flex items-center justify-center cursor-pointer select-none rounded-3xl p-1.5 outline-none touch-manipulation focus-visible:ring-2 focus-visible:ring-white/40"
                         aria-label="סטודיו טליה - תזונה • אימונים"
                     >
@@ -221,26 +317,31 @@ export default function LandingPage() {
                         <img
                             src="/studio_emblem_clean.png"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-[6.75rem] w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.7)] transition-all duration-150 group-active:brightness-125 [@media(max-height:650px)]:h-20"
+                            className="h-[6.5rem] w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.7)] transition-all duration-150 group-active:brightness-125 [@media(max-height:650px)]:h-18"
                         />
                     </motion.button>
                 </header>
 
                 {/* Main Hero Section: Bold Editorial Hebrew Typography */}
-                <section aria-labelledby="landing-title" className="relative my-auto py-3 [@media(max-height:650px)]:py-1">
-                    {/* Eyebrow: Clean text without button borders */}
-                    <p className="mb-2 text-sm font-bold tracking-wider text-[var(--studio-accent-text)] [@media(max-height:650px)]:mb-0.5 [@media(max-height:650px)]:text-xs">
-                        ✦ האימון הבא מתחיל כאן
-                    </p>
+                <section aria-labelledby="landing-title" className="relative my-auto py-2.5 [@media(max-height:650px)]:py-1">
+                    {/* Eyebrow badge */}
+                    <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--studio-accent-bg)]/30 bg-[var(--studio-accent-bg)]/12 px-3 py-1 text-xs font-bold tracking-wide text-[var(--studio-accent-text)] backdrop-blur-xs [@media(max-height:650px)]:mb-0.5 [@media(max-height:650px)]:text-[11px]">
+                        <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
+                        <span>האימון הבא מתחיל כאן</span>
+                    </div>
 
-                    {/* Headline: Larger, bolder, authoritative */}
-                    <h1 id="landing-title" className="font-bold leading-[0.9] tracking-[-0.055em]">
-                        <span className="block text-[clamp(3rem,12.5vw,4.6rem)] text-[var(--studio-deep-contrast)]">
+                    {/* Headline: Editorial typography with balanced line wrapping */}
+                    <h1
+                        id="landing-title"
+                        style={{ textWrap: "balance" }}
+                        className="font-bold leading-[0.9] tracking-[-0.055em]"
+                    >
+                        <span className="block text-[clamp(2.75rem,11.5vw,4.2rem)] text-[var(--studio-deep-contrast)]">
                             יש לך
                         </span>
-                        <span className="relative inline-block text-[clamp(5.2rem,22vw,7.6rem)] text-[var(--studio-accent-text)]">
+                        <span className="relative inline-block text-[clamp(5rem,21vw,7.4rem)] text-[var(--studio-accent-text)]">
                             מקום
-                            {/* Animated wavy underline drawing naturally from Right to Left (hidden until drawing starts to eliminate dot) */}
+                            {/* Animated wavy underline drawing RTL */}
                             <svg aria-hidden="true" viewBox="0 0 240 20" preserveAspectRatio="none" className="absolute -bottom-3.5 right-0 h-4 w-full overflow-visible text-[var(--studio-coral-bg)]">
                                 <motion.path
                                     d="M236 4 C175 14 120 8 70 4 S14 12 4 15"
@@ -257,49 +358,133 @@ export default function LandingPage() {
                                 />
                             </svg>
                         </span>
-                        <span className="mt-1 block text-[clamp(4rem,16.5vw,5.8rem)] text-[var(--studio-deep-contrast)]">
+                        <span className="mt-1 block text-[clamp(3.8rem,15.5vw,5.5rem)] text-[var(--studio-deep-contrast)]">
                             לזוז<span className="text-[var(--studio-coral-text)]">.</span>
                         </span>
                     </h1>
 
-                    {/* Subtitle: Larger and warm */}
-                    <p className="mt-4 max-w-[22rem] text-base leading-relaxed text-[var(--studio-deep-contrast)]/90 [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:text-xs">
+                    {/* Subtitle */}
+                    <p className="mt-3.5 max-w-[22rem] text-base leading-relaxed text-[var(--studio-deep-contrast)]/90 [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:text-xs">
                         האימונים, ההרשמות והיתרה שלך — הכול מחכה לך כאן במקום אחד.
                     </p>
 
-                    {/* Studio Features: Each on its own line with user's attached leaf icon */}
-                    <ul className="mt-4 space-y-2.5 text-base font-semibold text-[var(--studio-deep-contrast)]/95 [@media(max-height:650px)]:mt-2 [@media(max-height:650px)]:space-y-1.5 [@media(max-height:650px)]:text-xs">
-                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2.5 select-none transition-transform">
-                            <UserLeafIcon className="h-5 w-5 shrink-0 text-[var(--studio-accent-text)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] [@media(max-height:650px)]:h-4 [@media(max-height:650px)]:w-4" />
-                            <span>לוח אימונים</span>
-                        </motion.li>
-                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2.5 select-none transition-transform">
-                            <UserLeafIcon className="h-5 w-5 shrink-0 text-[var(--studio-accent-text)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] [@media(max-height:650px)]:h-4 [@media(max-height:650px)]:w-4" />
-                            <span>הרשמה</span>
-                        </motion.li>
-                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2.5 select-none transition-transform">
-                            <UserLeafIcon className="h-5 w-5 shrink-0 text-[var(--studio-accent-text)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] [@media(max-height:650px)]:h-4 [@media(max-height:650px)]:w-4" />
-                            <span>ניהול כרטיסיות</span>
-                        </motion.li>
-                    </ul>
+                    {/* Interactive Feature Cards (UI/UX Pro Max upgrade from static bullets) */}
+                    <div
+                        role="region"
+                        aria-label="יתרונות הסטודיו"
+                        className="mt-4 space-y-2 [@media(max-height:650px)]:mt-2 [@media(max-height:650px)]:space-y-1.5"
+                    >
+                        {STUDIO_FEATURES.map((item) => {
+                            const isExpanded = activeFeature === item.id;
+                            const IconComponent = item.icon;
+
+                            return (
+                                <motion.div
+                                    key={item.id}
+                                    onClick={() => toggleFeature(item.id)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            toggleFeature(item.id);
+                                        }
+                                    }}
+                                    tabIndex={0}
+                                    role="button"
+                                    aria-expanded={isExpanded}
+                                    whileHover={reduceMotion ? undefined : { y: -1 }}
+                                    whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                                    className={`group cursor-pointer select-none rounded-2xl border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+                                        isExpanded
+                                            ? "border-[var(--studio-accent-bg)]/50 bg-white/[0.08] shadow-lg shadow-black/20"
+                                            : "border-white/[0.08] bg-white/[0.035] hover:border-white/20 hover:bg-white/[0.06]"
+                                    } p-2.5 backdrop-blur-xs [@media(max-height:650px)]:p-2`}
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-accent-bg)]/20 text-[var(--studio-accent-text)] group-hover:bg-[var(--studio-accent-bg)]/30 transition-colors [@media(max-height:650px)]:h-7 [@media(max-height:650px)]:w-7">
+                                                <IconComponent className="h-4 w-4 [@media(max-height:650px)]:h-3.5 [@media(max-height:650px)]:w-3.5" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-[var(--studio-deep-contrast)] [@media(max-height:650px)]:text-xs">
+                                                    {item.title}
+                                                </div>
+                                                <div className="text-xs text-[var(--studio-deep-contrast)]/75 [@media(max-height:650px)]:hidden">
+                                                    {item.desc}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <span className="shrink-0 rounded-full border border-[var(--studio-coral-bg)]/30 bg-[var(--studio-coral-bg)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--studio-coral-text)]">
+                                            {item.badge}
+                                        </span>
+                                    </div>
+
+                                    {/* Expandable micro-detail on tap */}
+                                    <AnimatePresence>
+                                        {isExpanded && (
+                                            <motion.div
+                                                initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="mt-2 border-t border-white/10 pt-2 text-xs leading-relaxed text-[var(--studio-accent-text)]">
+                                                    {item.detail}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Boutique Trust Strip */}
+                    <div className="mt-3 flex items-center justify-around rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-[11px] font-medium text-[var(--studio-deep-contrast)]/70 [@media(max-height:650px)]:hidden">
+                        <span className="flex items-center gap-1.5">
+                            <UserLeafIcon className="h-3.5 w-3.5 text-[var(--studio-accent-text)]" />
+                            יחס אישי מותאם
+                        </span>
+                        <span className="text-white/20">•</span>
+                        <span className="flex items-center gap-1.5">
+                            <Sparkles className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
+                            מרחב נשי מעצים
+                        </span>
+                        <span className="text-white/20">•</span>
+                        <span className="flex items-center gap-1.5">
+                            <ShieldCheck className="h-3.5 w-3.5 text-[var(--studio-accent-text)]" />
+                            גמישות מלאה
+                        </span>
+                    </div>
                 </section>
 
                 {/* Bottom Action Area: True iOS Liquid Frosted Glass */}
                 <div className="relative mt-auto w-full pt-3 [@media(max-height:650px)]:pt-1">
-                    {/* Radiant Ambient Backlight so the frosted glass refracts warm sage and terracotta light */}
+                    {/* Radiant Ambient Backlight */}
                     <div
                         aria-hidden="true"
                         className="pointer-events-none absolute -bottom-4 inset-x-2 h-32 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(139,142,111,0.38)_0%,rgba(195,122,97,0.22)_45%,transparent_75%)] blur-2xl -z-10"
                     />
 
-                    {authError && <p role="alert" className="mb-2 text-xs font-bold text-[var(--studio-coral-text)]">{authError}</p>}
+                    {authError && (
+                        <div
+                            role="alert"
+                            aria-live="assertive"
+                            className="mb-2 flex items-center gap-2 rounded-xl border border-[var(--studio-danger)]/30 bg-[var(--studio-danger)]/15 px-3 py-2 text-xs font-bold text-[var(--studio-coral-text)]"
+                        >
+                            <AlertCircle className="h-4 w-4 shrink-0 text-[var(--studio-coral-text)]" />
+                            <span>{authError}</span>
+                        </div>
+                    )}
 
-                    {/* Primary Google Login Button: Exact Liqui Design Liquid Glass */}
+                    {/* Primary Google Login Button */}
                     <LiquidGlassButton
                         id="main-signin-button"
                         type="button"
                         onClick={handleGoogleLogin}
                         disabled={isLoading}
+                        aria-busy={isLoading}
                         radius={18}
                         blur={1}
                         refraction={45}
@@ -315,15 +500,19 @@ export default function LandingPage() {
                                 <GoogleMark className="h-4 w-4" />
                             </span>
                             <span className="text-[16px] font-semibold tracking-[-0.01em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] [@media(max-height:650px)]:text-sm">
-                                {isLoading ? "מחברות אותך..." : "ממשיכים עם גוגל"}
+                                {isLoading ? "מחברות אותך..." : "ממשיכות עם גוגל"}
                             </span>
                         </div>
                     </LiquidGlassButton>
 
-                    {/* Secondary Email OTP Button: Exact Liqui Design Liquid Glass */}
+                    {/* Secondary Email OTP Button */}
                     <LiquidGlassButton
                         type="button"
-                        onClick={() => { setAuthError(""); setLoginView("email"); setIsLoginOpen(true); }}
+                        onClick={() => {
+                            setAuthError("");
+                            setLoginView("email");
+                            setIsLoginOpen(true);
+                        }}
                         radius={16}
                         blur={1}
                         refraction={38}
@@ -339,26 +528,40 @@ export default function LandingPage() {
                             <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">כניסה עם קוד במייל</span>
                         </div>
                     </LiquidGlassButton>
+
+                    {/* Reassurance Micro-Copy */}
+                    <p className="mt-2 text-center text-[11px] font-medium text-white/50 [@media(max-height:650px)]:hidden">
+                        כניסה מאובטחת ללא סיסמה • הפרטים שלך שמורים
+                    </p>
                 </div>
             </main>
 
-            {/* Mobile Login Sheet */}
+            {/* Mobile Login Sheet (Accessible Modal) */}
             <AnimatePresence>
                 {isLoginOpen && (
-                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-end justify-center">
+                    <motion.div
+                        initial={reduceMotion ? false : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-end justify-center"
+                    >
+                        {/* Backdrop button with blur */}
                         <motion.button
                             type="button"
-                            aria-label="סגירה"
+                            aria-label="סגירת חלון התחברות"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={resetLoginState}
-                            className="absolute inset-0 h-full w-full bg-[#111a12]/65 backdrop-blur-xs"
+                            className="absolute inset-0 h-full w-full bg-[#111a12]/70 backdrop-blur-xs cursor-pointer"
                         />
+
+                        {/* Modal Container */}
                         <motion.div
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="login-title"
+                            aria-describedby="login-desc"
                             initial={reduceMotion ? false : { y: "100%" }}
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
@@ -366,25 +569,59 @@ export default function LandingPage() {
                             className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2.25rem] bg-[var(--studio-sheet)] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 text-[var(--studio-ink)] shadow-2xl"
                         >
                             {/* Drag grabber handle */}
-                            <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-[#1b251c]/15" />
+                            <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-[#1b251c]/20" />
 
-                            <button type="button" onClick={resetLoginState} aria-label="סגירה" className="absolute left-6 top-6 flex h-10 w-10 items-center justify-center rounded-full border border-[#1b251c]/15 active:scale-95">
+                            <button
+                                type="button"
+                                onClick={resetLoginState}
+                                aria-label="סגירה"
+                                className="absolute left-6 top-6 flex h-10 w-10 items-center justify-center rounded-full border border-[#1b251c]/15 text-[var(--studio-ink)] hover:bg-[#1b251c]/5 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-[var(--studio-brand)]"
+                            >
                                 <X aria-hidden="true" className="h-4 w-4" />
                             </button>
 
                             <p className="mb-1 text-xs font-bold text-[var(--studio-subtle)]">סטודיו טליה</p>
-                            <h2 id="login-title" className="max-w-[15rem] text-[2rem] font-bold leading-tight">
+                            <h2 id="login-title" className="max-w-[16rem] text-[2rem] font-bold leading-tight">
                                 {loginView === "email" ? "נשלח לך קוד למייל" : "הקוד בדרך אלייך"}
                             </h2>
-                            <p className="mb-6 mt-2 max-w-[18rem] text-sm leading-relaxed text-[var(--studio-muted)]">
-                                {loginView === "email" ? "כתבי את הכתובת שלך ונשלח קוד חד־פעמי ללא סיסמה." : `הקוד נשלח אל ${email}. הזיני אותו כאן.`}
+                            <p id="login-desc" className="mb-6 mt-2 max-w-[19rem] text-sm leading-relaxed text-[var(--studio-muted)]">
+                                {loginView === "email" ? (
+                                    "כתבי את הכתובת שלך ונשלח קוד חד־פעמי בן 6 ספרות לכניסה מיידית ללא צורך בסיסמה."
+                                ) : (
+                                    <>
+                                        הקוד נשלח אל{" "}
+                                        <span dir="ltr" className="font-bold text-[var(--studio-ink)] underline decoration-[var(--studio-brand)]">
+                                            {email}
+                                        </span>
+                                        . הזיני אותו כאן:
+                                    </>
+                                )}
                             </p>
 
+                            {resendSuccess && (
+                                <div
+                                    role="status"
+                                    className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-xs font-bold text-emerald-800"
+                                >
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                                    <span>הקוד נשלח בהצלחה לכתובת המייל!</span>
+                                </div>
+                            )}
+
                             {loginView === "email" && (
-                                <form onSubmit={(event) => { event.preventDefault(); handleSendCode(); }} className="space-y-3.5">
+                                <form
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        handleSendCode();
+                                    }}
+                                    className="space-y-4"
+                                >
                                     <div>
-                                        <label htmlFor="login-email" className="block text-xs font-bold mb-1.5">כתובת המייל שלך</label>
+                                        <label htmlFor="login-email" className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]">
+                                            כתובת המייל שלך <span className="text-[var(--studio-coral-bg)]">*</span>
+                                        </label>
                                         <input
+                                            ref={emailInputRef}
                                             id="login-email"
                                             type="email"
                                             inputMode="email"
@@ -393,55 +630,102 @@ export default function LandingPage() {
                                             dir="ltr"
                                             value={email}
                                             onChange={(event) => setEmail(event.target.value)}
-                                            placeholder="כתובת המייל שלך"
-                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-sm outline-none focus:border-[var(--studio-accent-text)] focus:ring-2 focus:ring-[var(--studio-accent-bg)]/20"
+                                            placeholder="name@example.com"
+                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-base outline-none transition-all focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-accent-bg)]/25"
                                         />
                                     </div>
-                                    <button type="submit" disabled={isLoading || !email} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-[var(--studio-deep-contrast)] disabled:opacity-50 active:scale-[0.985]">
+
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading || !email}
+                                        className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-md hover:bg-black disabled:opacity-50 active:scale-[0.985] transition-all cursor-pointer"
+                                    >
                                         <span>{isLoading ? "שולחות קוד..." : "שלחי לי קוד"}</span>
                                         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
                                     </button>
-                                    <button type="button" onClick={resetLoginState} className="flex min-h-10 w-full items-center justify-center text-xs font-bold text-[var(--studio-muted)]">
+
+                                    <button
+                                        type="button"
+                                        onClick={resetLoginState}
+                                        className="flex min-h-10 w-full items-center justify-center text-xs font-bold text-[var(--studio-muted)] hover:text-[var(--studio-ink)] transition-colors"
+                                    >
                                         ביטול וחזרה
                                     </button>
                                 </form>
                             )}
 
                             {loginView === "otp" && (
-                                <form onSubmit={(event) => { event.preventDefault(); handleVerifyCode(); }} className="space-y-3.5">
+                                <form
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        handleVerifyCode();
+                                    }}
+                                    className="space-y-4"
+                                >
                                     <div>
-                                        <label htmlFor="login-code" className="block text-xs font-bold mb-1.5">הקוד שקיבלת</label>
+                                        <label htmlFor="login-code" className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]">
+                                            קוד אימות בן 6 ספרות <span className="text-[var(--studio-coral-bg)]">*</span>
+                                        </label>
                                         <input
+                                            ref={otpInputRef}
                                             id="login-code"
                                             type="text"
                                             inputMode="numeric"
                                             autoComplete="one-time-code"
-                                            maxLength={10}
+                                            maxLength={8}
                                             required
                                             dir="ltr"
                                             value={otpCode}
                                             onChange={(event) => setOtpCode(event.target.value)}
                                             placeholder="••••••"
-                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-center font-mono text-xl tracking-[0.35em] outline-none focus:border-[var(--studio-accent-text)]"
+                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-center font-mono text-2xl tracking-[0.35em] outline-none transition-all focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-accent-bg)]/25"
                                         />
                                     </div>
-                                    <button type="submit" disabled={isLoading || otpCode.length < 6} className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-[var(--studio-deep-contrast)] disabled:opacity-50 active:scale-[0.985]">
-                                        <span>{isLoading ? "בודקות..." : "אימות וכניסה"}</span>
+
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading || otpCode.trim().length < 6}
+                                        className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-md hover:bg-black disabled:opacity-50 active:scale-[0.985] transition-all cursor-pointer"
+                                    >
+                                        <span>{isLoading ? "בודקות קוד..." : "אימות וכניסה"}</span>
                                         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
                                     </button>
+
                                     <div className="flex items-center justify-between pt-1 text-xs">
-                                        <button type="button" onClick={() => { setAuthError(""); setLoginView("email"); }} className="flex items-center gap-1.5 font-bold text-[var(--studio-muted)]">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setAuthError("");
+                                                setLoginView("email");
+                                            }}
+                                            className="flex items-center gap-1.5 font-bold text-[var(--studio-muted)] hover:text-[var(--studio-ink)] transition-colors cursor-pointer"
+                                        >
                                             <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
                                             שינוי כתובת מייל
                                         </button>
-                                        <button type="button" onClick={handleSendCode} disabled={isLoading} className="font-bold text-[var(--studio-accent-bg)] hover:underline">
+
+                                        <button
+                                            type="button"
+                                            onClick={handleSendCode}
+                                            disabled={isLoading}
+                                            className="font-bold text-[var(--studio-brand)] hover:underline cursor-pointer disabled:opacity-50"
+                                        >
                                             שליחה חוזרת
                                         </button>
                                     </div>
                                 </form>
                             )}
 
-                            {authError && <p role="alert" className="mt-4 rounded-2xl bg-[var(--studio-danger)]/10 p-3 text-sm text-[var(--studio-danger)]">{authError}</p>}
+                            {authError && (
+                                <div
+                                    role="alert"
+                                    aria-live="assertive"
+                                    className="mt-4 flex items-center gap-2 rounded-2xl bg-[var(--studio-danger)]/10 border border-[var(--studio-danger)]/25 p-3 text-sm text-[var(--studio-danger)]"
+                                >
+                                    <AlertCircle className="h-4 w-4 shrink-0" />
+                                    <span>{authError}</span>
+                                </div>
+                            )}
                         </motion.div>
                     </motion.div>
                 )}
