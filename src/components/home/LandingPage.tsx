@@ -217,7 +217,7 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="relative h-dvh max-h-dvh w-full overflow-hidden bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
+        <div className="relative h-dvh max-h-dvh w-full overflow-hidden touch-none bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
             {/* Background Layer: Botanical Branch, Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
                 {/* Velvety atmospheric green-brownish earthy gradient */}
@@ -286,7 +286,7 @@ export default function LandingPage() {
             </div>
 
             {/* Foreground Content */}
-            <main className="relative z-10 mx-auto flex h-full max-h-dvh w-full max-w-md flex-col justify-between px-5 pt-[max(0.85rem,calc(env(safe-area-inset-top)+0.5rem))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <main className="relative z-10 mx-auto flex h-full max-h-dvh w-full max-w-md flex-col justify-between px-5 pt-[max(1.1rem,calc(env(safe-area-inset-top)+0.75rem))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 {/* Header: Centered Studio Emblem */}
                 <header className="flex shrink-0 items-center justify-center pt-1 pb-0.5">
                     <motion.button

@@ -120,83 +120,86 @@ export default function TraineeDashboard({
     const today = new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
     return (
-        <div className="relative h-dvh max-h-dvh w-full overflow-hidden bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
+        <div className="relative h-dvh max-h-dvh w-full overflow-hidden touch-none bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
             {/* Ambient atmospheric lighting */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]"
             />
 
-            <main className="relative mx-auto flex h-full max-w-md flex-col justify-between px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(0.85rem,calc(env(safe-area-inset-top)+0.65rem))] sm:px-5">
-                {/* 1. Header: Studio Brand Emblem & Date / Admin Badge */}
-                <header className="flex shrink-0 items-center justify-between gap-3 pt-0.5 pb-0.5">
-                    <Link
-                        href="/dashboard"
-                        className="group flex items-center transition-transform active:scale-95"
-                        aria-label="סטודיו טליה - תזונה • אימונים"
-                    >
-                        {/* High-contrast crisp studio logo emblem - proud & prominent */}
-                        <img
-                            src="/studio_emblem_dark.png"
-                            alt="סטודיו טליה - תזונה • אימונים"
-                            onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = "/studio_logo_crisp.svg";
-                            }}
-                            className="h-12 sm:h-13 w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.12)] transition-transform group-hover:scale-[1.02]"
-                        />
-                    </Link>
+            <main className="relative mx-auto flex h-full max-w-md flex-col justify-between px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-[max(1.15rem,calc(env(safe-area-inset-top)+0.75rem))] sm:px-5">
+                {/* 1 & 2: Header + Personal Greeting grouped cohesively */}
+                <div className="flex shrink-0 flex-col gap-2.5 sm:gap-3.5">
+                    {/* Header: Studio Brand Emblem & Date / Admin Badge */}
+                    <header className="flex shrink-0 items-center justify-between gap-3 pt-0.5">
+                        <Link
+                            href="/dashboard"
+                            className="group flex items-center transition-transform active:scale-95"
+                            aria-label="סטודיו טליה - תזונה • אימונים"
+                        >
+                            {/* High-contrast studio emblem - proud & prominent */}
+                            <img
+                                src="/studio_emblem_dark.png"
+                                alt="סטודיו טליה - תזונה • אימונים"
+                                onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src = "/studio_logo_crisp.svg";
+                                }}
+                                className="h-13 sm:h-15 w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.14)] transition-transform group-hover:scale-[1.02]"
+                            />
+                        </Link>
 
-                    <div className="flex items-center gap-2">
-                        {profile?.role === "administrator" && (
-                            <Link
-                                href="/admin"
-                                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--studio-deep)] px-2.5 py-1 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-sm transition-transform active:scale-95"
-                            >
-                                <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
-                                <span>ניהול</span>
-                            </Link>
-                        )}
-                        <div className="flex items-center gap-1.5 rounded-full border border-[#8b9978] bg-white px-2.5 py-1 text-xs font-bold text-[#142217] shadow-[0_2px_6px_rgba(20,32,22,0.06)] whitespace-nowrap shrink-0">
-                            <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 text-[#1e2e1c]" strokeWidth={2.4} />
-                            <span>{today}</span>
-                        </div>
-                    </div>
-                </header>
-
-                {/* 2. Personal Greeting with Harmonious Terracotta Sun & 100% Uncropped Botanical Art */}
-                <div className="flex shrink-0 items-center justify-between gap-2.5 py-0.5">
-                    {/* Greeting text on right (RTL start) */}
-                    <div className="min-w-0 flex-1">
-                        <p className="mb-0.5 text-xs font-semibold tracking-wide text-[#283824]">
-                            ✦ {greeting} · {nextClass ? "טוב לראות אותך" : "איזה כיף שבאת"}
-                        </p>
-                        <h1 className="break-words font-bold leading-[1.08] tracking-[-0.03em] text-[#142217]">
-                            <span className="block text-base sm:text-lg font-semibold text-[#142217]/85">
-                                {loading ? "שלום לך" : "היי,"}
-                            </span>
-                            {!loading && (
-                                <span className="mt-0.5 block text-[clamp(1.75rem,7vw,2.3rem)] font-bold text-[#142217]">
-                                    {firstName}<span className="text-[#c37a61]">.</span>
-                                </span>
+                        <div className="flex items-center gap-2">
+                            {profile?.role === "administrator" && (
+                                <Link
+                                    href="/admin"
+                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--studio-deep)] px-3 py-1.5 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-sm transition-transform active:scale-95"
+                                >
+                                    <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
+                                    <span>ניהול</span>
+                                </Link>
                             )}
-                        </h1>
-                    </div>
+                            <div className="flex items-center gap-1.5 rounded-full border border-[#8b9978] bg-white px-3 py-1.5 text-xs font-bold text-[#142217] shadow-[0_2px_6px_rgba(20,32,22,0.06)] whitespace-nowrap shrink-0">
+                                <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 text-[#1e2e1c]" strokeWidth={2.4} />
+                                <span>{today}</span>
+                            </div>
+                        </div>
+                    </header>
 
-                    {/* Botanical Art Vignette on left (RTL end) - fully contained, uncropped, zero header collision */}
-                    <div
-                        aria-hidden="true"
-                        className="relative flex h-20 w-20 sm:h-22 sm:w-22 shrink-0 items-center justify-center select-none pointer-events-none"
-                    >
-                        {/* Terracotta sun disk */}
-                        <div className="absolute h-13 w-13 sm:h-15 sm:w-15 rounded-full bg-[#c37a61]/75 shadow-sm" />
-                        {/* Terracotta outer accent circle */}
-                        <div className="absolute h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 rounded-full border-[1.5px] border-[#c37a61]/45" />
-                        {/* Complete botanical branch - contained naturally, 100% uncropped */}
-                        <img
-                            src="/user_leaves_branch_dark.png"
-                            alt=""
-                            className="relative z-10 h-full w-full object-contain drop-shadow-[0_2px_4px_rgba(20,32,22,0.15)]"
-                        />
+                    {/* Personal Greeting with Harmonious Terracotta Sun & 100% Uncropped Botanical Art */}
+                    <div className="flex shrink-0 items-center justify-between gap-2.5">
+                        {/* Greeting text on right (RTL start) */}
+                        <div className="min-w-0 flex-1">
+                            <p className="mb-0.5 text-xs font-semibold tracking-wide text-[#283824]">
+                                ✦ {greeting} · {nextClass ? "טוב לראות אותך" : "איזה כיף שבאת"}
+                            </p>
+                            <h1 className="break-words font-bold leading-[1.08] tracking-[-0.03em] text-[#142217]">
+                                <span className="block text-base sm:text-lg font-semibold text-[#142217]/85">
+                                    {loading ? "שלום לך" : "היי,"}
+                                </span>
+                                {!loading && (
+                                    <span className="mt-0.5 block text-[clamp(1.75rem,7vw,2.3rem)] font-bold text-[#142217]">
+                                        {firstName}<span className="text-[#c37a61]">.</span>
+                                    </span>
+                                )}
+                            </h1>
+                        </div>
+
+                        {/* Botanical Art Vignette on left (RTL end) - fully contained, uncropped, zero header collision */}
+                        <div
+                            aria-hidden="true"
+                            className="relative flex h-20 w-20 sm:h-22 sm:w-22 shrink-0 items-center justify-center select-none pointer-events-none"
+                        >
+                            {/* Terracotta sun disk */}
+                            <div className="absolute h-13 w-13 sm:h-15 sm:w-15 rounded-full bg-[#c37a61]/75 shadow-sm" />
+                            {/* Terracotta outer accent circle */}
+                            <div className="absolute h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 rounded-full border-[1.5px] border-[#c37a61]/45" />
+                            {/* Complete botanical branch - contained naturally, 100% uncropped */}
+                            <img
+                                src="/user_leaves_branch_dark.png"
+                                alt=""
+                                className="relative z-10 h-full w-full object-contain drop-shadow-[0_2px_4px_rgba(20,32,22,0.15)]"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -204,7 +207,7 @@ export default function TraineeDashboard({
                 <section
                     aria-labelledby="next-class"
                     aria-busy={classLoading}
-                    className="relative isolate shrink-0 overflow-hidden rounded-[22px_22px_12px_22px] border-2 border-[var(--studio-brand)]/40 bg-gradient-to-br from-[#1c2c1f] via-[#142217] to-[#0c140e] p-3.5 sm:p-4 text-white shadow-[0_12px_28px_-10px_rgba(12,22,14,0.6)]"
+                    className="relative isolate flex flex-1 flex-col justify-between overflow-hidden rounded-[22px_22px_12px_22px] border-2 border-[var(--studio-brand)]/40 bg-gradient-to-br from-[#1c2c1f] via-[#142217] to-[#0c140e] p-4 sm:p-5 text-white shadow-[0_12px_28px_-10px_rgba(12,22,14,0.6)] min-h-[12rem] max-h-[18rem]"
                 >
                     {/* Atmospheric corner glow & botanical leaf artwork inside card */}
                     <div

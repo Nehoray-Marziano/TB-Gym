@@ -38,8 +38,8 @@ export default function PaymentModal({
     return (
         <AnimatePresence>
             {isOpen && (
-                <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    {/* Backdrop - Independent Layer */}
+                <div className="fixed inset-0 z-[70] flex items-end justify-center">
+                    {/* Backdrop */}
                     <motion.div
                         key="backdrop"
                         initial={{ opacity: 0 }}
@@ -47,24 +47,22 @@ export default function PaymentModal({
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
                         onClick={onClose}
-                        className="fixed inset-0 z-[60] bg-[#111a12]/70"
+                        className="fixed inset-0 bg-[#111a12]/75 backdrop-blur-sm"
                     />
 
-                    {/* Modal Wrapper - Independent Layer for Layout */}
-                    <div className="pointer-events-none fixed inset-0 z-[60] flex items-end justify-center">
-                        {/* Modal */}
-                        <motion.div
-                            key="modal"
-                            initial={reduceMotion ? false : { opacity: 0, y: "100%" }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: "100%" }}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            onClick={(e) => e.stopPropagation()}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="payment-title"
-                            className="pointer-events-auto relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] pb-[env(safe-area-inset-bottom)] text-[var(--studio-ink)] shadow-2xl"
-                        >
+                    {/* Modal */}
+                    <motion.div
+                        key="modal"
+                        initial={reduceMotion ? false : { opacity: 0, y: "100%" }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: "100%" }}
+                        transition={{ type: "spring", stiffness: 350, damping: 32 }}
+                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="payment-title"
+                        className="relative z-10 max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-[2.2rem] bg-[var(--studio-sheet)] pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-[var(--studio-ink)] shadow-2xl"
+                    >
                             {/* Close Button */}
                             <button
                                 onClick={onClose}
@@ -148,7 +146,6 @@ export default function PaymentModal({
                             </div>
                         </motion.div>
                     </div>
-                </motion.div>
             )}
         </AnimatePresence>
     );
