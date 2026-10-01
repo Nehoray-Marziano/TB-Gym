@@ -161,21 +161,21 @@ export default function TraineeDashboard({
                 </header>
 
                 {/* Personal Greeting with Terracotta Sun & High-Contrast Botanical Art */}
-                <div className="relative isolate flex min-h-36 sm:min-h-44 items-center py-2 sm:py-3">
+                <div className="relative isolate flex min-h-[13.5rem] sm:min-h-[15rem] items-center py-3 sm:py-4">
                     {/* Terracotta sun circles & botanical watermark */}
-                    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-[42%] overflow-hidden select-none">
-                        <div className="absolute left-5 top-4 h-16 w-16 rounded-full bg-[var(--studio-coral-bg)]/80 sm:h-20 sm:w-20 shadow-sm" />
-                        <div className="absolute left-2 top-2 h-22 w-22 rounded-full border-2 border-[var(--studio-coral-bg)]/60 sm:h-26 sm:w-26" />
-                        {/* High-contrast botanical branch */}
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 -z-10 w-[46%] select-none">
+                        <div className="absolute left-6 top-5 h-20 w-20 rounded-full bg-[var(--studio-coral-bg)]/80 sm:h-24 sm:w-24 shadow-sm" />
+                        <div className="absolute left-3 top-2 h-26 w-26 rounded-full border-2 border-[var(--studio-coral-bg)]/60 sm:h-30 sm:w-30" />
+                        {/* High-contrast botanical branch - fully framed without cropping */}
                         <img
                             src="/user_leaves_branch_dark.png"
                             alt=""
-                            className="absolute -bottom-8 left-0 h-48 w-auto max-w-none -rotate-12 object-contain opacity-95 drop-shadow-[0_2px_4px_rgba(20,32,22,0.15)]"
+                            className="absolute bottom-1 left-1 h-[12.5rem] sm:h-[14rem] w-auto max-w-none -rotate-6 object-contain opacity-95 drop-shadow-[0_2px_6px_rgba(20,32,22,0.18)]"
                         />
                     </div>
 
-                    <div className="w-[74%]">
-                        <p className="mb-1 text-xs font-bold tracking-wide text-[#223320]">
+                    <div className="w-[72%]">
+                        <p className="mb-1.5 text-xs sm:text-sm font-bold tracking-wide text-[#223320]">
                             ✦ {greeting} · {nextClass ? "טוב לראות אותך" : "איזה כיף שבאת"}
                         </p>
                         <h1 className="break-words font-bold leading-[1.08] tracking-[-0.04em] text-[#142217]">
