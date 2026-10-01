@@ -327,39 +327,41 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
       }
     }, [size, isChromium, radius, bezel, profile, refraction]);
 
-    const effectiveBlur = Math.round(blur + frost * 12);
+    const effectiveBlur = blur + frost * 14;
     const backdropFilter = `blur(${effectiveBlur}px) saturate(${saturation})`;
     const refractFilter = glassRefs?.filterId ? `url(#${glassRefs.filterId})` : undefined;
+    const tintOpacity = 0.25 + 0.75 * frost;
 
     return (
       <div
         ref={localRef}
         className={cn(
-          "relative isolate select-none overflow-hidden",
-          elevated && "shadow-[0_12px_36px_rgba(0,0,0,0.45),0_3px_10px_rgba(0,0,0,0.2)]",
+          "liqui-glass",
+          elevated && "liqui-glass--elevated",
           className
         )}
         style={{
           borderRadius: `${radius}px`,
+          ["--lq-radius" as any]: `${radius}px`,
           ...style,
         }}
         {...props}
       >
-        {/* Layer 1: Optical Backdrop Blur & Saturation */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit]"
-          style={{
-            backdropFilter,
-            WebkitBackdropFilter: backdropFilter,
-          }}
-        />
+        {/* Layer 1: Backdrop Blur & Saturation */}
+        {backdropFilter && (
+          <span
+            className="liqui-glass__backdrop"
+            style={{
+              backdropFilter,
+              WebkitBackdropFilter: backdropFilter,
+            }}
+          />
+        )}
 
-        {/* Layer 2: Refraction Displacement (Chromium true liquid bend) */}
+        {/* Layer 2: Refraction Displacement (feDisplacementMap) */}
         {refractFilter && (
           <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] transition-opacity duration-300"
+            className="liqui-glass__refract"
             style={{
               backdropFilter: refractFilter,
               WebkitBackdropFilter: refractFilter,
@@ -367,39 +369,28 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
           />
         )}
 
-        {/* Layer 3: Ultra-clean Liquid Glass Tint (Crisp & transparent, not milky) */}
+        {/* Layer 3: Translucent Tint */}
         <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-[1] rounded-[inherit] bg-gradient-to-b from-white/[0.14] via-white/[0.04] to-white/[0.01]"
+          className="liqui-glass__tint"
+          style={{ opacity: tintOpacity }}
         />
 
-        {/* Layer 4: Normal-lit Specular Sun Arc (Ray-traced glass curvature) */}
+        {/* Layer 4: Normal-lit Specular Arc */}
         {glassRefs?.images.specular && specular > 0 && (
           <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-[2] rounded-[inherit] bg-no-repeat transition-opacity duration-300"
+            className="liqui-glass__specular"
             style={{
               backgroundImage: `url(${glassRefs.images.specular})`,
-              backgroundSize: "100% 100%",
               opacity: specular,
             }}
           />
         )}
 
-        {/* Layer 5: Apple Specular Bezel Rim (High-precision top catch-light, subtle bottom rim) */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-[3] rounded-[inherit] border border-white/20 border-t-white/60 shadow-[inset_0_1.5px_1px_0_rgba(255,255,255,0.75),inset_0_-1px_1px_0_rgba(255,255,255,0.12)]"
-        />
-
-        {/* Top-edge sharp glint */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-8 top-0 z-[4] h-[1px] bg-gradient-to-r from-transparent via-white/80 to-transparent"
-        />
+        {/* Layer 5: Specular Shine Bezel */}
+        <span className="liqui-glass__shine" />
 
         {/* Layer 6: Content */}
-        <div className={cn("relative z-[5] w-full", contentClassName)}>
+        <div className={cn("liqui-glass__content", contentClassName)}>
           {children}
         </div>
       </div>
@@ -409,8 +400,8 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
 LiquidGlass.displayName = "LiquidGlass";
 
 /**
- * LiquidGlassButton: A high-performance, accessible, tactile iOS Liquid Glass button
- * Powered by Liqui Design optics and Framer Motion spring physics.
+ * LiquidGlassButton: 100% Liqui Design Button component for React / Next.js
+ * Source-matched to https://liqui.design/r/button.json
  */
 export interface LiquidGlassButtonProps
   extends Omit<HTMLMotionProps<"button">, "ref" | "children"> {
@@ -434,16 +425,16 @@ export const LiquidGlassButton = React.forwardRef<
     {
       children,
       className,
-      radius = 9999,
-      blur = 2,
-      refraction = 40,
-      bezel = 14,
-      specular = 0.85,
-      frost = 0.28,
-      saturation = 1.9,
+      radius = 18,
+      blur = 1,
+      refraction = 45,
+      bezel = 11,
+      specular = 0.65,
+      frost = 0.35,
+      saturation = 1.7,
       profile = "squircle",
       elevated = true,
-      whileTap = { scale: 0.96 },
+      whileTap = { scale: 0.97 },
       transition = { type: "spring", stiffness: 450, damping: 25 },
       disabled,
       ...props
@@ -457,7 +448,7 @@ export const LiquidGlassButton = React.forwardRef<
         whileTap={disabled ? undefined : whileTap}
         transition={transition}
         className={cn(
-          "group relative flex w-full cursor-pointer items-center justify-center p-0 outline-none select-none touch-manipulation disabled:cursor-not-allowed disabled:opacity-50",
+          "group inline-flex w-full cursor-pointer select-none items-center justify-center p-0 outline-none transition-[transform,box-shadow] duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--lq-accent)_40%,transparent)]",
           className
         )}
         {...props}
@@ -472,7 +463,8 @@ export const LiquidGlassButton = React.forwardRef<
           saturation={saturation}
           profile={profile}
           elevated={elevated}
-          className="w-full transition-all duration-200 group-hover:scale-[1.01] group-active:scale-[0.98]"
+          className="w-full"
+          contentClassName="inline-flex w-full items-center justify-center rounded-[inherit] font-semibold leading-tight whitespace-nowrap group-hover:bg-[color-mix(in_srgb,var(--lq-highlight)_40%,transparent)] transition-colors duration-150 group-data-[disabled]:bg-transparent"
         >
           {children}
         </LiquidGlass>

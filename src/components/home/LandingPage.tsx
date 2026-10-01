@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Mail, X } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import StudioLogo from "@/components/StudioLogo";
+import { LiquidGlassButton } from "@/components/ui/LiquidGlass";
 
 type LoginView = "email" | "otp";
 
@@ -293,41 +294,51 @@ export default function LandingPage() {
 
                     {authError && <p role="alert" className="mb-2 text-xs font-bold text-[var(--studio-coral-text)]">{authError}</p>}
 
-                    {/* Primary Google Login Button: Pristine Liquid Frosted Glass */}
-                    <motion.button
+                    {/* Primary Google Login Button: Exact Liqui Design Liquid Glass */}
+                    <LiquidGlassButton
                         id="main-signin-button"
                         type="button"
                         onClick={handleGoogleLogin}
                         disabled={isLoading}
-                        whileTap={reduceMotion ? undefined : { scale: 0.96 }}
-                        transition={{ type: "spring", stiffness: 450, damping: 25 }}
-                        className="group relative flex min-h-[3.5rem] w-full items-center justify-center gap-3 overflow-hidden rounded-full border border-white/40 border-t-white/80 border-b-white/20 bg-gradient-to-b from-white/[0.28] via-white/[0.14] to-white/[0.08] px-6 text-white backdrop-blur-2xl backdrop-saturate-[200%] shadow-[inset_0_1.5px_1px_0_rgba(255,255,255,0.75),inset_0_-1px_1px_0_rgba(255,255,255,0.2),0_12px_36px_rgba(0,0,0,0.4)] transition-all duration-200 hover:from-white/[0.34] hover:border-t-white/95 active:scale-[0.97] active:from-white/[0.38] disabled:opacity-50 touch-manipulation select-none outline-none focus-visible:ring-2 focus-visible:ring-white/80 [@media(max-height:650px)]:min-h-12 [@media(max-height:650px)]:px-4"
+                        radius={18}
+                        blur={1}
+                        refraction={45}
+                        bezel={11}
+                        frost={0.35}
+                        specular={0.7}
+                        profile="squircle"
+                        elevated={true}
+                        className="w-full"
                     >
-                        {/* Specular Top Catch-light Arc */}
-                        <div aria-hidden="true" className="pointer-events-none absolute inset-x-6 top-0 h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+                        <div className="flex min-h-[3.5rem] w-full items-center justify-center gap-3 px-6 text-white [@media(max-height:650px)]:min-h-12 [@media(max-height:650px)]:px-4">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform group-active:scale-95">
+                                <GoogleMark className="h-4 w-4" />
+                            </span>
+                            <span className="text-[16px] font-semibold tracking-[-0.01em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] [@media(max-height:650px)]:text-sm">
+                                {isLoading ? "מחברות אותך..." : "ממשיכים עם גוגל"}
+                            </span>
+                        </div>
+                    </LiquidGlassButton>
 
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform group-active:scale-95">
-                            <GoogleMark className="h-4 w-4" />
-                        </span>
-                        <span className="text-[16px] font-semibold tracking-[-0.01em] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] [@media(max-height:650px)]:text-sm">
-                            {isLoading ? "מחברות אותך..." : "ממשיכים עם גוגל"}
-                        </span>
-                    </motion.button>
-
-                    {/* Secondary Email OTP Button: Luminous Translucent Frosted Glass */}
-                    <motion.button
+                    {/* Secondary Email OTP Button: Exact Liqui Design Liquid Glass */}
+                    <LiquidGlassButton
                         type="button"
                         onClick={() => { setAuthError(""); setLoginView("email"); setIsLoginOpen(true); }}
-                        whileTap={reduceMotion ? undefined : { scale: 0.96 }}
-                        transition={{ type: "spring", stiffness: 450, damping: 25 }}
-                        className="group relative mt-2.5 flex min-h-[2.85rem] w-full items-center justify-center gap-2 overflow-hidden rounded-full border border-white/25 border-t-white/60 border-b-white/10 bg-gradient-to-b from-white/[0.16] via-white/[0.08] to-white/[0.03] px-4 text-sm font-medium text-white/95 backdrop-blur-xl backdrop-saturate-[180%] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.5),inset_0_-1px_1px_0_rgba(255,255,255,0.1),0_8px_24px_rgba(0,0,0,0.25)] transition-all duration-200 hover:from-white/[0.22] hover:border-t-white/80 active:scale-[0.97] touch-manipulation select-none outline-none focus-visible:ring-2 focus-visible:ring-white/40 [@media(max-height:650px)]:min-h-10 [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:text-xs"
+                        radius={16}
+                        blur={1}
+                        refraction={38}
+                        bezel={9}
+                        frost={0.3}
+                        specular={0.5}
+                        profile="squircle"
+                        elevated={false}
+                        className="mt-2.5 w-full [@media(max-height:650px)]:mt-1.5"
                     >
-                        {/* Subtle top rim light */}
-                        <div aria-hidden="true" className="pointer-events-none absolute inset-x-8 top-0 h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/70 to-transparent" />
-
-                        <Mail aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)] opacity-95 transition-transform group-hover:scale-105" />
-                        <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">כניסה עם קוד במייל</span>
-                    </motion.button>
+                        <div className="flex min-h-[2.85rem] w-full items-center justify-center gap-2 px-4 text-sm font-medium text-white/95 [@media(max-height:650px)]:min-h-10 [@media(max-height:650px)]:text-xs">
+                            <Mail aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)] opacity-95 transition-transform group-hover:scale-105" />
+                            <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">כניסה עם קוד במייל</span>
+                        </div>
+                    </LiquidGlassButton>
                 </div>
             </main>
 
