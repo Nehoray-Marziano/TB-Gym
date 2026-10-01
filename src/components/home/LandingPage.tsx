@@ -110,6 +110,16 @@ export default function LandingPage() {
     const supabase = getSupabaseClient();
     const reduceMotion = useReducedMotion();
 
+    const resetLoginState = () => {
+        setIsLoginOpen(false);
+        setLoginView("email");
+        setEmail("");
+        setOtpCode("");
+        setAuthError("");
+        setResendSuccess(false);
+        setIsLoading(false);
+    };
+
     // Keyboard accessibility: Close login modal on Escape key
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -147,16 +157,6 @@ export default function LandingPage() {
         if (typeof navigator !== "undefined" && navigator.vibrate) {
             navigator.vibrate(10);
         }
-    };
-
-    const resetLoginState = () => {
-        setIsLoginOpen(false);
-        setLoginView("email");
-        setEmail("");
-        setOtpCode("");
-        setAuthError("");
-        setResendSuccess(false);
-        setIsLoading(false);
     };
 
     const handleGoogleLogin = async () => {
@@ -217,7 +217,7 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="relative h-dvh max-h-dvh w-full overflow-hidden touch-none bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
+        <div className="studio-welcome relative w-full bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
             {/* Background Layer: Botanical Branch, Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
                 {/* Velvety atmospheric green-brownish earthy gradient */}
@@ -286,9 +286,9 @@ export default function LandingPage() {
             </div>
 
             {/* Foreground Content */}
-            <main className="relative z-10 mx-auto flex h-full max-h-dvh w-full max-w-md flex-col justify-between px-5 pt-[max(1.1rem,calc(env(safe-area-inset-top)+0.75rem))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <main className="studio-welcome-main relative z-10 mx-auto w-full">
                 {/* Header: Centered Studio Emblem */}
-                <header className="flex shrink-0 items-center justify-center pt-1 pb-0.5">
+                <header className="studio-welcome-header flex items-center justify-center">
                     <motion.button
                         type="button"
                         onClick={handleEmblemTap}
@@ -308,15 +308,15 @@ export default function LandingPage() {
                         <img
                             src="/studio_emblem_clean.png"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-18 sm:h-22 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-150 group-active:brightness-125 [@media(max-height:680px)]:h-14"
+                            className="studio-welcome-emblem w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-150 group-active:brightness-125"
                         />
                     </motion.button>
                 </header>
 
                 {/* Main Hero Section: Bold Editorial Hebrew Typography */}
-                <section aria-labelledby="landing-title" className="my-auto flex flex-col justify-center py-1">
+                <section aria-labelledby="landing-title" className="studio-welcome-hero flex flex-col justify-center">
                     {/* Eyebrow badge */}
-                    <p className="mb-1 text-xs sm:text-sm font-bold tracking-wide text-[var(--studio-accent-text)]">
+                    <p className="studio-welcome-eyebrow font-bold tracking-wide text-[var(--studio-accent-text)]">
                         ✦ האימון הבא מתחיל כאן
                     </p>
 
@@ -326,10 +326,10 @@ export default function LandingPage() {
                         style={{ textWrap: "balance" }}
                         className="font-bold leading-[0.92] tracking-[-0.05em]"
                     >
-                        <span className="block text-[clamp(2.2rem,8.5vw,3.2rem)] text-[var(--studio-deep-contrast)]">
+                        <span className="studio-welcome-title-start block text-[var(--studio-deep-contrast)]">
                             יש לך
                         </span>
-                        <span className="relative inline-block text-[clamp(3.8rem,15vw,5.4rem)] text-[var(--studio-accent-text)]">
+                        <span className="studio-welcome-title-focus relative inline-block text-[var(--studio-accent-text)]">
                             מקום
                             {/* Animated wavy underline drawing RTL */}
                             <svg aria-hidden="true" viewBox="0 0 240 20" preserveAspectRatio="none" className="absolute -bottom-2.5 right-0 h-3.5 w-full overflow-visible text-[var(--studio-coral-bg)]">
@@ -348,18 +348,18 @@ export default function LandingPage() {
                                 />
                             </svg>
                         </span>
-                        <span className="mt-0.5 block text-[clamp(3rem,11.5vw,4.2rem)] text-[var(--studio-deep-contrast)]">
+                        <span className="studio-welcome-title-end mt-0.5 block text-[var(--studio-deep-contrast)]">
                             לזוז<span className="text-[var(--studio-coral-text)]">.</span>
                         </span>
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="mt-2 sm:mt-2.5 max-w-[20rem] text-xs sm:text-sm leading-relaxed text-[var(--studio-deep-contrast)]/85">
+                    <p className="studio-welcome-description leading-relaxed text-[var(--studio-deep-contrast)]/85">
                         האימונים, ההרשמות והיתרה שלך — הכול מחכה לך כאן במקום אחד.
                     </p>
 
                     {/* Studio Features: Compact boutique leaf list */}
-                    <ul className="mt-2.5 sm:mt-3 space-y-1.5 text-xs sm:text-sm font-semibold text-[var(--studio-deep-contrast)]/90">
+                    <ul className="studio-welcome-features font-semibold text-[var(--studio-deep-contrast)]/90">
                         <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
                             <UserLeafIcon className="h-4 w-4 text-[var(--studio-accent-text)] shrink-0 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
                             <span>לוח אימונים גמיש ומעודכן</span>
@@ -376,7 +376,7 @@ export default function LandingPage() {
                 </section>
 
                 {/* Bottom Action Area: True iOS Liquid Frosted Glass */}
-                <div className="relative mt-auto shrink-0 w-full pt-1.5 pb-0.5">
+                <div className="studio-welcome-actions relative w-full">
                     {/* Radiant Ambient Backlight */}
                     <div
                         aria-hidden="true"
@@ -411,11 +411,11 @@ export default function LandingPage() {
                         elevated={true}
                         className="w-full"
                     >
-                        <div className="flex min-h-[3.25rem] w-full items-center justify-center gap-3 px-5 text-white">
+                        <div className="studio-welcome-google flex w-full items-center justify-center gap-3 px-5 text-white">
                             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform group-active:scale-95">
                                 <GoogleMark className="h-3.5 w-3.5" />
                             </span>
-                            <span className="text-[15px] font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                            <span className="font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                                 {isLoading ? "מחברות אותך..." : "ממשיכות עם גוגל"}
                             </span>
                         </div>
@@ -437,16 +437,16 @@ export default function LandingPage() {
                         specular={0.5}
                         profile="squircle"
                         elevated={false}
-                        className="mt-2 w-full"
+                        className="studio-welcome-email-button w-full"
                     >
-                        <div className="flex min-h-[2.65rem] w-full items-center justify-center gap-2 px-4 text-xs sm:text-sm font-medium text-white/90">
+                        <div className="studio-welcome-email flex w-full items-center justify-center gap-2 px-4 font-medium text-white/90">
                             <Mail aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-accent-text)] opacity-95 transition-transform group-hover:scale-105" />
                             <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">כניסה עם קוד במייל</span>
                         </div>
                     </LiquidGlassButton>
 
                     {/* Reassurance Micro-Copy */}
-                    <p className="mt-1.5 text-center text-[10px] font-medium text-white/45">
+                    <p className="studio-welcome-reassurance text-center font-medium text-white/65">
                         כניסה מאובטחת ללא סיסמה • הפרטים שלך שמורים
                     </p>
                 </div>

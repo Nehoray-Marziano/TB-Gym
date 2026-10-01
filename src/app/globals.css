@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../components/home/home-layout.css";
 
 @theme {
   --font-sans: var(--font-varela-round), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
