@@ -127,9 +127,9 @@ export default function TraineeDashboard({
                 className="pointer-events-none absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]"
             />
 
-            <main className="relative mx-auto flex h-full max-w-md flex-col justify-between px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[max(0.85rem,env(safe-area-inset-top))] sm:px-5">
+            <main className="relative mx-auto flex h-full max-w-md flex-col justify-between px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[max(1.5rem,calc(env(safe-area-inset-top)+0.75rem))] sm:px-5">
                 {/* 1. Header: Studio Brand Emblem & Date / Admin Badge */}
-                <header className="flex shrink-0 items-center justify-between gap-3">
+                <header className="flex shrink-0 items-center justify-between gap-3 pt-1 pb-1">
                     <Link
                         href="/dashboard"
                         className="group flex items-center transition-transform active:scale-95"
@@ -139,7 +139,7 @@ export default function TraineeDashboard({
                         <img
                             src="/studio_logo_crisp.svg"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="h-13 sm:h-14 w-auto text-[#142217] object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.16)] transition-transform group-hover:scale-[1.02]"
+                            className="h-14 sm:h-16 w-auto text-[#142217] object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.16)] transition-transform group-hover:scale-[1.02]"
                         />
                     </Link>
 
