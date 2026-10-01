@@ -129,11 +129,11 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="relative min-h-svh w-full overflow-hidden bg-[#141f16] text-[var(--studio-deep-contrast)]">
+        <div className="relative min-h-svh w-full overflow-hidden bg-[#181611] text-[var(--studio-deep-contrast)]">
             {/* Background Layer: Animated Botanical Branch, Pulsing Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-                {/* Velvety atmospheric gradient */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_30%,#203123_0%,#141f16_60%,#0c140d_100%)] opacity-95" />
+                {/* Velvety atmospheric green-brownish earthy gradient */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_30%,#2a251b_0%,#1a1711_55%,#100e0a_100%)] opacity-95" />
 
                 {/* Warm terracotta sun with expanding and retracting halo & shadow */}
                 <motion.div
@@ -239,7 +239,7 @@ export default function LandingPage() {
                         </span>
                         <span className="relative inline-block text-[clamp(5.2rem,22vw,7.6rem)] text-[var(--studio-accent-text)]">
                             מקום
-                            {/* Animated wavy underline drawing naturally from Right to Left */}
+                            {/* Animated wavy underline drawing naturally from Right to Left (hidden until drawing starts to eliminate dot) */}
                             <svg aria-hidden="true" viewBox="0 0 240 20" preserveAspectRatio="none" className="absolute -bottom-3.5 right-0 h-4 w-full overflow-visible text-[var(--studio-coral-bg)]">
                                 <motion.path
                                     d="M236 4 C175 14 120 8 70 4 S14 12 4 15"
@@ -247,9 +247,12 @@ export default function LandingPage() {
                                     stroke="currentColor"
                                     strokeWidth="4.5"
                                     strokeLinecap="round"
-                                    initial={reduceMotion ? false : { pathLength: 0 }}
-                                    animate={{ pathLength: 1 }}
-                                    transition={{ duration: 0.85, delay: 0.2, ease: "easeOut" }}
+                                    initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+                                    animate={{ pathLength: 1, opacity: 1 }}
+                                    transition={reduceMotion ? undefined : {
+                                        pathLength: { duration: 0.85, delay: 0.25, ease: "easeOut" },
+                                        opacity: { duration: 0.05, delay: 0.25 },
+                                    }}
                                 />
                             </svg>
                         </span>
@@ -280,37 +283,43 @@ export default function LandingPage() {
                     </ul>
                 </section>
 
-                {/* Bottom Action Area: iOS Liquid Glass Buttons */}
+                {/* Bottom Action Area: Ultra-Glassy, Shiny & Transparent iOS Buttons */}
                 <div className="relative mt-auto w-full pt-3 [@media(max-height:650px)]:pt-1">
                     {authError && <p role="alert" className="mb-2 text-xs font-bold text-[var(--studio-coral-text)]">{authError}</p>}
 
-                    {/* Primary Google Login Button: Authentic iOS Frosted Glass */}
+                    {/* Primary Google Login Button: Ultra-Glassy (Shiny + Transparent) */}
                     <motion.button
                         id="main-signin-button"
                         type="button"
                         onClick={handleGoogleLogin}
                         disabled={isLoading}
-                        whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+                        whileTap={reduceMotion ? undefined : { scale: 0.95 }}
                         transition={{ type: "spring", stiffness: 450, damping: 25 }}
-                        className="group relative flex min-h-[3.5rem] w-full items-center justify-center gap-3 rounded-full border border-white/25 bg-[#9faf76]/25 px-6 text-white backdrop-blur-2xl backdrop-saturate-200 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.4),0_10px_30px_rgba(0,0,0,0.35)] transition-colors duration-150 hover:bg-[#9faf76]/32 hover:border-white/35 active:bg-[#9faf76]/42 disabled:opacity-50 touch-manipulation [@media(max-height:650px)]:min-h-12 [@media(max-height:650px)]:px-4"
+                        className="group relative flex min-h-[3.5rem] w-full items-center justify-center gap-3 overflow-hidden rounded-full border border-white/30 border-t-white/70 border-b-white/10 bg-gradient-to-b from-white/[0.18] via-white/[0.05] to-white/[0.01] px-6 text-white backdrop-blur-2xl backdrop-saturate-[220%] shadow-[inset_0_1.5px_1px_0_rgba(255,255,255,0.7),inset_0_-1px_1px_0_rgba(255,255,255,0.12),0_12px_36px_rgba(0,0,0,0.4)] transition-all duration-200 hover:border-t-white/90 hover:from-white/[0.24] active:scale-[0.96] active:from-white/[0.22] disabled:opacity-50 touch-manipulation [@media(max-height:650px)]:min-h-12 [@media(max-height:650px)]:px-4"
                     >
+                        {/* Sharp specular top-edge light glint */}
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-x-6 top-0 h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-white/85 to-transparent" />
+
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform group-active:scale-95">
                             <GoogleMark className="h-4 w-4" />
                         </span>
-                        <span className="text-[16px] font-semibold tracking-[-0.01em] text-[#fbfcf8] [@media(max-height:650px)]:text-sm">
+                        <span className="text-[16px] font-semibold tracking-[-0.01em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] [@media(max-height:650px)]:text-sm">
                             {isLoading ? "מחברות אותך..." : "ממשיכים עם גוגל"}
                         </span>
                     </motion.button>
 
-                    {/* Email OTP Button: Clean iOS Secondary Glass */}
+                    {/* Email OTP Button: Transparent Frosted Glass with Shiny Highlight */}
                     <motion.button
                         type="button"
                         onClick={() => { setAuthError(""); setLoginView("email"); setIsLoginOpen(true); }}
-                        whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+                        whileTap={reduceMotion ? undefined : { scale: 0.95 }}
                         transition={{ type: "spring", stiffness: 450, damping: 25 }}
-                        className="group relative mt-2.5 flex min-h-[2.85rem] w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.06] text-sm font-medium text-white/90 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_4px_16px_rgba(0,0,0,0.2)] transition-colors duration-150 hover:bg-white/[0.12] hover:border-white/20 active:bg-white/[0.18] touch-manipulation [@media(max-height:650px)]:min-h-10 [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:text-xs"
+                        className="group relative mt-2.5 flex min-h-[2.85rem] w-full items-center justify-center gap-2 overflow-hidden rounded-full border border-white/20 border-t-white/50 border-b-white/10 bg-gradient-to-b from-white/[0.10] via-white/[0.03] to-transparent text-sm font-medium text-white/95 backdrop-blur-xl backdrop-saturate-[180%] shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.45),0_6px_20px_rgba(0,0,0,0.25)] transition-all duration-200 hover:border-t-white/70 hover:from-white/[0.15] active:scale-[0.96] touch-manipulation [@media(max-height:650px)]:min-h-10 [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:text-xs"
                     >
-                        <Mail aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)] opacity-90" />
+                        {/* Specular top light streak */}
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-x-8 top-0 h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+
+                        <Mail aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)] opacity-95" />
                         <span>כניסה עם קוד במייל</span>
                     </motion.button>
                 </div>
