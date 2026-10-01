@@ -48,3 +48,7 @@ public/sw.js
 public/sw.js.map
 public/workbox-*.js
 public/fallback-*.js
+
+# Local testing data
+.dummy-users.json
+
