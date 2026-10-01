@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, House, UserRound } from "lucide-react";
+import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { LiquidGlass } from "@/components/ui/LiquidGlass";
 
 const items = [
     { href: "/dashboard", label: "בית", icon: House },
@@ -12,13 +14,19 @@ const items = [
 
 export default function BottomNav() {
     const pathname = usePathname();
+    return <MemberNavigation pathname={pathname} />;
+}
+
+export function MemberNavigation({ pathname }: { pathname: string }) {
+    const reduceMotion = useReducedMotion();
 
     return (
         <nav
             aria-label="ניווט ראשי"
-            className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--studio-ink)]/10 bg-[var(--studio-card)]/95 pb-[env(safe-area-inset-bottom)] text-[var(--studio-ink)] shadow-[0_-10px_32px_rgba(12,25,13,0.06)] backdrop-blur-xl"
+            className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-1/2 z-50 w-[calc(100%-2rem)] max-w-[23rem] -translate-x-1/2 text-[var(--studio-ink)]"
         >
-            <div className="mx-auto grid h-[4.5rem] max-w-lg grid-cols-3 px-3">
+            <LiquidGlass radius={9999} blur={18} refraction={0} frost={0.8} saturation={1.15} specular={0.2} elevated={false} profile="convex" className="studio-navigation-glass w-full" contentClassName="grid grid-cols-3 gap-1 p-1.5">
+                <LayoutGroup id="studio-bottom-navigation">
                 {items.map(({ href, label, icon: Icon }) => {
                     const active = pathname === href || (href === "/dashboard" && pathname === "/my-bookings");
                     return (
@@ -26,16 +34,17 @@ export default function BottomNav() {
                             key={href}
                             href={href}
                             prefetch
-                            aria-current={active ? "page" : undefined}
-                            className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-bold outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--studio-accent-text)] ${active ? "studio-nav-current text-[var(--studio-ink)]" : "text-[var(--studio-muted)] active:bg-[var(--studio-canvas)]"}`}
+                            aria-current={active ? pathname === href ? "page" : "location" : undefined}
+                            className={`relative isolate flex min-h-[3.75rem] cursor-pointer flex-col items-center justify-center gap-1 rounded-full px-1 py-2 text-[11px] font-bold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[var(--studio-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--studio-card)] ${active ? "studio-navigation-selected" : "text-[var(--studio-muted)] hover:bg-[var(--studio-ink)]/5 hover:text-[var(--studio-ink)] active:bg-[var(--studio-ink)]/10"}`}
                         >
-                            <span className={`absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-[var(--studio-accent-text)] transition-transform duration-200 ${active ? "scale-x-100" : "scale-x-0"}`} />
-                            <Icon aria-hidden="true" className="h-[1.3rem] w-[1.3rem]" strokeWidth={active ? 2.3 : 1.8} />
-                            <span>{label}</span>
+                            {active && <motion.span aria-hidden="true" layoutId="selected-tab" className="studio-navigation-highlight absolute inset-0 -z-10 rounded-full" transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 36 }} />}
+                            <Icon aria-hidden="true" className="h-[1.3rem] w-[1.3rem]" strokeWidth={active ? 2.2 : 1.7} />
+                            <span className="leading-4">{label}</span>
                         </Link>
                     );
                 })}
-            </div>
+                </LayoutGroup>
+            </LiquidGlass>
         </nav>
     );
 }

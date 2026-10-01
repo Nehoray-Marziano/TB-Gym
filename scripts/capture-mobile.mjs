@@ -1,10 +1,14 @@
 import { spawn } from "child_process";
 import fs from "fs";
+import os from "os";
 
 export async function captureScreenshot({ url, output, width = 390, height = 844, waitMs = 1200 }) {
     const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+    const tempDir = fs.mkdtempSync(`${os.tmpdir()}/chrome-ss-`);
     const chrome = spawn(chromePath, [
         "--headless=new",
+        `--user-data-dir=${tempDir}`,
+        "--incognito",
         "--remote-debugging-port=0",
         "--remote-allow-origins=*",
         "--disable-gpu",
@@ -70,8 +74,24 @@ export async function captureScreenshot({ url, output, width = 390, height = 844
             screenOrientation: { angle: 0, type: "portraitPrimary" }
         });
         await sendSession("Emulation.setTouchEmulationEnabled", { enabled: true });
+        await sendSession("Emulation.setEmulatedMedia", {
+            media: "screen",
+            features: [{ name: "prefers-color-scheme", value: "light" }]
+        });
 
-        // Navigate
+        ws.addEventListener("message", (event) => {
+            try {
+                const res = JSON.parse(event.data);
+                if (res.method === "Runtime.exceptionThrown") {
+                    console.error("BROWSER_EXCEPTION:", JSON.stringify(res.params.exceptionDetails));
+                }
+                if (res.method === "Runtime.consoleAPICalled" && res.params.type === "error") {
+                    console.error("BROWSER_CONSOLE_ERROR:", JSON.stringify(res.params.args));
+                }
+            } catch {}
+        });
+
+        await sendSession("Runtime.enable");
         await sendSession("Page.enable");
         await sendSession("Page.navigate", { url });
         await new Promise((r) => setTimeout(r, waitMs));

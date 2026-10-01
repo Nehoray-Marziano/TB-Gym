@@ -240,19 +240,31 @@ a,
   animation: studio-page-enter 360ms cubic-bezier(.2,.8,.2,1) both;
 }
 
-.studio-nav-current svg {
-  animation: studio-nav-arrive 380ms cubic-bezier(.2,.8,.2,1) both;
+.studio-navigation-glass {
+  background: color-mix(in srgb, var(--studio-card) 78%, transparent);
+  box-shadow: 0 12px 36px -12px rgb(12 25 13 / 30%), 0 3px 10px -4px rgb(12 25 13 / 18%), inset 0 1px 0 rgb(255 255 255 / 35%);
+}
+
+.studio-navigation-selected {
+  color: var(--studio-deep-contrast);
+}
+
+.studio-navigation-highlight {
+  background: var(--studio-deep);
+  box-shadow: 0 2px 5px rgb(12 25 13 / 12%), inset 0 1px 0 rgb(255 255 255 / 10%);
+}
+
+.dark .studio-navigation-selected {
+  color: var(--studio-deep);
+}
+
+.dark .studio-navigation-highlight {
+  background: var(--studio-accent-text);
 }
 
 @keyframes studio-page-enter {
   from { opacity: .8; transform: translate3d(0, 16px, 0) scale(.985); }
   to { opacity: 1; transform: none; }
-}
-
-@keyframes studio-nav-arrive {
-  0% { transform: translateY(5px) scale(.8); }
-  65% { transform: translateY(-3px) scale(1.12); }
-  100% { transform: translateY(0) scale(1); }
 }
 
 @keyframes studio-botanical-breathe {

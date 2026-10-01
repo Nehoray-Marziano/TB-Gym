@@ -45,7 +45,7 @@ export default function InstallAppButton({ home = false }: { home?: boolean }) {
                 <button
                     type="button"
                     onClick={handleClick}
-                    className="flex min-h-16 w-full items-center gap-3.5 rounded-[22px] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] px-5 text-start shadow-[0_4px_16px_-6px_rgba(22,34,24,0.05)] transition-all hover:border-[var(--studio-ink)]/20 active:bg-[var(--studio-accent-bg)]/20 active:scale-[0.99]"
+                    className="flex min-h-16 w-full items-center gap-3.5 rounded-[22px] border border-[#ced5be] bg-white px-5 text-start shadow-[0_10px_28px_-10px_rgba(20,32,22,0.08),0_2px_6px_rgba(20,32,22,0.04)] transition-all hover:border-[var(--studio-brand)]/40 hover:shadow-[0_14px_32px_-10px_rgba(20,32,22,0.14)] active:scale-[0.99]"
                 >
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] shadow-sm">
                         <Download aria-hidden="true" className="h-5 w-5" />

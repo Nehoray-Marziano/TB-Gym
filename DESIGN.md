@@ -30,6 +30,7 @@ The workout card uses three 30px corners and one 10px corner, echoing the studio
 
 - `src/components/home/TraineeDashboard.tsx` owns greeting, upcoming-workout rendering, and balance summary; `GymStoreProvider` owns balance and profile data.
 - `src/components/BottomNav.tsx` remains the shared navigation owner. Labels are בית, לוח אימונים, חשבון. My bookings remains in the Home navigation family.
+- Member navigation is a detached, fully rounded glass dock, at most 23rem wide with 16px side clearance and 12px plus device safe-area clearance below. Reuse `LiquidGlass` for the surface; `studio-navigation-*` in `globals.css` owns its business-specific elevation and active colors. Each labeled tab has a 60px minimum height. The selected capsule moves between tabs with a short spring; reduced-motion users get an immediate change. Light/classic selection is forest with cream text; dark selection is sage with forest text. Keep existing page bottom padding, which reserves room for the 72px dock and its lower clearance.
 - Existing Next Links own navigation; links have focus, hover, and pressed feedback. No new dialog, form, payment, or booking mutation is introduced.
 - Loading reserves the workout content region and announces progress. A failed request is distinct from an empty booking list. Empty copy makes no assertion about available class capacity.
 - Existing toast, theme, and account-installation owners remain unchanged.
