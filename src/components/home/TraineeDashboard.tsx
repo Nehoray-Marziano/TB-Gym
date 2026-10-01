@@ -127,9 +127,9 @@ export default function TraineeDashboard({
                 className="pointer-events-none absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]"
             />
 
-            <main className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-start px-4 pb-24 pt-2.5 sm:px-5 sm:pt-4 space-y-3.5 sm:space-y-4">
-                {/* Header: Studio Brand Emblem & Date / Admin Badge */}
-                <header className="flex items-center justify-between gap-3 pt-0.5">
+            <main className="relative mx-auto flex h-dvh max-w-md flex-col justify-between px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5">
+                {/* 1. Header: Studio Brand Emblem & Date / Admin Badge */}
+                <header className="flex shrink-0 items-center justify-between gap-3">
                     <Link
                         href="/dashboard"
                         className="group flex items-center transition-transform active:scale-95"
@@ -160,8 +160,8 @@ export default function TraineeDashboard({
                     </div>
                 </header>
 
-                {/* Personal Greeting with Harmonious Terracotta Sun & 100% Uncropped Botanical Art */}
-                <div className="flex items-center justify-between gap-3 py-0.5 sm:py-1">
+                {/* 2. Personal Greeting with Harmonious Terracotta Sun & 100% Uncropped Botanical Art */}
+                <div className="flex shrink-0 items-center justify-between gap-3">
                     {/* Greeting text on right (RTL start) */}
                     <div className="min-w-0 flex-1">
                         <p className="mb-1 text-xs sm:text-sm font-semibold tracking-wide text-[#283824]">
@@ -197,11 +197,11 @@ export default function TraineeDashboard({
                     </div>
                 </div>
 
-                {/* Hero Workout Stage: Contextual, Asymmetric Studio Squircle */}
+                {/* 3. Hero Workout Stage: Contextual, Asymmetric Studio Squircle */}
                 <section
                     aria-labelledby="next-class"
                     aria-busy={classLoading}
-                    className="relative isolate overflow-hidden rounded-[28px_28px_12px_28px] border-2 border-[var(--studio-brand)]/40 bg-gradient-to-br from-[#1c2c1f] via-[#142217] to-[#0c140e] p-4.5 sm:p-5 text-white shadow-[0_16px_36px_-12px_rgba(12,22,14,0.7)]"
+                    className="relative isolate shrink-0 overflow-hidden rounded-[28px_28px_14px_28px] border-2 border-[var(--studio-brand)]/40 bg-gradient-to-br from-[#1c2c1f] via-[#142217] to-[#0c140e] p-5 sm:p-6 text-white shadow-[0_16px_36px_-12px_rgba(12,22,14,0.7)]"
                 >
                     {/* Atmospheric corner glow & botanical leaf artwork inside card */}
                     <div
@@ -234,7 +234,7 @@ export default function TraineeDashboard({
                         )}
                     </div>
 
-                    <div className="relative flex flex-col pt-3">
+                    <div className="relative flex flex-col pt-3.5">
                         {classLoading ? (
                             <div className="flex min-h-[7rem] items-center justify-center" role="status">
                                 <p className="text-sm font-semibold text-white animate-pulse">טוענים את האימון הבא…</p>
@@ -275,8 +275,8 @@ export default function TraineeDashboard({
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-1">
-                                            <p className="text-[clamp(1.55rem,6.5vw,2.05rem)] font-bold leading-[1.12] tracking-tight text-white">
+                                        <div className="space-y-1.5">
+                                            <p className="text-[clamp(1.6rem,6.8vw,2.15rem)] font-bold leading-[1.12] tracking-tight text-white">
                                                 קצת זמן<br />
                                                 <span className="text-[#d8e0b5]">בשבילך.</span>
                                             </p>
@@ -290,7 +290,7 @@ export default function TraineeDashboard({
                                 {nextClass || classError ? (
                                     <Link
                                         href="/my-bookings"
-                                        className="mt-3.5 flex min-h-10 items-center justify-between gap-3 rounded-xl border-t border-white/20 pt-2.5 text-sm font-bold text-white transition-colors hover:text-[#d8e0b5] active:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d8e0b5]"
+                                        className="mt-4 flex min-h-10 items-center justify-between gap-3 rounded-xl border-t border-white/20 pt-2.5 text-sm font-bold text-white transition-colors hover:text-[#d8e0b5] active:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d8e0b5]"
                                     >
                                         <span>לפרטי האימון וביטולים</span>
                                         <span className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-full bg-[#d8e0b5] text-[#142016] shadow-sm transition-transform hover:-translate-x-1">
@@ -300,7 +300,7 @@ export default function TraineeDashboard({
                                 ) : (
                                     <Link
                                         href="/book"
-                                        className="mt-3.5 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#dbe5b8] via-[#cbd3aa] to-[#bed09e] px-4 py-2 text-sm font-bold text-[#111c13] shadow-[0_10px_24px_-6px_rgba(203,211,170,0.65),0_0_0_1px_rgba(255,255,255,0.4)] transition-all hover:brightness-105 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#cbd3aa]"
+                                        className="mt-4 flex min-h-[3.15rem] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#dbe5b8] via-[#cbd3aa] to-[#bed09e] px-4 py-2.5 text-sm font-bold text-[#111c13] shadow-[0_10px_24px_-6px_rgba(203,211,170,0.65),0_0_0_1px_rgba(255,255,255,0.4)] transition-all hover:brightness-105 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#cbd3aa]"
                                     >
                                         <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2.4} />
                                         <span>למערכת השעות ושריון מקום</span>
@@ -312,8 +312,8 @@ export default function TraineeDashboard({
                     </div>
                 </section>
 
-                {/* Member Status & Balance Row - Single compact, high-contrast, non-wrapping row */}
-                <div className="flex items-center justify-between gap-3 rounded-[20px] border-2 border-[#8b9978] bg-white px-3.5 py-3 sm:px-4 sm:py-3.5 shadow-[0_6px_20px_-8px_rgba(20,32,22,0.1)]">
+                {/* 4. Member Status & Balance Row - Single compact, high-contrast, non-wrapping row */}
+                <div className="flex shrink-0 items-center justify-between gap-3 rounded-[22px] border-2 border-[#8b9978] bg-white px-4 py-3.5 sm:px-4.5 sm:py-4 shadow-[0_6px_20px_-8px_rgba(20,32,22,0.1)]">
                     <div className="flex min-w-0 items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#142217] text-[#d8e0b5] shadow-sm">
                             <Ticket aria-hidden="true" className="h-4.5 w-4.5 text-[#d8e0b5]" strokeWidth={2.4} />
