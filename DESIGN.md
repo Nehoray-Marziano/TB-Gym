@@ -4,7 +4,7 @@
 
 Talia is a Hebrew, right-to-left studio booking app, primarily used on phones. The public introduction carries the brand; the member home helps a returning member see her next workout and find the schedule. Product rules and the route inventory are maintained in `../TALIA-APP-HANDOFF.md`.
 
-The approved home direction (October 1, 2026) is one prominent workout card, a compact balance row, and persistent navigation. Preserve the existing green palette, Varela Round typography, soft corners, and restrained botanical artwork. Avoid repeated destination tiles and promotional content on the member home.
+The home direction (October 1, 2026) keeps one prominent workout card, a balance row, and persistent navigation. The first sparse implementation was rejected as empty and lacking personality. Preserve the intro's expressive Hebrew typography, sage and terracotta palette, sun and botanical composition. Simpler navigation must not mean a generic or visually vacant page. Avoid repeated destination tiles and promotional content on the member home.
 
 ## Colors
 
@@ -20,11 +20,11 @@ Member home is a single natural-height column, max-width `max-w-lg`, with 20px m
 
 ## Elevation & Depth
 
-Only the workout card carries emphasis and a subtle shadow. The balance is an unboxed row. Preserve breathing room below content instead of filling it with duplicate shortcuts.
+The greeting has a decorative terracotta sun and existing leaf artwork beside large personal typography. The workout card carries tonal depth and a soft shadow; a separate date column gives booked sessions a recognizable appointment composition. The balance remains an unboxed row, with a larger numeral and a fine baseline. Space should frame these elements, not dominate the screen.
 
 ## Shapes
 
-Retain the existing 26px workout-card radius and rounded controls. Botanical art stays decorative, low contrast, and inaccessible to assistive technology.
+The workout card uses three 30px corners and one 10px corner, echoing the studio's existing asymmetric surfaces. Rounded controls and the circular appointment arrow soften the composition. Botanical art stays decorative and inaccessible to assistive technology.
 
 ## Components
 
