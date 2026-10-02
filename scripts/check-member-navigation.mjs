@@ -141,6 +141,9 @@ try {
     await evaluate("(()=>{const layer=document.createElement('div');layer.id='glass-background-fixture';layer.style.cssText='position:fixed;inset:0;z-index:40;background:var(--studio-deep);pointer-events:none';document.querySelector('.studio-app-shell').append(layer)})()");
     await delay(150);
     await screenshot("navigation-glass-dark-390x844");
+    await evaluate("document.querySelector('#glass-background-fixture').style.background='linear-gradient(90deg,var(--studio-deep) 0 33%,var(--studio-coral-bg) 33% 66%,var(--studio-canvas) 66% 100%)'");
+    await delay(150);
+    await screenshot("navigation-glass-pattern-390x844");
     await evaluate("document.querySelector('#glass-background-fixture').remove()");
     const tap = await evaluate("(()=>{const a=document.querySelectorAll('.studio-member-navigation a')[1];a.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation()},{capture:true,once:true});const r=a.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()");
     await call("Input.dispatchMouseEvent", { type: "mousePressed", button: "left", clickCount: 1, ...tap });

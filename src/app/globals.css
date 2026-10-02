@@ -159,11 +159,11 @@ a,
 
 .studio-navigation-glass {
   --lq-text: var(--studio-ink);
-  --lq-tint: color-mix(in srgb, var(--studio-card) 62%, transparent);
-  --lq-tint-deep: color-mix(in srgb, var(--studio-card) 26%, transparent);
+  --lq-tint: color-mix(in srgb, var(--studio-card) 28%, transparent);
+  --lq-tint-deep: color-mix(in srgb, var(--studio-card) 8%, transparent);
   --lq-rim-hi: color-mix(in srgb, var(--studio-card) 96%, transparent);
   --lq-rim-lo: color-mix(in srgb, var(--studio-card) 64%, transparent);
-  background: color-mix(in srgb, var(--studio-card) 42%, transparent);
+  background: color-mix(in srgb, var(--studio-card) 10%, transparent);
   box-shadow: 0 12px 32px -12px rgb(12 25 13 / 22%), 0 3px 10px -5px rgb(12 25 13 / 14%), inset 0 0 0 1px color-mix(in srgb, var(--studio-card) 38%, transparent);
 }
 
@@ -181,13 +181,24 @@ a,
 
 .studio-navigation-selected {
   color: var(--studio-deep-contrast);
+  text-shadow: 0 1px 1px color-mix(in srgb, var(--studio-deep) 60%, transparent);
+}
+
+/* Keep contrast local to the glyphs instead of whitening the entire glass. */
+.studio-navigation-idle {
+  color: var(--studio-ink);
+  text-shadow: 0 1px 1px var(--studio-card), 0 -1px 1px var(--studio-card), 1px 0 1px var(--studio-card), -1px 0 1px var(--studio-card);
+}
+
+.studio-navigation-idle svg {
+  filter: drop-shadow(0 0 1px var(--studio-card)) drop-shadow(0 1px 1px var(--studio-card));
 }
 
 .studio-navigation-highlight {
   background: linear-gradient(155deg,
-    color-mix(in srgb, var(--studio-deep) 78%, var(--studio-brand)),
-    var(--studio-deep) 52%,
-    color-mix(in srgb, var(--studio-deep) 92%, var(--studio-brand)));
+    color-mix(in srgb, color-mix(in srgb, var(--studio-deep) 78%, var(--studio-brand)) 80%, transparent),
+    color-mix(in srgb, var(--studio-deep) 76%, transparent) 52%,
+    color-mix(in srgb, color-mix(in srgb, var(--studio-deep) 92%, var(--studio-brand)) 80%, transparent));
   box-shadow: 0 3px 8px -2px rgb(12 25 13 / 22%), inset 0 1px 1px color-mix(in srgb, var(--studio-card) 34%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--studio-card) 10%, transparent);
 }
 
