@@ -342,7 +342,7 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
         )}
         style={{
           borderRadius: `${radius}px`,
-          ["--lq-radius" as any]: `${radius}px`,
+          ["--lq-radius" as string]: `${radius}px`,
           ...style,
         }}
         {...props}

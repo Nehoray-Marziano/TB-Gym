@@ -8,8 +8,8 @@ export function TraineeIdentity({ userId, children }: { userId: string; children
     return <TraineeIdentityContext.Provider value={userId}>{children}</TraineeIdentityContext.Provider>;
 }
 
-export function useTraineeUserId() {
+export function useTraineeUserId(fallbackId?: string) {
     const userId = useContext(TraineeIdentityContext);
-    if (!userId) throw new Error("Trainee identity is unavailable outside the protected layout");
-    return userId;
+    if (!userId && !fallbackId) throw new Error("Trainee identity is unavailable outside the protected layout");
+    return userId || fallbackId || "";
 }

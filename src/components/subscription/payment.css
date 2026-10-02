@@ -1,0 +1,39 @@
+.membership-payment-dialog { inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 16px; border: 0; background: transparent; color: var(--studio-ink); }
+.membership-payment-dialog[open] { display: grid; align-items: center; justify-items: center; }
+.membership-payment-dialog::backdrop { background: color-mix(in srgb, var(--studio-deep) 70%, transparent); backdrop-filter: blur(5px); }
+.membership-payment-sheet { position: relative; width: 100%; max-width: 520px; max-height: calc(100dvh - 32px - env(safe-area-inset-top)); overflow-y: auto; overscroll-behavior: contain; padding: 28px 28px calc(24px + env(safe-area-inset-bottom)); border-radius: 28px; background: var(--studio-sheet); line-height: 1.65; font-size: 16px; }
+.membership-payment-close { position: absolute; top: 18px; inset-inline-end: 18px; display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid color-mix(in srgb, var(--studio-ink) 20%, transparent); border-radius: 50%; background: transparent; cursor: pointer; transition: background 180ms; }
+.membership-payment-close:hover, .membership-payment-close:active { background: var(--studio-neutral-bg); }
+.membership-payment-close svg { width: 20px; height: 20px; }
+.membership-bit-logo { width: 52px; height: 52px; margin-bottom: 18px; }
+.membership-payment-sheet h2 { margin: 0 0 10px; font-size: 34px; line-height: 1.3; font-weight: 700; letter-spacing: -0.03em; }
+#payment-description { color: var(--studio-muted); font-size: 16px; }
+.membership-payment-total { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-block: 22px; padding: 18px 20px; border-radius: 18px; background: var(--studio-deep); color: var(--studio-deep-contrast); }
+.membership-payment-total > div { display: flex; flex-direction: column; gap: 4px; }
+.membership-payment-total span { font-size: 14px; color: var(--studio-accent-text); }
+.membership-payment-total > strong { font-size: 34px; white-space: nowrap; color: var(--studio-accent-text); }
+.membership-copy-label { margin-bottom: 8px; font-size: 16px; font-weight: 700; }
+.membership-copy-box { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--studio-ink) 20%, transparent); border-radius: 16px; background: var(--studio-card); }
+.membership-copy-box p { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 16px; user-select: text; }
+.membership-copy-box button { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding-inline: 10px; border: 0; border-radius: 12px; background: var(--studio-neutral-bg); color: var(--studio-ink); cursor: pointer; font: inherit; font-size: 14px; transition: background 180ms; }
+.membership-copy-box button:hover, .membership-copy-box button:active { background: var(--studio-accent-text); }
+.membership-copy-box svg { width: 18px; height: 18px; }
+.membership-copy-feedback { min-height: 44px; margin-top: 7px; font-size: 14px; color: var(--studio-muted); }
+.membership-payment-notice { display: flex; align-items: start; gap: 9px; margin-block: 8px 22px; padding: 14px; border-radius: 14px; background: var(--studio-neutral-bg); font-size: 15px; }
+.membership-payment-notice svg { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 3px; }
+.membership-payment-error { margin-block: 12px; color: var(--studio-danger); font-size: 15px; }
+.membership-bit-button { width: 100%; }
+.membership-payment-cancel { display: block; width: 100%; min-height: 48px; margin-top: 8px; border: 0; border-radius: 24px; background: transparent; color: var(--studio-muted); font: inherit; font-size: 15px; cursor: pointer; transition: background 180ms; }
+.membership-payment-cancel:hover, .membership-payment-cancel:active { background: var(--studio-neutral-bg); }
+
+.membership-payment-sheet .membership-eyebrow { color: var(--studio-muted); }
+@media (max-width: 359px) {
+  .membership-payment-sheet { padding-inline: 20px; }
+  .membership-payment-total { padding-inline: 14px; gap: 10px; }
+  .membership-payment-total > strong { font-size: 29px; }
+}
+@media (max-width: 599px) {
+  .membership-payment-dialog { padding: calc(12px + env(safe-area-inset-top)) 0 0; }
+  .membership-payment-dialog[open] { align-items: end; }
+  .membership-payment-sheet { max-height: calc(100dvh - 12px - env(safe-area-inset-top)); border-radius: 28px 28px 0 0; }
+}

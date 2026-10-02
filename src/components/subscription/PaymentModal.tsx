@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Copy, Check, ExternalLink, X } from "lucide-react";
 import Image from "next/image";
+import "./payment.css";
 
 interface PaymentModalProps {
     isOpen: boolean;
