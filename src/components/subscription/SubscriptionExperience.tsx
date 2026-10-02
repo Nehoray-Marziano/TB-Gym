@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, MoveHorizontal } from "lucide-react";
+import { ArrowDown, ArrowLeft, Check, ChevronDown, ChevronRight, MoveHorizontal } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
@@ -76,20 +76,47 @@ function TierMotif({ weekly, className = "" }: { weekly: number; className?: str
     </svg>;
 }
 
-function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequest }: { selected: number; onSelect: (index: number) => void; onPurchase: (button: HTMLButtonElement) => void; focusOnReveal: boolean; revealRequest: number }) {
+function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequest, sceneRef }: { selected: number; onSelect: (index: number) => void; onPurchase: (button: HTMLButtonElement) => void; focusOnReveal: boolean; revealRequest: number; sceneRef: RefObject<HTMLDivElement | null> }) {
     const reduceMotion = useReducedMotion();
     const stageRef = useRef<HTMLElement>(null);
     const trackRef = useRef<HTMLDivElement>(null);
     const selectedRef = useRef(selected);
     const requestedRef = useRef(selected);
-    const centersRef = useRef<{ index: number; center: number }[]>([]);
+    const centersRef = useRef<{ index: number; center: number; card: HTMLElement; scene: HTMLElement | null }[]>([]);
+    const viewportWidthRef = useRef(0);
+    const paintFrameRef = useRef(0);
     const touchingRef = useRef(false);
     const movingRef = useRef(false);
     const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const [moving, setMoving] = useState(false);
 
+    // Presentation follows native scroll position; React selection and payment
+    // ownership settle separately. Only cached geometry and compositor styles
+    // are used here, so a swipe never measures layout or replaces its target.
+    const paintFocus = useCallback(() => {
+        paintFrameRef.current = 0;
+        const track = trackRef.current;
+        const cards = centersRef.current;
+        if (!track || cards.length < 2) return;
+        const center = track.scrollLeft + viewportWidthRef.current / 2;
+        const stride = Math.abs(cards[1].center - cards[0].center);
+        const nearest = cards.reduce((best, card) => Math.abs(card.center - center) < Math.abs(best.center - center) ? card : best);
+        for (const item of cards) {
+            const distance = (item.center - center) / stride;
+            // Native snap positions round to device pixels. Resolve the last
+            // fraction of a pixel to full emphasis instead of leaving a ghost
+            // of the previous hue when a card has finished snapping.
+            const proximity = Math.abs(distance);
+            const focus = reduceMotion ? Number(item === nearest) : proximity < .005 ? 1 : proximity > .995 ? 0 : 1 - proximity;
+            item.card.style.setProperty("--card-focus", focus.toFixed(4));
+            item.card.style.transformOrigin = `${50 - Math.max(-1, Math.min(1, distance)) * 50}% center`;
+            if (item.scene) item.scene.style.opacity = focus.toFixed(4);
+        }
+    }, [reduceMotion]);
+
     const finishMovement = useCallback(() => {
         if (touchingRef.current || !trackRef.current || !centersRef.current.length) return;
+        paintFocus();
         clearTimeout(settleTimer.current);
         const center = trackRef.current.scrollLeft + trackRef.current.clientWidth / 2;
         const nearest = centersRef.current.reduce((best, card) => Math.abs(card.center - center) < Math.abs(best.center - center) ? card : best);
@@ -97,7 +124,7 @@ function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequ
         setMoving(false);
         requestedRef.current = nearest.index;
         if (nearest.index !== selectedRef.current) { selectedRef.current = nearest.index; onSelect(nearest.index); }
-    }, [onSelect]);
+    }, [onSelect, paintFocus]);
 
     const scheduleSettle = () => {
         clearTimeout(settleTimer.current);
@@ -115,18 +142,25 @@ function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequ
 
     useLayoutEffect(() => {
         const measure = () => {
-            centersRef.current = [...(trackRef.current?.querySelectorAll<HTMLElement>("[data-plan-index]") || [])].map(card => ({ index: Number(card.dataset.planIndex), center: card.offsetLeft + card.offsetWidth / 2 }));
+            viewportWidthRef.current = trackRef.current?.clientWidth || 0;
+            centersRef.current = [...(trackRef.current?.querySelectorAll<HTMLElement>("[data-plan-index]") || [])].map(position => {
+                const index = Number(position.dataset.planIndex);
+                return { index, center: position.offsetLeft + position.offsetWidth / 2,
+                    card: position.querySelector<HTMLElement>(".membership-card")!,
+                    scene: sceneRef.current?.querySelector<HTMLElement>(`.membership-scene--${PLANS[index].tone}`) || null };
+            });
         };
         measure();
         moveTo(selectedRef.current, true);
+        paintFocus();
         let width = trackRef.current?.clientWidth;
         const observer = new ResizeObserver(() => {
             const nextWidth = trackRef.current?.clientWidth;
-            if (nextWidth !== width) { width = nextWidth; measure(); moveTo(selectedRef.current, true); }
+            if (nextWidth !== width) { width = nextWidth; measure(); moveTo(selectedRef.current, true); paintFocus(); }
         });
         if (trackRef.current) observer.observe(trackRef.current);
-        return () => { clearTimeout(settleTimer.current); observer.disconnect(); };
-    }, [moveTo]);
+        return () => { clearTimeout(settleTimer.current); cancelAnimationFrame(paintFrameRef.current); observer.disconnect(); };
+    }, [moveTo, paintFocus, sceneRef]);
 
     useEffect(() => {
         const track = trackRef.current;
@@ -155,6 +189,7 @@ function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequ
     }, [revealRequest, reduceMotion, focusOnReveal]);
 
     const syncSelection = () => {
+        if (!paintFrameRef.current) paintFrameRef.current = requestAnimationFrame(paintFocus);
         if (!movingRef.current) { movingRef.current = true; setMoving(true); }
         scheduleSettle();
     };
@@ -199,14 +234,6 @@ function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequ
                 })}
             </div>
 
-            <div className="membership-carousel-controls">
-                <button type="button" className="membership-carousel-arrow" aria-label="למסלול הקטן יותר" disabled={selected === 0} onClick={() => moveTo(selected - 1)}><ChevronRight aria-hidden="true" /></button>
-                <div className="membership-carousel-pagination" aria-label="בחירת מסלול">{PLANS.map((plan, index) => <button type="button" key={plan.sessions} aria-label={`${plan.sessions} אימונים בחודש`} aria-pressed={selected === index} aria-controls={`membership-plan-${index}`} onClick={() => moveTo(index)}>
-                    <span className="membership-pagination-highlight" aria-hidden="true" />
-                    <span>{plan.sessions}</span>
-                </button>)}</div>
-                <button type="button" className="membership-carousel-arrow" aria-label="למסלול הגדול יותר" disabled={selected === 2} onClick={() => moveTo(selected + 1)}><ChevronLeft aria-hidden="true" /></button>
-            </div>
             <p className="membership-announcement" role="status" aria-live="polite" aria-atomic="true">נבחר מסלול {PLANS[selected].sessions} אימונים, {PLANS[selected].price} שקלים לחודש.</p>
         </section>
     );
@@ -220,6 +247,7 @@ export default function SubscriptionExperience() {
     const [paymentOpen, setPaymentOpen] = useState(false);
     const [paymentError, setPaymentError] = useState("");
     const [handoffStarted, setHandoffStarted] = useState(false);
+    const sceneRef = useRef<HTMLDivElement>(null);
     const reduceMotion = useReducedMotion();
     const { profile, subscription, tickets } = useGymStore();
     const { toast } = useToast();
@@ -233,11 +261,12 @@ export default function SubscriptionExperience() {
     };
     const continueToBit = () => {
         const paymentWindow = window.open(BIT_URL, "_blank");
-        if (!paymentWindow) { setPaymentError("הדפדפן חסם את פתיחת ביט. אפשר לאפשר חלונות קופצים ולנסות שוב."); return; }
+        if (!paymentWindow) { setPaymentError("הדפדפן חסם את פתיחת ביט. אפשר לאפשר חלונות קופצים ולנסות שוב."); return false; }
         paymentWindow.opener = null;
         setPaymentOpen(false);
         setHandoffStarted(true);
         toast({ title: "ביט נפתחה בחלון חדש", description: "האימונים יתווספו אחרי אישור ההעברה על ידי טליה.", type: "info" });
+        return true;
     };
     const showPlans = (fromKeyboard: boolean) => {
         setKeyboardReveal(fromKeyboard);
@@ -246,11 +275,11 @@ export default function SubscriptionExperience() {
     };
 
     return <main className="membership-page" data-tone={plansVisible ? plan.tone : "sage"} data-revealed={plansVisible}>
-        <div className="membership-scene" aria-hidden="true">{PLANS.map(tier => <div key={tier.tone} className={`membership-scene-layer membership-scene--${tier.tone}`} data-active={(plansVisible ? plan.tone : "sage") === tier.tone}>
+        <div ref={sceneRef} className="membership-scene" aria-hidden="true">{PLANS.map(tier => <div key={tier.tone} className={`membership-scene-layer membership-scene--${tier.tone}`} data-active={(plansVisible ? plan.tone : "sage") === tier.tone}>
             <span className="membership-scene-halo" /><TierMotif weekly={tier.weekly} className="membership-scene-motif" />
             <span className="membership-scene-horizon" />
         </div>)}</div>
-        <PaymentModal isOpen={paymentOpen} onClose={() => setPaymentOpen(false)} onConfirm={continueToBit} tierDisplay={`מסלול ${plan.sessions} אימונים`} amount={plan.price} userName={profile?.full_name || "מתאמנת"} error={paymentError} />
+        <PaymentModal isOpen={paymentOpen} onClose={() => setPaymentOpen(false)} onConfirm={continueToBit} tierDisplay={`מסלול ${plan.sessions} אימונים`} tone={plan.tone} amount={plan.price} userName={profile?.full_name || "מתאמנת"} error={paymentError} />
         <section id="membership-intro" className="membership-intro" aria-labelledby="membership-title">
             <div className="membership-atmosphere" aria-hidden="true"><span className="membership-orbit" /><span className="membership-sun" /><StudioBotanical className="membership-botanical" sun={false} /></div>
             <header className="membership-header"><Link href="/dashboard" className="membership-back"><ChevronRight aria-hidden="true" /><span>חזרה לבית</span></Link><span className="membership-brand"><StudioLogo className="membership-logo" /><span>סטודיו טליה</span></span></header>
@@ -268,7 +297,7 @@ export default function SubscriptionExperience() {
         </section>
 
         {plansVisible && <div className="membership-revealed">
-            <PlanGallery selected={selected} onSelect={selectPlan} onPurchase={openPayment} focusOnReveal={keyboardReveal} revealRequest={revealRequest} />
+            <PlanGallery selected={selected} onSelect={selectPlan} onPurchase={openPayment} focusOnReveal={keyboardReveal} revealRequest={revealRequest} sceneRef={sceneRef} />
             <div className="membership-after-plans">
                 {subscription?.is_active && <p className="membership-current">המנוי שלך: {subscription.tier_display_name} · {tickets} אימונים ביתרה</p>}
                 {handoffStarted && <p className="membership-handoff" role="status">ביט נפתחה. האימונים יתווספו ליתרה שלך אחרי שטליה תאשר את ההעברה.</p>}

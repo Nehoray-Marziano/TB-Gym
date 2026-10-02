@@ -1,3 +1,4 @@
+import { tierNavigation } from "./subscription-test-navigation.mjs";
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 
@@ -34,7 +35,7 @@ export async function runMobileScenarios({ call, evaluate, screenshot, baseUrl, 
         assert(await evaluate("Math.abs(document.querySelector('.membership-stage').getBoundingClientRect().top)<1"), "Reveal must remain fully aligned after settling");
     };
     const select = async index => {
-        await evaluate(`document.querySelector('.membership-carousel-pagination button[aria-controls="membership-plan-${index}"]').click()`);
+        await evaluate(tierNavigation(index));
         await until(centered(index), `Tier ${index} did not center`);
         await wait(300);
     };
@@ -82,6 +83,9 @@ export async function runMobileScenarios({ call, evaluate, screenshot, baseUrl, 
         await screenshot(`intro-${width}`);
         await reveal();
         await screenshot(`gallery-${width}`);
+        assert(await evaluate("!document.querySelector('.membership-carousel-controls')"), "Bottom plan controls must be removed");
+        const focus=await evaluate("[...document.querySelectorAll('.membership-card')].map(card=>new DOMMatrix(getComputedStyle(card).transform).a)");
+        assert(focus[1]>.99 && focus[0]<.9 && focus[2]<.9, "Centered card must dominate smaller edge previews");
         const order = await evaluate("[...document.querySelectorAll('[data-plan-index]')].map(el=>Number(el.dataset.planIndex))");
         assert.deepEqual(order,[2,1,0], "Highest tier left; lowest tier right");
         const heights = [];
@@ -135,10 +139,9 @@ export async function runMobileScenarios({ call, evaluate, screenshot, baseUrl, 
     await until(centered(1), "Viewport resizing preserves middle-first selection");
 
     // Interrupt one crossfade with another tier before it settles.
-    await evaluate("document.querySelector('[aria-controls=membership-plan-0]').click()");
-    await until("document.querySelector('.membership-page').dataset.tone==='terracotta'", "Lower tier scene starts");
+    await evaluate(tierNavigation(0));
     await until("[...document.querySelectorAll('.membership-scene-layer')].some(el=>{const opacity=Number(getComputedStyle(el).opacity);return opacity>0 && opacity<1})", "Background transition must crossfade rather than jump");
-    await evaluate("document.querySelector('[aria-controls=membership-plan-2]').click()");
+    await evaluate(tierNavigation(2));
     await until(centered(2), "Rapid selection must settle on the final tier");
     await scene(2,390);
     await evaluate("document.querySelector('.membership-intro-link').click()");

@@ -1,5 +1,6 @@
 import { runMobileScenarios } from './subscription-mobile-scenarios.mjs';
 import { runMotionScenarios } from './subscription-motion-scenarios.mjs';
+import { runPaymentScenarios } from './subscription-payment-scenarios.mjs';
 // Local, synthetic browser QA. No authentication, payment or database writes.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -74,8 +75,15 @@ try {
         const { data } = await call("Page.captureScreenshot", { format: "png", ...(full ? { captureBeyondViewport:true, clip:{ x:0, y:0, width:cssContentSize.width, height:cssContentSize.height, scale:1 } } : {}) });
         await writeFile(`${output}/${name}.png`, Buffer.from(data, "base64"));
     };
-    if (!process.argv.includes('--motion-only')) await runMobileScenarios({ call, evaluate, screenshot, baseUrl, output });
-    await runMotionScenarios({ call, evaluate, screenshot, baseUrl, output, recordOnly: process.argv.includes('--record-motion') });
+    if (process.argv.includes('--payment-only')) {
+        await runPaymentScenarios({ call, evaluate, screenshot, baseUrl, output });
+    } else {
+        if (!process.argv.includes('--motion-only')) {
+            await runMobileScenarios({ call, evaluate, screenshot, baseUrl, output });
+            await runPaymentScenarios({ call, evaluate, screenshot, baseUrl, output });
+        }
+        await runMotionScenarios({ call, evaluate, screenshot, baseUrl, output, recordOnly: process.argv.includes('--record-motion') });
+    }
 } finally {
     ws?.close();
     chrome.kill();

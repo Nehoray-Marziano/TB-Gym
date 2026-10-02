@@ -24,7 +24,7 @@
   overflow: hidden;
   background: var(--scene-base);
   opacity: 0;
-  transition: opacity 550ms ease;
+  will-change: opacity;
 }
 .membership-scene-layer[data-active="true"] { opacity: 1; }
 .membership-scene--terracotta {
@@ -111,11 +111,11 @@
 .membership-swipe-hint { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--membership-soft); font-size: 14px; }
 .membership-swipe-hint svg { width: 18px; height: 18px; color: var(--scene-accent); transition: color 700ms; }
 .membership-carousel {
-  --membership-card-width: 82vw;
+  --membership-card-width: 84vw;
   position: relative;
   display: flex;
   align-items: stretch;
-  gap: 16px;
+  gap: 10px;
   margin: 0 auto;
   padding: 24px calc((100% - var(--membership-card-width)) / 2) 24px;
   overflow-x: auto;
@@ -146,11 +146,12 @@
   box-shadow: 0 24px 42px -18px color-mix(in srgb, var(--studio-ink) 80%, transparent), inset 0 1px 0 color-mix(in srgb, var(--studio-card) 35%, transparent);
   overflow: hidden;
   transform-origin: center center;
-  transform: scale(.97);
-  opacity: .78;
-  transition: transform 220ms ease-out, opacity 220ms ease-out;
+  --card-focus: 0;
+  transform: scale(calc(.86 + var(--card-focus) * .14));
+  opacity: calc(.64 + var(--card-focus) * .36);
+  will-change: transform;
 }
-.is-active .membership-card { transform: none; opacity: 1; }
+.is-active .membership-card { --card-focus: 1; }
 .membership-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--card-signal) 16%, transparent), transparent 55%); pointer-events: none; }
 .membership-card::after { content: ""; position: absolute; top: 0; left: 15%; right: 15%; height: 1px; background: linear-gradient(90deg, transparent, var(--card-signal), transparent); pointer-events: none; }
 .membership-card--sage {
@@ -203,18 +204,6 @@
 .membership-preview-target { position: absolute; inset: 0; z-index: 1; border: 0; border-radius: 32px; background: transparent; cursor: pointer; }
 .is-active .membership-preview-target { visibility: hidden; pointer-events: none; }
 .membership-preview-target:active { background: color-mix(in srgb, var(--studio-card) 7%, transparent); }
-.membership-carousel-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
-.membership-carousel-arrow { display: grid; place-items: center; flex: 0 0 46px; height: 46px; border: 1px solid color-mix(in srgb, var(--scene-accent) 35%, transparent); border-radius: 50%; background: color-mix(in srgb, var(--studio-deep) 25%, transparent); color: var(--scene-accent); cursor: pointer; transition: background 180ms, opacity 180ms, color 700ms, border-color 700ms; }
-.membership-carousel-arrow:hover:not(:disabled) { background: color-mix(in srgb, var(--scene-accent) 16%, transparent); }
-.membership-carousel-arrow:active:not(:disabled) { background: color-mix(in srgb, var(--scene-accent) 28%, transparent); }
-.membership-carousel-arrow:disabled { cursor: default; opacity: .25; }
-.membership-carousel-arrow svg { width: 21px; height: 21px; }
-.membership-carousel-pagination { display: flex; align-items: center; gap: 4px; padding: 5px; border: 1px solid var(--membership-rule); border-radius: 30px; background: color-mix(in srgb, var(--studio-deep) 25%, transparent); }
-.membership-carousel-pagination button { position: relative; isolation: isolate; display: grid; place-items: center; width: 50px; height: 44px; border: 0; border-radius: 24px; background: transparent; color: var(--membership-soft); font: inherit; font-size: 17px; cursor: pointer; transition: color 180ms, background 180ms; }
-.membership-carousel-pagination button:active { background: color-mix(in srgb, var(--scene-accent) 20%, transparent); }
-.membership-carousel-pagination button[aria-pressed="true"] { color: var(--studio-ink); }
-.membership-pagination-highlight { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: var(--scene-accent); opacity: 0; transition: opacity 180ms, background-color 550ms; }
-.membership-carousel-pagination button[aria-pressed="true"] .membership-pagination-highlight { opacity: 1; }
 .membership-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .membership-after-plans { position: relative; margin-inline: auto; padding: 30px 24px calc(32px + env(safe-area-inset-bottom)); }
 .membership-current, .membership-handoff { margin-bottom: 22px; padding: 16px; border: 1px solid var(--membership-rule); border-radius: 16px; font-size: 16px; }
@@ -252,7 +241,6 @@
   .membership-card-title { gap: 6px; }
   .membership-price-value { font-size: 58px; }
   .membership-purchase-button { font-size: 16px; padding-right: 16px; }
-  .membership-carousel-controls { gap: 8px; }
 }
 @media (max-height: 680px) {
   .membership-intro { padding-top: calc(12px + env(safe-area-inset-top)); padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
@@ -269,7 +257,5 @@
 }
 @media (forced-colors: active) {
   .membership-scene, .membership-atmosphere { display: none; }
-  .membership-card, .membership-carousel-pagination { border: 1px solid CanvasText; }
-  .membership-pagination-highlight { forced-color-adjust: none; background: Highlight; }
-  .membership-carousel-pagination button[aria-pressed="true"] { forced-color-adjust: none; color: HighlightText; }
+  .membership-card { border: 1px solid CanvasText; }
 }

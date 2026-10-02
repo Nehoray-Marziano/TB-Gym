@@ -1,3 +1,4 @@
+import { tierNavigation } from "./subscription-test-navigation.mjs";
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
 
@@ -61,6 +62,11 @@ export async function runMotionScenarios({ call, evaluate, screenshot, baseUrl, 
     }
     // Holding the finger still must not commit a new tier or replace its target.
     await wait(280);
+    const liveFocus=await evaluate(`(() => {
+        const card=document.querySelector('[data-plan-index="2"] .membership-card');
+        return {scale:new DOMMatrix(getComputedStyle(card).transform).a,sceneOpacity:Number(getComputedStyle(document.querySelector('.membership-scene--champagne')).opacity)};
+    })()`);
+    assert(liveFocus.scale>.93 && liveFocus.sceneOpacity>.5,'Card growth and hue must follow the finger before touch release');
     await evaluate('window.__membershipProbe.dragging=false');
     await call('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
     await until("document.querySelector('.is-active')?.dataset.planIndex==='2'", 'Swipe must finish on the higher tier');
@@ -68,7 +74,7 @@ export async function runMotionScenarios({ call, evaluate, screenshot, baseUrl, 
     await evaluate("window.__membershipProbe.phase='burst'");
     // Burst controls while previous scrolling/fading is still underway.
     for (const index of [0,2,0,1,2,1]) {
-        await evaluate(`document.querySelector('[aria-controls="membership-plan-${index}"]').click()`);
+        await evaluate(tierNavigation(index));
         await wait(70);
     }
     await until(`(() => {
@@ -84,12 +90,13 @@ export async function runMotionScenarios({ call, evaluate, screenshot, baseUrl, 
             frameCount:probe.frames,p95FrameMs:Math.round(gaps[Math.floor(gaps.length*.95)]),
             longestFrameMs:Math.round(Math.max(...gaps)),longTasks:probe.longTasks,animationFrames:probe.animationFrames,finalTier:document.querySelector('.is-active').dataset.planIndex};
     })()`);
+    report.liveFocus=liveFocus;
     const {profile}=await call('Profiler.stop');
     await writeFile(`${output}/motion.cpuprofile`,JSON.stringify(profile));
     await writeFile(`${output}/motion-report.json`,JSON.stringify(report,null,2));
     console.log(JSON.stringify({motion:report},null,2));
     if (!recordOnly) {
-        assert.equal(report.changesDuringTouch,0,'Tier effects must wait for the finger to lift and scrolling to settle');
+        assert.equal(report.changesDuringTouch,0,'Payment ownership must wait for the finger to lift and scrolling to settle');
         assert.equal(report.touchTargetRemoved,false,'Never unmount the touch target during a swipe');
         assert(report.longestFrameMs<250,'Throttled swipe must avoid prolonged main-thread freezes');
     }
@@ -105,7 +112,7 @@ export async function runMotionScenarios({ call, evaluate, screenshot, baseUrl, 
     await wait(1300);
     await evaluate("document.querySelector('.membership-reveal-button').click()");
     await until("document.activeElement.classList.contains('membership-carousel') && Math.abs(document.querySelector('.membership-stage').getBoundingClientRect().top)<1", 'Reveal timer fallback must align and restore keyboard focus');
-    await evaluate("document.querySelector('[aria-controls=membership-plan-0]').click()");
+    await evaluate(tierNavigation(0));
     await until("document.querySelector('.is-active').dataset.planIndex==='0' && document.querySelector('.membership-carousel').dataset.moving==='false'", 'Selection debounce fallback must settle');
     const cancelY=await evaluate("document.querySelector('.is-active').getBoundingClientRect().top+170");
     await call('Input.dispatchTouchEvent', {type:'touchStart',touchPoints:[{x:90,y:cancelY}]});
