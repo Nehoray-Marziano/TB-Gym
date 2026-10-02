@@ -8,6 +8,7 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
+import StudioLogo from "@/components/StudioLogo";
 
 export type UpcomingSession = { id: string; title: string; start_time: string };
 
@@ -137,15 +138,8 @@ export default function TraineeDashboard({
                             className="group flex items-center transition-transform active:scale-95"
                             aria-label="סטודיו טליה - תזונה • אימונים"
                         >
-                            {/* High-contrast studio emblem - proud & prominent */}
-                            <img
-                                src="/studio_emblem_dark.png"
-                                alt="סטודיו טליה - תזונה • אימונים"
-                                onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src = "/studio_logo_crisp.svg";
-                                }}
-                                className="studio-home-emblem w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.14)] transition-transform group-hover:scale-[1.02]"
-                            />
+                            {/* The shared in-app mark omits the introductory tagline. */}
+                            <StudioLogo className="studio-home-emblem shrink-0 bg-[var(--studio-ink)] transition-transform group-hover:scale-[1.02]" />
                         </Link>
 
                         <div className="flex items-center gap-2">
@@ -177,7 +171,7 @@ export default function TraineeDashboard({
                                     {loading ? "שלום לך" : "היי,"}
                                 </span>
                                 {!loading && (
-                                    <span className="studio-home-name mt-0.5 block font-bold text-[#142217]">
+                                    <span data-long-name={firstName.length > 10 ? "" : undefined} className="studio-home-name mt-0.5 block font-bold text-[#142217]">
                                         {firstName}<span className="text-[#c37a61]">.</span>
                                     </span>
                                 )}
@@ -265,12 +259,12 @@ export default function TraineeDashboard({
                                                         <Clock3 aria-hidden="true" className="h-3.5 w-3.5 text-[#d8e0b5]" strokeWidth={2.4} />
                                                         <span>{format(nextClass.start_time, { hour: "2-digit", minute: "2-digit" })}</span>
                                                     </span>
-                                                    <span className="sr-only">{format(nextClass.start_time, { day: "numeric", month: "long" })}</span>
+                                                    <span className="studio-home-session-date-summary sr-only">{format(nextClass.start_time, { day: "numeric", month: "long" })}</span>
                                                 </time>
                                             </div>
                                             <div
                                                 aria-hidden="true"
-                                                className="flex shrink-0 items-center gap-2 text-center text-[#d8e0b5] min-[380px]:block min-[380px]:border-r min-[380px]:border-white/20 min-[380px]:pr-3"
+                                                className="studio-home-session-date flex shrink-0 items-center gap-2 text-center text-[#d8e0b5] min-[380px]:block min-[380px]:border-r min-[380px]:border-white/20 min-[380px]:pr-3"
                                             >
                                                 <span className="studio-home-workout-day block font-bold leading-none tracking-tight tabular-nums text-white">
                                                     {format(nextClass.start_time, { day: "2-digit" })}

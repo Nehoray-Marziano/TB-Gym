@@ -62,35 +62,45 @@
 
 .studio-home-main {
   max-width: 608px;
+  grid-template-rows: minmax(min-content, 1fr) auto auto;
   /* The shared dock is 72px tall, with 12px beneath and 12px above. */
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
-.studio-home-heading { gap: clamp(8px, 1.8cqh, 20px); }
-.studio-home-emblem { height: clamp(48px, 9cqh, 80px); }
+.studio-home-heading {
+  justify-content: space-between;
+  gap: clamp(8px, 1.8cqh, 20px);
+  padding-bottom: clamp(4px, 1.6cqh, 16px);
+}
+.studio-home-emblem {
+  width: clamp(56px, 14cqh, 112px);
+  height: clamp(56px, 14cqh, 112px);
+}
 .studio-home-eyebrow { font-size: clamp(12px, 2cqh, 16px); }
 .studio-home-hello { font-size: clamp(16px, 2.8cqh, 22px); }
-.studio-home-name { font-size: clamp(28px, min(6.5cqh, 10cqw), 52px); }
+.studio-home-name { font-size: clamp(28px, min(8.2cqh, 13cqw), 56px); }
+.studio-home-name:where([data-long-name]) { font-size: clamp(26px, min(5.5cqh, 10cqw), 40px); }
 .studio-home-botanical {
-  width: clamp(64px, min(17cqh, 25cqw), 128px);
-  height: clamp(64px, min(17cqh, 25cqw), 128px);
+  width: clamp(64px, min(25cqh, 40cqw), 160px);
+  height: clamp(64px, min(25cqh, 40cqw), 160px);
 }
 .studio-home-workout {
-  min-height: 0;
-  padding: clamp(14px, 2.8cqh, 28px);
+  min-height: min(32dvh, 300px);
+  gap: clamp(12px, 1.6cqh, 20px);
+  padding: clamp(14px, 2.4cqh, 24px);
 }
 .studio-home-workout-label { min-width: 0; font-size: clamp(12px, 2cqh, 16px); }
 .studio-home-workout-content { gap: clamp(8px, 2cqh, 20px); padding-top: 8px; }
 .studio-home-workout-title { font-size: clamp(20px, min(4.5cqh, 7cqw), 36px); }
 .studio-home-workout-time { font-size: clamp(14px, 2.5cqh, 18px); }
 .studio-home-workout-day { font-size: clamp(28px, 6cqh, 48px); }
-.studio-home-empty-title { font-size: clamp(26px, min(6.5cqh, 10cqw), 48px); }
+.studio-home-empty-title { font-size: clamp(26px, min(5.5cqh, 10cqw), 38px); }
 .studio-home-empty-description {
   max-width: 26rem;
-  font-size: clamp(14px, 2.4cqh, 18px);
+  font-size: clamp(14px, 2.2cqh, 16px);
 }
 .studio-home-workout-action {
-  min-height: clamp(44px, 7cqh, 60px);
-  font-size: clamp(14px, 2.4cqh, 18px);
+  min-height: clamp(44px, 6.5cqh, 56px);
+  font-size: clamp(14px, 2.2cqh, 16px);
 }
 .studio-home-workout-action svg { width: 1.15em; height: 1.15em; }
 .studio-home-balance { padding: clamp(10px, 2cqh, 18px) clamp(12px, 2cqh, 20px); }
@@ -117,9 +127,37 @@
   .studio-home-workout-content > div > .flex { gap: 6px; }
 }
 
+@container (max-height: 600px) {
+  .studio-home-emblem { width: clamp(56px, 12cqh, 80px); height: clamp(56px, 12cqh, 80px); }
+  .studio-home-botanical { width: clamp(80px, 20cqh, 112px); height: clamp(80px, 20cqh, 112px); }
+  .studio-home-name { font-size: clamp(26px, 9cqw, 32px); }
+  .studio-home-empty-title { font-size: 26px; }
+  .studio-home-empty-description { font-size: 14px; line-height: 1.5; }
+  .studio-home-workout-action { min-height: 44px; font-size: 14px; }
+  .studio-home-workout-content { gap: 8px; padding-top: 4px; }
+}
+
+@container (max-height: 500px) {
+  .studio-home-emblem { width: 56px; height: 56px; }
+  .studio-home-botanical { width: 80px; height: 80px; }
+  .studio-home-name { font-size: 26px; }
+  .studio-home-heading { padding-bottom: 4px; }
+  .studio-home-workout { gap: 8px; }
+  .studio-home-session-date { display: none; }
+  .studio-home-session-date-summary {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+}
+
 /* Notches and browser chrome can leave less room than the device height implies. */
 @container (max-height: 420px) {
-  .studio-home-emblem { height: 44px; }
+  .studio-home-emblem { width: 44px; height: 44px; }
   .studio-home-heading { gap: 4px; }
   .studio-home-heading header > div { flex-wrap: nowrap; }
   .studio-home-heading header > div > div {
@@ -173,6 +211,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
+    padding-bottom: 0;
   }
   .studio-home-heading header { gap: 16px; }
   .studio-home-greeting { flex: 1; }
@@ -180,7 +219,7 @@
   .studio-home-greeting .studio-home-name { display: inline; }
   .studio-home-eyebrow { font-size: 12px; }
   .studio-home-botanical { width: 56px; height: 56px; }
-  .studio-home-workout { padding: 12px 16px; }
+  .studio-home-workout { min-height: 0; padding: 12px 16px; gap: 8px; }
   .studio-home-workout-content { gap: 8px; padding-top: 4px; }
   .studio-home-empty-title { font-size: 24px; }
   .studio-home-empty-title br { display: none; }

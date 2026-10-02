@@ -100,7 +100,10 @@ try {
     const main = document.querySelector("main");
     const issues = [];
     const rect = element => element.getBoundingClientRect();
-    const visible = element => !element.closest('[aria-hidden="true"], .sr-only') && getComputedStyle(element).visibility !== "hidden" && rect(element).height > 0;
+    const visible = element => {
+      const screenReaderOnly = element.closest(".sr-only");
+      return !element.closest('[aria-hidden="true"]') && !(screenReaderOnly && getComputedStyle(screenReaderOnly).position === "absolute") && getComputedStyle(element).visibility !== "hidden" && rect(element).height > 0;
+    };
     const label = element => (element.textContent || element.className).toString().trim().slice(0, 75);
     if (document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1) issues.push("document overflows viewport");
     const children = [...main.children].filter(visible);
@@ -115,6 +118,8 @@ try {
       const range = document.createRange(); range.selectNodeContents(node);
       const text = range.getBoundingClientRect();
       if (text.left < -1 || text.right > innerWidth + 1 || text.top < -1 || text.bottom > innerHeight + 1) issues.push("text outside viewport: " + label(parent));
+      const section = parent.closest(".studio-home-heading, .studio-home-workout, .studio-home-balance");
+      if (section && (text.top < rect(section).top - 1 || text.bottom > rect(section).bottom + 1)) issues.push("text outside section: " + label(parent));
       for (let ancestor = parent; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
         const style = getComputedStyle(ancestor);
         if (["hidden", "clip", "auto", "scroll"].includes(style.overflowY)) {
@@ -132,11 +137,19 @@ try {
       if (box.height < 44 - 1) issues.push("short touch target: " + label(target));
     }
     const workout = document.querySelector(".studio-home-workout");
+    const heading = document.querySelector(".studio-home-heading");
+    const mainStyle = getComputedStyle(main);
+    const usableHeight = main.clientHeight - parseFloat(mainStyle.paddingTop) - parseFloat(mainStyle.paddingBottom);
+    if (workout && innerWidth < 600 && usableHeight >= 700) {
+      if (rect(workout).height > usableHeight * 0.46) issues.push("workout card dominates available height");
+      if (rect(heading).height < rect(workout).height) issues.push("greeting is smaller than workout card");
+    }
     window.scrollTo(0, 9999);
     if (scrollY !== 0) issues.push("page can scroll");
     return { issues: [...new Set(issues)], width: innerWidth, height: innerHeight,
       bodyFont: getComputedStyle(document.querySelector(".studio-welcome-description, .studio-home-empty-description, .studio-home-workout-time") || main).fontSize,
-      cardHeight: workout ? Math.round(rect(workout).height) : null };
+      cardHeight: workout ? Math.round(rect(workout).height) : null,
+      headingHeight: heading ? Math.round(rect(heading).height) : null };
   })()`;
   for (const [width, height] of viewports) {
     await call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 1000 });
