@@ -16,7 +16,9 @@
 # next.js
 /.next/
 /.next-qa/
+/.next-subscription-dev/
 /out/
+/scratch/
 
 # production
 /build

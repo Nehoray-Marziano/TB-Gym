@@ -209,6 +209,7 @@ export default function LandingPage() {
             setAuthError("הקוד לא תקין או שפג תוקפו. בדקי ונסי שוב.");
             setIsLoading(false);
         } else if (data?.session) {
+            window.scrollTo(0, 0);
             window.location.href = "/dashboard";
         } else {
             setAuthError("לא הצלחנו להשלים את הכניסה. נסי שוב.");
@@ -217,7 +218,7 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="studio-welcome relative w-full bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
+        <div className="studio-welcome fixed inset-0 w-full h-full overflow-hidden bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
             {/* Background Layer: Botanical Branch, Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
                 {/* Velvety atmospheric green-brownish earthy gradient */}

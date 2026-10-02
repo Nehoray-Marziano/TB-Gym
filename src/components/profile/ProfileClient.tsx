@@ -120,8 +120,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     if (!profile) return null; // Should not happen with server data, but safety check
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
-            <main className="mx-auto max-w-lg px-5 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+        <div className="h-full w-full overflow-y-auto overscroll-contain bg-[var(--studio-canvas)] text-[var(--studio-ink)] [-webkit-overflow-scrolling:touch]">
+            <main className="mx-auto max-w-lg px-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
             <header className="flex items-center justify-between gap-3">
                 <div>
                     <p className="text-xs font-bold text-[var(--studio-subtle)]">סטודיו טליה</p>

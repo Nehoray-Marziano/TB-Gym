@@ -10,5 +10,14 @@ export default async function TraineeLayout({ children }: Readonly<{ children: R
     const userId = data?.claims?.sub;
     if (!userId) redirect("/auth/login");
 
-    return <TraineeIdentity userId={userId}><PageEntrance>{children}</PageEntrance><BottomNav /></TraineeIdentity>;
+    return (
+        <TraineeIdentity userId={userId}>
+            <div className="studio-app-shell">
+                <div className="relative flex-1 h-full w-full overflow-hidden">
+                    <PageEntrance>{children}</PageEntrance>
+                </div>
+                <BottomNav />
+            </div>
+        </TraineeIdentity>
+    );
 }

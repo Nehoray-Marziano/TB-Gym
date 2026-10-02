@@ -164,8 +164,8 @@ export default function BookingPage() {
     };
 
     return (
-        <div className="min-h-dvh overflow-x-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
-            <div className="mx-auto max-w-lg pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
+        <div className="h-full w-full overflow-y-auto overscroll-contain bg-[var(--studio-canvas)] text-[var(--studio-ink)] [-webkit-overflow-scrolling:touch]">
+            <div className="mx-auto max-w-lg pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
                 <header className="relative isolate overflow-hidden rounded-b-[2rem] bg-[var(--studio-deep)] px-5 pb-6 pt-[max(1.1rem,env(safe-area-inset-top))] text-[var(--studio-deep-contrast)]">
                     <StudioBotanical sun={false} className="studio-botanical-drift pointer-events-none absolute -bottom-24 -left-20 h-48 w-72 text-[var(--studio-accent-text)]/25" />
                     <p className="relative text-[11px] font-bold text-[var(--studio-accent-text)]">סטודיו טליה / השבוע הקרוב</p>

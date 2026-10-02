@@ -10,7 +10,8 @@
     "test:pwa": "node --test scripts/test-pwa-update.mjs",
     "stress:bookings": "node scripts/stress-bookings.mjs",
     "stress:edge": "node scripts/edge-cases.mjs",
-    "stress:admin": "node scripts/admin-schedule.mjs"
+    "stress:admin": "node scripts/admin-schedule.mjs",
+    "stress:concurrent": "node scripts/concurrent-lesson-tests.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

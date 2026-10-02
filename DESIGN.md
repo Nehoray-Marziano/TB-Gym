@@ -32,6 +32,8 @@ The workout card uses three 30px corners and one 10px corner, echoing the studio
 
 ## Components
 
+- Subscription uses a three-choice weekly-rhythm radio selector, one selected-plan surface, readable price and benefit text, and one persistent purchase bar. Its document scrolls naturally with safe-area and purchase-bar clearance. Page-specific geometry and verified product behavior are documented in `design-system/talia-studio/pages/subscription.md`; `src/app/subscription/subscription.css` consumes the canonical global studio colors and font. The shared Bit instruction dialog owns keyboard focus and payment handoff feedback. Payment requires Talia's approval before workouts are credited.
+
 - `src/components/home/TraineeDashboard.tsx` owns greeting, upcoming-workout rendering, and balance summary; `GymStoreProvider` owns balance and profile data.
 - In-app branding reuses `StudioLogo` and the clean `initials_logo.svg` TB mark without the tagline. The public introduction retains the full studio signature.
 - `src/components/BottomNav.tsx` remains the shared navigation owner. Labels are בית, לוח אימונים, חשבון. My bookings remains in the Home navigation family.

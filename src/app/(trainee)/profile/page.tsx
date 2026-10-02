@@ -83,7 +83,7 @@ export default function ProfilePage() {
 // Inline skeleton component for faster initial render
 function ProfileSkeleton() {
     return (
-        <div className="min-h-dvh bg-[var(--studio-canvas)] px-5 pt-5" aria-busy="true">
+        <div className="h-full w-full overflow-hidden bg-[var(--studio-canvas)] px-5 pt-5" aria-busy="true">
             <div className="mx-auto max-w-lg animate-pulse">
                 <div className="h-10 w-44 rounded-xl bg-[var(--studio-card)]" />
                 <div className="mt-8 h-12 w-48 rounded-xl bg-[var(--studio-card)]" />
