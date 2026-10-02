@@ -14,27 +14,27 @@ export default function manifest(): MetadataRoute.Manifest {
         background_color: "#162218",
         theme_color: "#162218",
         shortcuts: [
-            { name: "לוח אימונים", short_name: "אימונים", url: "/book", icons: [{ src: "/pwa-icon-v2-192.png", sizes: "192x192", type: "image/png" }] },
-            { name: "האימונים שלי", short_name: "שלי", url: "/my-bookings", icons: [{ src: "/pwa-icon-v2-192.png", sizes: "192x192", type: "image/png" }] },
+            { name: "לוח אימונים", short_name: "אימונים", url: "/book", icons: [{ src: "/pwa-icon-v3-192.png", sizes: "192x192", type: "image/png" }] },
+            { name: "האימונים שלי", short_name: "שלי", url: "/my-bookings", icons: [{ src: "/pwa-icon-v3-192.png", sizes: "192x192", type: "image/png" }] },
         ],
         icons: [
             {
-                src: "/pwa-icon-v2-192.png",
-                sizes: "192x192",
-                type: "image/png",
-                purpose: "any"
-            },
-            {
-                src: "/pwa-icon-v2-512.png",
+                src: "/pwa-icon-v3-512.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "any"
             },
             {
-                src: "/pwa-icon-v2-maskable-512.png",
+                src: "/pwa-icon-v3-maskable-512.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable"
+            },
+            {
+                src: "/pwa-icon-v3-192.png",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "any"
             }
         ],
 

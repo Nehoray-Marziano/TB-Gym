@@ -218,18 +218,18 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="studio-welcome fixed inset-0 w-full h-full overflow-hidden bg-[#181611] text-[var(--studio-deep-contrast)] selection:bg-[var(--studio-accent-bg)]/30 selection:text-white">
+        <div className="studio-welcome fixed inset-0 w-full h-full overflow-hidden bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20 selection:text-[var(--studio-ink)]">
             {/* Background Layer: Botanical Branch, Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-                {/* Velvety atmospheric green-brownish earthy gradient */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_65%_30%,#2a251b_0%,#1a1711_55%,#100e0a_100%)] opacity-95" />
+                {/* Ambient atmospheric sage lighting matching trainee dashboard */}
+                <div className="absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]" />
 
-                {/* Warm terracotta sun with expanding and retracting halo & shadow */}
+                {/* Warm terracotta sun with gentle pulse matching studio palette */}
                 <motion.div
                     className="absolute -left-10 top-20 h-56 w-56 rounded-full bg-[var(--studio-coral-bg)]/20 blur-3xl [@media(max-height:650px)]:top-12"
                     animate={reduceMotion ? undefined : {
-                        scale: [1, 1.25, 1],
-                        opacity: [0.18, 0.4, 0.18],
+                        scale: [1, 1.2, 1],
+                        opacity: [0.2, 0.35, 0.2],
                     }}
                     transition={{
                         duration: 5.5,
@@ -238,13 +238,13 @@ export default function LandingPage() {
                     }}
                 />
                 <motion.div
-                    className="absolute left-6 top-28 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_40%_40%,#d9886e_0%,#c37a61_70%,#9e553f_100%)] opacity-85 [@media(max-height:650px)]:h-18 [@media(max-height:650px)]:w-18 [@media(max-height:650px)]:top-16 [@media(max-height:650px)]:left-3"
+                    className="absolute left-6 top-28 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_40%_40%,#d9886e_0%,#c37a61_70%,#9e553f_100%)] opacity-90 shadow-[0_4px_24px_rgba(195,122,97,0.3)] [@media(max-height:650px)]:h-18 [@media(max-height:650px)]:w-18 [@media(max-height:650px)]:top-16 [@media(max-height:650px)]:left-3"
                     animate={reduceMotion ? undefined : {
-                        scale: [1, 1.05, 1],
+                        scale: [1, 1.04, 1],
                         boxShadow: [
-                            "0 0 30px 6px rgba(195,122,97,0.35)",
-                            "0 0 65px 18px rgba(195,122,97,0.65)",
-                            "0 0 30px 6px rgba(195,122,97,0.35)",
+                            "0 0 24px 4px rgba(195,122,97,0.25)",
+                            "0 0 45px 10px rgba(195,122,97,0.4)",
+                            "0 0 24px 4px rgba(195,122,97,0.25)",
                         ],
                     }}
                     transition={{
@@ -254,10 +254,10 @@ export default function LandingPage() {
                     }}
                 >
                     <motion.div
-                        className="absolute -inset-2.5 rounded-full border border-[var(--studio-coral-bg)]/35"
+                        className="absolute -inset-2.5 rounded-full border border-[var(--studio-coral-bg)]/45"
                         animate={reduceMotion ? undefined : {
-                            scale: [1, 1.08, 1],
-                            opacity: [0.35, 0.65, 0.35],
+                            scale: [1, 1.06, 1],
+                            opacity: [0.4, 0.7, 0.4],
                         }}
                         transition={{
                             duration: 4.5,
@@ -268,13 +268,13 @@ export default function LandingPage() {
                 </motion.div>
 
                 {/* Ambient sage glow */}
-                <div className="absolute bottom-16 right-0 h-72 w-72 rounded-full bg-[var(--studio-accent-bg)]/14 blur-3xl" />
+                <div className="absolute bottom-16 right-0 h-72 w-72 rounded-full bg-[var(--studio-brand)]/14 blur-3xl" />
 
-                {/* User's 5-leaf botanical branch gently tilting */}
+                {/* User's 5-leaf botanical branch gently tilting (deep ink version for creamy background) */}
                 <motion.img
-                    src="/user_leaves_branch_sage.png"
+                    src="/user_leaves_branch_dark.png"
                     alt=""
-                    className="absolute -bottom-10 left-7 h-[520px] w-auto max-w-none origin-bottom-left object-contain opacity-18 mix-blend-screen drop-shadow-[0_4px_16px_rgba(0,0,0,0.35)] [@media(max-height:650px)]:h-[340px] [@media(max-height:650px)]:-bottom-4 [@media(max-height:650px)]:left-5"
+                    className="absolute -bottom-10 left-7 h-[520px] w-auto max-w-none origin-bottom-left object-contain opacity-20 drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] [@media(max-height:650px)]:h-[340px] [@media(max-height:650px)]:-bottom-4 [@media(max-height:650px)]:left-5"
                     animate={reduceMotion ? undefined : {
                         rotate: [-14, -8, -14],
                     }}
@@ -288,7 +288,7 @@ export default function LandingPage() {
 
             {/* Foreground Content */}
             <main className="studio-welcome-main relative z-10 mx-auto w-full">
-                {/* Header: Centered Studio Emblem */}
+                {/* Header: Centered Studio Emblem (Dark variant with 13.53:1 contrast against creamy background) */}
                 <header className="studio-welcome-header flex items-center justify-center">
                     <motion.button
                         type="button"
@@ -296,44 +296,44 @@ export default function LandingPage() {
                         whileTap={reduceMotion ? undefined : { scale: 0.92 }}
                         whileHover={reduceMotion ? undefined : { scale: 1.04 }}
                         transition={{ type: "spring", stiffness: 450, damping: 20 }}
-                        className="group relative flex items-center justify-center cursor-pointer select-none rounded-2xl p-1 outline-none touch-manipulation focus-visible:ring-2 focus-visible:ring-white/40"
+                        className="group relative flex items-center justify-center cursor-pointer select-none rounded-2xl p-1 outline-none touch-manipulation focus-visible:ring-2 focus-visible:ring-[var(--studio-ink)]/40"
                         aria-label="סטודיו טליה - תזונה • אימונים"
                     >
                         {/* Animated ambient touch halo ring */}
                         <motion.div
-                            className="absolute inset-0 -z-10 rounded-full bg-[var(--studio-accent-bg)]/35 blur-xl pointer-events-none"
+                            className="absolute inset-0 -z-10 rounded-full bg-[var(--studio-brand)]/35 blur-xl pointer-events-none"
                             animate={isEmblemPressed ? { scale: [1, 1.45, 1.2], opacity: [0.3, 0.85, 0.4] } : { scale: 1, opacity: 0.15 }}
                             transition={{ duration: 0.45 }}
                         />
 
                         <img
-                            src="/studio_emblem_clean.png"
+                            src="/studio_emblem_dark.png"
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="studio-welcome-emblem w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-150 group-active:brightness-125"
+                            className="studio-welcome-emblem w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.12)] transition-all duration-150 group-active:scale-95"
                         />
                     </motion.button>
                 </header>
 
                 {/* Main Hero Section: Bold Editorial Hebrew Typography */}
                 <section aria-labelledby="landing-title" className="studio-welcome-hero flex flex-col justify-center">
-                    {/* Eyebrow badge */}
-                    <p className="studio-welcome-eyebrow font-bold tracking-wide text-[var(--studio-accent-text)]">
+                    {/* Eyebrow badge: high contrast (10.27:1) matching trainee dashboard */}
+                    <p className="studio-welcome-eyebrow font-bold tracking-wide text-[#283824]">
                         ✦ האימון הבא מתחיל כאן
                     </p>
 
-                    {/* Headline: Editorial typography with balanced line wrapping */}
+                    {/* Headline: Editorial typography with balanced line wrapping (13.53:1 contrast) */}
                     <h1
                         id="landing-title"
                         style={{ textWrap: "balance" }}
                         className="font-bold leading-[0.92] tracking-[-0.05em]"
                     >
-                        <span className="studio-welcome-title-start block text-[var(--studio-deep-contrast)]">
+                        <span className="studio-welcome-title-start block text-[var(--studio-ink)]">
                             יש לך
                         </span>
-                        <span className="studio-welcome-title-focus relative inline-block text-[var(--studio-accent-text)]">
+                        <span className="studio-welcome-title-focus relative inline-block text-[var(--studio-ink)]">
                             מקום
-                            {/* Animated wavy underline drawing RTL */}
-                            <svg aria-hidden="true" viewBox="0 0 240 20" preserveAspectRatio="none" className="absolute -bottom-2.5 right-0 h-3.5 w-full overflow-visible text-[var(--studio-coral-bg)]">
+                            {/* Animated wavy underline drawing RTL with warm terracotta (#9e462d: 5.13:1 contrast) */}
+                            <svg aria-hidden="true" viewBox="0 0 240 20" preserveAspectRatio="none" className="absolute -bottom-2.5 right-0 h-3.5 w-full overflow-visible text-[#9e462d]">
                                 <motion.path
                                     d="M236 4 C175 14 120 8 70 4 S14 12 4 15"
                                     fill="none"
@@ -349,53 +349,53 @@ export default function LandingPage() {
                                 />
                             </svg>
                         </span>
-                        <span className="studio-welcome-title-end mt-0.5 block text-[var(--studio-deep-contrast)]">
-                            לזוז<span className="text-[var(--studio-coral-text)]">.</span>
+                        <span className="studio-welcome-title-end mt-0.5 block text-[var(--studio-ink)]">
+                            לזוז<span className="text-[#9e462d]">.</span>
                         </span>
                     </h1>
 
-                    {/* Subtitle */}
-                    <p className="studio-welcome-description leading-relaxed text-[var(--studio-deep-contrast)]/85">
+                    {/* Subtitle: High contrast (10.27:1) */}
+                    <p className="studio-welcome-description leading-relaxed text-[#283824]">
                         האימונים, ההרשמות והיתרה שלך — הכול מחכה לך כאן במקום אחד.
                     </p>
 
-                    {/* Studio Features: Compact boutique leaf list */}
-                    <ul className="studio-welcome-features font-semibold text-[var(--studio-deep-contrast)]/90">
+                    {/* Studio Features: Compact boutique leaf list with high contrast (13.53:1 text, 7.67:1 icon) */}
+                    <ul className="studio-welcome-features font-semibold text-[var(--studio-ink)]">
                         <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
-                            <UserLeafIcon className="h-4 w-4 text-[var(--studio-accent-text)] shrink-0 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
+                            <UserLeafIcon className="h-4 w-4 text-[#384c34] shrink-0 drop-shadow-[0_1px_2px_rgba(20,32,22,0.1)]" />
                             <span>לוח אימונים גמיש ומעודכן</span>
                         </motion.li>
                         <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
-                            <UserLeafIcon className="h-4 w-4 text-[var(--studio-accent-text)] shrink-0 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
+                            <UserLeafIcon className="h-4 w-4 text-[#384c34] shrink-0 drop-shadow-[0_1px_2px_rgba(20,32,22,0.1)]" />
                             <span>קבוצות בוטיק אינטימיות (עד 8 מתאמנות)</span>
                         </motion.li>
                         <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
-                            <UserLeafIcon className="h-4 w-4 text-[var(--studio-accent-text)] shrink-0 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
+                            <UserLeafIcon className="h-4 w-4 text-[#384c34] shrink-0 drop-shadow-[0_1px_2px_rgba(20,32,22,0.1)]" />
                             <span>מעקב כרטיסיות ומנוי בזמן אמת</span>
                         </motion.li>
                     </ul>
                 </section>
 
-                {/* Bottom Action Area: True iOS Liquid Frosted Glass */}
+                {/* Bottom Action Area: High-Contrast Actions */}
                 <div className="studio-welcome-actions relative w-full">
                     {/* Radiant Ambient Backlight */}
                     <div
                         aria-hidden="true"
-                        className="pointer-events-none absolute -bottom-2 inset-x-2 h-24 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(139,142,111,0.32)_0%,rgba(195,122,97,0.18)_45%,transparent_75%)] blur-xl -z-10"
+                        className="pointer-events-none absolute -bottom-2 inset-x-2 h-24 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(139,142,111,0.22)_0%,rgba(195,122,97,0.12)_45%,transparent_75%)] blur-xl -z-10"
                     />
 
                     {authError && (
                         <div
                             role="alert"
                             aria-live="assertive"
-                            className="mb-2 flex items-center gap-2 rounded-xl border border-[var(--studio-danger)]/30 bg-[var(--studio-danger)]/15 px-3 py-1.5 text-xs font-bold text-[var(--studio-coral-text)]"
+                            className="mb-2 flex items-center gap-2 rounded-xl border border-[var(--studio-danger)]/30 bg-[var(--studio-danger)]/12 px-3 py-1.5 text-xs font-bold text-[#8f2e27]"
                         >
-                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0 text-[#8f2e27]" />
                             <span>{authError}</span>
                         </div>
                     )}
 
-                    {/* Primary Google Login Button */}
+                    {/* Primary Google Login Button: Deep Studio Ink (#162218 vs canvas: 13.53:1 AAA, text vs button: 15.14:1 AAA) */}
                     <LiquidGlassButton
                         id="main-signin-button"
                         type="button"
@@ -410,19 +410,19 @@ export default function LandingPage() {
                         specular={0.7}
                         profile="squircle"
                         elevated={true}
-                        className="w-full"
+                        className="w-full bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)] shadow-lg shadow-[#162218]/15 hover:bg-[#0c140e] transition-colors"
                     >
-                        <div className="studio-welcome-google flex w-full items-center justify-center gap-3 px-5 text-white">
+                        <div className="studio-welcome-google flex w-full items-center justify-center gap-3 px-5 text-[var(--studio-deep-contrast)]">
                             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform group-active:scale-95">
                                 <GoogleMark className="h-3.5 w-3.5" />
                             </span>
-                            <span className="font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                            <span className="font-semibold tracking-tight text-[var(--studio-deep-contrast)]">
                                 {isLoading ? "מחברות אותך..." : "ממשיכות עם גוגל"}
                             </span>
                         </div>
                     </LiquidGlassButton>
 
-                    {/* Secondary Email OTP Button */}
+                    {/* Secondary Email OTP Button: High-Contrast Crisp Boutique Card Button (Border vs canvas: 3.20:1, text vs button: 16.46:1 AAA) */}
                     <LiquidGlassButton
                         type="button"
                         onClick={() => {
@@ -438,16 +438,16 @@ export default function LandingPage() {
                         specular={0.5}
                         profile="squircle"
                         elevated={false}
-                        className="studio-welcome-email-button w-full"
+                        className="studio-welcome-email-button w-full border-2 border-[#788665] bg-white/90 text-[var(--studio-ink)] shadow-sm hover:bg-white transition-colors"
                     >
-                        <div className="studio-welcome-email flex w-full items-center justify-center gap-2 px-4 font-medium text-white/90">
-                            <Mail aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-accent-text)] opacity-95 transition-transform group-hover:scale-105" />
-                            <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">כניסה עם קוד במייל</span>
+                        <div className="studio-welcome-email flex w-full items-center justify-center gap-2 px-4 font-semibold text-[var(--studio-ink)]">
+                            <Mail aria-hidden="true" className="h-4 w-4 text-[#384c34] opacity-95 transition-transform group-hover:scale-105" />
+                            <span>כניסה עם קוד במייל</span>
                         </div>
                     </LiquidGlassButton>
 
-                    {/* Reassurance Micro-Copy */}
-                    <p className="studio-welcome-reassurance text-center font-medium text-white/65">
+                    {/* Reassurance Micro-Copy: High contrast (8.05:1 AAA) */}
+                    <p className="studio-welcome-reassurance text-center font-medium text-[#384834]">
                         כניסה מאובטחת ללא סיסמה • הפרטים שלך שמורים
                     </p>
                 </div>
@@ -497,17 +497,17 @@ export default function LandingPage() {
                                 <X aria-hidden="true" className="h-4 w-4" />
                             </button>
 
-                            <p className="mb-1 text-xs font-bold text-[var(--studio-subtle)]">סטודיו טליה</p>
-                            <h2 id="login-title" className="max-w-[16rem] text-[2rem] font-bold leading-tight">
+                            <p className="mb-1 text-xs font-bold text-[#283824]">סטודיו טליה</p>
+                            <h2 id="login-title" className="max-w-[16rem] text-[2rem] font-bold leading-tight text-[var(--studio-ink)]">
                                 {loginView === "email" ? "נשלח לך קוד למייל" : "הקוד בדרך אלייך"}
                             </h2>
-                            <p id="login-desc" className="mb-6 mt-2 max-w-[19rem] text-sm leading-relaxed text-[var(--studio-muted)]">
+                            <p id="login-desc" className="mb-6 mt-2 max-w-[19rem] text-sm leading-relaxed text-[#384834]">
                                 {loginView === "email" ? (
                                     "כתבי את הכתובת שלך ונשלח קוד חד־פעמי בן 6 ספרות לכניסה מיידית ללא צורך בסיסמה."
                                 ) : (
                                     <>
                                         הקוד נשלח אל{" "}
-                                        <span dir="ltr" className="font-bold text-[var(--studio-ink)] underline decoration-[var(--studio-brand)]">
+                                        <span dir="ltr" className="font-bold text-[var(--studio-ink)] underline decoration-[#384c34]">
                                             {email}
                                         </span>
                                         . הזיני אותו כאן:
@@ -518,9 +518,9 @@ export default function LandingPage() {
                             {resendSuccess && (
                                 <div
                                     role="status"
-                                    className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-xs font-bold text-emerald-800"
+                                    className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25 p-2.5 text-xs font-bold text-emerald-900"
                                 >
-                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
                                     <span>הקוד נשלח בהצלחה לכתובת המייל!</span>
                                 </div>
                             )}
@@ -535,7 +535,7 @@ export default function LandingPage() {
                                 >
                                     <div>
                                         <label htmlFor="login-email" className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]">
-                                            כתובת המייל שלך <span className="text-[var(--studio-coral-bg)]">*</span>
+                                            כתובת המייל שלך <span className="text-[#9e462d]">*</span>
                                         </label>
                                         <input
                                             ref={emailInputRef}
@@ -548,7 +548,7 @@ export default function LandingPage() {
                                             value={email}
                                             onChange={(event) => setEmail(event.target.value)}
                                             placeholder="name@example.com"
-                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-base outline-none transition-all focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-accent-bg)]/25"
+                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/25 bg-white px-4 text-base text-[var(--studio-ink)] outline-none transition-all placeholder:text-[#5d6958] focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-brand)]/25"
                                         />
                                     </div>
 
@@ -564,7 +564,7 @@ export default function LandingPage() {
                                     <button
                                         type="button"
                                         onClick={resetLoginState}
-                                        className="flex min-h-10 w-full items-center justify-center text-xs font-bold text-[var(--studio-muted)] hover:text-[var(--studio-ink)] transition-colors"
+                                        className="flex min-h-10 w-full items-center justify-center text-xs font-bold text-[#384834] hover:text-[var(--studio-ink)] transition-colors"
                                     >
                                         ביטול וחזרה
                                     </button>
@@ -581,7 +581,7 @@ export default function LandingPage() {
                                 >
                                     <div>
                                         <label htmlFor="login-code" className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]">
-                                            קוד אימות בן 6 ספרות <span className="text-[var(--studio-coral-bg)]">*</span>
+                                            קוד אימות בן 6 ספרות <span className="text-[#9e462d]">*</span>
                                         </label>
                                         <input
                                             ref={otpInputRef}
@@ -595,7 +595,7 @@ export default function LandingPage() {
                                             value={otpCode}
                                             onChange={(event) => setOtpCode(event.target.value)}
                                             placeholder="••••••"
-                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-center font-mono text-2xl tracking-[0.35em] outline-none transition-all focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-accent-bg)]/25"
+                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/25 bg-white px-4 text-center font-mono text-2xl tracking-[0.35em] text-[var(--studio-ink)] outline-none transition-all placeholder:text-[#5d6958] focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-brand)]/25"
                                         />
                                     </div>
 
@@ -615,7 +615,7 @@ export default function LandingPage() {
                                                 setAuthError("");
                                                 setLoginView("email");
                                             }}
-                                            className="flex items-center gap-1.5 font-bold text-[var(--studio-muted)] hover:text-[var(--studio-ink)] transition-colors cursor-pointer"
+                                            className="flex items-center gap-1.5 font-bold text-[#384834] hover:text-[var(--studio-ink)] transition-colors cursor-pointer"
                                         >
                                             <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
                                             שינוי כתובת מייל
@@ -625,7 +625,7 @@ export default function LandingPage() {
                                             type="button"
                                             onClick={handleSendCode}
                                             disabled={isLoading}
-                                            className="font-bold text-[var(--studio-brand)] hover:underline cursor-pointer disabled:opacity-50"
+                                            className="font-bold text-[#32452e] hover:underline cursor-pointer disabled:opacity-50"
                                         >
                                             שליחה חוזרת
                                         </button>
@@ -637,9 +637,9 @@ export default function LandingPage() {
                                 <div
                                     role="alert"
                                     aria-live="assertive"
-                                    className="mt-4 flex items-center gap-2 rounded-2xl bg-[var(--studio-danger)]/10 border border-[var(--studio-danger)]/25 p-3 text-sm text-[var(--studio-danger)]"
+                                    className="mt-4 flex items-center gap-2 rounded-2xl bg-[var(--studio-danger)]/12 border border-[var(--studio-danger)]/30 p-3 text-sm font-bold text-[#8f2e27]"
                                 >
-                                    <AlertCircle className="h-4 w-4 shrink-0" />
+                                    <AlertCircle className="h-4 w-4 shrink-0 text-[#8f2e27]" />
                                     <span>{authError}</span>
                                 </div>
                             )}

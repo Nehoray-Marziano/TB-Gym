@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     title: "סטודיו טליה",
   },
   icons: {
-    icon: "/pwa-icon-v2-192.png",
-    shortcut: "/pwa-icon-v2-192.png",
-    apple: "/apple-touch-icon-v2.png",
+    icon: "/pwa-icon-v3-192.png",
+    shortcut: "/pwa-icon-v3-192.png",
+    apple: "/apple-touch-icon-v3.png",
   },
 
 };
