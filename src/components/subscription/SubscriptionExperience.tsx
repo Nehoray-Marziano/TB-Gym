@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, MoveHorizontal } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
 import StudioLogo from "@/components/StudioLogo";
@@ -27,46 +27,53 @@ const FAQS = [
     { question: "מה אם צריך לבטל, ולכמה זמן המסלול תקף?", answer: "אפשר לבטל באפליקציה עד 10 שעות לפני תחילת האימון, ללא חיוב בכניסה. המסלולים תקפים לחודש קלנדרי, ללא התחייבות שנתית. היתרה ותוקף המנוי מוצגים באפליקציה." },
 ];
 
-// Re-measure the destination while dvh changes as mobile browser chrome retracts.
-// Independent frame scrolling also avoids competing native smooth-scroll jobs
-// between the vertical reveal and the horizontal deck's resize observer.
+// Let the browser animate scrolling. Correct the destination once at completion
+// instead of forcing layout and writing the window scroll position every frame.
 function revealGallery(element: HTMLElement, reduceMotion: boolean, onComplete: () => void) {
-    const origin = window.scrollY;
-    const started = performance.now();
     let frame = 0;
+    let fallback: ReturnType<typeof setTimeout> | undefined;
     const cancel = () => {
         cancelAnimationFrame(frame);
-        window.removeEventListener("touchstart", cancel);
-        window.removeEventListener("wheel", cancel);
-        window.removeEventListener("keydown", cancel);
+        clearTimeout(fallback);
+        document.removeEventListener("scrollend", onScrollEnd);
+        window.removeEventListener("touchstart", interrupt);
+        window.removeEventListener("wheel", interrupt);
+        window.removeEventListener("keydown", interrupt);
     };
-    const tick = (now: number) => {
-        const progress = reduceMotion ? 1 : Math.min((now - started) / 780, 1);
+    const interrupt = () => {
+        cancel();
+        window.scrollTo({ top: window.scrollY, behavior: "instant" });
+    };
+    const finish = () => {
+        cancel();
+        const remaining = element.getBoundingClientRect().top;
+        if (Math.abs(remaining) > 1) window.scrollTo({ top: window.scrollY + remaining, behavior: "instant" });
+        onComplete();
+    };
+    const onScrollEnd = (event: Event) => {
+        if (event.target === document) finish();
+    };
+    document.addEventListener("scrollend", onScrollEnd);
+    window.addEventListener("touchstart", interrupt, { passive: true });
+    window.addEventListener("wheel", interrupt, { passive: true });
+    window.addEventListener("keydown", interrupt);
+    frame = requestAnimationFrame(() => {
         const destination = window.scrollY + element.getBoundingClientRect().top;
-        const eased = 1 - Math.pow(1 - progress, 4);
-        window.scrollTo({ top: origin + (destination - origin) * eased, behavior: "instant" });
-        if (progress < 1) frame = requestAnimationFrame(tick);
-        else { cancel(); onComplete(); }
-    };
-    window.addEventListener("touchstart", cancel, { passive: true });
-    window.addEventListener("wheel", cancel, { passive: true });
-    window.addEventListener("keydown", cancel);
-    frame = requestAnimationFrame(tick);
+        window.scrollTo({ top: destination, behavior: reduceMotion ? "instant" : "smooth" });
+        if (reduceMotion || Math.abs(element.getBoundingClientRect().top) < 1) finish();
+        else fallback = setTimeout(finish, 1200);
+    });
     return cancel;
 }
 
-function TierMotif({ weekly, active = true, className = "" }: { weekly: number; active?: boolean; className?: string }) {
-    const reduceMotion = useReducedMotion();
-    return <motion.svg className={`membership-tier-motif ${className}`} viewBox="0 0 120 130" fill="none" aria-hidden="true"
-        animate={{ rotate: active && !reduceMotion ? 0 : -12 }} transition={{ type: "spring", stiffness: 80, damping: 18 }}>
+function TierMotif({ weekly, className = "" }: { weekly: number; className?: string }) {
+    return <svg className={`membership-tier-motif ${className}`} viewBox="0 0 120 130" fill="none" aria-hidden="true">
         {[
             "M20 104C-12 53 35-6 74 26S130 103 86 115",
             "M37 96C12 54 45 17 71 38S103 93 75 102",
             "M51 85C35 56 54 35 69 49S82 78 65 86",
-        ].map((path, index) => <motion.path key={path} d={path} className={index < weekly ? "is-lit" : undefined}
-            initial={false} animate={{ pathLength: active || reduceMotion ? 1 : .65 }}
-            transition={reduceMotion ? { duration: 0 } : { duration: .9, delay: index * .08, ease: [0.22, 1, 0.36, 1] }} />)}
-    </motion.svg>;
+        ].map((path, index) => <path key={path} d={path} className={index < weekly ? "is-lit" : undefined} />)}
+    </svg>;
 }
 
 function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequest }: { selected: number; onSelect: (index: number) => void; onPurchase: (button: HTMLButtonElement) => void; focusOnReveal: boolean; revealRequest: number }) {
@@ -74,26 +81,71 @@ function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequ
     const stageRef = useRef<HTMLElement>(null);
     const trackRef = useRef<HTMLDivElement>(null);
     const selectedRef = useRef(selected);
-    const scrollFrame = useRef(0);
+    const requestedRef = useRef(selected);
+    const centersRef = useRef<{ index: number; center: number }[]>([]);
+    const touchingRef = useRef(false);
+    const movingRef = useRef(false);
+    const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const [moving, setMoving] = useState(false);
+
+    const finishMovement = useCallback(() => {
+        if (touchingRef.current || !trackRef.current || !centersRef.current.length) return;
+        clearTimeout(settleTimer.current);
+        const center = trackRef.current.scrollLeft + trackRef.current.clientWidth / 2;
+        const nearest = centersRef.current.reduce((best, card) => Math.abs(card.center - center) < Math.abs(best.center - center) ? card : best);
+        movingRef.current = false;
+        setMoving(false);
+        requestedRef.current = nearest.index;
+        if (nearest.index !== selectedRef.current) { selectedRef.current = nearest.index; onSelect(nearest.index); }
+    }, [onSelect]);
+
+    const scheduleSettle = () => {
+        clearTimeout(settleTimer.current);
+        settleTimer.current = setTimeout(finishMovement, 140);
+    };
 
     const moveTo = useCallback((index: number, instant = false) => {
         const track = trackRef.current;
-        const card = track?.querySelector<HTMLElement>(`[data-plan-index="${index}"]`);
+        const card = centersRef.current.find(card => card.index === index);
         if (!track || !card) return;
-        const left = card.offsetLeft + card.offsetWidth / 2 - track.clientWidth / 2;
+        requestedRef.current = index;
+        const left = card.center - track.clientWidth / 2;
         track.scrollTo({ left, behavior: instant || reduceMotion ? "instant" : "smooth" });
     }, [reduceMotion]);
 
     useLayoutEffect(() => {
+        const measure = () => {
+            centersRef.current = [...(trackRef.current?.querySelectorAll<HTMLElement>("[data-plan-index]") || [])].map(card => ({ index: Number(card.dataset.planIndex), center: card.offsetLeft + card.offsetWidth / 2 }));
+        };
+        measure();
         moveTo(selectedRef.current, true);
         let width = trackRef.current?.clientWidth;
         const observer = new ResizeObserver(() => {
             const nextWidth = trackRef.current?.clientWidth;
-            if (nextWidth !== width) { width = nextWidth; moveTo(selectedRef.current, true); }
+            if (nextWidth !== width) { width = nextWidth; measure(); moveTo(selectedRef.current, true); }
         });
         if (trackRef.current) observer.observe(trackRef.current);
-        return () => { cancelAnimationFrame(scrollFrame.current); observer.disconnect(); };
+        return () => { clearTimeout(settleTimer.current); observer.disconnect(); };
     }, [moveTo]);
+
+    useEffect(() => {
+        const track = trackRef.current;
+        const lift = () => {
+            if (!touchingRef.current) return;
+            touchingRef.current = false;
+            clearTimeout(settleTimer.current);
+            settleTimer.current = setTimeout(finishMovement, 140);
+        };
+        track?.addEventListener("scrollend", finishMovement);
+        window.addEventListener("touchend", lift, { passive: true, capture: true });
+        window.addEventListener("touchcancel", lift, { passive: true, capture: true });
+        return () => {
+            track?.removeEventListener("scrollend", finishMovement);
+            window.removeEventListener("touchend", lift, true);
+            window.removeEventListener("touchcancel", lift, true);
+            clearTimeout(settleTimer.current);
+        };
+    }, [finishMovement]);
 
     useLayoutEffect(() => {
         if (!stageRef.current) return;
@@ -103,33 +155,23 @@ function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequ
     }, [revealRequest, reduceMotion, focusOnReveal]);
 
     const syncSelection = () => {
-        cancelAnimationFrame(scrollFrame.current);
-        scrollFrame.current = requestAnimationFrame(() => {
-            const track = trackRef.current;
-            if (!track) return;
-            const center = track.scrollLeft + track.clientWidth / 2;
-            let nearest = 1;
-            let distance = Infinity;
-            track.querySelectorAll<HTMLElement>("[data-plan-index]").forEach(card => {
-                const nextDistance = Math.abs(card.offsetLeft + card.offsetWidth / 2 - center);
-                if (nextDistance < distance) { distance = nextDistance; nearest = Number(card.dataset.planIndex); }
-            });
-            if (nearest !== selectedRef.current) { selectedRef.current = nearest; onSelect(nearest); }
-        });
+        if (!movingRef.current) { movingRef.current = true; setMoving(true); }
+        scheduleSettle();
     };
 
     return (
         <section ref={stageRef} id="membership-plans" className="membership-stage" aria-labelledby="membership-plans-title">
-            <motion.div className="membership-stage-heading" initial={reduceMotion ? false : { opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.7 }} transition={{ duration: 0.55 }}>
+            <div className="membership-stage-heading">
                 <a href="#membership-intro" className="membership-intro-link">על הסטודיו <ChevronRight aria-hidden="true" /></a>
                 <h2 id="membership-plans-title">לכל שגרה יש התחלה.</h2>
                 <p className="membership-swipe-hint"><MoveHorizontal aria-hidden="true" />מחליקות בין המסלולים ובוחרות את שלך</p>
-            </motion.div>
+            </div>
 
-            <div ref={trackRef} className="membership-carousel" dir="ltr" role="region" aria-roledescription="קרוסלה" aria-label="מסלולי האימונים" tabIndex={0} onScroll={syncSelection}
+            <div ref={trackRef} className="membership-carousel" dir="ltr" role="region" aria-roledescription="קרוסלה" aria-label="מסלולי האימונים" tabIndex={0} onScroll={syncSelection} data-moving={moving} aria-busy={moving}
+                onTouchStart={() => { touchingRef.current = true; }}
                 onKeyDown={event => {
                     if (event.target !== event.currentTarget) return;
-                    const target = event.key === "ArrowRight" ? selected - 1 : event.key === "ArrowLeft" ? selected + 1 : event.key === "Home" ? 0 : event.key === "End" ? 2 : null;
+                    const target = event.key === "ArrowRight" ? requestedRef.current - 1 : event.key === "ArrowLeft" ? requestedRef.current + 1 : event.key === "Home" ? 0 : event.key === "End" ? 2 : null;
                     if (target === null) return;
                     event.preventDefault();
                     moveTo(Math.max(0, Math.min(2, target)));
@@ -138,33 +180,29 @@ function PlanGallery({ selected, onSelect, onPurchase, focusOnReveal, revealRequ
                     const plan = PLANS[index];
                     const active = selected === index;
                     const perWorkout = new Intl.NumberFormat("he-IL", { maximumFractionDigits: 2 }).format(plan.price / plan.sessions);
-                    return <motion.div key={plan.sessions} data-plan-index={index} className={`membership-card-position${active ? " is-active" : ""}`} dir="rtl"
-                        initial={reduceMotion ? false : { opacity: 0, y: 38 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.01 }} transition={{ duration: 0.7, delay: index === 1 ? 0 : 0.12, ease: [0.22, 1, 0.36, 1] }}>
-                        <motion.article id={`membership-plan-${index}`} className={`membership-card membership-card--${plan.tone}`} aria-label={`מסלול ${plan.sessions} אימונים`} aria-roledescription="כרטיס מסלול" aria-current={active ? "true" : undefined}
-                            animate={{ scale: active || reduceMotion ? 1 : 0.92, y: active || reduceMotion ? 0 : 14, opacity: active ? 1 : 0.65, rotate: active || reduceMotion ? 0 : index < selected ? 1.5 : -1.5 }}
-                            transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 240, damping: 27 }}>
-                            <span className="membership-card-light" aria-hidden="true" />
+                    return <div key={plan.sessions} data-plan-index={index} className={`membership-card-position${active ? " is-active" : ""}`} dir="rtl">
+                        <article id={`membership-plan-${index}`} className={`membership-card membership-card--${plan.tone}`} aria-label={`מסלול ${plan.sessions} אימונים`} aria-roledescription="כרטיס מסלול" aria-current={active ? "true" : undefined}>
                             <div className="membership-card-content" inert={!active} aria-hidden={!active}>
                                 <div className="membership-card-top"><StudioLogo className="membership-card-logo" /><span><i aria-hidden="true" />{plan.name}</span></div>
-                                <div className="membership-card-title"><h3><span className="membership-session-count">{plan.sessions}</span><span className="membership-session-label">אימונים<small>בחודש</small></span></h3><TierMotif weekly={plan.weekly} active={active} className="membership-card-motif" /></div>
+                                <div className="membership-card-title"><h3><span className="membership-session-count">{plan.sessions}</span><span className="membership-session-label">אימונים<small>בחודש</small></span></h3><TierMotif weekly={plan.weekly} className="membership-card-motif" /></div>
                                 <p className="membership-card-rhythm">{plan.rhythm}</p>
                                 <div className="membership-card-price"><span className="membership-price-value" dir="ltr">{plan.price}<span>₪</span></span><span>לחודש</span></div>
                                 <p className="membership-unit-price"><bdi>{perWorkout} ₪</bdi> לאימון · ללא התחייבות שנתית</p>
                                 <div className="membership-card-rule" aria-hidden="true" />
                                 <ul className="membership-card-features">{plan.features.slice(1).map(feature => <li key={feature}><Check aria-hidden="true" /><span>{feature}</span></li>)}</ul>
-                                <motion.button type="button" className="membership-card-purchase membership-purchase-button" onClick={event => onPurchase(event.currentTarget)} aria-haspopup="dialog" whileTap={reduceMotion ? undefined : { scale: .97 }}>זה המסלול שלי <span><ArrowLeft aria-hidden="true" /></span></motion.button>
+                                <button type="button" className="membership-card-purchase membership-purchase-button" disabled={!active || moving} onClick={event => onPurchase(event.currentTarget)} aria-haspopup="dialog">זה המסלול שלי <span><ArrowLeft aria-hidden="true" /></span></button>
                                 <p className="membership-card-payment">ממשיכות לתשלום בביט</p>
                             </div>
-                        </motion.article>
-                        {!active && <button type="button" className="membership-preview-target" tabIndex={-1} aria-label={`לצפייה במסלול ${plan.sessions} אימונים`} onClick={() => { trackRef.current?.focus({ preventScroll: true }); moveTo(index); }} />}
-                    </motion.div>;
+                        </article>
+                        <button type="button" className="membership-preview-target" tabIndex={-1} disabled={active} aria-hidden={active} aria-label={`לצפייה במסלול ${plan.sessions} אימונים`} onClick={() => moveTo(index)} />
+                    </div>;
                 })}
             </div>
 
             <div className="membership-carousel-controls">
                 <button type="button" className="membership-carousel-arrow" aria-label="למסלול הקטן יותר" disabled={selected === 0} onClick={() => moveTo(selected - 1)}><ChevronRight aria-hidden="true" /></button>
                 <div className="membership-carousel-pagination" aria-label="בחירת מסלול">{PLANS.map((plan, index) => <button type="button" key={plan.sessions} aria-label={`${plan.sessions} אימונים בחודש`} aria-pressed={selected === index} aria-controls={`membership-plan-${index}`} onClick={() => moveTo(index)}>
-                    {selected === index && <motion.span className="membership-pagination-highlight" layoutId="membership-selected-plan" transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 350, damping: 30 }} />}
+                    <span className="membership-pagination-highlight" aria-hidden="true" />
                     <span>{plan.sessions}</span>
                 </button>)}</div>
                 <button type="button" className="membership-carousel-arrow" aria-label="למסלול הגדול יותר" disabled={selected === 2} onClick={() => moveTo(selected + 1)}><ChevronLeft aria-hidden="true" /></button>
@@ -186,6 +224,7 @@ export default function SubscriptionExperience() {
     const { profile, subscription, tickets } = useGymStore();
     const { toast } = useToast();
     const plan = PLANS[selected];
+    const selectPlan = useCallback((index: number) => { setSelected(index); setHandoffStarted(false); }, []);
 
     const openPayment = (button: HTMLButtonElement) => {
         button.focus();
@@ -228,14 +267,14 @@ export default function SubscriptionExperience() {
             </motion.div>
         </section>
 
-        <AnimatePresence>{plansVisible && <motion.div key="plans" className="membership-revealed" initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.65 }}>
-            <PlanGallery selected={selected} onSelect={index => { setSelected(index); setHandoffStarted(false); }} onPurchase={openPayment} focusOnReveal={keyboardReveal} revealRequest={revealRequest} />
+        {plansVisible && <div className="membership-revealed">
+            <PlanGallery selected={selected} onSelect={selectPlan} onPurchase={openPayment} focusOnReveal={keyboardReveal} revealRequest={revealRequest} />
             <div className="membership-after-plans">
                 {subscription?.is_active && <p className="membership-current">המנוי שלך: {subscription.tier_display_name} · {tickets} אימונים ביתרה</p>}
                 {handoffStarted && <p className="membership-handoff" role="status">ביט נפתחה. האימונים יתווספו ליתרה שלך אחרי שטליה תאשר את ההעברה.</p>}
                 <section className="membership-details" aria-labelledby="membership-faq-title"><h2 id="membership-faq-title">לפני שמתחילות</h2>{FAQS.map(faq => <details key={faq.question} className="membership-faq"><summary><span>{faq.question}</span><ChevronDown aria-hidden="true" /></summary><p>{faq.answer}</p></details>)}</section>
                 <footer className="membership-footer"><StudioLogo className="membership-logo" /><span>סטודיו טליה · מקום לעצמך</span></footer>
             </div>
-        </motion.div>}</AnimatePresence>
+        </div>}
     </main>;
 }

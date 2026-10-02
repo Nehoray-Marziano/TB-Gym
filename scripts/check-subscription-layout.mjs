@@ -1,4 +1,5 @@
 import { runMobileScenarios } from './subscription-mobile-scenarios.mjs';
+import { runMotionScenarios } from './subscription-motion-scenarios.mjs';
 // Local, synthetic browser QA. No authentication, payment or database writes.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -10,7 +11,7 @@ assert(["localhost", "127.0.0.1"].includes(new URL(baseUrl).hostname), "Use a lo
 const output = resolve(process.argv[3] || "../subscription-qa");
 await mkdir(output, { recursive: true });
 const chrome = spawn("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", [
-    "--headless=new", "--disable-gpu", "--no-sandbox", `--user-data-dir=${output}/chrome`,
+    "--headless=new", "--no-sandbox", `--user-data-dir=${output}/chrome`,
     "--remote-debugging-port=0", "--remote-allow-origins=*", "--no-first-run", "--no-default-browser-check", "about:blank",
 ], { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
 let ws;
@@ -53,7 +54,9 @@ try {
     const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
     const call = (method, params) => send(method, params, sessionId);
     const evaluate = async expression => {
-        const result = await call("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+        const result = await call("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true }).catch(error => {
+            throw new Error(`${error.message}: ${expression.slice(0, 180)}`);
+        });
         if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
         return result.result.value;
     };
@@ -71,8 +74,12 @@ try {
         const { data } = await call("Page.captureScreenshot", { format: "png", ...(full ? { captureBeyondViewport:true, clip:{ x:0, y:0, width:cssContentSize.width, height:cssContentSize.height, scale:1 } } : {}) });
         await writeFile(`${output}/${name}.png`, Buffer.from(data, "base64"));
     };
-    await runMobileScenarios({ call, evaluate, screenshot, baseUrl, output });
+    if (!process.argv.includes('--motion-only')) await runMobileScenarios({ call, evaluate, screenshot, baseUrl, output });
+    await runMotionScenarios({ call, evaluate, screenshot, baseUrl, output, recordOnly: process.argv.includes('--record-motion') });
 } finally {
     ws?.close();
     chrome.kill();
+    chrome.stdout?.destroy();
+    chrome.stderr?.destroy();
+    chrome.unref();
 }
