@@ -1,10 +1,10 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, House, UserRound } from "lucide-react";
 import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { LiquidGlass } from "@/components/ui/LiquidGlass";
+import { useMemberNavigation } from "@/hooks/useMemberNavigation";
 
 const items = [
     { href: "/dashboard", label: "בית", icon: House },
@@ -19,13 +19,15 @@ export default function BottomNav() {
 
 export function MemberNavigation({ pathname }: { pathname: string }) {
     const reduceMotion = useReducedMotion();
+    const navRef = useMemberNavigation(pathname);
 
     return (
         <nav
+            ref={navRef}
             aria-label="ניווט ראשי"
-            className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-1/2 z-50 w-[calc(100%-2rem)] max-w-[23rem] -translate-x-1/2 text-[var(--studio-ink)]"
+            className="studio-member-navigation text-[var(--studio-ink)]"
         >
-            <LiquidGlass radius={9999} blur={18} refraction={0} frost={0.8} saturation={1.15} specular={0.2} elevated={false} profile="convex" className="studio-navigation-glass w-full" contentClassName="grid grid-cols-3 gap-1 p-1.5">
+            <LiquidGlass radius={9999} blur={28} refraction={12} bezel={12} frost={0.92} saturation={1.25} specular={0.72} elevated={false} profile="convex" className="studio-navigation-glass w-full" contentClassName="grid grid-cols-3 gap-1 p-1.5">
                 <LayoutGroup id="studio-bottom-navigation">
                 {items.map(({ href, label, icon: Icon }) => {
                     const active = pathname === href || (href === "/dashboard" && pathname === "/my-bookings");

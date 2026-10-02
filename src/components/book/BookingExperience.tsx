@@ -2,8 +2,9 @@
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useCallback, useEffect, useState, useMemo } from "react";
+import { StudioModal } from "@/components/ui/StudioModal";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, useReducedMotion } from "framer-motion";
 import {
     CalendarDays,
     CalendarPlus,
@@ -26,19 +27,31 @@ import Link from "next/link";
 import "@/app/(trainee)/book/book.css";
 
 function bookingMessage(message: string | undefined) {
-    const translations: Record<string, string> = {
-        "Authentication required": "כדי להירשם, יש להתחבר מחדש.",
-        "Session not found": "האימון כבר אינו זמין בלוח.",
-        "Session has already started": "האימון כבר החל.",
-        "Too late to cancel": "ניתן לבטל ללא חיוב עד 10 שעות לפני האימון.",
-        "Booking not found": "לא נמצאה הרשמה פעילה לאימון זה.",
-        "No tickets available": "אין לך כרטיסיות זמינות להרשמה.",
-        "User already booked": "את כבר רשומה לאימון הזה.",
-        "Session is full": "האימון מלא, לא נותרו מקומות פנויים.",
-    };
-    if (message && translations[message]) return translations[message];
-    if (message && /^[\u0590-\u05FF\s!?.]+$/.test(message)) return message;
-    return "משהו השתבש בתהליך. נסי שוב בעוד רגע.";
+    if (!message) return "משהו השתבש בתהליך. נסי שוב בעוד רגע.";
+    const lower = message.toLowerCase();
+    if (lower.includes("too late") || lower.includes("10 hour")) {
+        return "ניתן לבטל ללא חיוב עד 10 שעות לפני תחילת האימון.";
+    }
+    if (lower.includes("not found") || lower.includes("already cancel")) {
+        return "לא נמצאה הרשמה פעילה לאימון זה, או שהאימון כבר בוטל.";
+    }
+    if (lower.includes("auth") || lower.includes("login")) {
+        return "כדי לבטל או להירשם, יש להתחבר מחדש למערכת.";
+    }
+    if (lower.includes("already start")) {
+        return "לא ניתן לבטל אימון שכבר החל.";
+    }
+    if (lower.includes("already book") || lower.includes("כבר רשומה")) {
+        return "את כבר רשומה לאימון הזה.";
+    }
+    if (lower.includes("full") || lower.includes("מלא")) {
+        return "האימון מלא, לא נותרו מקומות פנויים.";
+    }
+    if (lower.includes("no ticket") || lower.includes("אין כרטיס")) {
+        return "אין לך כרטיסיות זמינות להרשמה.";
+    }
+    if (/^[\u0590-\u05FF\s!?.]+$/.test(message)) return message;
+    return "לא הצלחנו להשלים את הפעולה כרגע. נסי שוב בעוד רגע.";
 }
 
 const HEBREW_DAYS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
@@ -88,6 +101,13 @@ export default function BookingExperience({
     // Modal states
     const [sessionForBooking, setSessionForBooking] = useState<Session | null>(null);
     const [sessionToCancel, setSessionToCancel] = useState<Session | null>(null);
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
 
     // Confetti celebration helper
     const triggerCelebration = useCallback(() => {
@@ -307,7 +327,8 @@ export default function BookingExperience({
 
     // Cancellation action handler
     const confirmCancel = async () => {
-        if (!sessionToCancel) return;
+        if (!sessionToCancel || isCancelling) return;
+        setIsCancelling(true);
 
         const prevSessions = [...sessions];
         setSessions(curr =>
@@ -318,29 +339,38 @@ export default function BookingExperience({
             )
         );
 
-        const result = await globalCancel(sessionToCancel.id);
+        try {
+            const result = await globalCancel(sessionToCancel.id);
 
-        if (result.success) {
-            sessionStorage.removeItem(`talia_upcoming_${userId}`);
-            if (navigator.vibrate) navigator.vibrate(15);
-            toast({ title: "האימון בוטל", description: "הכרטיסייה הוחזרה לחשבונך", type: "success" });
-            fetchSessions();
-            void refreshData(true);
+            if (result.success) {
+                sessionStorage.removeItem(`talia_upcoming_${userId}`);
+                if (navigator.vibrate) navigator.vibrate(15);
+                toast({ title: "האימון בוטל", description: "הכרטיסייה הוחזרה לחשבונך", type: "success" });
+                fetchSessions();
+                void refreshData(true);
 
-            void fetch("/api/notifications", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: "ביטול אימון",
-                    message: `מתאמנת ביטלה את ההרשמה לאימון ${sessionToCancel.title}`,
-                    targetRole: "administrator"
-                })
-            }).catch(err => console.error("Cancellation notification error:", err));
-        } else {
+                void fetch("/api/notifications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: "ביטול אימון",
+                        message: `מתאמנת ביטלה את ההרשמה לאימון ${sessionToCancel.title}`,
+                        targetRole: "administrator"
+                    })
+                }).catch(err => console.error("Cancellation notification error:", err));
+                setSessionToCancel(null);
+            } else {
+                setSessions(prevSessions);
+                toast({ title: "לא ניתן לבטל", description: bookingMessage(result.message), type: "error" });
+                setSessionToCancel(null);
+            }
+        } catch {
             setSessions(prevSessions);
-            toast({ title: "לא ניתן לבטל", description: bookingMessage(result.message), type: "error" });
+            toast({ title: "לא ניתן לבטל", description: "משהו השתבש בתהליך. נסי שוב בעוד רגע.", type: "error" });
+            setSessionToCancel(null);
+        } finally {
+            setIsCancelling(false);
         }
-        setSessionToCancel(null);
     };
 
     // Add to Calendar (iOS .ics or Google Calendar)
@@ -392,7 +422,7 @@ export default function BookingExperience({
     };
 
     return (
-        <div className="studio-book-page relative h-full w-full overflow-y-auto overscroll-contain bg-[var(--studio-canvas)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
+        <div data-member-scroll className="studio-book-page relative h-full w-full overflow-y-auto overscroll-contain bg-[var(--studio-canvas)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
             {/* Top Atmospheric Glow */}
             <div
                 aria-hidden="true"
@@ -813,207 +843,201 @@ export default function BookingExperience({
 
             {/* 5. Native iOS/Android Bottom Sheet: Booking Confirmation Modal */}
             <AnimatePresence>
-                {sessionForBooking && (
-                    <div className="fixed inset-0 z-[100] flex items-end justify-center">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setSessionForBooking(null)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={reduceMotion ? false : { y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="book-modal-title"
-                            className="relative max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-[2.2rem] bg-[var(--studio-card)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 text-[var(--studio-ink)] shadow-2xl"
-                        >
-                            {/* Grabber Notch */}
-                            <div className="studio-sheet-notch mx-auto my-2" />
-
-                            <div className="flex items-center justify-between pb-3 pt-2">
-                                <div>
-                                    <p className="text-[11px] font-bold text-[var(--studio-brand)]">סטודיו טליה</p>
-                                    <h2 id="book-modal-title" className="text-xl font-bold">הרשמה לאימון</h2>
-                                </div>
+                {mounted && sessionForBooking && (
+                    <StudioModal titleId="book-modal-title" descriptionId="book-modal-policy" variant="booking" busy={Boolean(bookingId)} onClose={() => setSessionForBooking(null)}
+                        actions={<>
+                            {tickets > 0 || subscription?.is_active ? (
                                 <button
                                     type="button"
-                                    onClick={() => setSessionForBooking(null)}
-                                    className="studio-tap-feedback flex h-9 w-9 items-center justify-center rounded-full border border-[var(--studio-ink)]/12 bg-white/70"
-                                    aria-label="סגירה"
+                                    onClick={() => handleBook(sessionForBooking.id)}
+                                    disabled={Boolean(bookingId)}
+                                    className="studio-tap-feedback flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-deep)] px-4 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-lg shadow-[#162218]/20 active:bg-[#203123]"
                                 >
-                                    <X className="h-4 w-4" />
+                                    {bookingId === sessionForBooking.id ? (
+                                        <>
+                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                            <span>רושמים אותך...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="h-4 w-4 text-[var(--studio-accent-text)]" />
+                                            <span>אישור והרשמה לאימון</span>
+                                        </>
+                                    )}
                                 </button>
-                            </div>
+                            ) : (
+                                <Link
+                                    href="/subscription"
+                                    className="studio-tap-feedback flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-coral-bg)] px-4 text-sm font-bold text-white shadow-lg active:brightness-95"
+                                >
+                                    <Ticket className="h-4 w-4" />
+                                    <span>לרכישת כרטיסייה / מנוי</span>
+                                </Link>
+                            )}
 
-                            {/* Session Detail Card */}
-                            <div className="mt-3 rounded-2xl bg-[var(--studio-deep)] p-4 text-[var(--studio-deep-contrast)] shadow-inner">
-                                <span className="text-[11px] font-bold text-[var(--studio-accent-text)]">
-                                    {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).relativeDay} ·{" "}
-                                    {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).weekday}
+                            <button
+                                type="button"
+                                data-modal-cancel
+                                disabled={Boolean(bookingId)}
+                                onClick={() => !bookingId && setSessionForBooking(null)}
+                                className="studio-tap-feedback flex min-h-11 w-full items-center justify-center rounded-2xl border border-[var(--studio-ink)]/12 px-4 text-xs font-bold text-[var(--studio-muted)]"
+                            >
+                                חזרה ללוח
+                            </button>
+                        </>}>
+                        {/* Grabber Notch */}
+                        <div className="studio-sheet-notch mx-auto my-2" />
+
+                        <div className="flex items-center justify-between pb-3 pt-2">
+                            <div>
+                                <p className="text-[11px] font-bold text-[var(--studio-brand)]">סטודיו טליה</p>
+                                <h2 id="book-modal-title" className="text-xl font-bold">הרשמה לאימון</h2>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => !bookingId && setSessionForBooking(null)}
+                                disabled={Boolean(bookingId)}
+                                className="studio-tap-feedback flex h-11 w-11 items-center justify-center rounded-full border border-[var(--studio-ink)]/12 bg-white/70"
+                                aria-label="סגירה"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        {/* Session Detail Card */}
+                        <div className="mt-3 rounded-2xl bg-[var(--studio-deep)] p-4 text-[var(--studio-deep-contrast)] shadow-inner">
+                            <span className="text-[11px] font-bold text-[var(--studio-accent-text)]">
+                                {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).relativeDay} ·{" "}
+                                {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).weekday}
+                            </span>
+                            <h3 className="mt-1 text-lg font-bold leading-tight">{sessionForBooking.title}</h3>
+                            <div className="mt-3 flex items-center justify-between text-xs text-[#cbd3aa]">
+                                <span className="flex items-center gap-1">
+                                    <Clock3 className="h-3.5 w-3.5" />
+                                    {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).startTime} -{" "}
+                                    {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).endTime}
                                 </span>
-                                <h3 className="mt-1 text-lg font-bold leading-tight">{sessionForBooking.title}</h3>
-                                <div className="mt-3 flex items-center justify-between text-xs text-[#cbd3aa]">
-                                    <span className="flex items-center gap-1">
-                                        <Clock3 className="h-3.5 w-3.5" />
-                                        {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).startTime} -{" "}
-                                        {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).endTime}
-                                    </span>
-                                    <span>מדריכה: טליה</span>
+                                <span>מדריכה: טליה</span>
+                            </div>
+                        </div>
+
+                        {/* Ticket Balance & Policy Notice */}
+                        <div id="book-modal-policy" className="mt-4 space-y-2.5">
+                            <div className="flex items-start gap-2.5 rounded-2xl bg-[var(--studio-neutral-bg)]/80 p-3 text-xs leading-relaxed">
+                                <Ticket className="mt-0.5 h-4 w-4 shrink-0 text-[var(--studio-coral-bg)]" />
+                                <div>
+                                    <p className="font-bold">ניצול כרטיסייה</p>
+                                    <p className="text-[var(--studio-muted)]">
+                                        {tickets > 0
+                                            ? `יירד כרטיס 1 מיתרתך (יישארו לך ${tickets - 1} כרטיסיות).`
+                                            : subscription?.is_active
+                                            ? "האימון כלול במסגרת המנוי הפעיל שלך."
+                                            : "אין לך כרטיסיות זמינות. תוכלי לרכוש כרטיסייה חדשה כעת."}
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Ticket Balance & Policy Notice */}
-                            <div className="mt-4 space-y-2.5">
-                                <div className="flex items-start gap-2.5 rounded-2xl bg-[var(--studio-neutral-bg)]/80 p-3 text-xs leading-relaxed">
-                                    <Ticket className="mt-0.5 h-4 w-4 shrink-0 text-[var(--studio-coral-bg)]" />
-                                    <div>
-                                        <p className="font-bold">ניצול כרטיסייה</p>
-                                        <p className="text-[var(--studio-muted)]">
-                                            {tickets > 0
-                                                ? `יירד כרטיס 1 מיתרתך (יישארו לך ${tickets - 1} כרטיסיות).`
-                                                : subscription?.is_active
-                                                ? "האימון כלול במסגרת המנוי הפעיל שלך."
-                                                : "אין לך כרטיסיות זמינות. תוכלי לרכוש כרטיסייה חדשה כעת."}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-2.5 rounded-2xl bg-white p-3 text-xs leading-relaxed border border-[var(--studio-ink)]/8">
-                                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--studio-brand)]" />
-                                    <div>
-                                        <p className="font-bold">מדיניות ביטולים הוגנת</p>
-                                        <p className="text-[var(--studio-muted)]">
-                                            ניתן לבטל ללא עלות עד 10 שעות לפני תחילת האימון, והכרטיסייה תוחזר ליתרתך.
-                                        </p>
-                                    </div>
+                            <div className="flex items-start gap-2.5 rounded-2xl bg-white p-3 text-xs leading-relaxed border border-[var(--studio-ink)]/8">
+                                <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--studio-brand)]" />
+                                <div>
+                                    <p className="font-bold">מדיניות ביטולים הוגנת</p>
+                                    <p className="text-[var(--studio-muted)]">
+                                        ניתן לבטל ללא עלות עד 10 שעות לפני תחילת האימון, והכרטיסייה תוחזר ליתרתך.
+                                    </p>
                                 </div>
                             </div>
-
-                            {/* Action Buttons */}
-                            <div className="mt-6 flex flex-col gap-2.5">
-                                {tickets > 0 || subscription?.is_active ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleBook(sessionForBooking.id)}
-                                        disabled={Boolean(bookingId)}
-                                        className="studio-tap-feedback flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-deep)] px-4 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-lg shadow-[#162218]/20 active:bg-[#203123]"
-                                    >
-                                        {bookingId === sessionForBooking.id ? (
-                                            <>
-                                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                                <span>רושמים אותך...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Check className="h-4 w-4 text-[var(--studio-accent-text)]" />
-                                                <span>אישור והרשמה לאימון</span>
-                                            </>
-                                        )}
-                                    </button>
-                                ) : (
-                                    <Link
-                                        href="/subscription"
-                                        className="studio-tap-feedback flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-coral-bg)] px-4 text-sm font-bold text-white shadow-lg active:brightness-95"
-                                    >
-                                        <Ticket className="h-4 w-4" />
-                                        <span>לרכישת כרטיסייה / מנוי</span>
-                                    </Link>
-                                )}
-
-                                <button
-                                    type="button"
-                                    onClick={() => setSessionForBooking(null)}
-                                    className="studio-tap-feedback flex min-h-11 w-full items-center justify-center rounded-2xl border border-[var(--studio-ink)]/12 px-4 text-xs font-bold text-[var(--studio-muted)]"
-                                >
-                                    חזרה ללוח
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
+                        </div>
+                    </StudioModal>
                 )}
             </AnimatePresence>
-
-            {/* 6. Native iOS/Android Bottom Sheet: Cancellation Modal */}
+            {/* 6. Centered Accessibility-Compliant Confirmation Dialog: Cancellation Modal */}
             <AnimatePresence>
-                {sessionToCancel && (
-                    <div className="fixed inset-0 z-[100] flex items-end justify-center">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setSessionToCancel(null)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={reduceMotion ? false : { y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="cancel-booking-title"
-                            className="relative max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-[2.2rem] bg-[var(--studio-card)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 text-[var(--studio-ink)] shadow-2xl"
+                {mounted && sessionToCancel && (
+                    <StudioModal titleId="cancel-booking-title" descriptionId="cancel-booking-policy" variant="confirmation" busy={isCancelling} onClose={() => setSessionToCancel(null)}
+                        actions={<>
+                            <button
+                                type="button"
+                                onClick={confirmCancel}
+                                disabled={isCancelling}
+                                className="studio-tap-feedback flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-danger)] px-4 text-sm font-bold text-white shadow-lg shadow-[#a53d35]/30 hover:bg-[#8f322b] active:brightness-95 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--studio-danger)]"
+                            >
+                                {isCancelling ? (
+                                    <>
+                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                        <span>מבטלים את ההרשמה...</span>
+                                    </>
+                                ) : (
+                                    <span>כן, לבטל את ההרשמה</span>
+                                )}
+                            </button>
+                            <button
+                                type="button"
+                                data-modal-cancel
+                                onClick={() => setSessionToCancel(null)}
+                                disabled={isCancelling}
+                                className="studio-tap-feedback flex min-h-[46px] w-full items-center justify-center rounded-2xl border border-[var(--studio-ink)]/15 bg-white px-4 text-xs font-bold text-[var(--studio-ink)] shadow-sm hover:bg-[var(--studio-neutral-bg)]/50 active:bg-[var(--studio-ink)]/5 disabled:opacity-50"
+                            >
+                                להישאר רשומה (חזרה)
+                            </button>
+                        </>}>
+                        <button
+                            type="button"
+                            onClick={() => !isCancelling && setSessionToCancel(null)}
+                            disabled={isCancelling}
+                            className="studio-tap-feedback absolute top-4 left-4 flex h-11 w-11 items-center justify-center rounded-full border border-[var(--studio-ink)]/10 bg-white/80 text-[var(--studio-muted)] hover:text-[var(--studio-ink)]"
+                            aria-label="סגירה"
                         >
-                            {/* Grabber Notch */}
-                            <div className="studio-sheet-notch mx-auto my-2" />
+                            <X className="h-4 w-4" />
+                        </button>
 
-                            <div className="flex items-center justify-between pb-2 pt-2">
-                                <div>
-                                    <p className="text-[11px] font-bold text-[var(--studio-danger)]">ביטול הרשמה</p>
-                                    <h2 id="cancel-booking-title" className="text-xl font-bold">לבטל את ההרשמה?</h2>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSessionToCancel(null)}
-                                    className="studio-tap-feedback flex h-9 w-9 items-center justify-center rounded-full border border-[var(--studio-ink)]/12 bg-white/70"
-                                    aria-label="סגירה"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            </div>
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--studio-danger)]/12 text-[var(--studio-danger)] mb-3">
+                            <AlertCircle aria-hidden="true" className="h-7 w-7" />
+                        </div>
 
-                            {/* Session Detail Card */}
-                            <div className="mt-3 rounded-2xl bg-[var(--studio-deep)] p-4 text-[var(--studio-deep-contrast)]">
-                                <span className="text-[11px] font-bold text-[var(--studio-accent-text)]">
-                                    האימון שיתפנה
+                        <div className="text-center">
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--studio-danger)]">ביטול הרשמה</p>
+                            <h2 id="cancel-booking-title" className="mt-1 text-xl font-bold leading-tight">לבטל את ההרשמה?</h2>
+                        </div>
+
+                        {/* Session Detail Card */}
+                        <div className="mt-4 rounded-2xl bg-[var(--studio-deep)] p-4 text-[var(--studio-deep-contrast)] text-center shadow-inner">
+                            <span className="text-[11px] font-bold text-[var(--studio-accent-text)]">
+                                {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).relativeDay} ·{" "}
+                                {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).weekday}
+                            </span>
+                            <h3 className="mt-1 text-lg font-bold leading-tight">{sessionToCancel.title}</h3>
+                            <p className="mt-2 text-xs text-[#cbd3aa] flex items-center justify-center gap-1.5">
+                                <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
+                                <span>
+                                    {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).startTime} - {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).endTime}
                                 </span>
-                                <h3 className="mt-1 text-lg font-bold leading-tight">{sessionToCancel.title}</h3>
-                                <p className="mt-2 text-xs text-[#cbd3aa]">
-                                    {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).weekday} ·{" "}
-                                    {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).startTime}
-                                </p>
-                            </div>
-
-                            <p className="mt-4 text-xs leading-relaxed text-[var(--studio-muted)]">
-                                המקום שלך יתפנה למתאמנת אחרת, והכרטיסייה תוחזר מיידית לחשבונך.
                             </p>
+                        </div>
 
-                            {/* Dual Buttons */}
-                            <div className="mt-6 grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setSessionToCancel(null)}
-                                    className="studio-tap-feedback flex min-h-12 items-center justify-center rounded-2xl bg-[var(--studio-deep)] px-3 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-md"
-                                >
-                                    להישאר רשומה
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={confirmCancel}
-                                    className="studio-tap-feedback flex min-h-12 items-center justify-center rounded-2xl border border-[var(--studio-danger)]/30 bg-[var(--studio-danger)]/10 px-3 text-xs font-bold text-[var(--studio-danger)] active:bg-[var(--studio-danger)]/20"
-                                >
-                                    כן, לבטל
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
+                        {/* Dynamic Policy / 10-Hour Context */}
+                        <div id="cancel-booking-policy">
+                        {(() => {
+                            const msUntil = new Date(sessionToCancel.start_time).getTime() - Date.now();
+                            const hoursUntil = msUntil / (1000 * 60 * 60);
+                            if (hoursUntil < 10 && hoursUntil > 0) {
+                                return (
+                                    <div className="mt-3.5 rounded-xl bg-[var(--studio-warning-bg)]/90 border border-[var(--studio-warning-ink)]/15 p-3 text-xs text-[var(--studio-warning-ink)] text-center leading-relaxed">
+                                        <p className="font-bold">לתשומת לבך:</p>
+                                        <p className="mt-0.5">האימון מתקיים בעוד פחות מ-10 שעות. לפי מדיניות הסטודיו, ביטול ללא חיוב מתאפשר עד 10 שעות לפני תחילת האימון.</p>
+                                    </div>
+                                );
+                            }
+                            return (
+                                <p className="mt-3.5 text-center text-xs leading-relaxed text-[var(--studio-muted)]">
+                                    המקום שלך יתפנה למתאמנת אחרת, והכרטיסייה תוחזר מיידית לחשבונך.
+                                </p>
+                            );
+                        })()}
+                        </div>
+                    </StudioModal>
                 )}
             </AnimatePresence>
+
         </div>
     );
 }

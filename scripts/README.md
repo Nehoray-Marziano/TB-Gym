@@ -1,5 +1,7 @@
 # Booking stress test
 
+For the member navigation and confirmation layout, run `node scripts/check-member-navigation.mjs http://127.0.0.1:3100` against a local development server. It creates an exclusive temporary route with synthetic workouts, checks scrolling, keyboard focus, modal isolation, busy dismissal, short screens, long content, and reduced motion, then removes the route. Screenshots and the JSON report are saved in `scratch/member-navigation-qa/`. It never submits a booking or cancellation.
+
 Run `npm run stress:bookings -- 30 3` to create 30 synthetic trainees and race them for three lesson spots. The defaults are 12 trainees and three spots; the harness caps trainee count at 30 because a 50-user run hit Supabase Auth's free-tier request-rate limit before bookings began. Run `npm run stress:edge` for double-spending, late cancellation, unverified purchase, and profile role checks. Run `npm run stress:admin` for lesson creation, invitations, refunds, deletion, and ticket adjustments. The scripts use randomly generated, administrator-created email/password accounts only inside tests. The app's Google-only sign-in stays unchanged. No email is sent.
 
 The script loads the project URL and publishable key from `.env.local` and a server-side `SUPABASE_SECRET_KEY` from `.env.stress.local`. Both files are Git-ignored. Never add the secret key to a `NEXT_PUBLIC_` variable or a client bundle.

@@ -1,6 +1,6 @@
 export default function Loading() {
     return (
-        <div className="studio-book-page relative h-full w-full overflow-y-auto bg-[var(--studio-canvas)] text-[var(--studio-ink)] pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
+        <div data-member-scroll className="studio-book-page relative h-full w-full overflow-y-auto bg-[var(--studio-canvas)] text-[var(--studio-ink)] pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
             <div className="relative mx-auto flex min-h-full max-w-lg flex-col">
                 {/* Header Skeleton */}
                 <header className="sticky top-0 z-30 border-b border-[var(--studio-ink)]/8 bg-[var(--studio-canvas)]/92 px-4.5 pb-3.5 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">

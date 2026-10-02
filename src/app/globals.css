@@ -51,6 +51,8 @@
   --studio-warning-bg: #f4e6cd;
   --studio-warning-ink: #754d16;
   --studio-danger: #a53d35;
+  --studio-z-navigation: 50;
+  --studio-navigation-clearance: calc(6rem + env(safe-area-inset-bottom));
   --studio-scrollbar-thumb: var(--studio-brand);
   --studio-scrollbar-track: transparent;
   --studio-scrollbar-hover: var(--studio-muted);
@@ -156,8 +158,25 @@ a,
 }
 
 .studio-navigation-glass {
-  background: color-mix(in srgb, var(--studio-card) 78%, transparent);
-  box-shadow: 0 12px 36px -12px rgb(12 25 13 / 30%), 0 3px 10px -4px rgb(12 25 13 / 18%), inset 0 1px 0 rgb(255 255 255 / 35%);
+  --lq-text: var(--studio-ink);
+  --lq-tint: color-mix(in srgb, var(--studio-card) 62%, transparent);
+  --lq-tint-deep: color-mix(in srgb, var(--studio-card) 26%, transparent);
+  --lq-rim-hi: color-mix(in srgb, var(--studio-card) 96%, transparent);
+  --lq-rim-lo: color-mix(in srgb, var(--studio-card) 64%, transparent);
+  background: color-mix(in srgb, var(--studio-card) 42%, transparent);
+  box-shadow: 0 12px 32px -12px rgb(12 25 13 / 22%), 0 3px 10px -5px rgb(12 25 13 / 14%), inset 0 0 0 1px color-mix(in srgb, var(--studio-card) 38%, transparent);
+}
+
+/* Static light catches keep the glass reflective on every engine. The optical
+   layer bends only the backdrop; labels and their focus rings stay crisp. */
+.studio-navigation-glass .liqui-glass__shine {
+  background: linear-gradient(112deg,
+    transparent 12%,
+    color-mix(in srgb, var(--studio-card) 28%, transparent) 23%,
+    color-mix(in srgb, var(--studio-card) 5%, transparent) 33%,
+    transparent 46% 68%,
+    color-mix(in srgb, var(--studio-card) 15%, transparent) 84%,
+    transparent 96%);
 }
 
 .studio-navigation-selected {
@@ -165,8 +184,159 @@ a,
 }
 
 .studio-navigation-highlight {
-  background: var(--studio-deep);
-  box-shadow: 0 2px 5px rgb(12 25 13 / 12%), inset 0 1px 0 rgb(255 255 255 / 10%);
+  background: linear-gradient(155deg,
+    color-mix(in srgb, var(--studio-deep) 78%, var(--studio-brand)),
+    var(--studio-deep) 52%,
+    color-mix(in srgb, var(--studio-deep) 92%, var(--studio-brand)));
+  box-shadow: 0 3px 8px -2px rgb(12 25 13 / 22%), inset 0 1px 1px color-mix(in srgb, var(--studio-card) 34%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--studio-card) 10%, transparent);
+}
+
+.studio-member-navigation {
+  position: fixed;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: var(--studio-z-navigation);
+  width: calc(100% - 2rem);
+  max-width: 23rem;
+  transform: translate(-50%, 0);
+  opacity: 1;
+  transition: transform 240ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease;
+}
+
+.studio-member-navigation[data-hidden="true"] {
+  transform: translate(-50%, calc(100% + 2rem + env(safe-area-inset-bottom)));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.studio-member-navigation:where([data-suppressed="true"]) {
+  transition: transform 200ms cubic-bezier(.4,0,1,1), opacity 140ms ease;
+}
+
+.studio-member-navigation:has(:focus-visible):not([data-suppressed="true"]) {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+  transition: none;
+}
+
+/* The native top layer starts the retreat immediately; the hook also makes
+   navigation inert and keeps it down until the action finishes closing. */
+body:has(dialog:modal) .studio-member-navigation,
+body.studio-modal-active .studio-member-navigation,
+html.studio-modal-active .studio-member-navigation {
+  transform: translate(-50%, calc(100% + 2rem + env(safe-area-inset-bottom)));
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-member-scroll] {
+  scroll-padding-bottom: var(--studio-navigation-clearance);
+}
+
+.studio-modal {
+  position: fixed;
+  inset: auto;
+  top: var(--modal-top, 0px);
+  left: var(--modal-left, 0px);
+  width: var(--modal-width, 100%);
+  height: var(--modal-height, 100dvh);
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  color: var(--studio-ink);
+  overflow: hidden;
+}
+
+.studio-modal[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.studio-modal::backdrop {
+  background: rgb(0 0 0 / 65%);
+  backdrop-filter: blur(8px);
+}
+
+.studio-modal-surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 24rem;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--studio-ink) 10%, transparent);
+  border-radius: 2rem;
+  background: var(--studio-card);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 35%);
+}
+
+.studio-modal-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+  overflow-wrap: anywhere;
+}
+
+.studio-modal-actions {
+  flex: 0 0 auto;
+  max-height: calc(var(--modal-height, 100dvh) * 0.6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid color-mix(in srgb, var(--studio-ink) 10%, transparent);
+  background: var(--studio-card);
+}
+
+.studio-modal button,
+.studio-modal a {
+  cursor: pointer;
+}
+
+.studio-modal button:disabled {
+  cursor: default;
+}
+
+.studio-modal :is(button, a):focus-visible {
+  outline: 2px solid var(--studio-ink);
+  outline-offset: 2px;
+}
+
+.studio-modal[data-variant="booking"] {
+  padding: max(16px, env(safe-area-inset-top)) 0 0;
+  align-items: flex-end;
+}
+
+.studio-modal[data-variant="booking"] .studio-modal-surface {
+  max-width: 32rem;
+  border-radius: 2.2rem 2.2rem 0 0;
+}
+
+.studio-modal[data-variant="booking"] .studio-modal-content {
+  padding: 12px 20px 20px;
+}
+
+.studio-modal[data-variant="booking"] .studio-modal-actions {
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-member-navigation { transition: none; }
+}
+
+@media (max-height: 400px) {
+  .studio-modal-content { padding: 16px; }
+  .studio-modal-actions { padding: 8px 16px 12px; gap: 8px; }
 }
 
 @keyframes studio-page-enter {
