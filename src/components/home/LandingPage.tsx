@@ -376,7 +376,7 @@ export default function LandingPage() {
                     </ul>
                 </section>
 
-                {/* Bottom Action Area: High-Contrast Actions */}
+                {/* Frosted sign-in actions */}
                 <div className="studio-welcome-actions relative w-full">
                     {/* Radiant Ambient Backlight */}
                     <div
@@ -395,34 +395,36 @@ export default function LandingPage() {
                         </div>
                     )}
 
-                    {/* Primary Google Login Button: Deep Studio Ink (#162218 vs canvas: 13.53:1 AAA, text vs button: 15.14:1 AAA) */}
+                    {/* Pearl glass keeps Google slightly whiter than email. */}
                     <LiquidGlassButton
                         id="main-signin-button"
                         type="button"
                         onClick={handleGoogleLogin}
                         disabled={isLoading}
                         aria-busy={isLoading}
-                        radius={16}
-                        blur={1}
-                        refraction={40}
+                        radius={22}
+                        blur={3}
+                        refraction={18}
                         bezel={10}
-                        frost={0.35}
-                        specular={0.7}
-                        profile="squircle"
-                        elevated={true}
-                        className="w-full bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)] shadow-lg shadow-[#162218]/15 hover:bg-[#0c140e] transition-colors"
+                        frost={0.86}
+                        saturation={1.35}
+                        specular={0.78}
+                        profile="convex"
+                        elevated={false}
+                        whileTap={reduceMotion ? { scale: 1 } : { scale: 0.98 }}
+                        className="studio-welcome-auth-button studio-welcome-google-button w-full"
                     >
-                        <div className="studio-welcome-google flex w-full items-center justify-center gap-3 px-5 text-[var(--studio-deep-contrast)]">
+                        <div className="studio-welcome-google flex w-full items-center justify-center gap-3 px-5 text-[var(--studio-ink)]">
                             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white shadow-xs transition-transform group-active:scale-95">
                                 <GoogleMark className="h-3.5 w-3.5" />
                             </span>
-                            <span className="font-semibold tracking-tight text-[var(--studio-deep-contrast)]">
+                            <span className="font-semibold tracking-tight">
                                 {isLoading ? "מחברות אותך..." : "ממשיכות עם גוגל"}
                             </span>
                         </div>
                     </LiquidGlassButton>
 
-                    {/* Secondary Email OTP Button: High-Contrast Crisp Boutique Card Button (Border vs canvas: 3.20:1, text vs button: 16.46:1 AAA) */}
+                    {/* Clearer mist glass lets the sage background show through. */}
                     <LiquidGlassButton
                         type="button"
                         onClick={() => {
@@ -430,15 +432,17 @@ export default function LandingPage() {
                             setLoginView("email");
                             setIsLoginOpen(true);
                         }}
-                        radius={14}
-                        blur={1}
-                        refraction={35}
-                        bezel={8}
-                        frost={0.28}
-                        specular={0.5}
-                        profile="squircle"
+                        radius={22}
+                        blur={3}
+                        refraction={18}
+                        bezel={10}
+                        frost={0.86}
+                        saturation={1.35}
+                        specular={0.78}
+                        profile="convex"
                         elevated={false}
-                        className="studio-welcome-email-button w-full border-2 border-[#788665] bg-white/90 text-[var(--studio-ink)] shadow-sm hover:bg-white transition-colors"
+                        whileTap={reduceMotion ? { scale: 1 } : { scale: 0.98 }}
+                        className="studio-welcome-auth-button studio-welcome-email-button w-full"
                     >
                         <div className="studio-welcome-email flex w-full items-center justify-center gap-2 px-4 font-semibold text-[var(--studio-ink)]">
                             <Mail aria-hidden="true" className="h-4 w-4 text-[#384c34] opacity-95 transition-transform group-hover:scale-105" />
