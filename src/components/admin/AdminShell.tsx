@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, CalendarDays, House, UsersRound, type LucideIcon } from "lucide-react";
 import PageEntrance from "@/components/PageEntrance";
+import { adminNavigationItems, isNavigationItemActive } from "@/lib/navigation";
+
+const icons = { "/admin": House, "/admin/schedule": CalendarDays, "/admin/trainees": UsersRound, "/dashboard": ArrowRight };
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -15,10 +18,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </main>
             <nav aria-label="ניווט ניהול" className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#111a12]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
                 <div className="mx-auto grid h-[4.5rem] max-w-lg grid-cols-4 px-2">
-                    <NavIcon href="/admin" icon={House} label="סקירה" isActive={pathname === "/admin"} />
-                    <NavIcon href="/admin/schedule" icon={CalendarDays} label="יומן" isActive={pathname.startsWith("/admin/schedule")} />
-                    <NavIcon href="/admin/trainees" icon={UsersRound} label="מתאמנות" isActive={pathname.startsWith("/admin/trainees")} />
-                    <NavIcon href="/dashboard" icon={ArrowRight} label="האפליקציה" isActive={false} />
+                    {adminNavigationItems.map(item => (
+                        <NavIcon key={item.href} href={item.href} icon={icons[item.href]} label={item.label} isActive={isNavigationItemActive(pathname, item)} />
+                    ))}
                 </div>
             </nav>
         </div>

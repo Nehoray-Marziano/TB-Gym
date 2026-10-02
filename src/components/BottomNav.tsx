@@ -5,12 +5,9 @@ import { CalendarDays, House, UserRound } from "lucide-react";
 import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { LiquidGlass } from "@/components/ui/LiquidGlass";
 import { useMemberNavigation } from "@/hooks/useMemberNavigation";
+import { isNavigationItemActive, memberNavigationItems } from "@/lib/navigation";
 
-const items = [
-    { href: "/dashboard", label: "בית", icon: House },
-    { href: "/book", label: "לוח אימונים", icon: CalendarDays },
-    { href: "/profile", label: "חשבון", icon: UserRound },
-] as const;
+const icons = { "/dashboard": House, "/book": CalendarDays, "/profile": UserRound };
 
 export default function BottomNav() {
     const pathname = usePathname();
@@ -29,8 +26,10 @@ export function MemberNavigation({ pathname }: { pathname: string }) {
         >
             <LiquidGlass radius={9999} blur={3} refraction={18} bezel={10} frost={0.86} saturation={1.35} specular={0.78} elevated={false} profile="convex" className="studio-navigation-glass w-full" contentClassName="grid grid-cols-3 gap-1 p-1.5">
                 <LayoutGroup id="studio-bottom-navigation">
-                {items.map(({ href, label, icon: Icon }) => {
-                    const active = pathname === href || (href === "/dashboard" && pathname === "/my-bookings");
+                {memberNavigationItems.map(item => {
+                    const { href, label } = item;
+                    const Icon = icons[href];
+                    const active = isNavigationItemActive(pathname, item);
                     return (
                         <Link
                             key={href}
