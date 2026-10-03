@@ -254,14 +254,13 @@ export default function LandingPage() {
 
                 {/* Warm terracotta sun with gentle hardware-accelerated CSS breathing */}
                 <div
-                    className="absolute -left-10 top-20 h-56 w-56 rounded-full bg-[var(--studio-coral-bg)]/20 blur-3xl will-change-transform [@media(max-height:650px)]:top-12 animate-pulse"
-                    style={{ animationDuration: '6s' }}
+                    className="studio-welcome-sun-halo absolute -left-10 top-20 h-56 w-56 rounded-full bg-[var(--studio-coral-bg)]/20 blur-3xl [@media(max-height:650px)]:top-12"
                 />
                 <div
-                    className="absolute left-6 top-28 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_40%_40%,#d9886e_0%,#c37a61_70%,#9e553f_100%)] opacity-90 shadow-[0_4px_24px_rgba(195,122,97,0.3)] will-change-transform [@media(max-height:650px)]:h-18 [@media(max-height:650px)]:w-18 [@media(max-height:650px)]:top-16 [@media(max-height:650px)]:left-3"
+                    className="studio-welcome-sun absolute left-6 top-28 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_40%_40%,#d9886e_0%,#c37a61_70%,#9e553f_100%)] opacity-90 shadow-[0_4px_24px_rgba(195,122,97,0.3)] [@media(max-height:650px)]:h-18 [@media(max-height:650px)]:w-18 [@media(max-height:650px)]:top-16 [@media(max-height:650px)]:left-3"
                 >
                     <div
-                        className="absolute -inset-2.5 rounded-full border border-[var(--studio-coral-bg)]/45 opacity-60"
+                        className="studio-welcome-sun-ring absolute -inset-2.5 rounded-full border border-[var(--studio-coral-bg)]/45 opacity-60"
                     />
                 </div>
 
@@ -272,8 +271,7 @@ export default function LandingPage() {
                 <img
                     src="/user_leaves_branch_dark.png"
                     alt=""
-                    className="absolute -bottom-10 left-7 h-[520px] w-auto max-w-none origin-bottom-left object-contain opacity-20 drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] will-change-transform pointer-events-none [@media(max-height:650px)]:h-[340px] [@media(max-height:650px)]:-bottom-4 [@media(max-height:650px)]:left-5"
-                    style={{ transform: 'rotate(-11deg)' }}
+                    className="studio-welcome-branch absolute -bottom-10 left-7 h-[520px] w-auto max-w-none origin-bottom-left object-contain opacity-20 drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] pointer-events-none [@media(max-height:650px)]:h-[340px] [@media(max-height:650px)]:-bottom-4 [@media(max-height:650px)]:left-5"
                 />
             </div>
 
@@ -396,12 +394,12 @@ export default function LandingPage() {
                         disabled={isLoading}
                         aria-busy={isLoading}
                         radius={9999}
-                        blur={3}
-                        refraction={18}
-                        bezel={10}
-                        frost={0.86}
+                        blur={2}
+                        refraction={24}
+                        bezel={12}
+                        frost={0.65}
                         saturation={1.35}
-                        specular={0.94}
+                        specular={1}
                         profile="convex"
                         elevated={false}
                         whileTap={reduceMotion ? { scale: 1 } : { scale: 0.98 }}
@@ -426,12 +424,12 @@ export default function LandingPage() {
                             setIsLoginOpen(true);
                         }}
                         radius={9999}
-                        blur={3}
-                        refraction={18}
-                        bezel={10}
-                        frost={0.86}
+                        blur={2}
+                        refraction={24}
+                        bezel={12}
+                        frost={0.65}
                         saturation={1.35}
-                        specular={0.94}
+                        specular={1}
                         profile="convex"
                         elevated={false}
                         whileTap={reduceMotion ? { scale: 1 } : { scale: 0.98 }}
