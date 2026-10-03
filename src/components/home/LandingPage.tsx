@@ -302,7 +302,7 @@ export default function LandingPage() {
                             width={998}
                             height={807}
                             alt="סטודיו טליה - תזונה • אימונים"
-                            className="studio-welcome-emblem w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.12)] transition-all duration-150 group-active:scale-95"
+                            className="studio-welcome-emblem w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.12)] transition-transform duration-150 group-active:scale-95"
                         />
                     </motion.button>
                 </header>
