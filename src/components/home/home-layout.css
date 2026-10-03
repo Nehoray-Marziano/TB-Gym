@@ -118,17 +118,17 @@
   }
 }
 
-/* A pearl Google lens and sage email lens make the clear specular reflections
-   legible against the intro's pale canvas. The darker waist and bright rolled
-   rim supply depth without an opaque fill or a moving shimmer. */
+/* Keep the lens body clear enough to transmit the thin moving branch at rest.
+   Light frost softens its lines; bright rolled rims and narrow reflections
+   supply the polish without covering the whole face in white. */
 .studio-welcome-auth-button {
   --lq-text: var(--studio-ink);
   --lq-highlight: #fff;
-  --lq-tint: color-mix(in srgb, var(--lq-highlight) 18%, transparent);
-  --lq-tint-deep: color-mix(in srgb, var(--studio-brand) 12%, transparent);
+  --lq-tint: color-mix(in srgb, var(--lq-highlight) 8%, transparent);
+  --lq-tint-deep: color-mix(in srgb, var(--studio-brand) 4%, transparent);
   --lq-rim-hi: color-mix(in srgb, var(--lq-highlight) 96%, transparent);
   --lq-rim-lo: color-mix(in srgb, var(--lq-highlight) 64%, transparent);
-  --welcome-glass-fill: color-mix(in srgb, var(--studio-brand) 28%, transparent);
+  --welcome-glass-fill: color-mix(in srgb, var(--studio-brand) 6%, transparent);
   --welcome-glass-edge: color-mix(in srgb, var(--lq-highlight) 78%, transparent);
   border-radius: 9999px;
   color: var(--studio-ink);
@@ -136,9 +136,9 @@
 }
 
 .studio-welcome-google-button {
-  --lq-tint: color-mix(in srgb, var(--lq-highlight) 38%, transparent);
-  --lq-tint-deep: color-mix(in srgb, var(--lq-highlight) 9%, transparent);
-  --welcome-glass-fill: color-mix(in srgb, var(--lq-highlight) 18%, transparent);
+  --lq-tint: color-mix(in srgb, var(--lq-highlight) 20%, transparent);
+  --lq-tint-deep: color-mix(in srgb, var(--lq-highlight) 3%, transparent);
+  --welcome-glass-fill: color-mix(in srgb, var(--lq-highlight) 10%, transparent);
   --welcome-glass-edge: color-mix(in srgb, var(--lq-highlight) 80%, transparent);
 }
 
@@ -153,18 +153,17 @@
 
 .studio-welcome-auth-button .liqui-glass__shine {
   background: linear-gradient(180deg,
-    color-mix(in srgb, var(--lq-highlight) 76%, transparent),
-    color-mix(in srgb, var(--lq-highlight) 18%, transparent) 22%,
-    transparent 38%,
-    color-mix(in srgb, var(--studio-deep) 9%, transparent) 54% 72%,
-    color-mix(in srgb, var(--lq-highlight) 32%, transparent) 88%,
-    color-mix(in srgb, var(--lq-highlight) 70%, transparent)),
+    color-mix(in srgb, var(--lq-highlight) 72%, transparent),
+    color-mix(in srgb, var(--lq-highlight) 14%, transparent) 8%,
+    transparent 25% 78%,
+    color-mix(in srgb, var(--lq-highlight) 18%, transparent) 90%,
+    color-mix(in srgb, var(--lq-highlight) 62%, transparent)),
     linear-gradient(112deg,
-    transparent 3%,
-    color-mix(in srgb, var(--lq-highlight) 82%, transparent) 16%,
-    color-mix(in srgb, var(--lq-highlight) 12%, transparent) 24%,
-    transparent 35% 67%,
-    color-mix(in srgb, var(--lq-highlight) 42%, transparent) 78%,
+    transparent 8%,
+    color-mix(in srgb, var(--lq-highlight) 58%, transparent) 13%,
+    color-mix(in srgb, var(--lq-highlight) 8%, transparent) 19%,
+    transparent 25% 70%,
+    color-mix(in srgb, var(--lq-highlight) 20%, transparent) 84%,
     transparent 92%);
   box-shadow: inset 0 2px 1px var(--lq-highlight),
     inset 1px 0 2px color-mix(in srgb, var(--lq-highlight) 86%, transparent),

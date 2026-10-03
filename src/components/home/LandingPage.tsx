@@ -394,10 +394,10 @@ export default function LandingPage() {
                         disabled={isLoading}
                         aria-busy={isLoading}
                         radius={9999}
-                        blur={2}
+                        blur={0.5}
                         refraction={24}
                         bezel={12}
-                        frost={0.65}
+                        frost={0.1}
                         saturation={1.35}
                         specular={1}
                         profile="convex"
@@ -424,10 +424,10 @@ export default function LandingPage() {
                             setIsLoginOpen(true);
                         }}
                         radius={9999}
-                        blur={2}
+                        blur={0.5}
                         refraction={24}
                         bezel={12}
-                        frost={0.65}
+                        frost={0.1}
                         saturation={1.35}
                         specular={1}
                         profile="convex"

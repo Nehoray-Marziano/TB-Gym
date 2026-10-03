@@ -4,10 +4,11 @@ import { spawn } from "node:child_process";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import sharp from "sharp";
 
 const baseUrl = process.argv[2] || "http://127.0.0.1:3104";
 assert(["127.0.0.1", "localhost"].includes(new URL(baseUrl).hostname));
-const output = join(process.cwd(), "scratch", "intro-gloss-v3");
+const output = join(process.cwd(), "scratch", "intro-glass-clear");
 await mkdir(output, { recursive: true });
 const profile = await mkdtemp(join(tmpdir(), "talia-intro-motion-"));
 // Warm the local route before Chrome's navigation timeout starts.
@@ -64,6 +65,7 @@ try {
     await delay(200);
   }
   await evaluate("document.fonts.ready");
+  await evaluate("document.querySelector('.studio-welcome-branch').decode()");
   const readMotion = `(() => Object.fromEntries(['branch','sun','sun-ring','sun-halo'].map(name => {
     const el = document.querySelector('.studio-welcome-' + name), css = getComputedStyle(el);
     return [name, { transform: css.transform, opacity: css.opacity, running: el.getAnimations().some(a => a.playState === 'running') }];
@@ -83,6 +85,72 @@ try {
     const shot = await call("Page.captureScreenshot", { format: "png" });
     await writeFile(join(output, `intro-glass-${width}x${height}.png`), Buffer.from(shot.data, "base64"));
   }
+
+  // Freeze the actual artwork to isolate how much of it the untouched glass
+  // transmits. Comparing screenshots catches excessive frost/white overlays
+  // that look translucent in CSS but erase the thin branch in the browser.
+  await evaluate("document.querySelectorAll('.studio-welcome-branch,.studio-welcome-sun,.studio-welcome-sun-ring,.studio-welcome-sun-halo').forEach(e=>e.getAnimations().forEach(a=>{a.pause();a.currentTime=0;}))");
+  const capture = async () => {
+    await delay(250);
+    const shot = await call("Page.captureScreenshot", { format: "png" });
+    return Buffer.from(shot.data, "base64");
+  };
+  const transmittedPixels = async (visible, hidden, rect) => {
+    const crop = { left: Math.ceil(rect.x) + 16, top: Math.ceil(rect.y) + 8,
+      width: Math.floor(rect.width) - 32, height: Math.floor(rect.height) - 16 };
+    const a = await sharp(visible).extract(crop).removeAlpha().raw().toBuffer();
+    const b = await sharp(hidden).extract(crop).removeAlpha().raw().toBuffer();
+    let count = 0;
+    for (let i = 0; i < a.length; i += 3) {
+      const difference = (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2])) / 3;
+      if (difference >= 8) count++;
+    }
+    return count;
+  };
+  for (const [width, height] of [[390, 844], [320, 568]]) {
+    await call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: true });
+    await delay(350);
+    const rects = await evaluate(`(() => [...document.querySelectorAll('.studio-welcome-auth-button')].map(e=>{
+      const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,pressed:e.matches(':active,:hover')};
+    }))()`);
+    assert(rects.every(r => !r.pressed), "Transparency is checked before hover or press");
+    const visible = await capture();
+    await evaluate("document.querySelector('.studio-welcome-branch').style.visibility='hidden'");
+    const hidden = await capture();
+    await evaluate("document.querySelector('.studio-welcome-branch').style.visibility=''");
+    for (const [index, rect] of rects.entries()) {
+      const pixels = await transmittedPixels(visible, hidden, rect);
+      assert(pixels >= 100, `${index === 0 ? 'Google' : 'Email'} glass must reveal the branch at rest (${pixels} pixels at ${width}px)`);
+      console.log(`PASS: ${index === 0 ? 'Google' : 'Email'} reveals the branch before interaction at ${width}px (${pixels} pixels).`);
+    }
+    await evaluate("document.querySelector('.studio-welcome-branch').getAnimations()[0].currentTime=3500");
+    const moved = await capture();
+    for (const rect of rects) {
+      assert(await transmittedPixels(visible, moved, rect) >= 100, "Branch movement remains visible through untouched glass");
+    }
+    await evaluate("document.querySelector('.studio-welcome-branch').getAnimations()[0].currentTime=0");
+  }
+  // A cancelled touch exercises the real pressed rendering without signing in.
+  const readMaterial = `(() => [...document.querySelectorAll('.studio-welcome-auth-button')].map(e=>{
+    const g=e.querySelector('.liqui-glass');return {
+      background:getComputedStyle(g).backgroundColor,
+      frost:getComputedStyle(g.querySelector('.liqui-glass__backdrop')).backdropFilter,
+      tint:getComputedStyle(g.querySelector('.liqui-glass__tint')).opacity,
+      shine:getComputedStyle(g.querySelector('.liqui-glass__shine')).backgroundImage
+    };
+  }))()`;
+  const restingMaterial = await evaluate(readMaterial);
+  await call("Emulation.setTouchEmulationEnabled", { enabled: true });
+  const touch = await evaluate("(() => {const r=document.querySelector('.studio-welcome-email-button').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
+  await call("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [touch] });
+  await delay(200);
+  assert.deepEqual(await evaluate(readMaterial), restingMaterial, "Pressing must not change the glass material");
+  await call("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
+  await delay(400);
+  assert.deepEqual(await evaluate(readMaterial), restingMaterial, "Released glass keeps the same transparency");
+  assert.equal(await evaluate("Boolean(document.querySelector('[role=dialog]'))"), false, "A cancelled touch does not open sign-in");
+  console.log("PASS: Frost, tint, and reflection stay constant through a cancelled touch.");
+
   await call("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
   await delay(200);
   const reducedBefore = await evaluate(readMotion);
