@@ -135,6 +135,7 @@ try {
     await waitFor("document.querySelectorAll('article').length===16 && document.querySelector('.studio-member-navigation')?.dataset.hidden==='false'", "fixture hydration");
     await delay(400);
     await check("Dock visible on entry", "document.querySelector('.studio-member-navigation').dataset.hidden==='false'");
+    await check("Frost and refraction share one backdrop plane", "(()=>{const glass=document.querySelector('.studio-navigation-glass'),backdrops=[...glass.children].filter(el=>getComputedStyle(el).backdropFilter!=='none');return backdrops.length===1 && backdrops[0].style.backdropFilter.includes('blur(') && backdrops[0].style.backdropFilter.includes('url(')})()");
     // Keep development chrome out of the visual evidence.
     await evaluate("document.querySelector('nextjs-portal')?.setAttribute('hidden','')");
     await screenshot("navigation-glass-390x844");
@@ -150,11 +151,43 @@ try {
     await call("Input.dispatchMouseEvent", { type: "mouseReleased", button: "left", clickCount: 1, ...tap });
     await scrollTo(300);
     await check("Pointer focus does not pin navigation", "document.querySelector('.studio-member-navigation').dataset.hidden==='true'");
-    await check("Downward scroll hides dock", "document.querySelector('.studio-member-navigation').dataset.hidden==='true' && getComputedStyle(document.querySelector('.studio-member-navigation')).opacity==='0'");
+    await check("Downward scroll hides dock below viewport", "document.querySelector('.studio-member-navigation').dataset.hidden==='true' && document.querySelector('.studio-member-navigation').getBoundingClientRect().top>=innerHeight");
     await scrollTo(296);
     await check("Small reverse movement does not flicker", "document.querySelector('.studio-member-navigation').dataset.hidden==='true'");
     await scrollTo(284);
     await check("Upward scroll reveals dock", "document.querySelector('.studio-member-navigation').dataset.hidden==='false'");
+    // A parent opacity fade changes the backdrop root as it ends. Track a full
+    // return, including its first frames, instead of checking only settled CSS.
+    await evaluate("window.glassCanvasCount=0;window.glassCreateElement=document.createElement;document.createElement=function(name,...args){if(name.toLowerCase()==='canvas')window.glassCanvasCount++;return window.glassCreateElement.call(this,name,...args)};window.glassNodes=[...document.querySelector('.studio-navigation-glass').children];window.glassFilters=[...document.querySelectorAll('filter[id^=lq-refract-]')].map(el=>el.id).join('|')");
+    for (let cycle = 0; cycle < 3; cycle++) {
+        await scrollTo(420);
+        const samples = await evaluate(`new Promise(resolve=>{
+            const nav=document.querySelector('.studio-member-navigation'),samples=[];
+            document.querySelector('[data-member-scroll]').scrollTop=360;
+            const start=performance.now();
+            function sample(){const css=getComputedStyle(nav);samples.push({opacity:css.opacity,transform:css.transform,filters:nav.querySelector('.liqui-glass__backdrop').style.backdropFilter});if(performance.now()-start<1100)requestAnimationFrame(sample);else resolve(samples)}
+            requestAnimationFrame(sample);
+        })`);
+        assert(samples.every(sample => sample.opacity === "1"), "Dock opacity stays constant throughout its return");
+        assert(new Set(samples.map(sample => sample.filters)).size === 1, "Backdrop optics stay constant throughout its return");
+    }
+    await check("Scroll returns reuse glass nodes, maps, and filters", "window.glassCanvasCount===0 && window.glassNodes.every((node,index)=>node===document.querySelector('.studio-navigation-glass').children[index]) && window.glassFilters===[...document.querySelectorAll('filter[id^=lq-refract-]')].map(el=>el.id).join('|')");
+    await evaluate("document.createElement=window.glassCreateElement;delete window.glassCreateElement");
+    checks.push("Three animated returns keep opacity and optics stable for 1.1 seconds");
+    // Static, fine stripes expose lost frost. Crop the dock after the return
+    // and again a second later so a delayed compositing change fails the check.
+    await evaluate("(()=>{const layer=document.createElement('div');layer.id='glass-stability-fixture';layer.style.cssText='position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(90deg,#162218 0 18px,#c37a61 18px 36px,#e9eadc 36px 54px)';document.querySelector('.studio-app-shell').append(layer)})()");
+    await scrollTo(420);
+    await scrollTo(360);
+    const clip = await evaluate("(()=>{const r=document.querySelector('.studio-member-navigation').getBoundingClientRect();return {x:Math.floor(r.x),y:Math.floor(r.y),width:Math.ceil(r.width),height:Math.ceil(r.height),scale:1}})()");
+    const returned = await call("Page.captureScreenshot", { format: "png", clip });
+    await delay(1100);
+    const settled = await call("Page.captureScreenshot", { format: "png", clip });
+    await writeFile(join(output, "glass-return.png"), Buffer.from(returned.data, "base64"));
+    await writeFile(join(output, "glass-return-settled.png"), Buffer.from(settled.data, "base64"));
+    assert.equal(returned.data, settled.data, "Returned glass remains pixel-identical after another second");
+    checks.push("Returned glass remains pixel-identical after another second");
+    await evaluate("document.querySelector('#glass-stability-fixture').remove()");
     await scrollTo(400);
     await key("Tab");
     await check("Tab reveals navigation", "document.querySelector('.studio-member-navigation').dataset.hidden==='false'");
@@ -258,6 +291,13 @@ try {
     await scrollTo(0);
     await check("Top reveals dock", "document.querySelector('.studio-member-navigation').dataset.hidden==='false'");
     await screenshot("navigation-visible");
+    // Chrome on iOS uses WebKit. Exercise its UA branch in this browser harness
+    // to ensure an unsupported SVG URL cannot suppress the CSS frost fallback.
+    await call("Network.setUserAgentOverride", { userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/137.0.0.0 Mobile/15E148 Safari/604.1" });
+    await call("Page.navigate", { url: `${baseUrl}/member-navigation-check` });
+    await waitFor("document.querySelector('.studio-member-navigation')?.dataset.hidden==='false'", "iOS fallback hydration");
+    await delay(400);
+    await check("iOS UA retains CSS frost without SVG refraction", "(()=>{const glass=document.querySelector('.studio-navigation-glass'),css=getComputedStyle(glass.querySelector('.liqui-glass__backdrop'));return css.backdropFilter.includes('blur(') && !css.backdropFilter.includes('url(') && !glass.querySelector('.liqui-glass__specular')})()");
     await writeFile(join(output, "report.json"), JSON.stringify({ checks, result: "passed" }, null, 2));
     console.log(JSON.stringify({ result: "passed", checks: checks.length, output }));
 } finally {

@@ -228,23 +228,23 @@ a,
   width: calc(100% - 2rem);
   max-width: 23rem;
   transform: translate(-50%, 0);
-  opacity: 1;
-  transition: transform 240ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease;
+  /* Fading an ancestor creates/removes a backdrop root, changing the glass's
+     sampling boundary at the end of the fade. Keep the material fully painted
+     and hide it with travel only; cached optics stay intact across returns. */
+  transition: transform 240ms cubic-bezier(.2,.8,.2,1);
 }
 
 .studio-member-navigation[data-hidden="true"] {
   transform: translate(-50%, calc(100% + 2rem + env(safe-area-inset-bottom)));
-  opacity: 0;
   pointer-events: none;
 }
 
 .studio-member-navigation:where([data-suppressed="true"]) {
-  transition: transform 200ms cubic-bezier(.4,0,1,1), opacity 140ms ease;
+  transition: transform 200ms cubic-bezier(.4,0,1,1);
 }
 
 .studio-member-navigation:has(:focus-visible):not([data-suppressed="true"]) {
   transform: translate(-50%, 0);
-  opacity: 1;
   pointer-events: auto;
   transition: none;
 }
@@ -255,7 +255,6 @@ body:has(dialog:modal) .studio-member-navigation,
 body.studio-modal-active .studio-member-navigation,
 html.studio-modal-active .studio-member-navigation {
   transform: translate(-50%, calc(100% + 2rem + env(safe-area-inset-bottom)));
-  opacity: 0;
   pointer-events: none;
 }
 

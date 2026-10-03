@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * 1. Snell's law (n = 1.5) curvature calculation for realistic edge magnification and bend.
  * 2. Canvas-rendered normal displacement map powering SVG feDisplacementMap.
  * 3. Directional sun specular illumination map (THETA_KEY - top-left, THETA_COUNTER - bottom-right).
- * 4. Multi-layer glass sandwich: Refracting backdrop + Frosted blur + Specular ray plane + Hairline bevel.
+ * 4. One frosted/refracting backdrop + Specular ray plane + Hairline bevel.
  */
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -285,7 +285,7 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
       if (typeof window === "undefined") return;
       const ua = navigator.userAgent;
       const isChromeOrEdge =
-        /chrome|chromium|crios/i.test(ua) && !/firefox|fxios/i.test(ua);
+        /chrome|chromium/i.test(ua) && !/firefox|fxios|crios|edgios/i.test(ua);
       if (isChromeOrEdge && CSS.supports("backdrop-filter", "blur(1px)")) {
         setIsChromium(true);
       }
@@ -328,8 +328,10 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
     }, [size, isChromium, radius, bezel, profile, refraction]);
 
     const effectiveBlur = blur + frost * 14;
-    const backdropFilter = `blur(${effectiveBlur}px) saturate(${saturation})`;
     const refractFilter = glassRefs?.filterId ? `url(#${glassRefs.filterId})` : undefined;
+    // Apply frost and refraction to the same sampled image. A second sibling
+    // backdrop plane can repaint the raw page over the already-frosted surface.
+    const backdropFilter = `blur(${effectiveBlur}px) saturate(${saturation})${refractFilter ? ` ${refractFilter}` : ""}`;
     const tintOpacity = 0.25 + 0.75 * frost;
 
     return (
@@ -347,7 +349,7 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
         }}
         {...props}
       >
-        {/* Layer 1: Backdrop Blur & Saturation */}
+        {/* Layer 1: One Backdrop with Frost, Saturation & Edge Refraction */}
         {backdropFilter && (
           <span
             className="liqui-glass__backdrop"
@@ -358,24 +360,13 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
           />
         )}
 
-        {/* Layer 2: Refraction Displacement (feDisplacementMap) */}
-        {refractFilter && (
-          <span
-            className="liqui-glass__refract"
-            style={{
-              backdropFilter: refractFilter,
-              WebkitBackdropFilter: refractFilter,
-            }}
-          />
-        )}
-
-        {/* Layer 3: Translucent Tint */}
+        {/* Layer 2: Translucent Tint */}
         <span
           className="liqui-glass__tint"
           style={{ opacity: tintOpacity }}
         />
 
-        {/* Layer 4: Normal-lit Specular Arc */}
+        {/* Layer 3: Normal-lit Specular Arc */}
         {glassRefs?.images.specular && specular > 0 && (
           <span
             className="liqui-glass__specular"
@@ -386,10 +377,10 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
           />
         )}
 
-        {/* Layer 5: Specular Shine Bezel */}
+        {/* Layer 4: Specular Shine Bezel */}
         <span className="liqui-glass__shine" />
 
-        {/* Layer 6: Content */}
+        {/* Layer 5: Content */}
         <div className={cn("liqui-glass__content", contentClassName)}>
           {children}
         </div>

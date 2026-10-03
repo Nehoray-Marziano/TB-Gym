@@ -432,13 +432,13 @@ export default function LandingPage() {
                         onClick={handleGoogleLogin}
                         disabled={isLoading}
                         aria-busy={isLoading}
-                        radius={22}
+                        radius={9999}
                         blur={3}
                         refraction={18}
                         bezel={10}
                         frost={0.86}
                         saturation={1.35}
-                        specular={0.78}
+                        specular={0.94}
                         profile="convex"
                         elevated={false}
                         whileTap={reduceMotion ? { scale: 1 } : { scale: 0.98 }}
@@ -462,13 +462,13 @@ export default function LandingPage() {
                             setLoginView("email");
                             setIsLoginOpen(true);
                         }}
-                        radius={22}
+                        radius={9999}
                         blur={3}
                         refraction={18}
                         bezel={10}
                         frost={0.86}
                         saturation={1.35}
-                        specular={0.78}
+                        specular={0.94}
                         profile="convex"
                         elevated={false}
                         whileTap={reduceMotion ? { scale: 1 } : { scale: 0.98 }}
