@@ -10,6 +10,7 @@ import ConnectionStatus from "@/components/ConnectionStatus";
 import { PWAInstallProvider } from "@/components/PWAInstallProvider";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 import MotionProvider from "@/components/MotionProvider";
+import { APPLE_STARTUP_IMAGES, LAUNCH_BACKGROUND, LAUNCH_CRITICAL_CSS } from "@/lib/pwa-launch.mjs";
 
 
 // Only load the Hebrew font we actually use
@@ -27,36 +28,7 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "סטודיו טליה",
-    startupImage: [
-      {
-        url: "/apple-splash-1179-2556.png",
-        media: "screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)",
-      },
-      {
-        url: "/apple-splash-1170-2532.png",
-        media: "screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
-      },
-      {
-        url: "/apple-splash-1290-2796.png",
-        media: "screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)",
-      },
-      {
-        url: "/apple-splash-1284-2778.png",
-        media: "screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)",
-      },
-      {
-        url: "/apple-splash-1125-2436.png",
-        media: "screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
-      },
-      {
-        url: "/apple-splash-828-1792.png",
-        media: "screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)",
-      },
-      {
-        url: "/apple-splash-750-1334.png",
-        media: "screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)",
-      },
-    ],
+    startupImage: APPLE_STARTUP_IMAGES,
   },
   icons: {
     icon: "/pwa-icon-v3-192.png",
@@ -67,7 +39,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e9eadc",
+  themeColor: LAUNCH_BACKGROUND,
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -79,9 +52,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" suppressHydrationWarning>
+    <html lang="he" dir="rtl" suppressHydrationWarning style={{ backgroundColor: LAUNCH_BACKGROUND, colorScheme: "light" }}>
+      <head>
+        <style id="studio-launch-critical">{LAUNCH_CRITICAL_CSS}</style>
+      </head>
       <body
         suppressHydrationWarning
+        style={{ backgroundColor: LAUNCH_BACKGROUND }}
         className={`${varelaRound.variable} antialiased font-sans`}
       >
 

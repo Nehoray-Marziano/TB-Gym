@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /.next-qa/
+/.next-launch-qa/
 /.next-subscription-dev/
 /.next-home-dev/
 /out/

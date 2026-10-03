@@ -73,6 +73,8 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // LaunchScreen embeds this repository SVG on the server before any image fetch.
+  outputFileTracingIncludes: { "/*": ["./public/initials_logo.svg"] },
   turbopack: {},
   distDir: process.env.TALIA_BUILD_DIR || ".next",
   env: { APP_BUILD_ID: getAppBuildId() },
