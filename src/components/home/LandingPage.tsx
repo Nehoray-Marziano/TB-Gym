@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
     AlertCircle,
@@ -104,11 +104,39 @@ export default function LandingPage() {
     const [isEmblemPressed, setIsEmblemPressed] = useState(false);
     const [activeFeature, setActiveFeature] = useState<string | null>(null);
 
+    const welcomeRef = useRef<HTMLDivElement>(null);
     const emailInputRef = useRef<HTMLInputElement>(null);
     const otpInputRef = useRef<HTMLInputElement>(null);
 
     const supabase = getSupabaseClient();
     const reduceMotion = useReducedMotion();
+
+    useLayoutEffect(() => {
+        const welcome = welcomeRef.current;
+        if (!welcome) return;
+        const viewport = window.visualViewport;
+        const fitViewport = () => {
+            // Standalone startup/resume can settle the visible viewport before
+            // CSS viewport units. Fit before paint so the fixed, clipped shell
+            // keeps both sign-in actions and its footer inside the screen.
+            // Preserve the layout size during pinch zoom.
+            const height = viewport?.scale === 1
+                ? Math.min(window.innerHeight, viewport.height)
+                : window.innerHeight;
+            if (height > 0) welcome.style.height = `${height}px`;
+        };
+        fitViewport();
+        viewport?.addEventListener("resize", fitViewport);
+        window.addEventListener("resize", fitViewport);
+        window.addEventListener("pageshow", fitViewport);
+        document.addEventListener("visibilitychange", fitViewport);
+        return () => {
+            viewport?.removeEventListener("resize", fitViewport);
+            window.removeEventListener("resize", fitViewport);
+            window.removeEventListener("pageshow", fitViewport);
+            document.removeEventListener("visibilitychange", fitViewport);
+        };
+    }, []);
 
     const resetLoginState = () => {
         setIsLoginOpen(false);
@@ -218,7 +246,7 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="studio-welcome fixed inset-0 w-full h-full overflow-hidden bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20 selection:text-[var(--studio-ink)]">
+        <div ref={welcomeRef} className="studio-welcome fixed inset-0 w-full h-full overflow-hidden bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20 selection:text-[var(--studio-ink)]">
             {/* Background Layer: Botanical Branch, Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
                 {/* Ambient atmospheric sage lighting matching trainee dashboard */}
@@ -308,6 +336,8 @@ export default function LandingPage() {
 
                         <img
                             src="/studio_emblem_dark.png"
+                            width={998}
+                            height={807}
                             alt="סטודיו טליה - תזונה • אימונים"
                             className="studio-welcome-emblem w-auto object-contain drop-shadow-[0_2px_8px_rgba(20,32,22,0.12)] transition-all duration-150 group-active:scale-95"
                         />
