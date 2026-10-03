@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
         description: "האימונים, ההרשמות והיתרה שלך במקום אחד.",
         lang: "he",
         dir: "rtl",
-        start_url: "/dashboard",
+        start_url: "/",
         scope: "/",
         id: "/",
         display: "standalone",
@@ -35,6 +35,12 @@ export default function manifest(): MetadataRoute.Manifest {
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "any"
+            },
+            {
+                src: "/pwa-icon-v3-maskable-192.png",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "maskable"
             }
         ],
 

@@ -17,10 +17,12 @@ const canvas = () => `<svg xmlns="http://www.w3.org/2000/svg" width="1024" heigh
 
 const outputs = [
   ['pwa-icon-v3-192.png', 192],
+  ['pwa-icon-v3-maskable-192.png', 192],
   ['pwa-icon-v3-512.png', 512],
   ['pwa-icon-v3-maskable-512.png', 512],
   ['apple-touch-icon-v3.png', 180],
   ['pwa-icon-v2-192.png', 192],
+  ['pwa-icon-v2-maskable-192.png', 192],
   ['pwa-icon-v2-512.png', 512],
   ['pwa-icon-v2-maskable-512.png', 512],
   ['apple-touch-icon-v2.png', 180],
