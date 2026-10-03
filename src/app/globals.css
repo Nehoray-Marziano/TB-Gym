@@ -154,16 +154,25 @@ a,
 }
 
 .studio-page-enter {
+  --studio-page-enter-distance: clamp(16px, 5vw, 24px);
   --studio-page-enter-x: 0px;
-  animation: studio-page-enter 300ms cubic-bezier(.2,.8,.2,1) both;
+  --studio-page-fade: studio-page-fade 160ms ease-out backwards;
+  animation: var(--studio-page-fade);
+}
+
+.studio-page-enter:is([data-entry="left"], [data-entry="right"]) {
+  /* Restore full contrast early while the shorter slide settles gently.
+     Backwards fill releases the transform after the entrance, keeping fixed
+     descendants and later dialogs in their normal containing block. */
+  animation: studio-page-enter 360ms cubic-bezier(.22,.75,.25,1) backwards, var(--studio-page-fade);
 }
 
 .studio-page-enter[data-entry="left"] {
-  --studio-page-enter-x: -32px;
+  --studio-page-enter-x: calc(-1 * var(--studio-page-enter-distance));
 }
 
 .studio-page-enter[data-entry="right"] {
-  --studio-page-enter-x: 32px;
+  --studio-page-enter-x: var(--studio-page-enter-distance);
 }
 
 .studio-navigation-glass {
@@ -352,7 +361,8 @@ html.studio-modal-active .studio-member-navigation {
 
 @media (prefers-reduced-motion: reduce) {
   .studio-member-navigation { transition: none; }
-  .studio-page-enter { animation: none; }
+  .studio-page-enter,
+  .studio-page-enter:is([data-entry="left"], [data-entry="right"]) { animation: none; }
 }
 
 @media (max-height: 400px) {
@@ -361,8 +371,13 @@ html.studio-modal-active .studio-member-navigation {
 }
 
 @keyframes studio-page-enter {
-  from { opacity: .85; transform: translate3d(var(--studio-page-enter-x), 0, 0); }
-  to { opacity: 1; transform: none; }
+  from { transform: translate3d(var(--studio-page-enter-x), 0, 0); }
+  to { transform: none; }
+}
+
+@keyframes studio-page-fade {
+  from { opacity: .45; }
+  to { opacity: 1; }
 }
 
 @keyframes studio-botanical-breathe {
