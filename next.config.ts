@@ -73,6 +73,9 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // PWA display/status-bar metadata must precede the first splash/body frame.
+  // Streaming it later lets the browser change the viewport during launch.
+  htmlLimitedBots: /.*/,
   // LaunchScreen embeds this repository SVG on the server before any image fetch.
   outputFileTracingIncludes: { "/*": ["./public/initials_logo.svg"] },
   turbopack: {},

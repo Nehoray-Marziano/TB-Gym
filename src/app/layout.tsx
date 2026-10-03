@@ -54,6 +54,9 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning style={{ backgroundColor: LAUNCH_BACKGROUND, colorScheme: "light" }}>
       <head>
+        {/* Next's appleWebApp.capable emits only mobile-web-app-capable. Apple
+            still needs its own tag for startup images and status-bar geometry. */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <style id="studio-launch-critical">{LAUNCH_CRITICAL_CSS}</style>
       </head>
       <body

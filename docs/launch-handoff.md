@@ -6,6 +6,24 @@ changes. This investigation separates the web document from the OS compositor.
 
 ## Findings in Talia
 
+- The follow-up regression checked the initial `<head>`, instead of merely
+  searching the completed response. It caught Next.js streaming the generic
+  capability, startup-image, and status-bar metadata into the body after the
+  initial shell. This is also confirmed in deployed `ba72b75` for `/`,
+  `/auth/login`, and `/dashboard`: the status-bar tag arrives after `</head>`.
+  A late `black-translucent` declaration can change the screen's coordinate
+  origin after the loading frame appears. `htmlLimitedBots: /.*/` disables
+  metadata streaming for all user agents so launch metadata precedes the body.
+  This can increase time to the first response if future metadata adds slow
+  data dependencies; the current metadata is static. Content can still stream.
+- Follow-up on the remaining header/mark jump found that Next.js 16.0.10's
+  `appleWebApp.capable` emits only `mobile-web-app-capable`. Production HTML at
+  `ba72b75` omitted `apple-mobile-web-app-capable`, although Apple's status-bar
+  style and startup-image behavior depend on that Apple-specific declaration.
+  It is now explicit in the root `<head>`, before the body or hydration. The
+  generic tag remains for other browsers. Native OS chrome is not simulated by
+  the browser checks; verify the remaining transient header on the affected
+  phone before claiming that its native launch transition is resolved.
 - The native splash and final canvas already shared `#e9eadc`, but the original
   HTML/body background was defined only in the external global stylesheet.
   Matching the manifest alone did not protect the initial HTML canvas.
@@ -48,6 +66,13 @@ evidence that this switch cures the native flash.
 
 - [Apple's supported meta tags](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html)
   document the different viewport geometry for translucent versus opaque bars.
+- [Next.js issue 74524](https://github.com/vercel/next.js/issues/74524)
+  reproduces broken Apple startup images after removal of the Apple capability
+  tag and documents adding it explicitly alongside the generic tag. The installed
+  Next.js metadata generator and the deployed HTML confirm the same omission here.
+- [Next.js streaming metadata](https://nextjs.org/docs/app/api-reference/functions/generate-metadata#streaming-metadata)
+  documents metadata arriving in the body after initial UI and the supported
+  `htmlLimitedBots: /.*/` setting to keep it in the initial head.
 - [Apple's startup image guidance](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html)
   explains the native startup-image mechanism.
 - [WebKit's safe-area guidance](https://webkit.org/blog/7929/designing-websites-for-iphone-x/)

@@ -17,6 +17,21 @@ const output = join(process.cwd(), "scratch", "launch-handoff");
 await mkdir(output, { recursive: true });
 const profile = await mkdtemp(join(tmpdir(), "talia-launch-handoff-"));
 const html = await (await fetch(baseUrl)).text();
+const head = html.match(/<head[^>]*>([^]*?)<\/head>/)?.[1];
+assert(head, "The initial document includes the launch metadata in its head");
+assert.match(head, /<meta name="apple-mobile-web-app-capable" content="yes"\s*\/>/, "Apple's capability tag must be present before the first body frame, alongside the generic tag Next emits");
+assert.equal((html.match(/name="apple-mobile-web-app-capable"/g) || []).length, 1, "Exactly one Apple capability declaration");
+assert.match(head, /name="mobile-web-app-capable" content="yes"/, "Keep the generic capability declaration for other browsers");
+assert.match(head, /name="apple-mobile-web-app-status-bar-style" content="black-translucent"/, "The initial status-bar mode already matches the full-screen splash geometry");
+for (const path of ["/auth/login", "/dashboard"]) {
+  const response = await fetch(new URL(path, baseUrl));
+  assert.equal(response.status, 200);
+  const routeHead = (await response.text()).match(/<head[^>]*>([^]*?)<\/head>/)?.[1] || "";
+  for (const name of ["mobile-web-app-capable", "apple-mobile-web-app-capable"]) {
+    assert(routeHead.includes(`name="${name}" content="yes"`), `${path}: ${name} precedes the body`);
+  }
+  assert(routeHead.includes('name="apple-mobile-web-app-status-bar-style" content="black-translucent"'), `${path}: status-bar mode precedes the body, including old installed start URLs`);
+}
 assert.match(html, /id="studio-launch-critical"/, "Critical launch CSS is server-rendered");
 assert.match(html, /<html[^>]*style="[^"]*background-color:#e9eadc/, "The HTML canvas does not wait for CSS");
 assert.match(html, /<body[^>]*style="[^"]*background-color:#e9eadc/, "The body is opaque before hydration");
@@ -32,7 +47,7 @@ assert.equal(manifest.theme_color, LAUNCH_BACKGROUND);
 const css = await readFile(new URL("../src/app/globals.css", import.meta.url), "utf8");
 assert.match(css, new RegExp(`--studio-canvas: ${LAUNCH_BACKGROUND}`), "Launch colors match the runtime token owner");
 for (const image of APPLE_STARTUP_IMAGES) {
-  assert(html.includes(image.url), `Startup image is in the initial metadata: ${image.url}`);
+  assert(head.includes(image.url), `Startup image is in the initial head before the splash can paint: ${image.url}`);
   const pixels = await sharp(fileURLToPath(new URL(`../public${image.url}`, import.meta.url))).metadata();
   const [, width, height] = image.url.match(/v4-(\d+)-(\d+)\.png$/);
   assert.equal(pixels.width, Number(width));
