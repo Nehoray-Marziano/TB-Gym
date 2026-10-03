@@ -252,65 +252,28 @@ export default function LandingPage() {
                 {/* Ambient atmospheric sage lighting matching trainee dashboard */}
                 <div className="absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]" />
 
-                {/* Warm terracotta sun with gentle pulse matching studio palette */}
-                <motion.div
-                    className="absolute -left-10 top-20 h-56 w-56 rounded-full bg-[var(--studio-coral-bg)]/20 blur-3xl [@media(max-height:650px)]:top-12"
-                    animate={reduceMotion ? undefined : {
-                        scale: [1, 1.2, 1],
-                        opacity: [0.2, 0.35, 0.2],
-                    }}
-                    transition={{
-                        duration: 5.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                    }}
+                {/* Warm terracotta sun with gentle hardware-accelerated CSS breathing */}
+                <div
+                    className="absolute -left-10 top-20 h-56 w-56 rounded-full bg-[var(--studio-coral-bg)]/20 blur-3xl will-change-transform [@media(max-height:650px)]:top-12 animate-pulse"
+                    style={{ animationDuration: '6s' }}
                 />
-                <motion.div
-                    className="absolute left-6 top-28 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_40%_40%,#d9886e_0%,#c37a61_70%,#9e553f_100%)] opacity-90 shadow-[0_4px_24px_rgba(195,122,97,0.3)] [@media(max-height:650px)]:h-18 [@media(max-height:650px)]:w-18 [@media(max-height:650px)]:top-16 [@media(max-height:650px)]:left-3"
-                    animate={reduceMotion ? undefined : {
-                        scale: [1, 1.04, 1],
-                        boxShadow: [
-                            "0 0 24px 4px rgba(195,122,97,0.25)",
-                            "0 0 45px 10px rgba(195,122,97,0.4)",
-                            "0 0 24px 4px rgba(195,122,97,0.25)",
-                        ],
-                    }}
-                    transition={{
-                        duration: 4.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                    }}
+                <div
+                    className="absolute left-6 top-28 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_40%_40%,#d9886e_0%,#c37a61_70%,#9e553f_100%)] opacity-90 shadow-[0_4px_24px_rgba(195,122,97,0.3)] will-change-transform [@media(max-height:650px)]:h-18 [@media(max-height:650px)]:w-18 [@media(max-height:650px)]:top-16 [@media(max-height:650px)]:left-3"
                 >
-                    <motion.div
-                        className="absolute -inset-2.5 rounded-full border border-[var(--studio-coral-bg)]/45"
-                        animate={reduceMotion ? undefined : {
-                            scale: [1, 1.06, 1],
-                            opacity: [0.4, 0.7, 0.4],
-                        }}
-                        transition={{
-                            duration: 4.5,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                        }}
+                    <div
+                        className="absolute -inset-2.5 rounded-full border border-[var(--studio-coral-bg)]/45 opacity-60"
                     />
-                </motion.div>
+                </div>
 
                 {/* Ambient sage glow */}
-                <div className="absolute bottom-16 right-0 h-72 w-72 rounded-full bg-[var(--studio-brand)]/14 blur-3xl" />
+                <div className="absolute bottom-16 right-0 h-72 w-72 rounded-full bg-[var(--studio-brand)]/14 blur-3xl pointer-events-none" />
 
-                {/* User's 5-leaf botanical branch gently tilting (deep ink version for creamy background) */}
-                <motion.img
+                {/* Botanical branch with GPU-friendly transform */}
+                <img
                     src="/user_leaves_branch_dark.png"
                     alt=""
-                    className="absolute -bottom-10 left-7 h-[520px] w-auto max-w-none origin-bottom-left object-contain opacity-20 drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] [@media(max-height:650px)]:h-[340px] [@media(max-height:650px)]:-bottom-4 [@media(max-height:650px)]:left-5"
-                    animate={reduceMotion ? undefined : {
-                        rotate: [-14, -8, -14],
-                    }}
-                    transition={{
-                        duration: 7,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                    }}
+                    className="absolute -bottom-10 left-7 h-[520px] w-auto max-w-none origin-bottom-left object-contain opacity-20 drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] will-change-transform pointer-events-none [@media(max-height:650px)]:h-[340px] [@media(max-height:650px)]:-bottom-4 [@media(max-height:650px)]:left-5"
+                    style={{ transform: 'rotate(-11deg)' }}
                 />
             </div>
 
