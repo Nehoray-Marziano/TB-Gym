@@ -31,3 +31,6 @@ TypeScript, source/script lint, the 6 PWA tests and 7 gym-data tests passed. Sou
 The premium static audit reports five existing findings: three forms retain their established native validation, and two scrollbar rules are flagged. Those behaviors are outside this copy feature. The new textarea owner satisfies the audit's resize rule. An external documentation lint command was rejected by automatic approval review because it would download and execute an unverified npm package with possible data exposure; documentation was reviewed locally instead. No external package was installed.
 
 Physical iOS/Android clipboard permission prompts were not tested; permission denial and retry were exercised in Chrome. CSS/clipboard API behavior follows [MDN user-select](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/user-select) and [MDN clipboard writeText](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText).
+## Onboarding save recovery
+
+If either declaration or profile saving fails, the onboarding form retains its entered details and announces: "לא הצלחנו לשמור את הפרטים. הפרטים שהזנת נשמרו כאן, ואפשר לנסות שוב." The finish action retries the save; a failed declaration cannot mark the profile complete.

@@ -9,6 +9,8 @@ This contract covers the admin overview, schedule and trainee management. Hebrew
 | Administrator access | src/app/admin/layout.tsx and the server authorization in src/app/api/notifications/route.ts |
 | Session creation, cancellation, deletion and refunds | src/utils/supabase/migrations/14_atomic_admin_schedule.sql |
 | Available credits and permitted adjustments | src/utils/supabase/migrations/15_admin_ticket_adjustments.sql |
+| Concurrent invitation lock order | src/utils/supabase/migrations/17_order_admin_invitations.sql |
+| Public catalog reads and administrator writes | src/utils/supabase/migrations/18_protect_subscription_catalog.sql |
 | Visual identity and runtime token ownership | DESIGN.md and src/app/globals.css |
 
 ## Canonical UI Map
@@ -36,3 +38,7 @@ This contract covers the admin overview, schedule and trainee management. Hebrew
 ## Verification scope
 
 The local browser fixture imports the actual admin routes/components and intercepts all data and notification requests. It exercises success/failure, busy dismissal, focus, nested popup ownership, responsive geometry and reduced motion without changing live data. It is created only during the test and removed in finally. Live RPC correctness remains covered by the existing domain tests/stress tooling; this visual pass does not authorize live mutation tests.
+
+The separate, explicitly requested final correctness campaign is owned by `scripts/final-correctness.mjs`. It creates uniquely tagged disposable fixtures, checks persisted bookings/ticket conservation and permissions after concurrent operations, and independently verifies cleanup. It generates OTP tokens without sending emails. `scripts/check-onboarding-correctness.mjs` covers failed declaration/profile writes and repeated submissions, retaining the draft until a successful save.
+
+Email-code verification in `LandingPage` uses the `email` type for both first-time signup and returning sign-in; selecting only `magiclink` rejects new-user confirmation codes. `scripts/final-auth-lifecycle.mjs` tests the actual component's configured verification type against disposable real Auth identities, including invalid and replayed tokens.

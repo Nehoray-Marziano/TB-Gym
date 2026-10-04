@@ -3,7 +3,7 @@
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import StudioLogo from "@/components/StudioLogo";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Minus, Plus } from "lucide-react";
 import { CopyableInput, CopyableTextarea } from "@/components/ui/copyable-field";
@@ -29,6 +29,8 @@ export default function OnboardingPage() {
     const supabase = getSupabaseClient();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const submitting = useRef(false);
     const [formData, setFormData] = useState<FormData>({
         fullName: "",
         age: "",
@@ -48,7 +50,7 @@ export default function OnboardingPage() {
     };
 
     const handleNext = () => {
-        if (!isStepValid()) return;
+        if (submitting.current || !isStepValid()) return;
         if (step < STEPS.length) {
             setStep((current) => current + 1);
         } else {
@@ -57,24 +59,31 @@ export default function OnboardingPage() {
     };
 
     const handleSubmit = async () => {
+        if (submitting.current) return;
+        submitting.current = true;
+        setSaveError(null);
         setLoading(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("No user found");
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            if (authError || !user) throw authError || new Error("No user found");
 
-            await supabase.from("profiles").update({
+            // Save the declaration before marking the account ready. Supabase
+            // reports rejected writes as error results rather than throwing.
+            const { error: healthError } = await supabase.from("health_declarations").upsert({
+                id: user.id,
+                is_healthy: formData.isHealthy,
+                medical_conditions: formData.isHealthy ? null : formData.medicalConditions,
+            });
+            if (healthError) throw healthError;
+
+            const { error: profileError } = await supabase.from("profiles").update({
                 full_name: formData.fullName,
                 age: parseInt(formData.age),
                 phone: formData.phone,
                 onboarding_completed: true,
                 updated_at: new Date().toISOString(),
             }).eq("id", user.id);
-
-            await supabase.from("health_declarations").upsert({
-                id: user.id,
-                is_healthy: formData.isHealthy,
-                medical_conditions: formData.isHealthy ? null : formData.medicalConditions,
-            });
+            if (profileError) throw profileError;
 
             setTimeout(() => {
                 router.push("/");
@@ -82,7 +91,8 @@ export default function OnboardingPage() {
             }, 2500);
         } catch (error) {
             console.error(error);
-            alert("לא הצלחנו לשמור את הפרטים. נסי שוב.");
+            setSaveError("לא הצלחנו לשמור את הפרטים. הפרטים שהזנת נשמרו כאן, ואפשר לנסות שוב.");
+            submitting.current = false;
             setLoading(false);
         }
     };
@@ -223,6 +233,7 @@ export default function OnboardingPage() {
                             </div>
                         </motion.section>
 
+                        {saveError && <p role="alert" className="mb-4 rounded-2xl border border-[var(--studio-danger)]/25 bg-[var(--studio-card)] p-4 text-sm leading-relaxed text-[var(--studio-danger)]">{saveError}</p>}
                         <footer className="flex items-center gap-3 border-t border-[#1b251c]/15 pt-5">
                             {step > 1 && (
                                 <button type="button" onClick={() => setStep((current) => current - 1)} className="flex min-h-14 items-center gap-1 rounded-full px-3 text-sm font-bold text-[var(--studio-muted)]"><ArrowRight aria-hidden="true" className="h-4 w-4" />חזרה</button>

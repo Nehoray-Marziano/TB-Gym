@@ -180,7 +180,7 @@ export default function LandingPage() {
         const { data, error } = await supabase.auth.verifyOtp({
             email,
             token: otpCode.trim(),
-            type: "magiclink",
+            type: "email",
         });
 
         if (error) {
