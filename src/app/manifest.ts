@@ -18,6 +18,9 @@ export default function manifest(): MetadataRoute.Manifest {
             { name: "לוח אימונים", short_name: "אימונים", url: "/book", icons: [{ src: "/pwa-icon-v4-192.png", sizes: "192x192", type: "image/png" }] },
             { name: "האימונים שלי", short_name: "שלי", url: "/my-bookings", icons: [{ src: "/pwa-icon-v4-192.png", sizes: "192x192", type: "image/png" }] },
         ],
+        // Chromium selects MASKABLE before ANY for the splash, independently
+        // of ordering and resolution. Use the transparent mark for every
+        // eligible splash icon; an opaque maskable entry restores its tile.
         icons: [
             {
                 src: "/pwa-icon-v4-512.png",
@@ -26,22 +29,10 @@ export default function manifest(): MetadataRoute.Manifest {
                 purpose: "any"
             },
             {
-                src: "/pwa-icon-v4-maskable-512.png",
-                sizes: "512x512",
-                type: "image/png",
-                purpose: "maskable"
-            },
-            {
                 src: "/pwa-icon-v4-192.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "any"
-            },
-            {
-                src: "/pwa-icon-v4-maskable-192.png",
-                sizes: "192x192",
-                type: "image/png",
-                purpose: "maskable"
             }
         ],
 

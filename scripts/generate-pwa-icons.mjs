@@ -10,7 +10,8 @@ const artwork = source.slice(source.indexOf('>') + 1, source.lastIndexOf('</svg>
 
 // A normal icon can be drawn directly over Android's splash canvas. Keep its
 // surround transparent so scaling/color conversion cannot expose a square tile.
-// Maskable and Apple icons need their own opaque background for launcher crops.
+// Apple home-screen icons need their own opaque background. Do not publish
+// maskable entries: Chromium prefers them for its splash over the normal mark.
 const canvas = (opaque) => `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   ${opaque ? `<rect width="1024" height="1024" fill="${PWA_BACKGROUND}"/>` : ''}
   <g transform="translate(512 512) scale(0.72) translate(-512 -512)">${artwork}</g>
@@ -18,9 +19,7 @@ const canvas = (opaque) => `<svg xmlns="http://www.w3.org/2000/svg" width="1024"
 
 const outputs = [
   ['pwa-icon-v4-192.png', 192, false],
-  ['pwa-icon-v4-maskable-192.png', 192, true],
   ['pwa-icon-v4-512.png', 512, false],
-  ['pwa-icon-v4-maskable-512.png', 512, true],
   ['apple-touch-icon-v4.png', 180, true],
 ];
 

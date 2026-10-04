@@ -8,8 +8,12 @@ generator. Login and authenticated destinations resolve normally on the server.
 Android generates its native splash from the manifest's name, opaque
 `background_color`, `theme_color`, and PNG icons. Normal v4 icons have a
 transparent surround so their square bitmap is not a second cream tile inside
-the native splash. Maskable v4 icons and the Apple home-screen icon stay opaque
-for launcher cropping. Regenerate with `node scripts/generate-pwa-icons.mjs`.
+the native splash. The manifest intentionally omits maskable entries:
+Chromium's `ShortcutInfo::UpdateBestSplashIcon` selects MASKABLE before ANY,
+regardless of their ordering. An opaque maskable entry bypasses the transparent
+normal icon. The launcher may add its own backing to a normal icon; the native
+splash's unboxed mark takes priority. The Apple home-screen icon stays opaque.
+Regenerate with `node scripts/generate-pwa-icons.mjs`.
 Keep the 192/512 sizes, standalone display, `/` start URL, stable `/` ID, and
 `/` scope.
 
@@ -81,6 +85,11 @@ boundary, and a line below the status region. Pixel inspection of the previous
 v3 icons found no drawn border and no non-opaque pixels. The v4 transparent
 normal icons remove the bitmap's background tile; this is an app-side
 mitigation, not proof that the browser's native icon treatment is fixed.
+The first v4 change mistakenly retained maskable manifest entries, so Android
+could still prefer the opaque bitmap. Those entries are now removed, and the
+asset check requires transparency for every eligible manifest icon. Older
+maskable PNG URLs remain available for compatibility with cached metadata but
+are no longer advertised or generated.
 
 Chromium's native `SplashController` explicitly handles a translucent window,
 removes translucency, and waits for a compositor redraw before fading its
@@ -114,6 +123,8 @@ opaque login document needs a device/browser trace rather than another overlay.
   — HTTP redirects before streaming versus client redirects after streaming.
 - [Chromium: native splash controller](https://github.com/chromium/chromium/blob/main/chrome/android/java/src/org/chromium/chrome/browser/browserservices/ui/splashscreen/SplashController.java)
   — native translucency, compositor redraw, and splash dismissal.
+- [Chromium: native splash icon selection](https://github.com/chromium/chromium/blob/main/components/webapps/browser/android/shortcut_info.cc)
+  — `UpdateBestSplashIcon` selects a maskable icon before trying normal icons.
 - [Chromium: WebAPK splash and insets](https://github.com/chromium/chromium/blob/main/chrome/android/java/src/org/chromium/chrome/browser/browserservices/ui/splashscreen/webapps/WebappSplashController.java)
   — static native artwork and system-bar alignment.
 - [Chromium: WebAPK update pipeline](https://github.com/chromium/chromium/blob/main/chrome/android/java/src/org/chromium/chrome/browser/webapps/README.md)

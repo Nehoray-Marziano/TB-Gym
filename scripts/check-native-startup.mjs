@@ -47,27 +47,25 @@ assert.equal(manifest.background_color, PWA_BACKGROUND);
 assert.equal(manifest.theme_color, PWA_BACKGROUND);
 for (const size of [192, 512]) {
   assert(manifest.icons.some(icon => icon.sizes === `${size}x${size}` && icon.purpose === "any"));
-  assert(manifest.icons.some(icon => icon.sizes === `${size}x${size}` && icon.purpose === "maskable"));
 }
+// Chromium's UpdateBestSplashIcon prefers MASKABLE before ANY. Every eligible
+// entry must preserve the transparent mark, not just the first/512px ANY icon.
+assert(manifest.icons.every(icon => icon.purpose === "any"), "No higher-priority opaque splash candidate");
 for (const icon of manifest.icons) {
   const response = await fetch(new URL(icon.src, baseUrl));
   assert.equal(response.status, 200);
-  const metadata = await sharp(Buffer.from(await response.arrayBuffer())).metadata();
+  const bytes = Buffer.from(await response.arrayBuffer());
+  const metadata = await sharp(bytes).metadata();
   assert.equal(`${metadata.width}x${metadata.height}`, icon.sizes);
-  const { data, info } = await sharp(Buffer.from(await (await fetch(new URL(icon.src, baseUrl))).arrayBuffer())).raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(bytes).raw().toBuffer({ resolveWithObject: true });
+  assert.equal(info.channels, 4);
   let artwork = 0;
   for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
     const offset = (y * info.width + x) * info.channels;
-    if (icon.purpose === "any") {
-      assert.equal(info.channels, 4);
-      if (x < info.width * 0.1 || x >= info.width * 0.9 || y < info.height * 0.1 || y >= info.height * 0.9) {
-        assert.equal(data[offset + 3], 0, "Normal icon has no rectangular backing outside its mark");
-      }
-      if (data[offset + 3]) artwork++;
-    } else {
-      assert.equal(info.channels, 3, "Maskable icon remains opaque for launcher crops");
-      if (data[offset] !== 233 || data[offset + 1] !== 234 || data[offset + 2] !== 220) artwork++;
+    if (x < info.width * 0.1 || x >= info.width * 0.9 || y < info.height * 0.1 || y >= info.height * 0.9) {
+      assert.equal(data[offset + 3], 0, "Every splash candidate has no rectangular backing outside its mark");
     }
+    if (data[offset + 3]) artwork++;
   }
   assert(artwork > 0);
 }

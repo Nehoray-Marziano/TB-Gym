@@ -37,7 +37,7 @@ The greeting has a decorative terracotta sun and existing leaf artwork beside la
 
 The workout card uses three 30px corners and one 10px corner, echoing the studio's existing asymmetric surfaces. Rounded controls and the circular appointment arrow soften the composition. Botanical art stays decorative and inaccessible to assistive technology.
 
-The signed-out introduction uses an opaque, in-flow viewport canvas sized in server HTML. CSS owns the initial height; passive visual-viewport corrections run only for a real discrepancy on keyboard/resume. Keep the full-screen introduction out of a fixed compositor layer and avoid synchronous hydration height writes. Normal Android v4 icons use a transparent surround; maskable and Apple launcher icons retain the canonical opaque canvas. Native browser/window effects require a physical installation check, separate from page rendering tests.
+The signed-out introduction uses an opaque, in-flow viewport canvas sized in server HTML. CSS owns the initial height; passive visual-viewport corrections run only for a real discrepancy on keyboard/resume. Keep the full-screen introduction out of a fixed compositor layer and avoid synchronous hydration height writes. Android v4 icons use a transparent surround. The manifest omits maskable entries because Chromium prefers them over normal icons for its splash; accept the launcher's own backing for a normal icon to preserve the unboxed splash mark. Apple launcher icons retain the canonical opaque canvas. Native browser/window effects require a physical installation check, separate from page rendering tests.
 
 ## Components
 
