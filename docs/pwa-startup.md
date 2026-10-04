@@ -107,6 +107,24 @@ installation browser/version, fresh-install result, and signed-in/signed-out
 comparison when reproducing the issue. A persistent flash with the verified
 opaque login document needs a device/browser trace rather than another overlay.
 
+### Native browser fix (September 11, 2026)
+
+Chromium commit `c2312525d5500d1aa03442f58ddd43ffdaefb927` (September 11, 2026)
+fixes native post-splash flashing and icon alignment: Android 12+ windows become
+opaque from startup, and splash screenshots receive system-bar inset padding.
+The published `155.0.8059.30` source contains those changes; the checked
+`154.0.8037.126` source lacks the alignment change. Verify the host browser build
+when testing installed startup; a production web build cannot establish that
+the native browser includes this fix. Capture a native window trace for a
+persistent launch transition issue on a browser containing the correction.
+
+The WebAPK `SplashTheme` inherits Android `Theme.Holo.Light`, whose
+`windowContentOverlay` is `@drawable/ab_solid_shadow_holo`. This is a source-backed
+candidate for the top line. Confirm against the installed APK/theme before
+calling it the root cause. A manifest or web-page stylesheet cannot override
+that Android theme. Do not add page delays or another React splash as a claimed
+fix for this native-window gap.
+
 ## Research
 
 - [Google: Web app manifest](https://web.dev/learn/pwa/web-app-manifest) — Android
@@ -129,3 +147,10 @@ opaque login document needs a device/browser trace rather than another overlay.
   — static native artwork and system-bar alignment.
 - [Chromium: WebAPK update pipeline](https://github.com/chromium/chromium/blob/main/chrome/android/java/src/org/chromium/chrome/browser/webapps/README.md)
   — manifest changes update the installed Android package separately.
+- [Chromium: native flash and icon-alignment fix](https://github.com/chromium/chromium/commit/c2312525d5500d1aa03442f58ddd43ffdaefb927)
+  — Android 12+ window opacity, native background, and splash screenshot insets.
+- [Chrome 155 splash alignment](https://github.com/chromium/chromium/blob/155.0.8059.30/chrome/android/java/src/org/chromium/chrome/browser/browserservices/ui/splashscreen/webapps/WebappSplashController.java)
+  — verified release source containing system-bar inset correction.
+- [WebAPK native splash theme](https://github.com/chromium/chromium/blob/main/chrome/android/webapk/shell_apk/res/values-v31/styles.xml),
+  [Android Holo themes](https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/res/res/values/themes_holo.xml)
+  — inherited native content-shadow candidate, independent of the app's HTML.
