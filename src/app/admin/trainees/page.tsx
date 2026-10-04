@@ -1,12 +1,13 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useCallback, useEffect, useState } from "react";
-import { Search, User, Ticket } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { User, Ticket } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import TicketUpdateModal from "@/components/admin/TicketUpdateModal";
 import StudioLogo from "@/components/StudioLogo";
-import { CopyableInput } from "@/components/ui/copyable-field";
+import { AdminSearch } from "@/components/admin/AdminSearch";
+import { AdminError, AdminLoading } from "@/components/admin/AdminFeedback";
 import { CopyButton } from "@/components/ui/copy-button";
 
 type Profile = {
@@ -25,6 +26,10 @@ export default function AdminTraineesPage() {
     const supabase = getSupabaseClient();
     const [trainees, setTrainees] = useState<Trainee[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
+    const [limit, setLimit] = useState(24);
+    const requestId = useRef(0);
+    const updateLock = useRef(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [grantingTickets, setGrantingTickets] = useState<string | null>(null);
     const [selectedTraineeForUpdate, setSelectedTraineeForUpdate] = useState<Trainee | null>(null);
@@ -32,6 +37,8 @@ export default function AdminTraineesPage() {
     const { toast } = useToast();
 
     const fetchTrainees = useCallback(async () => {
+        const request = ++requestId.current;
+        setFetchError(null);
         try {
             const cutoff = new Date().toISOString();
             const [profilesRes, ticketsRes] = await Promise.all([
@@ -39,10 +46,11 @@ export default function AdminTraineesPage() {
                 supabase.from("user_tickets").select("id,user_id").is("used_at", null).gt("expires_at", cutoff).order("user_id").order("id").range(0, 999),
             ]);
             if (profilesRes.error) throw profilesRes.error;
-            const traineeProfiles = (profilesRes.data as Profile[]).filter((profile) => profile.role !== "administrator");
+            const traineeProfiles = ((profilesRes.data || []) as Profile[]).filter((profile) => profile.role !== "administrator");
             const counts = new Map<string, number>();
             if (ticketsRes.error) {
                 const fallback = await Promise.all(traineeProfiles.map((profile) => supabase.rpc("get_available_tickets", { p_user_id: profile.id })));
+                if (fallback.some(result => result.error)) throw new Error("Ticket balance unavailable");
                 fallback.forEach((result, index) => counts.set(traineeProfiles[index].id, result.data || 0));
             } else {
                 let rows = ticketsRes.data || [];
@@ -56,20 +64,25 @@ export default function AdminTraineesPage() {
                     offset += rows.length;
                 }
             }
+            if (request !== requestId.current) return;
             setTrainees(traineeProfiles.map((profile) => ({ ...profile, tickets: counts.get(profile.id) || 0 })));
-        } catch (error) {
-            console.error(error);
-            toast({ title: "לא הצלחנו לטעון את המתאמנות", description: "כדאי לנסות שוב בעוד רגע.", type: "error" });
+        } catch {
+            if (request === requestId.current) setFetchError("לא הצלחנו לטעון את המתאמנות והיתרות. נסי שוב.");
         } finally {
-            setLoading(false);
+            if (request === requestId.current) setLoading(false);
         }
-    }, [supabase, toast]);
+    }, [supabase]);
 
     useEffect(() => {
-        fetchTrainees();
+        const counter = requestId;
+        void fetchTrainees();
+        return () => { counter.current++; };
     }, [fetchTrainees]);
 
     const handleGrantTickets = async (userId: string, quantity: number) => {
+        if (updateLock.current) return;
+        updateLock.current = true;
+        requestId.current++;
         setGrantingTickets(userId);
         try {
             // 1. Grant Tickets DB
@@ -98,8 +111,9 @@ export default function AdminTraineesPage() {
             });
         } catch (err: unknown) {
             console.error(err);
-            toast({ title: "שגיאה בהענקת כרטיסים", description: err instanceof Error ? err.message : "כדאי לנסות שוב בעוד רגע.", type: "error" });
+            throw err;
         } finally {
+            updateLock.current = false;
             setGrantingTickets(null);
         }
     };
@@ -123,29 +137,17 @@ export default function AdminTraineesPage() {
                     {!loading && <span className="text-sm font-bold tabular-nums text-[var(--studio-accent-text)]">{trainees.length}</span>}
                 </div>
 
-                <div className="relative mt-4">
-                    <Search aria-hidden="true" className="pointer-events-none absolute z-[1] right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#aebbad]" />
-                    <CopyableInput copyLabel="העתקת החיפוש"
-                        type="text"
-                        aria-label="חיפוש מתאמנת"
-                        placeholder="חיפוש לפי שם, מייל או טלפון"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="min-h-12 w-full rounded-2xl border border-white/15 bg-[#202c21] py-2 pr-12 pl-4 text-sm text-[var(--studio-deep-contrast)] outline-none placeholder:text-[#aebbad] focus:border-[#dce780]"
-                    />
-                </div>
+                <div className="mt-4"><AdminSearch dark value={searchTerm} onChange={value => { setSearchTerm(value); setLimit(24); }} /></div>
             </header>
 
             {loading ? (
-                <div aria-label="טוענים מתאמנות" className="space-y-3">
-                    {Array.from({ length: 2 }).map((_, index) => <div key={index} className="h-32 animate-pulse rounded-[1.35rem] bg-[#202c21]" />)}
-                </div>
+                <AdminLoading label="טוענים מתאמנות..." />
             ) : (
                 <div className="space-y-3">
-                    {filteredTrainees.map((trainee) => (
+                    {filteredTrainees.slice(0, limit).map((trainee) => (
                         <article
                             key={trainee.id}
-                            className="rounded-[1.35rem] bg-[var(--studio-sheet)] p-4 text-[var(--studio-ink)]"
+                            className="studio-admin-card rounded-[1.35rem] bg-[var(--studio-sheet)] p-4 text-[var(--studio-ink)]"
                         >
                             <div className="flex min-w-0 items-start gap-3">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-coral-bg)] text-lg font-bold text-[var(--studio-ink)]">
@@ -183,19 +185,22 @@ export default function AdminTraineesPage() {
                         </article>
                     ))}
 
-                    {filteredTrainees.length === 0 && (
-                        <div className="rounded-[1.75rem] border border-dashed border-white/15 bg-[#202c21]/50 px-5 py-12 text-center text-sm text-[#aebbad]">
+                    {!fetchError && filteredTrainees.length === 0 && (
+                        <div className="rounded-[1.75rem] border border-dashed border-white/15 bg-[var(--admin-surface)]/50 px-5 py-12 text-center text-sm text-[var(--admin-muted)]">
                             {searchTerm ? "לא נמצאו מתאמנות שמתאימות לחיפוש." : "אין מתאמנות להצגה כרגע."}
                         </div>
                     )}
                 </div>
             )}
 
+            {fetchError && <AdminError message={fetchError} onRetry={() => void fetchTrainees()} />}
+            {!loading && !fetchError && filteredTrainees.length > limit && <button type="button" onClick={() => setLimit(value => value + 24)} className="min-h-12 w-full rounded-full border border-white/20 text-sm font-bold">הצגת מתאמנות נוספות ({filteredTrainees.length - limit})</button>}
+
             {/* Ticket Update Modal */}
             <TicketUpdateModal
                 isOpen={isTicketModalOpen}
                 onClose={() => setIsTicketModalOpen(false)}
-                onConfirm={(amount) => { if (selectedTraineeForUpdate) void handleGrantTickets(selectedTraineeForUpdate.id, amount); }}
+                onConfirm={async (amount) => { if (selectedTraineeForUpdate) await handleGrantTickets(selectedTraineeForUpdate.id, amount); }}
                 traineeName={selectedTraineeForUpdate?.full_name ?? ""}
                 currentBalance={selectedTraineeForUpdate?.tickets ?? 0}
                 isUpdating={!!selectedTraineeForUpdate && grantingTickets === selectedTraineeForUpdate.id}

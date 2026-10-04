@@ -1,24 +1,37 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, useIsPresent, useReducedMotion } from "framer-motion";
 
 const scrollLocks = new WeakMap<HTMLElement, { users: number; overflow: string }>();
+const modalStack: HTMLDialogElement[] = [];
+const ModalContainerContext = createContext<HTMLElement | null>(null);
+
+/** Keep portaled pickers in the native modal's interactive top layer. */
+export function useStudioModalContainer() { return useContext(ModalContainerContext); }
 
 type StudioModalProps = {
     titleId: string;
     descriptionId?: string;
-    variant?: "confirmation" | "booking";
+    variant?: "confirmation" | "booking" | "admin";
+    role?: "dialog" | "alertdialog";
     busy?: boolean;
     onClose: () => void;
+    header?: ReactNode;
     children: ReactNode;
     actions: ReactNode;
 };
 
 /** Native top-layer modal with background isolation and explicit keyboard focus wrapping. */
-export function StudioModal({ titleId, descriptionId, variant = "confirmation", busy = false, onClose, children, actions }: StudioModalProps) {
+export function StudioModal({ titleId, descriptionId, variant = "confirmation", role = "dialog", busy = false, onClose, header, children, actions }: StudioModalProps) {
     const dialogRef = useRef<HTMLDialogElement>(null);
+    const [container, setContainer] = useState<HTMLDialogElement | null>(null);
+    const attachDialog = useCallback((element: HTMLDialogElement | null) => {
+        dialogRef.current = element;
+        setContainer(element);
+    }, []);
+    const backdropPress = useRef(false);
     const reduceMotion = useReducedMotion();
     const isPresent = useIsPresent();
     const behaviorRef = useRef({ busy, isPresent, onClose });
@@ -37,7 +50,7 @@ export function StudioModal({ titleId, descriptionId, variant = "confirmation", 
         const dialog = dialogRef.current;
         if (!dialog) return;
         const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        const scrollers = [...document.querySelectorAll<HTMLElement>("[data-member-scroll]")];
+        const scrollers = [...new Set([document.documentElement, document.body, ...document.querySelectorAll<HTMLElement>("[data-member-scroll]")])];
         scrollers.forEach(element => {
             const lock = scrollLocks.get(element);
             if (lock) lock.users++;
@@ -61,12 +74,15 @@ export function StudioModal({ titleId, descriptionId, variant = "confirmation", 
         };
         dialog.addEventListener("cancel", cancel);
         dialog.showModal();
+        modalStack.push(dialog);
         if (behaviorRef.current.busy) dialog.focus({ preventScroll: true });
         else dialog.querySelector<HTMLElement>("[data-modal-cancel]")?.focus();
         viewport?.addEventListener("resize", fitViewport);
         viewport?.addEventListener("scroll", fitViewport);
         window.addEventListener("resize", fitViewport);
         return () => {
+            const index = modalStack.indexOf(dialog);
+            if (index !== -1) modalStack.splice(index, 1);
             dialog.close();
             dialog.removeEventListener("cancel", cancel);
             scrollers.forEach(element => {
@@ -79,21 +95,26 @@ export function StudioModal({ titleId, descriptionId, variant = "confirmation", 
             viewport?.removeEventListener("resize", fitViewport);
             viewport?.removeEventListener("scroll", fitViewport);
             window.removeEventListener("resize", fitViewport);
-            if (previousFocus?.isConnected) {
-                previousFocus.focus({ preventScroll: true });
+            const returnFocus = previousFocus?.isConnected ? previousFocus
+                : modalStack.at(-1)?.querySelector<HTMLElement>("[data-modal-cancel]")
+                    ?? document.querySelector<HTMLElement>("[data-modal-fallback]");
+            if (returnFocus?.isConnected) {
+                returnFocus.focus({ preventScroll: true });
                 // Native focus restoration does not account for a resized route
                 // or its dock clearance. Scroll only as far as the trigger needs.
-                if (previousFocus.closest("[data-member-scroll]")) {
-                    previousFocus.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+                if (returnFocus.closest("[data-member-scroll]")) {
+                    returnFocus.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
                 }
             }
         };
     }, []);
 
     return createPortal(
-        <dialog ref={dialogRef} role="dialog" tabIndex={-1} className="studio-modal" data-variant={variant} aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} aria-busy={busy}
-            onClick={event => { if (event.target === event.currentTarget && !busy && isPresent) onClose(); }}
+        <dialog ref={attachDialog} role={role} tabIndex={-1} className="studio-modal" data-variant={variant} aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} aria-busy={busy}
+            onPointerDown={event => { backdropPress.current = event.target === event.currentTarget; }}
+            onClick={event => { if (backdropPress.current && event.target === event.currentTarget && !busy && isPresent) onClose(); }}
             onKeyDown={event => {
+                if (event.defaultPrevented || modalStack.at(-1) !== event.currentTarget || (event.target instanceof Element && event.target.closest('[data-studio-overlay]'))) return;
                 if (event.key === "Escape") {
                     event.preventDefault();
                     event.stopPropagation();
@@ -118,14 +139,17 @@ export function StudioModal({ titleId, descriptionId, variant = "confirmation", 
                     first.focus();
                 }
             }}>
+            <ModalContainerContext.Provider value={container}>
             <motion.div className="studio-modal-surface" inert={!isPresent}
-                initial={reduceMotion ? false : { opacity: 0, y: variant === "booking" ? 48 : 12 }}
+                initial={reduceMotion ? false : { opacity: 0, y: variant === "booking" ? 48 : variant === "admin" ? 32 : 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: variant === "booking" ? 48 : 12 }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: variant === "booking" ? 48 : variant === "admin" ? 32 : 12 }}
                 transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.2, 0.8, 0.2, 1] }}>
+                {header && <div className="studio-modal-header">{header}</div>}
                 <div className="studio-modal-content">{children}</div>
                 <div className="studio-modal-actions">{actions}</div>
             </motion.div>
+            </ModalContainerContext.Provider>
         </dialog>, document.body
     );
 }

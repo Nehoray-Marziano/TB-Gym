@@ -6,6 +6,7 @@ import { ArrowLeft, CalendarDays, UsersRound } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import StudioLogo from "@/components/StudioLogo";
 import StudioBotanical from "@/components/StudioBotanical";
+import { AdminError } from "@/components/admin/AdminFeedback";
 
 type Overview = { today: number; upcoming: number; trainees: number };
 
@@ -13,10 +14,13 @@ export default function AdminDashboardPage() {
     const supabase = getSupabaseClient();
     const [overview, setOverview] = useState<Overview | null>(null);
     const [error, setError] = useState(false);
+    const [attempt, setAttempt] = useState(0);
 
     useEffect(() => {
         let active = true;
         const load = async () => {
+            setError(false);
+            try {
             const now = new Date();
             const start = new Date(now);
             start.setHours(0, 0, 0, 0);
@@ -33,10 +37,11 @@ export default function AdminDashboardPage() {
                 return;
             }
             setOverview({ trainees: trainees.count || 0, today: today.count || 0, upcoming: upcoming.count || 0 });
+            } catch { if (active) setError(true); }
         };
         void load();
         return () => { active = false; };
-    }, [supabase]);
+    }, [supabase, attempt]);
 
     return (
         <div className="text-[var(--studio-deep-contrast)]">
@@ -62,21 +67,21 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div className="rounded-[1.35rem] border border-white/10 bg-[#202c21] p-4">
-                        <p className="text-xs text-[#aebbad]">אימונים קרובים</p>
+                    <div className="rounded-[1.35rem] border border-white/10 bg-[var(--admin-surface)] p-4">
+                        <p className="text-xs text-[var(--admin-muted)]">אימונים קרובים</p>
                         <p className="mt-3 text-[2.4rem] font-bold leading-none tabular-nums text-[var(--studio-accent-text)]">{overview?.upcoming ?? "—"}</p>
                     </div>
-                    <div className="rounded-[1.35rem] border border-white/10 bg-[#202c21] p-4">
-                        <p className="text-xs text-[#aebbad]">מתאמנות</p>
+                    <div className="rounded-[1.35rem] border border-white/10 bg-[var(--admin-surface)] p-4">
+                        <p className="text-xs text-[var(--admin-muted)]">מתאמנות</p>
                         <p className="mt-3 text-[2.4rem] font-bold leading-none tabular-nums text-[var(--studio-accent-text)]">{overview?.trainees ?? "—"}</p>
                     </div>
                 </div>
-                {error && <p role="alert" className="mt-3 text-xs text-[var(--studio-coral-text)]">לא הצלחנו לטעון את הנתונים כרגע.</p>}
+                {error && <div className="mt-3"><AdminError message="לא הצלחנו לטעון את הנתונים כרגע." onRetry={() => setAttempt(value => value + 1)} /></div>}
             </section>
 
             <nav aria-label="פעולות ניהול" className="mt-7 space-y-2">
-                <Link href="/admin/schedule" className="flex min-h-14 items-center gap-3 rounded-[1.2rem] border border-white/10 bg-[#202c21] px-4 text-sm font-bold transition-colors active:bg-[#2b392c]"><CalendarDays aria-hidden="true" className="h-5 w-5 text-[var(--studio-accent-text)]" /><span className="flex-1">יומן האימונים</span><ArrowLeft aria-hidden="true" className="h-4 w-4" /></Link>
-                <Link href="/admin/trainees" className="flex min-h-14 items-center gap-3 rounded-[1.2rem] border border-white/10 bg-[#202c21] px-4 text-sm font-bold transition-colors active:bg-[#2b392c]"><UsersRound aria-hidden="true" className="h-5 w-5 text-[var(--studio-accent-text)]" /><span className="flex-1">המתאמנות</span><ArrowLeft aria-hidden="true" className="h-4 w-4" /></Link>
+                <Link href="/admin/schedule" className="flex min-h-14 items-center gap-3 rounded-[1.2rem] border border-white/10 bg-[var(--admin-surface)] px-4 text-sm font-bold transition-colors active:bg-white/10"><CalendarDays aria-hidden="true" className="h-5 w-5 text-[var(--studio-accent-text)]" /><span className="flex-1">יומן האימונים</span><ArrowLeft aria-hidden="true" className="h-4 w-4" /></Link>
+                <Link href="/admin/trainees" className="flex min-h-14 items-center gap-3 rounded-[1.2rem] border border-white/10 bg-[var(--admin-surface)] px-4 text-sm font-bold transition-colors active:bg-white/10"><UsersRound aria-hidden="true" className="h-5 w-5 text-[var(--studio-accent-text)]" /><span className="flex-1">המתאמנות</span><ArrowLeft aria-hidden="true" className="h-4 w-4" /></Link>
             </nav>
         </div>
     );

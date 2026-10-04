@@ -1,8 +1,8 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { Bell, Calendar as CalendarIcon, Clock, Trash2, Users, Plus, X } from "lucide-react";
 
@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { TraineeSelector, type Trainee } from "@/components/admin/trainee-selector";
 import StudioLogo from "@/components/StudioLogo";
 import { useToast } from "@/components/ui/use-toast";
+import { StudioModal } from "@/components/ui/StudioModal";
+import { AdminBusyLabel, AdminError, AdminLoading } from "@/components/admin/AdminFeedback";
 
 type Session = {
     id: string;
@@ -47,18 +49,32 @@ type Booking = {
 export default function AdminSchedulePage() {
     const supabase = getSupabaseClient();
     const { toast } = useToast();
-    const reduceMotion = useReducedMotion();
+
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
+    const [sessionsError, setSessionsError] = useState<string | null>(null);
+    const [bookingsError, setBookingsError] = useState<string | null>(null);
+    const [createError, setCreateError] = useState<string | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [notifyError, setNotifyError] = useState<string | null>(null);
+    const [cancelError, setCancelError] = useState<string | null>(null);
+    const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
+    const [isCancelling, setIsCancelling] = useState(false);
+    const sessionsRequest = useRef(0);
+    const bookingsRequest = useRef(0);
+    const mutationLock = useRef(false);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+    const [listLimit, setListLimit] = useState(24);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [notifyConfirmOpen, setNotifyConfirmOpen] = useState(false);
     const [notifySending, setNotifySending] = useState(false);
 
     const notifyTrainees = async () => {
-        if (notifySending) return;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
         setNotifySending(true);
+        setNotifyError(null);
         try {
             const response = await fetch("/api/notifications", {
                 method: "POST",
@@ -74,8 +90,9 @@ export default function AdminSchedulePage() {
             toast({ title: "העדכון נשלח למתאמנות", type: "success" });
         } catch (error) {
             console.error(error);
-            toast({ title: "לא הצלחנו לשלוח את העדכון", type: "error" });
+            setNotifyError("לא הצלחנו לשלוח את העדכון. נסי שוב בעוד רגע.");
         } finally {
+            mutationLock.current = false;
             setNotifySending(false);
         }
     };
@@ -116,24 +133,42 @@ export default function AdminSchedulePage() {
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
     const fetchSessions = useCallback(async () => {
-        const { data, error } = await supabase
-            .from("gym_sessions_with_counts")
-            .select("*, bookings(count)")
-            .order("start_time", { ascending: true });
-
-        if (error) console.error(error);
-        else setSessions((data || []) as unknown as Session[]);
-        setLoading(false);
+        const request = ++sessionsRequest.current;
+        setSessionsError(null);
+        try {
+            const { data, error } = await supabase
+                .from("gym_sessions_with_counts").select("*, bookings(count)").order("start_time", { ascending: true });
+            if (request !== sessionsRequest.current) return;
+            if (error) throw error;
+            setSessions((data || []) as unknown as Session[]);
+        } catch {
+            if (request === sessionsRequest.current) setSessionsError("לא הצלחנו לטעון את האימונים. נסי שוב.");
+        } finally {
+            if (request === sessionsRequest.current) setLoading(false);
+        }
     }, [supabase]);
 
     useEffect(() => {
-        fetchSessions();
+        const sessionCounter = sessionsRequest;
+        const bookingsCounter = bookingsRequest;
+        void fetchSessions();
+        return () => { sessionCounter.current++; bookingsCounter.current++; };
     }, [fetchSessions]);
+
+    const closeCreate = () => { setIsCalendarOpen(false); setShowTraineeSelector(false); setIsModalOpen(false); };
+    const closeBookings = () => { bookingsRequest.current++; setViewBookingsSession(null); };
+    const closeDelete = () => setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 });
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (isCreating || !newSession.title.trim() || !newSession.date) return;
-
+        if (mutationLock.current) return;
+        if (!newSession.title.trim() || !newSession.date || (isPrivateSession && !selectedTrainees.length)) {
+            setCreateError("יש להזין שם ותאריך ולבחור מתאמנות לאימון למוזמנות.");
+            document.getElementById("new-session-title")?.focus();
+            return;
+        }
+        mutationLock.current = true;
+        setCreateError(null);
         setIsCreating(true);
         try {
             const [hours, minutes] = newSession.time.split(":").map(Number);
@@ -152,26 +187,32 @@ export default function AdminSchedulePage() {
             });
             if (error) throw error;
 
-            setIsModalOpen(false);
+            closeCreate();
+            setActiveTab("upcoming");
+            toast({ title: "האימון פורסם בהצלחה", type: "success" });
             setNewSession({ title: "", description: "", date: undefined, time: "08:00", max_capacity: 10 });
             setIsPrivateSession(false);
             setSelectedTrainees([]);
             fetchSessions();
         } catch (err) {
             console.error(err);
-            alert("לא הצלחנו לשמור את האימון. כדאי לנסות שוב.");
+            setCreateError("לא הצלחנו לשמור את האימון. הפרטים נשמרו כאן, ואפשר לנסות שוב.");
         } finally {
+            mutationLock.current = false;
             setIsCreating(false);
         }
     };
 
     const handleDeleteClick = (session: Session) => {
+        setDeleteError(null);
         const count = session.current_bookings || 0;
         setDeleteConfirmation({ isOpen: true, session, userCount: count });
     };
 
     const executeDeleteSession = async () => {
-        if (!deleteConfirmation.session) return;
+        if (!deleteConfirmation.session || mutationLock.current) return;
+        mutationLock.current = true;
+        setDeleteError(null);
         setIsDeleting(true);
 
         try {
@@ -196,37 +237,43 @@ export default function AdminSchedulePage() {
                 }
             }
 
-            fetchSessions();
+            setSessions(previous => previous.filter(session => session.id !== deleteConfirmation.session?.id));
+            closeDelete();
+            toast({ title: "האימון נמחק", type: "success" });
+            void fetchSessions();
         } catch (err) {
             console.error("Delete error:", err);
-            alert("לא הצלחנו למחוק את האימון. כדאי לנסות שוב.");
+            setDeleteError("לא הצלחנו למחוק את האימון. נסי שוב בעוד רגע.");
         } finally {
+            mutationLock.current = false;
             setIsDeleting(false);
-            setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 });
         }
     };
 
     const fetchBookings = async (sessionId: string) => {
+        const request = ++bookingsRequest.current;
         setLoadingBookings(true);
-        console.log("DEBUG: Fetching bookings for session:", sessionId);
-        const { data, error } = await supabase
-            .from("bookings")
-            .select(`id, status, created_at, user_id, users:profiles!user_id (id, full_name, email, phone)`)
-            .eq("session_id", sessionId)
-            .eq("status", "confirmed");
-        console.log("DEBUG: Fetch result:", { data, error });
-
-        if (error) {
-            console.error(error);
-            alert("שגיאה בטעינת נרשמות");
-        } else {
+        setBookingsError(null);
+        setSessionBookings([]);
+        try {
+            const { data, error } = await supabase.from("bookings")
+                .select("id, status, created_at, user_id, users:profiles!user_id (id, full_name, email, phone)")
+                .eq("session_id", sessionId).eq("status", "confirmed");
+            if (request !== bookingsRequest.current) return;
+            if (error) throw error;
             setSessionBookings((data || []) as unknown as Booking[]);
+        } catch {
+            if (request === bookingsRequest.current) setBookingsError("לא הצלחנו לטעון את הנרשמות. נסי שוב.");
+        } finally {
+            if (request === bookingsRequest.current) setLoadingBookings(false);
         }
-        setLoadingBookings(false);
     };
 
     const handleCancelBooking = async (booking: Booking) => {
-        if (!confirm("האם לבטל את ההרשמה ולזכות את המנויה?")) return;
+        if (mutationLock.current) return;
+        mutationLock.current = true;
+        setIsCancelling(true);
+        setCancelError(null);
         try {
             const { error } = await supabase.rpc("admin_cancel_booking", { p_booking_id: booking.id });
             if (error) throw error;
@@ -246,11 +293,17 @@ export default function AdminSchedulePage() {
                 console.error("Failed to notify user removal", e);
             }
 
-            if (viewBookingsSession) fetchBookings(viewBookingsSession.id);
+            setSessionBookings(previous => previous.filter(item => item.id !== booking.id));
+            setCancelTarget(null);
+            toast({ title: "ההרשמה בוטלה והזיכוי הוחזר", type: "success" });
+            if (viewBookingsSession) void fetchBookings(viewBookingsSession.id);
             fetchSessions();
         } catch (err) {
             console.error("Cancel booking error:", err);
-            alert("לא הצלחנו לבטל את ההרשמה. כדאי לנסות שוב.");
+            setCancelError("לא הצלחנו לבטל את ההרשמה. נסי שוב בעוד רגע.");
+        } finally {
+            mutationLock.current = false;
+            setIsCancelling(false);
         }
     };
 
@@ -273,6 +326,8 @@ export default function AdminSchedulePage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
+                        type="button"
+                        data-modal-fallback
                         onClick={() => setIsModalOpen(true)}
                         aria-label="אימון חדש"
                         className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] transition-transform active:scale-95"
@@ -282,7 +337,7 @@ export default function AdminSchedulePage() {
                     <button
                         type="button"
                         aria-label="להודיע למתאמנות שהלוח עודכן"
-                        onClick={() => setNotifyConfirmOpen(true)}
+                        onClick={() => { setNotifyError(null); setNotifyConfirmOpen(true); }}
                         className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-[var(--studio-accent-text)] transition-colors active:bg-white/10"
                     >
                         <Bell aria-hidden="true" className="h-5 w-5" />
@@ -291,13 +346,13 @@ export default function AdminSchedulePage() {
             </header>
 
             {/* Tabs */}
-            <div className="grid grid-cols-2 gap-1 rounded-[1.1rem] border border-white/10 bg-[#202c21] p-1">
+            <div className="grid grid-cols-2 gap-1 rounded-[1.1rem] border border-white/10 bg-[var(--admin-surface)] p-1">
                 <button
-                    onClick={() => setActiveTab('upcoming')}
+                    onClick={() => { setActiveTab('upcoming'); setListLimit(24); }}
                     aria-pressed={activeTab === 'upcoming'}
                     className={cn(
                         "flex min-h-11 items-center justify-center gap-2 rounded-[0.85rem] px-2 text-xs font-bold transition-colors",
-                        activeTab === 'upcoming' ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "text-[#aebbad]"
+                        activeTab === 'upcoming' ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "text-[var(--admin-muted)]"
                     )}
                 >
                     אימונים קרובים
@@ -305,15 +360,15 @@ export default function AdminSchedulePage() {
                         "rounded-full px-2 py-0.5 text-[11px] tabular-nums",
                         activeTab === 'upcoming' ? "bg-[var(--studio-deep)]/10" : "bg-white/10"
                     )}>
-                        {upcomingSessions.length}
+                        {loading ? "—" : upcomingSessions.length}
                     </span>
                 </button>
                 <button
-                    onClick={() => setActiveTab('past')}
+                    onClick={() => { setActiveTab('past'); setListLimit(24); }}
                     aria-pressed={activeTab === 'past'}
                     className={cn(
                         "flex min-h-11 items-center justify-center gap-2 rounded-[0.85rem] px-2 text-xs font-bold transition-colors",
-                        activeTab === 'past' ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "text-[#aebbad]"
+                        activeTab === 'past' ? "bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "text-[var(--admin-muted)]"
                     )}
                 >
                     אימונים שעברו
@@ -321,21 +376,17 @@ export default function AdminSchedulePage() {
                         "rounded-full px-2 py-0.5 text-[11px] tabular-nums",
                         activeTab === 'past' ? "bg-[var(--studio-deep)]/10" : "bg-white/10"
                     )}>
-                        {pastSessions.length}
+                        {loading ? "—" : pastSessions.length}
                     </span>
 
                 </button>
             </div>
 
             {loading ? (
-                <div aria-label="טוענים אימונים" className="space-y-3">
-                    {Array.from({ length: 2 }).map((_, i) => (
-                        <div key={i} className="h-36 animate-pulse rounded-[1.35rem] bg-[#202c21]" />
-                    ))}
-                </div>
+                <AdminLoading label="טוענים אימונים..." />
             ) : (
-                <div className="space-y-3">
-                        {displayedSessions.map((session) => {
+                <div key={activeTab} className="studio-admin-list space-y-3">
+                        {displayedSessions.slice(0, listLimit).map((session) => {
                             const count = session.current_bookings || 0;
                             const fillPercent = Math.min((count / session.max_capacity) * 100, 100);
                             const isFull = count >= session.max_capacity;
@@ -343,20 +394,20 @@ export default function AdminSchedulePage() {
                             return (
                                 <div
                                     key={session.id}
-                                    className="rounded-[1.35rem] bg-[var(--studio-sheet)] p-4 text-[var(--studio-ink)]"
+                                    className="studio-admin-card rounded-[1.35rem] bg-[var(--studio-sheet)] p-4 text-[var(--studio-ink)]"
                                 >
                                     {/* Top Metadata */}
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
-                                            <h3 className="text-lg font-bold leading-tight">{session.title}</h3>
+                                            <h3 className="break-words text-lg font-bold leading-tight">{session.title}</h3>
                                             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--studio-muted)]">
                                                 <span className="flex items-center gap-1.5">
                                                     <CalendarIcon aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-subtle)]" />
-                                                    {new Date(session.start_time).toLocaleDateString("he-IL", { day: 'numeric', month: 'numeric' })}
+                                                    {new Date(session.start_time).toLocaleDateString("he-IL", { day: 'numeric', month: 'numeric', timeZone: "Asia/Jerusalem" })}
                                                 </span>
                                                 <span className="flex items-center gap-1.5">
                                                     <Clock aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-subtle)]" />
-                                                    {new Date(session.start_time).toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(session.start_time).toLocaleTimeString("he-IL", { hour: '2-digit', minute: '2-digit', timeZone: "Asia/Jerusalem" })}
                                                 </span>
                                             </div>
                                         </div>
@@ -380,8 +431,8 @@ export default function AdminSchedulePage() {
                                         </div>
                                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--studio-deep)]/10">
                                             <div
-                                                style={{ width: `${fillPercent}%` }}
-                                                className={`h-full rounded-full ${isFull ? "bg-[var(--studio-danger)]" : "bg-[var(--studio-accent-text)]"}`}
+                                                style={{ transform: `scaleX(${fillPercent / 100})` }}
+                                                className={`studio-admin-capacity h-full rounded-full ${isFull ? "bg-[var(--studio-danger)]" : "bg-[var(--studio-subtle)]"}`}
                                             />
                                         </div>
                                     </div>
@@ -404,14 +455,17 @@ export default function AdminSchedulePage() {
                 </div>
             )}
 
+            {sessionsError && <AdminError message={sessionsError} onRetry={() => void fetchSessions()} />}
+            {!loading && !sessionsError && displayedSessions.length > listLimit && <button type="button" onClick={() => setListLimit(value => value + 24)} className="min-h-12 w-full rounded-full border border-white/20 text-sm font-bold">הצגת אימונים נוספים ({displayedSessions.length - listLimit})</button>}
+
             {/* Empty State */}
-            {!loading && displayedSessions.length === 0 && (
-                <div className="rounded-[1.75rem] border border-dashed border-white/15 bg-[#202c21]/50 px-6 py-12 text-center">
+            {!loading && !sessionsError && displayedSessions.length === 0 && (
+                <div className="rounded-[1.75rem] border border-dashed border-white/15 bg-[var(--admin-surface)]/50 px-6 py-12 text-center">
                     <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--studio-accent-bg)]/15 text-[var(--studio-accent-text)]"><CalendarIcon aria-hidden="true" className="h-7 w-7" /></span>
                     <h3 className="mt-5 text-lg font-bold">
                         {activeTab === 'upcoming' ? 'אין אימונים קרובים כרגע' : 'אין אימונים קודמים'}
                     </h3>
-                    <p className="mx-auto mt-2 max-w-56 text-sm leading-relaxed text-[#aebbad]">
+                    <p className="mx-auto mt-2 max-w-56 text-sm leading-relaxed text-[var(--admin-muted)]">
                         {activeTab === 'upcoming'
                             ? 'כדי להתחיל, הוסיפי אימון חדש ללוח.'
                             : 'כאן יופיעו אימונים שכבר התקיימו.'}
@@ -419,46 +473,35 @@ export default function AdminSchedulePage() {
                 </div>
             )}
 
+
             <AnimatePresence>
-                {notifyConfirmOpen && (
-                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] flex items-end justify-center">
-                        <button type="button" aria-label="סגירה" onClick={() => !notifySending && setNotifyConfirmOpen(false)} className="absolute inset-0 bg-black/65" />
-                        <motion.div role="dialog" aria-modal="true" aria-labelledby="notify-title" initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={reduceMotion ? undefined : { y: "100%" }} transition={{ type: "spring", stiffness: 350, damping: 35 }} className="relative w-full max-w-lg rounded-t-[2rem] bg-[var(--studio-sheet)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]">
-                            <p className="text-xs font-bold text-[var(--studio-subtle)]">עדכון לוח האימונים</p>
-                            <h2 id="notify-title" className="mt-2 text-[1.7rem] font-bold leading-tight">לשלוח התראה למתאמנות?</h2>
-                            <p className="mt-3 text-sm leading-relaxed text-[var(--studio-muted)]">נשלח עדכון שהלוח החדש מוכן ושאפשר להירשם.</p>
-                            <div className="mt-7 grid grid-cols-2 gap-3">
-                                <button type="button" disabled={notifySending} onClick={() => setNotifyConfirmOpen(false)} className="min-h-12 rounded-full border border-[var(--studio-ink)]/15 text-sm font-bold">לא עכשיו</button>
-                                <button type="button" disabled={notifySending} onClick={notifyTrainees} className="min-h-12 rounded-full bg-[var(--studio-deep)] text-sm font-bold text-[var(--studio-accent-text)] disabled:opacity-50">{notifySending ? "שולחות..." : "שלחי עדכון"}</button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
+                {notifyConfirmOpen && <StudioModal variant="admin" titleId="notify-title" descriptionId="notify-description" busy={notifySending} onClose={() => setNotifyConfirmOpen(false)} actions={
+                    <div className="grid grid-cols-2 gap-3">
+                        <button type="button" data-modal-cancel disabled={notifySending} onClick={() => setNotifyConfirmOpen(false)} className="studio-admin-action" data-emphasis="outline">לא עכשיו</button>
+                        <button type="button" disabled={notifySending} onClick={notifyTrainees} className="studio-admin-action" aria-busy={notifySending}><AdminBusyLabel busy={notifySending} idle="שלחי עדכון" pending="שולחות..." /></button>
+                    </div>
+                }>
+                    <p className="text-xs font-bold text-[var(--studio-subtle)]">עדכון לוח האימונים</p>
+                    <h2 id="notify-title" className="mt-2 text-[1.7rem] font-bold leading-tight">לשלוח התראה למתאמנות?</h2>
+                    <p id="notify-description" className="mt-3 text-sm leading-relaxed text-[var(--studio-muted)]">נשלח עדכון שהלוח החדש מוכן ושאפשר להירשם.</p>
+                    {notifyError && <div className="mt-4"><AdminError message={notifyError} /></div>}
+                </StudioModal>}
             </AnimatePresence>
 
-            {/* CREATE MODAL */}
             <AnimatePresence>
-                {isModalOpen && (
-                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-end justify-center">
-                        <div
-                            onClick={() => setIsModalOpen(false)}
-                            className="absolute inset-0 bg-[#071009]/80"
-                        />
-                        <motion.div
-                            initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="create-session-title"
-                            className="relative z-10 max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
-                        >
-                            <button type="button" onClick={() => setIsModalOpen(false)} aria-label="סגירה" className="absolute left-5 top-6 flex h-11 w-11 items-center justify-center rounded-full border border-[#1b251c]/15">
-                                <X aria-hidden="true" className="h-5 w-5" />
-                            </button>
-
-                            <p className="text-xs font-bold text-[var(--studio-subtle)]">יומן האימונים</p>
-                            <h2 id="create-session-title" className="mb-7 mt-2 text-[2rem] font-bold leading-tight">אימון חדש.</h2>
-
-                            <form onSubmit={handleCreate} className="space-y-5">
+                {isModalOpen && <StudioModal variant="admin" titleId="create-session-title" busy={isCreating} onClose={closeCreate} actions={
+                    <button type="submit" form="create-session-form" disabled={isCreating || !newSession.title.trim() || !newSession.date || (isPrivateSession && selectedTrainees.length === 0)} className="studio-admin-action" aria-busy={isCreating}>
+                        <AdminBusyLabel busy={isCreating} idle="פרסום אימון" pending="מפרסמים..." />
+                    </button>
+                } header={<>
+                    <button type="button" data-modal-cancel disabled={isCreating} onClick={closeCreate} aria-label="סגירת אימון חדש" className="studio-admin-modal-close"><X aria-hidden="true" className="h-5 w-5" /></button>
+                    <div className="studio-admin-modal-heading">
+                        <p className="text-xs font-bold text-[var(--studio-subtle)]">יומן האימונים</p>
+                        <h2 id="create-session-title" className="mt-2 text-[2rem] font-bold leading-tight">אימון חדש.</h2>
+                    </div>
+                </>}>
+                            <form id="create-session-form" noValidate onSubmit={handleCreate} className="space-y-5">
+                                <fieldset disabled={isCreating} className="min-w-0 space-y-5 border-0 p-0">
                                 <div className="space-y-2">
                                     <label htmlFor="new-session-title" className="text-xs font-bold">שם האימון</label>
                                     <CopyableInput copyLabel="העתקת שם האימון"
@@ -467,7 +510,7 @@ export default function AdminSchedulePage() {
                                         value={newSession.title}
                                         onChange={e => setNewSession({ ...newSession, title: e.target.value })}
                                         className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-base font-bold outline-none focus:border-[var(--studio-accent-text)]"
-                                        placeholder="למשל, אימון כוח"
+                                        required aria-invalid={!!createError && !newSession.title.trim()} aria-describedby={createError ? "create-session-error" : undefined} placeholder="למשל, אימון כוח"
                                     />
                                 </div>
 
@@ -479,12 +522,12 @@ export default function AdminSchedulePage() {
                                         </div>
                                         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                             <PopoverTrigger asChild>
-                                                <Button variant={"outline"} className="h-14 w-full justify-between rounded-2xl border-[#1b251c]/20 bg-[var(--studio-card)] px-3 text-sm font-medium text-[var(--studio-ink)] hover:bg-[var(--studio-card)] hover:text-[var(--studio-ink)]">
+                                                <Button type="button" onClick={() => setIsCalendarOpen(true)} aria-label="בחירת תאריך האימון" variant={"outline"} className="h-14 w-full justify-between rounded-2xl border-[#1b251c]/20 bg-[var(--studio-card)] px-3 text-sm font-medium text-[var(--studio-ink)] hover:bg-[var(--studio-card)] hover:text-[var(--studio-ink)]">
                                                     {newSession.date ? format(newSession.date, "dd/MM/yyyy") : <span className="text-[var(--studio-muted)]">בחירת תאריך</span>}
                                                     <CalendarIcon aria-hidden="true" className="h-4 w-4 text-[var(--studio-muted)]" />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent side="top" sideOffset={8} className="z-[70] max-h-[42dvh] w-auto overflow-y-auto border-[#1b251c]/20 bg-[var(--studio-sheet)] p-0" align="start">
+                                            <PopoverContent side="top" sideOffset={8} className="studio-admin-calendar w-auto border-[#1b251c]/20 p-0" align="start">
                                                 <Calendar
                                                     mode="single"
                                                     selected={newSession.date}
@@ -539,8 +582,8 @@ export default function AdminSchedulePage() {
                                             <div className="flex min-h-14 items-center gap-4 rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] p-2 ps-4">
                                                 <div className="flex-1 text-lg font-bold tabular-nums">{newSession.max_capacity}</div>
                                                 <div className="flex gap-2">
-                                                    <button type="button" aria-label="הפחתת מקום" onClick={() => setNewSession(p => ({ ...p, max_capacity: Math.max(1, p.max_capacity - 1) }))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8ebdf] text-lg font-bold">−</button>
-                                                    <button type="button" aria-label="הוספת מקום" onClick={() => setNewSession(p => ({ ...p, max_capacity: p.max_capacity + 1 }))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--studio-accent-bg)] text-lg font-bold">+</button>
+                                                    <button type="button" disabled={newSession.max_capacity <= 1} aria-label="הפחתת מקום" onClick={() => setNewSession(p => ({ ...p, max_capacity: Math.max(1, p.max_capacity - 1) }))} className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e8ebdf] text-lg font-bold">−</button>
+                                                    <button type="button" aria-label="הוספת מקום" onClick={() => setNewSession(p => ({ ...p, max_capacity: p.max_capacity + 1 }))} className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--studio-accent-bg)] text-lg font-bold">+</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -562,7 +605,7 @@ export default function AdminSchedulePage() {
                                                     onClick={() => setShowTraineeSelector(true)}
                                                     className="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#1b251c]/25 bg-[var(--studio-card)] p-4"
                                                 >
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dfe6bd]">
+                                                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dfe6bd]">
                                                         <Users aria-hidden="true" className="h-5 w-5" />
                                                     </div>
                                                     <span className="text-sm font-bold">בחירת מתאמנות לאימון</span>
@@ -592,126 +635,62 @@ export default function AdminSchedulePage() {
                                     )}
                                 </div>
 
-                                <button
-                                    disabled={isCreating || !newSession.title || !newSession.date || (isPrivateSession && selectedTrainees.length === 0)}
-                                    className="mt-4 min-h-14 w-full rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-white disabled:opacity-50"
-                                >
-                                    פרסום אימון
-                                </button>
+                                </fieldset>
+                                {createError && <div id="create-session-error"><AdminError message={createError} /></div>}
                             </form>
-                        </motion.div>
-                    </motion.div>
-                )}
+                </StudioModal>}
             </AnimatePresence>
 
-            {/* Trainee Selector Modal */}
             <AnimatePresence>
-                {showTraineeSelector && (
-                    <TraineeSelector
-                        selectedTrainees={selectedTrainees}
-                        onSelect={setSelectedTrainees}
-                        onClose={() => setShowTraineeSelector(false)}
-                    />
-                )}
+                {showTraineeSelector && <TraineeSelector selectedTrainees={selectedTrainees} onSelect={setSelectedTrainees} onClose={() => setShowTraineeSelector(false)} />}
             </AnimatePresence>
 
-            {/* View Bookings Modal */}
             <AnimatePresence>
-                {viewBookingsSession && (
-                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-end justify-center">
-                        <div
-                            onClick={() => setViewBookingsSession(null)}
-                            className="absolute inset-0 bg-[#071009]/80"
-                        />
-                        <motion.div
-                            initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="session-bookings-title"
-                            className="relative z-10 flex max-h-[94dvh] w-full max-w-lg flex-col rounded-t-[2rem] bg-[var(--studio-sheet)] px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
-                        >
-                            <div className="mb-6 shrink-0">
-                                <p className="text-xs font-bold text-[var(--studio-subtle)]">{viewBookingsSession.title}</p>
-                                <h2 id="session-bookings-title" className="mt-2 text-[2rem] font-bold leading-tight">מי נרשמה?</h2>
+                {viewBookingsSession && <StudioModal variant="admin" titleId="session-bookings-title" descriptionId="session-bookings-description" busy={isCancelling} onClose={closeBookings} actions={
+                    <button type="button" data-modal-cancel disabled={isCancelling} onClick={closeBookings} className="studio-admin-action">סגירה</button>
+                }>
+                    <div className="mb-6">
+                        <p id="session-bookings-description" className="text-xs font-bold text-[var(--studio-subtle)]">{viewBookingsSession.title}</p>
+                        <h2 id="session-bookings-title" className="mt-2 text-[2rem] font-bold leading-tight">מי נרשמה?</h2>
+                    </div>
+                    <div className="space-y-3">
+                        {loadingBookings ? <AdminLoading label="טוענים נרשמות..." /> : bookingsError ? <AdminError message={bookingsError} onRetry={() => void fetchBookings(viewBookingsSession.id)} /> : sessionBookings.length === 0 ? (
+                            <div className="rounded-2xl border border-dashed border-[#1b251c]/20 bg-[var(--studio-card)] px-4 py-10 text-center text-sm text-[var(--studio-muted)]">עדיין אין נרשמות לאימון הזה.</div>
+                        ) : sessionBookings.map(booking => (
+                            <div key={booking.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#1b251c]/10 bg-[var(--studio-card)] p-4">
+                                <div className="flex min-w-0 flex-1 items-center gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--studio-neutral-bg)] text-sm font-bold">{booking.users?.full_name?.[0] || "?"}</div>
+                                    <div className="min-w-0"><p dir="auto" className="break-words text-sm font-bold">{booking.users?.full_name || "ללא שם"}</p><p className="mt-1 text-xs text-[var(--studio-muted)]" dir="ltr">{booking.users?.phone}</p></div>
+                                </div>
+                                <button type="button" onClick={() => { setCancelError(null); setCancelTarget(booking); }} aria-label={`ביטול ההרשמה של ${booking.users?.full_name || "המתאמנת"}`} className="min-h-11 shrink-0 rounded-full border border-[var(--studio-danger)]/20 px-3 text-xs font-bold text-[var(--studio-danger)]">ביטול הרשמה</button>
                             </div>
-
-                            <div className="flex-1 space-y-3 overflow-y-auto">
-                                {loadingBookings ? (
-                                    <div className="flex justify-center p-8"><div aria-label="טוענים נרשמות" className="h-6 w-6 animate-spin rounded-full border-2 border-[#1b251c] border-t-transparent" /></div>
-                                ) : sessionBookings.length === 0 ? (
-                                    <div className="rounded-2xl border border-dashed border-[#1b251c]/20 bg-[var(--studio-card)] px-4 py-10 text-center text-sm text-[var(--studio-muted)]">
-                                        עדיין אין נרשמות לאימון הזה.
-                                    </div>
-                                ) : (
-                                    sessionBookings.map(booking => (
-                                        <div key={booking.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#1b251c]/10 bg-[var(--studio-card)] p-4">
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dfe6bd] text-sm font-bold">{booking.users?.full_name?.[0] || "?"}</div>
-                                                <div className="min-w-0">
-                                                    <p className="truncate text-sm font-bold">{booking.users?.full_name || "ללא שם"}</p>
-                                                    <p className="mt-1 text-xs text-[var(--studio-muted)]" dir="ltr">{booking.users?.phone}</p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => handleCancelBooking(booking)}
-                                                className="min-h-11 shrink-0 rounded-full border border-[var(--studio-danger)]/20 px-3 text-xs font-bold text-[var(--studio-danger)]"
-                                            >
-                                                ביטול הרשמה
-                                            </button>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            <button type="button" onClick={() => setViewBookingsSession(null)} className="mt-6 min-h-12 w-full rounded-full bg-[var(--studio-deep)] px-5 text-sm font-bold text-white">
-                                סגירה
-                            </button>
-                        </motion.div>
-                    </motion.div>
-                )}
+                        ))}
+                    </div>
+                </StudioModal>}
             </AnimatePresence>
 
-            {/* Delete Confirmation Modal */}
             <AnimatePresence>
-                {deleteConfirmation.isOpen && (
-                    <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[80] flex items-end justify-center">
-                        <div
-                            onClick={() => setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 })}
-                            className="absolute inset-0 bg-[#071009]/80"
-                        />
-                        <motion.div
-                            initial={reduceMotion ? false : { y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                            role="alertdialog"
-                            aria-modal="true"
-                            aria-labelledby="delete-session-title"
-                            className="relative z-10 max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[var(--studio-sheet)] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7 text-[var(--studio-ink)]"
-                        >
-                            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--studio-danger)]/10 text-[var(--studio-danger)]"><Trash2 aria-hidden="true" className="h-6 w-6" /></span>
-                            <h2 id="delete-session-title" className="mt-5 text-[2rem] font-bold leading-tight">למחוק את האימון?</h2>
-                            <p className="mb-7 mt-3 text-sm leading-relaxed text-[var(--studio-muted)]">
-                                {deleteConfirmation.userCount > 0
-                                    ? `${deleteConfirmation.userCount} נרשמות יקבלו את הזיכוי שלהן בחזרה. אי אפשר לבטל את המחיקה.`
-                                    : "האימון יוסר מהלוח. אי אפשר לבטל את המחיקה."}
-                            </p>
+                {cancelTarget && <StudioModal variant="admin" role="alertdialog" titleId="cancel-booking-title" descriptionId="cancel-booking-description" busy={isCancelling} onClose={() => setCancelTarget(null)} actions={<>
+                    <button type="button" disabled={isCancelling} onClick={() => void handleCancelBooking(cancelTarget)} className="studio-admin-action" data-intent="danger" aria-busy={isCancelling}><AdminBusyLabel busy={isCancelling} idle="ביטול הרשמה והחזרת זיכוי" pending="מבטלים..." /></button>
+                    <button type="button" data-modal-cancel disabled={isCancelling} onClick={() => setCancelTarget(null)} className="studio-admin-action" data-emphasis="outline">להשאיר את ההרשמה</button>
+                </>}>
+                    <h2 id="cancel-booking-title" className="text-[1.7rem] font-bold leading-tight">לבטל את ההרשמה?</h2>
+                    <p id="cancel-booking-description" className="mt-3 text-sm leading-relaxed text-[var(--studio-muted)]">ההרשמה של {cancelTarget.users?.full_name || "המתאמנת"} לאימון ״{viewBookingsSession?.title}״ תבוטל, והזיכוי יוחזר לחשבונה.</p>
+                    {cancelError && <div className="mt-4"><AdminError message={cancelError} /></div>}
+                </StudioModal>}
+            </AnimatePresence>
 
-                            <div className="space-y-2">
-                                <button
-                                    onClick={executeDeleteSession}
-                                    disabled={isDeleting}
-                                    className="min-h-14 w-full rounded-full bg-[var(--studio-danger)] px-5 text-sm font-bold text-white disabled:opacity-50"
-                                >
-                                    {isDeleting ? "מוחקים..." : "כן, למחוק את האימון"}
-                                </button>
-                                <button
-                                    onClick={() => setDeleteConfirmation({ isOpen: false, session: null, userCount: 0 })}
-                                    className="min-h-12 w-full text-sm font-bold text-[var(--studio-muted)]"
-                                >
-                                    להשאיר את האימון
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
+            <AnimatePresence>
+                {deleteConfirmation.isOpen && <StudioModal variant="admin" role="alertdialog" titleId="delete-session-title" descriptionId="delete-session-description" busy={isDeleting} onClose={closeDelete} actions={<>
+                    <button type="button" disabled={isDeleting} onClick={executeDeleteSession} className="studio-admin-action" data-intent="danger" aria-busy={isDeleting}><AdminBusyLabel busy={isDeleting} idle="כן, למחוק את האימון" pending="מוחקים..." /></button>
+                    <button type="button" data-modal-cancel disabled={isDeleting} onClick={closeDelete} className="studio-admin-action" data-emphasis="outline">להשאיר את האימון</button>
+                </>}>
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--studio-danger)]/10 text-[var(--studio-danger)]"><Trash2 aria-hidden="true" className="h-6 w-6" /></span>
+                    <h2 id="delete-session-title" className="mt-5 text-[2rem] font-bold leading-tight">למחוק את האימון?</h2>
+                    <p className="mt-3 break-words text-sm font-bold">״{deleteConfirmation.session?.title}״</p>
+                    <p id="delete-session-description" className="mt-3 text-sm leading-relaxed text-[var(--studio-muted)]">{deleteConfirmation.userCount > 0 ? `${deleteConfirmation.userCount} נרשמות יקבלו את הזיכוי שלהן בחזרה. אי אפשר לבטל את המחיקה.` : "האימון יוסר מהלוח. אי אפשר לבטל את המחיקה."}</p>
+                    {deleteError && <div className="mt-4"><AdminError message={deleteError} /></div>}
+                </StudioModal>}
             </AnimatePresence>
         </div>
     );

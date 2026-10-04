@@ -1,0 +1,19 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["src/app/admin", "src/components/admin", "src/components/ui"],
+  "locale": "he-IL",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Date", "Form", "Scrollbar", "Toast", "CRUD"],
+  "ownership": { "Date": "authored" },
+  "requiredCommands": ["lint", "typecheck", "unit", "e2e"],
+  "commands": {
+    "lint": "node node_modules/eslint/bin/eslint.js src/app/admin src/components/admin src/components/ui scripts/check-admin-polish.mjs",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
+    "unit": "node --experimental-strip-types --test scripts/test-pwa-update.mjs scripts/test-gym-data.mjs",
+    "e2e": "node scripts/check-admin-polish.mjs"
+  },
+  "evidence": {
+    "crudFullFlow": "scripts/check-admin-polish.mjs",
+    "failurePaths": "scripts/check-admin-polish.mjs"
+  }
+}

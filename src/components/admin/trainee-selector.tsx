@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { Search, User, Check, X } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { User, Check, X } from "lucide-react";
+import { StudioModal } from "@/components/ui/StudioModal";
+import { AdminSearch } from "./AdminSearch";
+import { AdminError, AdminLoading } from "./AdminFeedback";
 import { cn } from "@/lib/utils";
-import { CopyableInput } from "@/components/ui/copyable-field";
 
 export type Trainee = {
     id: string;
@@ -23,91 +24,60 @@ interface TraineeSelectorProps {
 
 export function TraineeSelector({ selectedTrainees, onSelect, onClose }: TraineeSelectorProps) {
     const supabase = getSupabaseClient();
-    const reduceMotion = useReducedMotion();
     const [trainees, setTrainees] = useState<Trainee[]>([]);
     const [term, setTerm] = useState("");
     const [loading, setLoading] = useState(true);
+    const [attempt, setAttempt] = useState(0);
+    const [limit, setLimit] = useState(24);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchTrainees = async () => {
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("*")
-                .order("full_name", { ascending: true });
-
-            if (error) {
-                console.error("Error fetching trainees:", error);
-                setFetchError("לא הצלחנו לטעון את המתאמנות. כדאי לנסות שוב.");
-            } else if (data) {
-                setTrainees(data as Trainee[]);
-            }
-            setLoading(false);
+        let active = true;
+        const load = async () => {
+            setLoading(true);
+            setFetchError(null);
+            try {
+                const { data, error } = await supabase.from("profiles")
+                    .select("id,full_name,email,phone").neq("role", "administrator")
+                    .order("full_name", { ascending: true });
+                if (!active) return;
+                if (error) throw error;
+                setTrainees((data || []) as Trainee[]);
+            } catch {
+                if (active) setFetchError("לא הצלחנו לטעון את המתאמנות. כדאי לנסות שוב.");
+            } finally { if (active) setLoading(false); }
         };
-        fetchTrainees();
-    }, [supabase]);
+        void load();
+        return () => { active = false; };
+    }, [supabase, attempt]);
 
-    const lowerTerm = term.toLowerCase();
-    const filtered = trainees.filter(t =>
-        (t.full_name || "").toLowerCase().includes(lowerTerm) ||
-        (t.phone || "").includes(lowerTerm) ||
-        (t.email || "").toLowerCase().includes(lowerTerm)
+    const lowerTerm = term.trim().toLowerCase();
+    const filtered = trainees.filter(trainee =>
+        (trainee.full_name || "").toLowerCase().includes(lowerTerm) ||
+        (trainee.phone || "").includes(lowerTerm) ||
+        (trainee.email || "").toLowerCase().includes(lowerTerm)
     );
-
     const toggleSelection = (trainee: Trainee) => {
-        if (selectedTrainees.some(t => t.id === trainee.id)) {
-            onSelect(selectedTrainees.filter(t => t.id !== trainee.id));
-        } else {
-            onSelect([...selectedTrainees, trainee]);
-        }
+        onSelect(selectedTrainees.some(item => item.id === trainee.id)
+            ? selectedTrainees.filter(item => item.id !== trainee.id)
+            : [...selectedTrainees, trainee]);
     };
 
-    return (
-        <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] flex items-end justify-center">
-            <div className="absolute inset-0 bg-[#071009]/80" onClick={onClose} />
-            <motion.div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="trainee-selector-title"
-                initial={reduceMotion ? false : { y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                className="relative z-10 flex h-[94dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[2rem] bg-[var(--studio-sheet)] text-[var(--studio-ink)]"
-            >
-                {/* Header */}
-                <div className="border-b border-[#1b251c]/10 px-5 pb-5 pt-7">
-                    <div className="mb-5 flex items-start justify-between gap-3">
-                        <div><p className="text-xs font-bold text-[var(--studio-subtle)]">אימון למוזמנות</p><h3 id="trainee-selector-title" className="mt-2 text-[2rem] font-bold leading-tight">את מי מזמינים?</h3></div>
-                        <button type="button" onClick={onClose} aria-label="סגירה" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#1b251c]/15">
-                            <X aria-hidden="true" className="h-5 w-5" />
-                        </button>
-                    </div>
-
-                    {/* Search */}
-                    <div className="relative">
-                        <Search aria-hidden="true" className="pointer-events-none absolute z-[1] right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--studio-muted)]" />
-                        <CopyableInput copyLabel="העתקת החיפוש"
-                            type="text"
-                            aria-label="חיפוש מתאמנת"
-                            placeholder="חיפוש לפי שם או טלפון"
-                            value={term}
-                            onChange={e => setTerm(e.target.value)}
-                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] py-3 pr-10 pl-4 text-sm outline-none focus:border-[var(--studio-accent-text)]"
-                        />
-                    </div>
-                </div>
-
-                {/* List */}
-                <div className="flex-1 space-y-2 overflow-y-auto p-5">
-                    {loading ? (
-                        <div className="flex justify-center p-8"><div aria-label="טוענים מתאמנות" className="h-6 w-6 animate-spin rounded-full border-2 border-[#1b251c] border-t-transparent" /></div>
-                    ) : fetchError ? (
-                        <div role="alert" className="p-4 text-center text-sm font-bold text-[var(--studio-danger)]">{fetchError}</div>
-                    ) : filtered.length === 0 ? (
-                        <div className="p-8 text-center text-sm text-[var(--studio-muted)]">לא נמצאו מתאמנות.</div>
-                    ) : (
-                        filtered.map(trainee => {
+    return <StudioModal variant="admin" titleId="trainee-selector-title" onClose={onClose} actions={
+        <div className="flex items-center justify-between gap-3">
+            <span role="status" className="text-sm font-bold text-[var(--studio-muted)]">נבחרו {selectedTrainees.length}</span>
+            <button type="button" onClick={onClose} className="studio-admin-action">סיימתי</button>
+        </div>
+    } header={<>
+        <button type="button" data-modal-cancel onClick={onClose} aria-label="סגירת בחירת המתאמנות" className="studio-admin-modal-close"><X aria-hidden="true" className="h-5 w-5" /></button>
+        <div className="studio-admin-modal-heading"><p className="text-xs font-bold text-[var(--studio-subtle)]">אימון למוזמנות</p><h2 id="trainee-selector-title" className="mt-2 text-[2rem] font-bold leading-tight">את מי מזמינים?</h2></div>
+    </>}>
+        <AdminSearch value={term} onChange={value => { setTerm(value); setLimit(24); }} />
+        <div className="mt-5 space-y-2">
+            {loading ? <AdminLoading label="טוענים מתאמנות..." /> : fetchError ? <AdminError message={fetchError} onRetry={() => setAttempt(value => value + 1)} /> : filtered.length === 0 ? (
+                <div className="p-8 text-center text-sm text-[var(--studio-muted)]">לא נמצאו מתאמנות.</div>
+            ) : (
+                        filtered.slice(0, limit).map(trainee => {
                             const isSelected = selectedTrainees.some(t => t.id === trainee.id);
                             return (
                                 <button
@@ -118,21 +88,21 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                                     className={cn(
                                         "flex min-h-16 w-full items-center gap-3 rounded-2xl border p-3 text-right transition-colors",
                                         isSelected
-                                            ? "border-[var(--studio-accent-text)]/50 bg-[#dfe6bd]"
+                                            ? "border-[var(--studio-accent-text)]/50 bg-[var(--studio-neutral-bg)]"
                                             : "border-[#1b251c]/10 bg-[var(--studio-card)]"
                                     )}
                                 >
                                     <div className={cn(
                                         "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                                        isSelected ? "bg-[var(--studio-deep)] text-white" : "bg-[#dfe6bd] text-[var(--studio-ink)]"
+                                        isSelected ? "bg-[var(--studio-deep)] text-white" : "bg-[var(--studio-neutral-bg)] text-[var(--studio-ink)]"
                                     )}>
                                         {trainee.full_name?.[0] || <User aria-hidden="true" className="h-5 w-5" />}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-bold">
+                                        <p className="break-words text-sm font-bold">
                                             {trainee.full_name || "ללא שם"}
                                         </p>
-                                        <p dir="ltr" className="mt-1 truncate text-xs text-[var(--studio-muted)]">{trainee.phone}</p>
+                                        <p dir="ltr" className="mt-1 break-all text-xs text-[var(--studio-muted)]">{trainee.phone}</p>
                                     </div>
                                     <div className={cn(
                                         "flex h-6 w-6 items-center justify-center rounded-full border",
@@ -143,23 +113,8 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
                                 </button>
                             );
                         })
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between gap-3 border-t border-[#1b251c]/10 bg-[var(--studio-sheet)] px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
-                    <span className="text-xs font-bold text-[var(--studio-muted)]">
-                        נבחרו {selectedTrainees.length}
-                    </span>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="min-h-12 rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-white"
-                    >
-                        סיימתי
-                    </button>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
+            )}
+            {!loading && !fetchError && filtered.length > limit && <button type="button" onClick={() => setLimit(value => value + 24)} className="studio-admin-action w-full" data-emphasis="outline">הצגת מתאמנות נוספות ({filtered.length - limit})</button>}
+        </div>
+    </StudioModal>;
 }
