@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
     AlertCircle,
@@ -111,30 +111,28 @@ export default function LandingPage() {
     const supabase = getSupabaseClient();
     const reduceMotion = useReducedMotion();
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         const welcome = welcomeRef.current;
         if (!welcome) return;
         const viewport = window.visualViewport;
         const fitViewport = () => {
-            // Standalone startup/resume can settle the visible viewport before
-            // CSS viewport units. Fit before paint so the fixed, clipped shell
-            // keeps both sign-in actions and its footer inside the screen.
-            // Preserve the layout size during pinch zoom.
+            // CSS owns the initial size. Only correct an actual discrepancy
+            // (keyboard/resume), after paint, without rewriting the launch frame.
             const height = viewport?.scale === 1
                 ? Math.min(window.innerHeight, viewport.height)
                 : window.innerHeight;
-            if (height > 0) welcome.style.height = `${height}px`;
+            if (height > 0 && Math.abs(welcome.getBoundingClientRect().height - height) > 1) {
+                welcome.style.height = `${height}px`;
+            }
         };
         fitViewport();
         viewport?.addEventListener("resize", fitViewport);
         window.addEventListener("resize", fitViewport);
         window.addEventListener("pageshow", fitViewport);
-        document.addEventListener("visibilitychange", fitViewport);
         return () => {
             viewport?.removeEventListener("resize", fitViewport);
             window.removeEventListener("resize", fitViewport);
             window.removeEventListener("pageshow", fitViewport);
-            document.removeEventListener("visibilitychange", fitViewport);
         };
     }, []);
 
@@ -246,7 +244,14 @@ export default function LandingPage() {
     };
 
     return (
-        <div ref={welcomeRef} className="studio-welcome fixed inset-0 w-full h-full overflow-hidden bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20 selection:text-[var(--studio-ink)]">
+        <div
+            ref={welcomeRef}
+            // The signed-out document owns an opaque, in-flow canvas from SSR.
+            // CSS handles the launch size; resume corrections happen after paint
+            // and do not replace a fixed full-screen compositor layer.
+            style={{ position: "relative", width: "100%", height: "100dvh", backgroundColor: "#eceee0" }}
+            className="studio-welcome overflow-hidden bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20 selection:text-[var(--studio-ink)]"
+        >
             {/* Background Layer: Botanical Branch, Terracotta Sun, and Atmospheric Light */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
                 {/* Ambient atmospheric sage lighting matching trainee dashboard */}

@@ -1,38 +1,35 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
+import { PWA_BACKGROUND, PWA_INK } from '../src/lib/pwa-startup.mjs';
 
 // Source artwork: studio initials logo with barbell and leaves
 const source = await readFile(new URL('../public/initials_logo.svg', import.meta.url), 'utf8');
 const artwork = source.slice(source.indexOf('>') + 1, source.lastIndexOf('</svg>'))
-  .replaceAll('fill="#000000"', 'fill="#162218"'); // Deep Studio Ink
+  .replaceAll('fill="#000000"', `fill="${PWA_INK}"`);
 
-// Cream Boutique Canvas #e9eadc
-// Use the same opaque canvas for installed icons and Android's native launch.
-const canvas = () => `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" fill="#e9eadc"/>
+// A normal icon can be drawn directly over Android's splash canvas. Keep its
+// surround transparent so scaling/color conversion cannot expose a square tile.
+// Maskable and Apple icons need their own opaque background for launcher crops.
+const canvas = (opaque) => `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  ${opaque ? `<rect width="1024" height="1024" fill="${PWA_BACKGROUND}"/>` : ''}
   <g transform="translate(512 512) scale(0.72) translate(-512 -512)">${artwork}</g>
 </svg>`;
 
 const outputs = [
-  ['pwa-icon-v3-192.png', 192],
-  ['pwa-icon-v3-maskable-192.png', 192],
-  ['pwa-icon-v3-512.png', 512],
-  ['pwa-icon-v3-maskable-512.png', 512],
-  ['apple-touch-icon-v3.png', 180],
-  ['pwa-icon-v2-192.png', 192],
-  ['pwa-icon-v2-maskable-192.png', 192],
-  ['pwa-icon-v2-512.png', 512],
-  ['pwa-icon-v2-maskable-512.png', 512],
-  ['apple-touch-icon-v2.png', 180],
+  ['pwa-icon-v4-192.png', 192, false],
+  ['pwa-icon-v4-maskable-192.png', 192, true],
+  ['pwa-icon-v4-512.png', 512, false],
+  ['pwa-icon-v4-maskable-512.png', 512, true],
+  ['apple-touch-icon-v4.png', 180, true],
 ];
 
-const svgBuffer = Buffer.from(canvas());
-
-for (const [name, size] of outputs) {
-  await sharp(svgBuffer)
-    .resize(size, size, { kernel: 'lanczos3' })
-    .png()
+for (const [name, size, opaque] of outputs) {
+  const icon = sharp(Buffer.from(canvas(opaque)))
+    .resize(size, size, { kernel: 'lanczos3' });
+  // Export opaque icons as RGB, normal icons as RGBA.
+  if (opaque) icon.removeAlpha();
+  await icon.png()
     .toFile(fileURLToPath(new URL(`../public/${name}`, import.meta.url)));
   console.log(`Generated ${name} (${size}x${size})`);
 }

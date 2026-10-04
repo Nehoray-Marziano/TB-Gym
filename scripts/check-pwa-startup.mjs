@@ -63,6 +63,10 @@ try {
       emblem: rect('.studio-welcome-emblem'), hero: rect('.studio-welcome-hero'),
       actions: rect('.studio-welcome-actions'), disclaimer: rect('.studio-welcome-reassurance'),
       decoded: image?.complete && image?.naturalWidth > 0,
+      canvas: rect('.studio-welcome'),
+      canvasColor: getComputedStyle(document.querySelector('.studio-welcome')).backgroundColor,
+      canvasOpacity: getComputedStyle(document.querySelector('.studio-welcome')).opacity,
+      bodyColor: getComputedStyle(document.body).backgroundColor,
       scrollHeight: document.documentElement.scrollHeight, scrollY,
     };
   })()`;
@@ -92,6 +96,22 @@ try {
     await call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: true });
     await call("Emulation.setSafeAreaInsetsOverride", { insets: { top, bottom, left: 0, right: 0 } });
     await call("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: width === 320 ? "reduce" : "no-preference" }] });
+    // Exercise the document before any hydration code can size or show it.
+    // The native splash must hand off to a complete opaque page, even when
+    // application JavaScript is delayed or unavailable.
+    await call("Emulation.setScriptExecutionDisabled", { value: true });
+    await call("Page.navigate", { url: `${baseUrl}/` });
+    await waitFor("Boolean(document.querySelector('.studio-welcome-reassurance')) && getComputedStyle(document.querySelector('.studio-welcome-main')).display === 'grid'");
+    const serverFrame = await evaluate(measurement);
+    assert.equal(serverFrame.canvasOpacity, "1", "The pre-hydration login frame is opaque");
+    assert.equal(serverFrame.canvasColor, "rgb(236, 238, 224)");
+    assert.equal(serverFrame.bodyColor, "rgb(233, 234, 220)");
+    assert.equal(serverFrame.canvas.y, 0);
+    assert(Math.abs(serverFrame.canvas.height - height) <= 1, "The server canvas covers the viewport");
+    assert(serverFrame.disclaimer.bottom <= height - bottom + 1, "Sign-in actions fit before hydration");
+    const serverScreenshot = await call("Page.captureScreenshot", { format: "png" });
+    await writeFile(join(output, `${width}x${height}-before-js.png`), Buffer.from(serverScreenshot.data, "base64"));
+    await call("Emulation.setScriptExecutionDisabled", { value: false });
     await call("Fetch.enable", { patterns: [{ urlPattern: "*studio_emblem_dark.png*", requestStage: "Request" }] });
     await call("Page.navigate", { url: `${baseUrl}/dashboard` });
     await waitFor("Boolean(document.querySelector('.studio-welcome-reassurance'))");
@@ -142,7 +162,7 @@ try {
     await evaluate("new Promise(resolve => setTimeout(resolve, 150))");
     const resumed = await evaluate(measurement);
     if (Math.abs(resumed.main.height - (height - 48)) > 1) issues.push("welcome height did not restore on app resume");
-    results.push({ case: `${width}x${height}`, issues, before, after, resized, reopened, settled, resumed });
+    results.push({ case: `${width}x${height}`, issues, serverFrame, before, after, resized, reopened, settled, resumed });
     await writeFile(join(output, "results.json"), JSON.stringify(results, null, 2));
     if (issues.length) failures.push(results.at(-1));
     console.log(`${issues.length ? "FAIL" : "PASS"} ${width}x${height}: ${issues.join("; ") || "stable logo and reachable login actions"}`);

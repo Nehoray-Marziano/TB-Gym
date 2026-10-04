@@ -35,6 +35,7 @@ for (const path of ["/", "/auth/login"]) {
   assert.match(html, /<html[^>]*background-color:#e9eadc/);
   assert.match(html, /<body[^>]*background-color:#e9eadc/);
   assert.match(html, /class="studio-welcome /, "Login is in the initial document");
+  assert.match(html, /style="position:relative;width:100%;height:100dvh;background-color:#eceee0"/, "Login canvas is opaque and sized before hydration");
   assert.doesNotMatch(html, /data-studio-launch|data-app-splash|studio-document-ready|http-equiv="refresh"/i, "No extra splash stage or client document redirect");
 }
 const manifest = await (await fetch(`${baseUrl}/manifest.webmanifest`)).json();
@@ -53,6 +54,22 @@ for (const icon of manifest.icons) {
   assert.equal(response.status, 200);
   const metadata = await sharp(Buffer.from(await response.arrayBuffer())).metadata();
   assert.equal(`${metadata.width}x${metadata.height}`, icon.sizes);
+  const { data, info } = await sharp(Buffer.from(await (await fetch(new URL(icon.src, baseUrl))).arrayBuffer())).raw().toBuffer({ resolveWithObject: true });
+  let artwork = 0;
+  for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
+    const offset = (y * info.width + x) * info.channels;
+    if (icon.purpose === "any") {
+      assert.equal(info.channels, 4);
+      if (x < info.width * 0.1 || x >= info.width * 0.9 || y < info.height * 0.1 || y >= info.height * 0.9) {
+        assert.equal(data[offset + 3], 0, "Normal icon has no rectangular backing outside its mark");
+      }
+      if (data[offset + 3]) artwork++;
+    } else {
+      assert.equal(info.channels, 3, "Maskable icon remains opaque for launcher crops");
+      if (data[offset] !== 233 || data[offset + 1] !== 234 || data[offset + 2] !== 220) artwork++;
+    }
+  }
+  assert(artwork > 0);
 }
 const canvas = [233, 234, 220];
 for (const image of APPLE_STARTUP_IMAGES) {

@@ -34,7 +34,7 @@
 }
 
 /* Preserve the existing member-home clearance. The welcome screen uses the
-   device reserves in the initial HTML instead of guessing one inset for all phones. */
+   browser's safe-area values instead of guessing one inset for all phones. */
 @media (max-width: 600px) and (min-height: 600px) {
   .studio-home-main {
     padding-top: max(59px, calc(env(safe-area-inset-top) + 12px));
