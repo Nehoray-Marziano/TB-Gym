@@ -1,10 +1,26 @@
 # Launch handoff investigation
 
-The reported sequence is the OS splash, a white frame, a glimpse of wallpaper,
-then the signed-out introduction. The launch mark also moves as the status bar
-changes. This investigation separates the web document from the OS compositor.
+The reported sequence is a splash with a horizontal line inside the app, a
+glimpse of wallpaper, then login. The user clarified that this is specific to
+the signed-out destination and that the line is not the phone status bar.
+Do not treat the earlier metadata theory as a confirmed explanation.
 
 ## Findings in Talia
+
+- A cold, CPU/network-throttled production capture of `/dashboard` at `443c375`
+  commits **two 200 documents**: first `/dashboard` with the root splash, then
+  `/auth/login`. The root `loading.tsx` sits above the authentication check and
+  lets the response start before the redirect is known. Next then emits a
+  client-side redirect rather than an HTTP redirect. This is especially relevant
+  to existing installations that still start at `/dashboard`.
+- Direct `/auth/login` also paints a centered in-app splash before replacing it
+  with the welcome page. Removing the root loading boundary removes that extra
+  visual stage and lets auth redirects complete before any document commits.
+  Keep route-level loading states below their authentication layout; do not
+  restore a Suspense fallback above the launch auth decision.
+- The initial failing regression is `check-launch-routing.mjs`: `/dashboard`
+  returns 200 where a pre-paint 307 is required. The browser regression also
+  checks document commits, rather than merely checking the final URL.
 
 - The follow-up regression checked the initial `<head>`, instead of merely
   searching the completed response. It caught Next.js streaming the generic
@@ -27,8 +43,8 @@ changes. This investigation separates the web document from the OS compositor.
 - The native splash and final canvas already shared `#e9eadc`, but the original
   HTML/body background was defined only in the external global stylesheet.
   Matching the manifest alone did not protect the initial HTML canvas.
-- Root `loading.tsx` had been removed. Auth checks and the nested trainee layout
-  could leave the first response waiting without a branded loading frame.
+- Adding root `loading.tsx` was a regression: an early branded frame is not
+  useful when it commits the wrong document before a signed-out redirect.
 - The previous phone-padding rule reserved 59px, then used the greater of that
   and `safe-area-inset-top + 12px`. A 59px inset changes padding to 71px. It also
   did not reserve the home-indicator inset, which changes the hero's usable size.
@@ -42,16 +58,24 @@ changes. This investigation separates the web document from the OS compositor.
 
 Initial HTML and body styles and a small critical stylesheet define the opaque
 canvas. `color-scheme: light` explicitly matches the app's existing single
-palette, including when the phone uses dark appearance. A lightweight,
-server-rendered root loading frame continues the native TB splash while auth
-resolves. Its SVG artwork and layout are inline, with no image, font, stylesheet,
-or hydration dependency and no artificial minimum display time.
+palette, including when the phone uses dark appearance. There is no root
+loading screen: the first rendered document contains the destination page.
+Authentication finishes before a response can stream a throwaway splash.
+This does not add a client timer or a second full-screen overlay.
+
+A warm-cache recording also caught the parser painting just the welcome backdrop
+before the main element existed. A standard `rel="expect" blocking="render"`
+head hint holds first paint until a hidden marker after the page markup. It is
+progressive enhancement for supporting Chromium browsers; Safari ignores it.
+It does not wait for hydration, image decoding, or async content behind nested
+Suspense boundaries. The small login emblem gets high fetch priority, which
+React also emits as an image preload in the response Link header. Cold/warm paint timing
+is checked against a MutationObserver mark for complete page markup.
 
 `pwa-launch.mjs` supplies one geometry definition to the native asset generator,
-startup metadata, and HTML loading frame. Startup image URLs are versioned and
-cover 13 portrait sizes and their landscape equivalents. On those installed Apple
-screens, the loading mark uses the native image's screen coordinates instead of
-following a viewport-height change while the status bar settles. Critical Apple-only,
+startup metadata, and the reusable `LaunchScreen` component (for loading below
+authentication, not root launch). Startup image URLs are versioned and cover 13
+portrait sizes and their landscape equivalents. Critical Apple-only,
 standalone portrait CSS reserves both device insets before they become available;
 the introduction keeps the larger of the reserve and the real inset. For shared
 X/mini screen metrics, the reserve uses the larger notch inset. Unknown devices,
@@ -77,6 +101,13 @@ evidence that this switch cures the native flash.
   explains the native startup-image mechanism.
 - [WebKit's safe-area guidance](https://webkit.org/blog/7929/designing-websites-for-iphone-x/)
   describes `viewport-fit=cover` and the safe-area environment variables.
+- [Chrome's render-blocking content hint](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document#render-blocking)
+  describes holding first render until a referenced DOM element is parsed,
+  without waiting for that element's images. This is an optional Chromium
+  improvement, not a Safari or native-compositor fix.
+- [Next.js redirect](https://nextjs.org/docs/app/api-reference/functions/redirect)
+  documents client-side meta redirects after streaming begins, versus HTTP 307
+  before streaming. The distinction is verified in the production regression.
 - [Next.js loading convention](https://nextjs.org/docs/app/api-reference/file-conventions/loading)
   documents server-rendered Suspense fallback, automatic replacement, streaming,
   and fallback coverage of nested layouts.
@@ -94,6 +125,17 @@ evidence that this switch cures the native flash.
   does not cure that report's problem.
 
 ## Verification and limits
+
+The production build, signed-out routing regression, 13 safe-area cases, and
+five startup/resume viewport cases pass. Recordings confirm removal of the
+intermediate centered splash and extra committed document. The reported
+horizontal line and phone-wallpaper frame have not been reproduced on this
+Windows/Chromium test setup; do not claim native-device perfection from these
+checks. The user has been asked for the affected phone and OS.
+
+Use `node scripts/check-launch-routing.mjs http://127.0.0.1:3115` to require
+pre-paint HTTP redirects for all signed-out trainee entries and initial login
+HTML without an intermediate splash.
 
 Use `node scripts/check-launch-handoff.mjs http://127.0.0.1:3113` against a local
 production build. It checks the initial response and all startup assets, withholds

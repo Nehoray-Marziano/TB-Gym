@@ -16,7 +16,8 @@ assert(["127.0.0.1", "localhost"].includes(new URL(baseUrl).hostname), "Use a lo
 const output = join(process.cwd(), "scratch", "launch-handoff");
 await mkdir(output, { recursive: true });
 const profile = await mkdtemp(join(tmpdir(), "talia-launch-handoff-"));
-const html = await (await fetch(baseUrl)).text();
+const initialResponse = await fetch(baseUrl);
+const html = await initialResponse.text();
 const head = html.match(/<head[^>]*>([^]*?)<\/head>/)?.[1];
 assert(head, "The initial document includes the launch metadata in its head");
 assert.match(head, /<meta name="apple-mobile-web-app-capable" content="yes"\s*\/>/, "Apple's capability tag must be present before the first body frame, alongside the generic tag Next emits");
@@ -32,14 +33,15 @@ for (const path of ["/auth/login", "/dashboard"]) {
   }
   assert(routeHead.includes('name="apple-mobile-web-app-status-bar-style" content="black-translucent"'), `${path}: status-bar mode precedes the body, including old installed start URLs`);
 }
+assert.match(head, /<link rel="expect" href="#studio-document-ready" blocking="render"/, "Hold supported browsers until the destination markup is parsed");
+assert(html.indexOf('id="studio-document-ready"') > html.indexOf('studio-welcome-reassurance'), "The paint marker follows the complete login content");
+assert.match(initialResponse.headers.get('link') || '', /<\/studio_emblem_dark.png>; rel=preload; as="image"; fetchpriority="high"/, "Login emblem is discovered in response headers before body parsing");
 assert.match(html, /id="studio-launch-critical"/, "Critical launch CSS is server-rendered");
 assert.match(html, /<html[^>]*style="[^"]*background-color:#e9eadc/, "The HTML canvas does not wait for CSS");
 assert.match(html, /<body[^>]*style="[^"]*background-color:#e9eadc/, "The body is opaque before hydration");
 assert.match(html, /name="color-scheme" content="light"/, "The light app declares its appearance even with a dark OS");
-assert.match(html, /data-studio-launch/, "The auth loading frame exists in the streamed server response");
-assert.match(html, /data-studio-launch[^]*?<svg[^]*?<path/, "Loading artwork is inline, with no image fetch");
-const loadingFrame = html.match(/<div data-studio-launch[^]*?<\/svg><\/div>/)?.[0];
-assert(loadingFrame, "The server response includes the complete standalone loading frame");
+assert.match(html, /class="studio-welcome /, "Login is in the initial HTML");
+assert.doesNotMatch(html, /<div data-studio-launch/, "No intermediate in-app splash before login");
 const manifest = await (await fetch(`${baseUrl}/manifest.webmanifest`)).json();
 assert.equal(manifest.start_url, "/");
 assert.equal(manifest.background_color, LAUNCH_BACKGROUND);
@@ -53,7 +55,7 @@ for (const image of APPLE_STARTUP_IMAGES) {
   assert.equal(pixels.width, Number(width));
   assert.equal(pixels.height, Number(height));
 }
-console.log(`PASS initial HTML, opaque canvas, inline loading artwork, and ${APPLE_STARTUP_IMAGES.length} native startup images`);
+console.log(`PASS initial HTML, opaque canvas, direct login, and ${APPLE_STARTUP_IMAGES.length} native startup images`);
 
 const chrome = spawn(process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", [
   "--headless=new", "--no-sandbox", `--user-data-dir=${profile}`, "--remote-debugging-port=0",
@@ -76,8 +78,14 @@ try {
   const pending = new Map();
   const paused = new Map();
   const errors = [];
+  const committedDocuments = new Map();
   ws.onmessage = (event) => {
     const message = JSON.parse(event.data);
+    if (message.method === "Page.frameNavigated" && !message.params.frame.parentId) {
+      const commits = committedDocuments.get(message.sessionId) || [];
+      commits.push(message.params.frame.url);
+      committedDocuments.set(message.sessionId, commits);
+    }
     if (message.method === "Fetch.requestPaused") {
       const requests = paused.get(message.sessionId) || [];
       requests.push(message.params);
@@ -159,7 +167,7 @@ try {
   await slow.waitFor("Boolean(document.querySelector('.studio-welcome')?.style.height)");
   await slow.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
   await writeFile(join(output, "after-delayed-downloads.png"), Buffer.from((await slow.call("Page.captureScreenshot", { format: "png" })).data, "base64"));
-  assert.equal(await slow.evaluate("Boolean(document.querySelector('[data-studio-launch]'))"), false, "The fallback releases automatically when login is ready");
+  assert.equal(await slow.evaluate("Boolean(document.querySelector('[data-studio-launch]'))"), false, "Login never inserts a second splash");
   results.push({ case: "styles-and-scripts-withheld", early });
   await send("Target.closeTarget", { targetId: slow.targetId });
   console.log("PASS opaque initial document while CSS and JavaScript downloads are withheld");
@@ -218,41 +226,40 @@ try {
     assert.equal(after.colorScheme, "light", "Dark OS does not override the app appearance");
     await writeFile(join(output, `${screen.width}x${screen.height}.png`), Buffer.from((await browser.call("Page.captureScreenshot", { format: "png" })).data, "base64"));
 
-    // Exercise the actual server-rendered loading markup with the native screen
-    // dimensions held constant while the web viewport settles around system UI.
-    await browser.evaluate(`(() => {
-      const template = document.createElement('template');
-      template.innerHTML = ${JSON.stringify(loadingFrame)};
-      document.body.appendChild(template.content);
-    })()`);
-    const markGeometry = `(() => {
-      const { x, y, width, height } = document.querySelector('[data-studio-launch] svg').getBoundingClientRect();
-      return { x, y, width, height };
-    })()`;
-    const markBefore = await browser.evaluate(markGeometry);
-    assert(Math.abs(markBefore.y + markBefore.height / 2 - screen.height * 0.45) < 1, "Loading mark matches the native image's vertical position");
-    assert(Math.abs(markBefore.width - screen.width * 0.32) < 1, "Loading mark matches the native image's size");
-    await browser.call("Emulation.setDeviceMetricsOverride", {
-      width: screen.width, height: screen.height - screen.top, screenWidth: screen.width, screenHeight: screen.height,
-      deviceScaleFactor: screen.scale, mobile: true,
-    });
-    await browser.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
-    const markAfter = await browser.evaluate(markGeometry);
-    for (const dimension of ["x", "y", "width", "height"]) {
-      assert(Math.abs(markBefore[dimension] - markAfter[dimension]) <= 1, `Loading mark ${dimension} moves as the viewport settles`);
-    }
-    results.push({ case: `${screen.width}x${screen.height}-loading-mark`, before: markBefore, after: markAfter });
-    await browser.evaluate("document.querySelector('[data-studio-launch]').remove()");
     await send("Target.closeTarget", { targetId: browser.targetId });
-    console.log(`PASS ${screen.width}x${screen.height}: loading mark and login controls remain stationary while system insets/viewport settle`);
+    console.log(`PASS ${screen.width}x${screen.height}: login controls remain stationary while safe areas settle`);
   }
   const legacy = await open(390, 844);
   await legacy.call("Page.navigate", { url: `${baseUrl}/dashboard` });
   await legacy.waitFor("location.pathname === '/auth/login' && Boolean(document.querySelector('.studio-welcome')?.style.height)");
   assert.equal(await legacy.evaluate("Boolean(document.querySelector('[data-studio-launch]'))"), false);
+  assert.deepEqual(committedDocuments.get(legacy.sessionId)?.filter(url => url.startsWith(baseUrl)).map(url => new URL(url).pathname), ["/auth/login"], "Old installed start URL must commit only the login document");
   results.push({ case: "legacy-dashboard-start", after: await legacy.evaluate(snapshot) });
   await send("Target.closeTarget", { targetId: legacy.targetId });
-  console.log("PASS older installed /dashboard start reaches login and releases launch loading");
+  console.log("PASS older installed /dashboard start commits only the login document");
+  const warm = await open(390, 844);
+  await warm.call("Page.addScriptToEvaluateOnNewDocument", { source: `(() => {
+    const observer = new MutationObserver(() => {
+      if (document.getElementById('studio-document-ready')) {
+        performance.mark('studio-markup-parsed');
+        observer.disconnect();
+      }
+    });
+    observer.observe(document, { childList: true, subtree: true });
+  })()` });
+  for (let visit = 0; visit < 2; visit++) {
+    await warm.call("Page.navigate", { url: baseUrl + "/auth/login" });
+    await warm.waitFor("Boolean(document.querySelector('.studio-welcome')?.style.height) && performance.getEntriesByName('first-paint').length > 0");
+    const paint = await warm.evaluate(`({
+      ready: performance.getEntriesByName('studio-markup-parsed')[0]?.startTime,
+      first: performance.getEntriesByName('first-paint')[0]?.startTime
+    })`);
+    assert(Number.isFinite(paint.ready), 'The complete-markup timestamp was recorded');
+    assert(paint.first >= paint.ready, 'First paint must follow the complete page markup, including on warm cache');
+    results.push({ case: visit ? "warm-first-paint" : "cold-first-paint", ...paint });
+  }
+  await send("Target.closeTarget", { targetId: warm.targetId });
+  console.log("PASS cold/warm first paint follows complete login markup");
   await writeFile(join(output, "results.json"), JSON.stringify({ platform: "Chromium; iOS CSS gates simulated explicitly", results, errors }, null, 2));
   assert.deepEqual(errors, [], "No runtime exceptions during launch");
   console.log(`Evidence: ${output}`);

@@ -57,6 +57,9 @@ export default function RootLayout({
         {/* Next's appleWebApp.capable emits only mobile-web-app-capable. Apple
             still needs its own tag for startup images and status-bar geometry. */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        {/* Supporting browsers wait for the page markup instead of painting
+            a partially parsed login. No hydration dependency or timer. */}
+        <link rel="expect" href="#studio-document-ready" blocking="render" />
         <style id="studio-launch-critical">{LAUNCH_CRITICAL_CSS}</style>
       </head>
       <body
@@ -79,6 +82,7 @@ export default function RootLayout({
             </ToastProvider>
           </MotionProvider>
         </ThemeProvider>
+        <span id="studio-document-ready" hidden />
       </body >
     </html >
   );

@@ -297,6 +297,7 @@ export default function LandingPage() {
 
                         <img
                             src="/studio_emblem_dark.png"
+                            fetchPriority="high"
                             width={998}
                             height={807}
                             alt="סטודיו טליה - תזונה • אימונים"
