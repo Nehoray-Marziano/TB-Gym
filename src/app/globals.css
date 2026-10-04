@@ -131,7 +131,12 @@ body:has(.studio-welcome) {
   overscroll-behavior: none;
 }
 
-/* Disable text selection on buttons and interactive elements */
+/* App-wide selection policy, including portalled dialogs and editable fields. */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 button,
 a,
 [role="button"] {
@@ -139,6 +144,62 @@ a,
   user-select: none;
   touch-action: manipulation;
 }
+
+/* Shared value-copy controls: stable geometry and logical RTL/LTR placement. */
+.studio-copy-field {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+.studio-copy-field > .studio-copy-field-control { padding-inline-end: 3.5rem; }
+.studio-copy-field > .studio-copy-field-control.text-center { padding-inline-start: 3.5rem; }
+.studio-copy-field input[type="number"] { appearance: textfield; }
+.studio-copy-field input[type="number"]::-webkit-inner-spin-button,
+.studio-copy-field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.studio-copy-action { position: relative; display: inline-flex; flex: 0 0 48px; color: inherit; }
+.studio-copy-field-action { position: absolute; inset-inline-end: 4px; top: 50%; transform: translateY(-50%); }
+.studio-copy-field-multiline .studio-copy-field-action { top: 4px; transform: none; }
+.studio-copy-button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background 160ms;
+}
+.studio-copy-button:hover, .studio-copy-button:active { background: color-mix(in srgb, currentColor 12%, transparent); }
+.studio-copy-button:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
+.studio-copy-button:disabled { opacity: .35; cursor: default; background: transparent; }
+.studio-copy-button[data-error="true"] { color: var(--studio-danger); }
+.studio-copy-button svg { width: 18px; height: 18px; }
+.studio-copy-feedback {
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  inset-inline-end: 0;
+  width: max-content;
+  max-width: 200px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--studio-deep);
+  color: var(--studio-deep-contrast);
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+}
+.studio-copy-feedback[data-visible="false"] { padding: 0; }
+.studio-copy-feedback[data-error="true"] { background: var(--studio-danger); }
+/* Stay inside textarea containers that clip animated disclosure content. */
+.studio-copy-field-multiline .studio-copy-feedback { bottom: auto; top: calc(100% + 4px); }
+@media (prefers-reduced-motion: reduce) { .studio-copy-button { transition: none; } }
+@media (forced-colors: active) { .studio-copy-button { border: 1px solid ButtonText; } }
 
 /* Animate only the elements that need it. A blanket transform creates stacking
    contexts around sheets and prevents some native transitions from rendering. */

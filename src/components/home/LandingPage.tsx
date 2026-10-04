@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlass";
+import { CopyableInput } from "@/components/ui/copyable-field";
 
 type LoginView = "email" | "otp";
 
@@ -490,7 +491,7 @@ export default function LandingPage() {
                                         <label htmlFor="login-email" className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]">
                                             כתובת המייל שלך <span className="text-[#9e462d]">*</span>
                                         </label>
-                                        <input
+                                        <CopyableInput copyLabel="העתקת כתובת המייל"
                                             ref={emailInputRef}
                                             id="login-email"
                                             type="email"
@@ -536,7 +537,7 @@ export default function LandingPage() {
                                         <label htmlFor="login-code" className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]">
                                             קוד אימות בן 6 ספרות <span className="text-[#9e462d]">*</span>
                                         </label>
-                                        <input
+                                        <CopyableInput copyLabel="העתקת קוד האימות"
                                             ref={otpInputRef}
                                             id="login-code"
                                             type="text"

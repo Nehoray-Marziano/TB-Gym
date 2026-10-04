@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import StudioBotanical from "@/components/StudioBotanical";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import InstallAppButton from "@/components/profile/InstallAppButton";
+import { CopyableInput, CopyableTextarea } from "@/components/ui/copyable-field";
 
 
 type UserProfile = {
@@ -141,11 +142,11 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 </div>
                 <div className="min-w-0 flex-1">
                 {isEditing ? (
-                    <input
+                    <CopyableInput copyLabel="העתקת השם המלא"
                         aria-label="שם מלא"
                         value={formData.full_name}
                         onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                        className="w-full min-h-11 border-b border-[#68794f] bg-transparent text-xl font-bold outline-none"
+                        className="w-full min-h-12 border-b border-[#68794f] bg-transparent text-xl font-bold outline-none"
                         placeholder="שם מלא"
                     />
                 ) : (
@@ -176,15 +177,16 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
                             <Phone aria-hidden="true" className="h-5 w-5" />
                         </div>
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-[var(--studio-muted)]">מספר נייד</p>
                             {isEditing ? (
-                                <input
+                                <CopyableInput copyLabel="העתקת מספר הנייד"
                                     value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                     type="tel"
+                                    dir="ltr"
                                     aria-label="מספר נייד"
-                                    className="min-h-11 w-full rounded-xl border border-[#162218]/15 bg-[var(--studio-canvas)] px-3 font-bold text-[var(--studio-ink)] outline-none focus:border-[#68794f]"
+                                    className="min-h-12 w-full rounded-xl border border-[#162218]/15 bg-[var(--studio-canvas)] px-3 font-bold text-[var(--studio-ink)] outline-none focus:border-[#68794f]"
                                 />
                             ) : (
                                 <p className="font-bold text-[var(--studio-ink)]" dir="ltr">{profile?.phone || "לא הוזן"}</p>
@@ -235,7 +237,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                     className="mt-3 overflow-hidden"
                                 >
                                     {isEditing ? (
-                                        <textarea
+                                        <CopyableTextarea copyLabel="העתקת פרטי הבריאות"
                                             value={formData.medical_conditions}
                                             onChange={e => setFormData({ ...formData, medical_conditions: e.target.value })}
                                             className="min-h-24 w-full rounded-xl border border-[#162218]/15 bg-[var(--studio-canvas)] p-3 text-sm text-[var(--studio-ink)] outline-none focus:border-[#68794f]"

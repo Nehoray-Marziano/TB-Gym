@@ -83,7 +83,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, amount, userN
                 <div className="membership-payment-copy-section">
                     <p className="membership-copy-label">לצרף לתיאור התשלום בביט</p>
                     <div className="membership-copy-box"><p dir="auto">{paymentDescription}</p><button type="button" onClick={handleCopy} aria-label="העתקת תיאור התשלום">{copyState === "copied" ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}<span>{copyState === "copied" ? "הועתק" : "העתקה"}</span></button></div>
-                    <p className="membership-copy-feedback" role="status">{copyState === "copied" ? "התיאור הועתק. הדביקי אותו בשדה התיאור בביט." : copyState === "error" ? "לא הצלחנו להעתיק. אפשר לסמן את התיאור ולהעתיק ידנית." : "העתיקי עכשיו, והדביקי בתיאור ההעברה בביט."}</p>
+                    <p className="membership-copy-feedback" role="status">{copyState === "copied" ? "התיאור הועתק. הדביקי אותו בשדה התיאור בביט." : copyState === "error" ? "לא הצלחנו להעתיק. נסי שוב באמצעות כפתור ההעתקה." : "העתיקי עכשיו, והדביקי בתיאור ההעברה בביט."}</p>
                 </div>
                 <div className="membership-payment-notice"><span><Clock3 aria-hidden="true" /></span><p><strong>האימונים בדרך אלייך</strong>המנוי יופעל לאחר אישור התשלום על ידי טליה.</p></div>
             </div>

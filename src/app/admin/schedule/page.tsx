@@ -14,6 +14,8 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { MuiTimePickerWrapper } from "@/components/ui/time-picker-mui";
+import { CopyableInput } from "@/components/ui/copyable-field";
+import { CopyButton } from "@/components/ui/copy-button";
 import { Button } from "@/components/ui/button";
 import { TraineeSelector, type Trainee } from "@/components/admin/trainee-selector";
 import StudioLogo from "@/components/StudioLogo";
@@ -459,7 +461,7 @@ export default function AdminSchedulePage() {
                             <form onSubmit={handleCreate} className="space-y-5">
                                 <div className="space-y-2">
                                     <label htmlFor="new-session-title" className="text-xs font-bold">שם האימון</label>
-                                    <input
+                                    <CopyableInput copyLabel="העתקת שם האימון"
                                         id="new-session-title"
                                         type="text"
                                         value={newSession.title}
@@ -471,7 +473,10 @@ export default function AdminSchedulePage() {
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-2">
-                                        <span className="text-xs font-bold">תאריך</span>
+                                        <div className="flex items-center justify-between gap-1">
+                                            <span className="text-xs font-bold">תאריך</span>
+                                            <CopyButton label="העתקת תאריך האימון" value={newSession.date ? format(newSession.date, "dd/MM/yyyy") : ""} disabled={!newSession.date} />
+                                        </div>
                                         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                             <PopoverTrigger asChild>
                                                 <Button variant={"outline"} className="h-14 w-full justify-between rounded-2xl border-[#1b251c]/20 bg-[var(--studio-card)] px-3 text-sm font-medium text-[var(--studio-ink)] hover:bg-[var(--studio-card)] hover:text-[var(--studio-ink)]">
@@ -496,7 +501,10 @@ export default function AdminSchedulePage() {
                                         </Popover>
                                     </div>
                                     <div className="space-y-2">
-                                        <span className="text-xs font-bold">שעה</span>
+                                        <div className="flex items-center justify-between gap-1">
+                                            <span className="text-xs font-bold">שעה</span>
+                                            <CopyButton label="העתקת שעת האימון" value={newSession.time} disabled={!newSession.time} />
+                                        </div>
                                         <MuiTimePickerWrapper
                                             value={newSession.time}
                                             onChange={(t: string) => setNewSession({ ...newSession, time: t })}

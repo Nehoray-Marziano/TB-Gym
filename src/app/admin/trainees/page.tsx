@@ -6,6 +6,8 @@ import { Search, User, Ticket } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import TicketUpdateModal from "@/components/admin/TicketUpdateModal";
 import StudioLogo from "@/components/StudioLogo";
+import { CopyableInput } from "@/components/ui/copyable-field";
+import { CopyButton } from "@/components/ui/copy-button";
 
 type Profile = {
     id: string;
@@ -122,8 +124,8 @@ export default function AdminTraineesPage() {
                 </div>
 
                 <div className="relative mt-4">
-                    <Search aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#aebbad]" />
-                    <input
+                    <Search aria-hidden="true" className="pointer-events-none absolute z-[1] right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#aebbad]" />
+                    <CopyableInput copyLabel="העתקת החיפוש"
                         type="text"
                         aria-label="חיפוש מתאמנת"
                         placeholder="חיפוש לפי שם, מייל או טלפון"
@@ -150,9 +152,18 @@ export default function AdminTraineesPage() {
                                     {trainee.full_name ? trainee.full_name[0] : <User aria-hidden="true" className="h-5 w-5" />}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <h2 className="truncate text-lg font-bold">{trainee.full_name || "ללא שם"}</h2>
-                                    {trainee.phone && <p dir="ltr" className="mt-1 truncate text-right text-xs text-[var(--studio-muted)]">{trainee.phone}</p>}
-                                    <p dir="ltr" className="mt-1 truncate text-right text-xs text-[var(--studio-muted)]">{trainee.email}</p>
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <h2 className="min-w-0 flex-1 break-words text-lg font-bold">{trainee.full_name || "ללא שם"}</h2>
+                                        <CopyButton label="העתקת שם המתאמנת" value={trainee.full_name || ""} disabled={!trainee.full_name} />
+                                    </div>
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <p dir="ltr" className="min-w-0 flex-1 break-all text-right text-xs text-[var(--studio-muted)]">{trainee.phone || "לא הוזן נייד"}</p>
+                                        <CopyButton label="העתקת מספר הנייד של המתאמנת" value={trainee.phone || ""} disabled={!trainee.phone} />
+                                    </div>
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <p dir="ltr" className="min-w-0 flex-1 break-all text-right text-xs text-[var(--studio-muted)]">{trainee.email || "לא הוזן מייל"}</p>
+                                        <CopyButton label="העתקת כתובת המייל של המתאמנת" value={trainee.email || ""} disabled={!trainee.email} />
+                                    </div>
                                 </div>
                             </div>
 

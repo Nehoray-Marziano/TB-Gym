@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X, Ticket, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { CopyableInput } from "@/components/ui/copyable-field";
 
 interface TicketUpdateModalProps {
     isOpen: boolean;
@@ -92,7 +93,7 @@ export default function TicketUpdateModal({
                                     <label htmlFor="ticket-change" className="block text-xs font-bold">
                                         כמה אימונים להוסיף או להפחית?
                                     </label>
-                                    <input
+                                    <CopyableInput copyLabel="העתקת מספר האימונים"
                                         id="ticket-change"
                                         type="number"
                                         inputMode="numeric"

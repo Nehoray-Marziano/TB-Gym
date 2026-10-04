@@ -5,6 +5,7 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 import { Search, User, Check, X } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CopyableInput } from "@/components/ui/copyable-field";
 
 export type Trainee = {
     id: string;
@@ -85,8 +86,8 @@ export function TraineeSelector({ selectedTrainees, onSelect, onClose }: Trainee
 
                     {/* Search */}
                     <div className="relative">
-                        <Search aria-hidden="true" className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--studio-muted)]" />
-                        <input
+                        <Search aria-hidden="true" className="pointer-events-none absolute z-[1] right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--studio-muted)]" />
+                        <CopyableInput copyLabel="העתקת החיפוש"
                             type="text"
                             aria-label="חיפוש מתאמנת"
                             placeholder="חיפוש לפי שם או טלפון"

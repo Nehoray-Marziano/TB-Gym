@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Minus, Plus } from "lucide-react";
+import { CopyableInput, CopyableTextarea } from "@/components/ui/copyable-field";
 
 type FormData = {
     fullName: string;
@@ -135,7 +136,7 @@ export default function OnboardingPage() {
                                 {step === 1 && (
                                     <div>
                                         <label htmlFor="onboarding-name" className="mb-2 block text-xs font-bold">שם מלא</label>
-                                        <input
+                                        <CopyableInput copyLabel="העתקת השם המלא"
                                             id="onboarding-name"
                                             type="text"
                                             autoComplete="name"
@@ -153,7 +154,7 @@ export default function OnboardingPage() {
                                         <label htmlFor="onboarding-age" className="mb-2 block text-xs font-bold">גיל</label>
                                         <div className="flex items-center gap-2">
                                             <button type="button" aria-label="להפחית שנה" onClick={() => setFormData({ ...formData, age: String(Math.max(16, (parseInt(formData.age) || 25) - 1)) })} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#1b251c]/15 bg-[var(--studio-card)]"><Minus aria-hidden="true" className="h-5 w-5" /></button>
-                                            <input
+                                            <CopyableInput copyLabel="העתקת הגיל"
                                                 id="onboarding-age"
                                                 type="number"
                                                 inputMode="numeric"
@@ -170,7 +171,7 @@ export default function OnboardingPage() {
                                 {step === 3 && (
                                     <div>
                                         <label htmlFor="onboarding-phone" className="mb-2 block text-xs font-bold">מספר נייד</label>
-                                        <input
+                                        <CopyableInput copyLabel="העתקת מספר הנייד"
                                             id="onboarding-phone"
                                             type="tel"
                                             inputMode="tel"
@@ -208,7 +209,7 @@ export default function OnboardingPage() {
                                         {formData.isHealthy === false && (
                                             <div className="pt-3">
                                                 <label htmlFor="onboarding-health" className="mb-2 block text-xs font-bold">ספרי לנו בקצרה</label>
-                                                <textarea
+                                                <CopyableTextarea copyLabel="העתקת פרטי הבריאות"
                                                     id="onboarding-health"
                                                     value={formData.medicalConditions}
                                                     onChange={(event) => setFormData({ ...formData, medicalConditions: event.target.value })}

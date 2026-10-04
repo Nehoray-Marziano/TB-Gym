@@ -10,6 +10,7 @@ import ConnectionStatus from "@/components/ConnectionStatus";
 import { PWAInstallProvider } from "@/components/PWAInstallProvider";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 import MotionProvider from "@/components/MotionProvider";
+import TextCopyPolicy from "@/components/TextCopyPolicy";
 import { APPLE_STARTUP_IMAGES, PWA_BACKGROUND } from "@/lib/pwa-startup.mjs";
 // Only load the Hebrew font we actually use
 const varelaRound = Varela_Round({
@@ -61,6 +62,7 @@ export default function RootLayout({
         className={`${varelaRound.variable} antialiased font-sans`}
       >
         <ServiceWorkerRegister />
+        <TextCopyPolicy />
         <ConnectionStatus />
         <ThemeProvider>
           <MotionProvider>
