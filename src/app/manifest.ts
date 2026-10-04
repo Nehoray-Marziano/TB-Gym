@@ -1,5 +1,4 @@
 import { MetadataRoute } from "next";
-import { LAUNCH_BACKGROUND } from "@/lib/pwa-launch.mjs";
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
@@ -12,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
         scope: "/",
         id: "/",
         display: "standalone",
-        background_color: LAUNCH_BACKGROUND,
-        theme_color: LAUNCH_BACKGROUND,
+        background_color: "#e9eadc",
+        theme_color: "#e9eadc",
         shortcuts: [
             { name: "לוח אימונים", short_name: "אימונים", url: "/book", icons: [{ src: "/pwa-icon-v3-192.png", sizes: "192x192", type: "image/png" }] },
             { name: "האימונים שלי", short_name: "שלי", url: "/my-bookings", icons: [{ src: "/pwa-icon-v3-192.png", sizes: "192x192", type: "image/png" }] },

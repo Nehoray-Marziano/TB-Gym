@@ -1,6 +1,4 @@
 import LandingPage from "@/components/home/LandingPage";
-
-
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 

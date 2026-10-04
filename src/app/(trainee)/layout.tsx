@@ -1,13 +1,10 @@
 import BottomNav from "@/components/BottomNav";
 import { TraineeIdentity } from "@/components/TraineeIdentity";
-import { createClient } from "@/utils/supabase/server";
+import { getGymIdentity } from "@/lib/gym-bootstrap";
 import { redirect } from "next/navigation";
 import PageEntrance from "@/components/PageEntrance";
-
 export default async function TraineeLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getClaims();
-    const userId = data?.claims?.sub;
+    const { userId } = await getGymIdentity();
     if (!userId) redirect("/auth/login");
 
     return (

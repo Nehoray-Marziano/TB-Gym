@@ -114,7 +114,9 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     const handleLogout = async () => {
         if (navigator.vibrate) navigator.vibrate(10);
         await supabase.auth.signOut();
-        router.push("/auth/login");
+        // Drop prefetched personal home payloads with the signed-out session.
+        router.replace("/auth/login");
+        router.refresh();
     };
 
     if (!profile) return null; // Should not happen with server data, but safety check

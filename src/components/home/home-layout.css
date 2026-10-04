@@ -46,8 +46,8 @@
 
 .studio-welcome-main {
   max-width: 544px;
-  padding-top: max(16px, calc(max(env(safe-area-inset-top), var(--studio-launch-safe-top, 0px)) + 12px));
-  padding-bottom: max(16px, calc(max(env(safe-area-inset-bottom), var(--studio-launch-safe-bottom, 0px)) + 12px));
+  padding-top: max(16px, calc(env(safe-area-inset-top) + 12px));
+  padding-bottom: max(16px, calc(env(safe-area-inset-bottom) + 12px));
 }
 
 .studio-welcome-emblem { height: clamp(56px, 12cqh, 112px); }
@@ -231,18 +231,34 @@
 .studio-home-eyebrow { font-size: clamp(12px, 2cqh, 16px); }
 .studio-home-hello { font-size: clamp(16px, 2.8cqh, 22px); }
 .studio-home-name { font-size: clamp(28px, min(8.2cqh, 13cqw), 56px); }
+.studio-home-name-placeholder {
+  display: inline-block;
+  width: 3ch;
+  height: 0.78em;
+  border-radius: 0.18em;
+  background: color-mix(in srgb, var(--studio-brand) 22%, transparent);
+}
 .studio-home-name:where([data-long-name]) { font-size: clamp(26px, min(5.5cqh, 10cqw), 40px); }
 .studio-home-botanical {
   width: clamp(64px, min(25cqh, 40cqw), 160px);
   height: clamp(64px, min(25cqh, 40cqw), 160px);
 }
 .studio-home-workout {
-  min-height: min(32dvh, 300px);
+  min-height: min-content;
   gap: clamp(12px, 1.6cqh, 20px);
   padding: clamp(14px, 2.4cqh, 24px);
 }
 .studio-home-workout-label { min-width: 0; font-size: clamp(12px, 2cqh, 16px); }
-.studio-home-workout-content { gap: clamp(8px, 2cqh, 20px); padding-top: 8px; }
+.studio-home-workout-content { display: grid; gap: clamp(8px, 2cqh, 20px); padding-top: 8px; }
+.studio-home-workout-body,
+.studio-home-workout-reserve {
+  grid-area: 1 / 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: inherit;
+}
+.studio-home-workout-reserve { visibility: hidden; pointer-events: none; user-select: none; }
 .studio-home-workout-title { font-size: clamp(20px, min(4.5cqh, 7cqw), 36px); }
 .studio-home-workout-time { font-size: clamp(14px, 2.5cqh, 18px); }
 .studio-home-workout-day { font-size: clamp(28px, 6cqh, 48px); }
@@ -262,10 +278,13 @@
   height: clamp(36px, 6cqh, 44px);
 }
 .studio-home-ticket-icon svg { width: 50%; height: 50%; }
-.studio-home-ticket-count { font-size: clamp(26px, 4.8cqh, 38px); }
+.studio-home-ticket-count { display: inline-block; min-width: 2ch; font-size: clamp(26px, 4.8cqh, 38px); }
 .studio-home-ticket-label { font-size: clamp(12px, min(2.2cqh, 3.8cqw), 14px); }
-.studio-home-ticket-description { font-size: clamp(12px, 1.9cqh, 14px); }
-.studio-home-membership { min-height: 44px; font-size: clamp(12px, 2cqh, 14px); }
+.studio-home-ticket-description { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: clamp(12px, 1.9cqh, 14px); }
+.studio-home-membership { min-height: 44px; inline-size: 8.5em; justify-content: center; font-size: clamp(12px, 2cqh, 14px); }
+.studio-home-retry { cursor: pointer; }
+.studio-home-retry:hover { background: var(--studio-accent-text); }
+.studio-home-retry:focus-visible { outline: 2px solid var(--studio-deep); outline-offset: 4px; }
 
 @media (max-width: 360px) {
   .studio-home-ticket-icon { display: none; }
@@ -284,18 +303,24 @@
   .studio-home-emblem { width: clamp(56px, 12cqh, 80px); height: clamp(56px, 12cqh, 80px); }
   .studio-home-botanical { width: clamp(80px, 20cqh, 112px); height: clamp(80px, 20cqh, 112px); }
   .studio-home-name { font-size: clamp(26px, 9cqw, 32px); }
+  .studio-home-name:where([data-long-name]) { font-size: clamp(18px, 6.5cqw, 26px); }
   .studio-home-empty-title { font-size: 26px; }
   .studio-home-empty-description { font-size: 14px; line-height: 1.5; }
   .studio-home-workout-action { min-height: 44px; font-size: 14px; }
   .studio-home-workout-content { gap: 8px; padding-top: 4px; }
 }
 
-@container (max-height: 500px) {
+@container (max-height: 540px) {
   .studio-home-emblem { width: 56px; height: 56px; }
   .studio-home-botanical { width: 80px; height: 80px; }
   .studio-home-name { font-size: 26px; }
   .studio-home-heading { padding-bottom: 4px; }
   .studio-home-workout { gap: 8px; }
+  .studio-home-empty-title { font-size: 24px; }
+  .studio-home-empty-title br { display: none; }
+  .studio-home-empty-title br + span::before { content: " "; }
+  .studio-home-empty-description { line-height: 1.4; }
+  .studio-home-workout-action { padding-inline: 8px; }
   .studio-home-session-date { display: none; }
   .studio-home-session-date-summary {
     position: static;

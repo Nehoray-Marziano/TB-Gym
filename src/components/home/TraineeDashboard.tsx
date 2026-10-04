@@ -1,127 +1,174 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock3, Sparkles, Ticket } from "lucide-react";
+import { loadUpcomingSession, type GymSnapshot, type UpcomingSession } from "@/lib/gym-data";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import { useToast } from "@/components/ui/use-toast";
 import StudioLogo from "@/components/StudioLogo";
 
-export type UpcomingSession = { id: string; title: string; start_time: string };
+export type { UpcomingSession } from "@/lib/gym-data";
 
 const format = (date: string, options: Intl.DateTimeFormatOptions) =>
-    new Intl.DateTimeFormat("he-IL", options).format(new Date(date));
+    new Intl.DateTimeFormat("he-IL", { ...options, timeZone: "Asia/Jerusalem" }).format(new Date(date));
 
 function getDayGreeting() {
-    const hour = new Date().getHours();
+    const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: "Asia/Jerusalem" }).format(new Date()));
     if (hour >= 5 && hour < 12) return "בוקר טוב";
     if (hour >= 12 && hour < 17) return "צהריים טובים";
     if (hour >= 17 && hour < 21) return "ערב טוב";
     return "לילה טוב";
 }
 
+function EmptyWorkoutCopy() {
+    return <div className="space-y-1">
+        <p className="studio-home-empty-title font-bold leading-[1.12] tracking-tight text-white">
+            קצת זמן<br /><span className="text-[#d8e0b5]">בשבילך.</span>
+        </p>
+        <p className="studio-home-empty-description font-medium leading-relaxed text-[#f4f6ea]">
+            לוח האימונים פתוח לשריון מקום. בואי נבחר את השעה המושלמת עבורך.
+        </p>
+    </div>;
+}
+
 export type TraineeDashboardProps = {
     userId: string;
+    initialData?: GymSnapshot;
+    initialUpcoming?: { session: UpcomingSession | null; error: boolean };
     previewNextClass?: UpcomingSession | null;
     previewTickets?: number;
     previewProfile?: { full_name?: string; role?: string };
+    previewLoading?: boolean;
 };
 
 export default function TraineeDashboard({
     userId,
+    initialData,
+    initialUpcoming,
     previewNextClass,
     previewTickets,
     previewProfile,
+    previewLoading = false,
 }: TraineeDashboardProps) {
     const router = useRouter();
     const { toast } = useToast();
-    const { profile: storeProfile, tickets: storeTickets, subscription, loading: storeLoading, refreshData } = useGymStore();
+    const { profile: storeProfile, tickets: storeTickets, subscription: storeSubscription, loading: storeLoading, error: storeError, hasData, refreshData, hydrateData } = useGymStore();
+    const [hydrated, setHydrated] = useState(false);
+    const hasCurrentData = hasData && storeProfile?.id === userId;
+    const hadDataAtMount = useRef(hasCurrentData);
+    const serverData = !hasCurrentData && !hydrated ? initialData : undefined;
 
-    const profile = previewProfile ?? storeProfile;
-    const tickets = previewTickets !== undefined ? previewTickets : storeTickets;
-    const loading = previewTickets !== undefined ? false : storeLoading;
+    const profile = previewProfile ?? (serverData ? serverData.profile : storeProfile);
+    const tickets = previewTickets ?? serverData?.tickets ?? storeTickets;
+    const subscription = serverData ? serverData.subscription : storeSubscription;
+    const loading = previewLoading || (previewTickets !== undefined || serverData ? false : storeLoading);
+    const dataError = previewTickets === undefined && !serverData && storeError;
 
-    const [loadedClass, setNextClass] = useState<UpcomingSession | null>(null);
-    const [classError, setClassError] = useState(false);
-    const [isClassLoading, setClassLoading] = useState(true);
+    const [loadedClass, setNextClass] = useState<UpcomingSession | null>(initialUpcoming?.session ?? null);
+    const [classError, setClassError] = useState(initialUpcoming?.error ?? false);
+    const [isClassLoading, setClassLoading] = useState(initialUpcoming === undefined);
     const nextClass = previewNextClass !== undefined ? previewNextClass : loadedClass;
-    const classLoading = previewNextClass === undefined && isClassLoading;
+    const classLoading = previewLoading || (previewNextClass === undefined && isClassLoading);
+
+    useEffect(() => {
+        if (previewTickets !== undefined || !userId) return;
+        let active = true;
+        // Back navigation may reuse an older prefetched server payload. Keep
+        // the current store (including completed bookings/refunds) on return.
+        if (initialData && !hadDataAtMount.current) hydrateData(initialData);
+        queueMicrotask(() => {
+            if (!active) return;
+            if (initialData) {
+                setHydrated(true);
+            }
+            if (!initialData || hadDataAtMount.current) {
+                void refreshData(false, userId);
+            }
+        });
+        return () => { active = false; };
+    }, [initialData, hydrateData, refreshData, userId, previewTickets]);
 
     useEffect(() => {
         if (previewNextClass !== undefined) {
             return;
         }
 
-        void refreshData(false, userId);
         let active = true;
-        const cacheKey = `talia_upcoming_${userId}`;
-        try {
-            const cached = sessionStorage.getItem(cacheKey);
-            if (cached) {
-                const previous = JSON.parse(cached) as UpcomingSession | null;
-                queueMicrotask(() => {
-                    if (!active) return;
-                    setNextClass(previous && new Date(previous.start_time) > new Date() ? previous : null);
-                    setClassLoading(false);
-                });
-            }
-        } catch {
-            sessionStorage.removeItem(cacheKey);
+        let requestVersion = 0;
+        if (initialUpcoming) {
+            queueMicrotask(() => {
+                if (!active) return;
+                setNextClass(initialUpcoming.session);
+                setClassError(initialUpcoming.error);
+                setClassLoading(false);
+            });
         }
 
-        const load = async () => {
-            const { data, error } = await getSupabaseClient()
-                .from("bookings")
-                .select("session:gym_sessions(id,title,start_time)")
-                .eq("user_id", userId)
-                .eq("status", "confirmed");
-            if (!active) return;
-            setClassError(Boolean(error));
-            if (!error && data) {
-                const upcoming = (data as unknown as { session: UpcomingSession | null }[])
-                    .map(({ session }) => session)
-                    .filter((session): session is UpcomingSession => Boolean(session && new Date(session.start_time) > new Date()))
-                    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0] ?? null;
-                setNextClass(upcoming);
-                sessionStorage.setItem(cacheKey, JSON.stringify(upcoming));
-            }
+        const load = async (version: number) => {
+            const supabase = getSupabaseClient();
+            if (!supabase) throw new Error("Supabase is unavailable");
+            const upcoming = await loadUpcomingSession(supabase, userId);
+            if (!active || version !== requestVersion) return;
+            setClassError(false);
+            setNextClass(upcoming);
             setClassLoading(false);
         };
-        void load().catch(() => {
-            if (!active) return;
-            setClassError(true);
-            setClassLoading(false);
-        });
-        return () => { active = false; };
-    }, [userId, refreshData, previewNextClass]);
+        const refresh = () => {
+            const version = ++requestVersion;
+            void load(version).catch(() => {
+                if (!active || version !== requestVersion) return;
+                setClassError(true);
+                setClassLoading(false);
+            });
+        };
+        const resume = () => {
+            if (document.visibilityState !== "visible") return;
+            void refreshData(false, userId);
+            refresh();
+        };
+        if (!initialUpcoming || hadDataAtMount.current) refresh();
+        document.addEventListener("visibilitychange", resume);
+        window.addEventListener("online", resume);
+        return () => {
+            active = false;
+            document.removeEventListener("visibilitychange", resume);
+            window.removeEventListener("online", resume);
+        };
+    }, [userId, refreshData, previewNextClass, initialUpcoming]);
 
     useEffect(() => {
-        if (loading) return;
+        if (loading || dataError || !userId || previewTickets !== undefined) return;
         const key = `talia_tickets_count_${userId}`;
-        const previous = sessionStorage.getItem(key);
-        if (previous !== null && tickets > Number(previous)) {
-            toast({ title: "נוספו לך אימונים ליתרה", type: "success" });
+        try {
+            const previous = sessionStorage.getItem(key);
+            if (previous !== null && tickets > Number(previous)) {
+                toast({ title: "נוספו לך אימונים ליתרה", type: "success" });
+            }
+            sessionStorage.setItem(key, String(tickets));
+        } catch {
+            // Storage can be disabled; it must never interrupt the home screen.
         }
-        sessionStorage.setItem(key, String(tickets));
-    }, [tickets, loading, toast, userId]);
+    }, [tickets, loading, dataError, toast, userId, previewTickets]);
 
     useEffect(() => {
+        if (!userId || previewTickets !== undefined) return;
         router.prefetch("/book");
         router.prefetch("/profile");
         router.prefetch("/subscription");
         router.prefetch("/my-bookings");
         if (profile?.role === "administrator") router.prefetch("/admin");
-    }, [router, profile?.role]);
+    }, [router, profile?.role, userId, previewTickets]);
 
     const firstName = profile?.full_name?.trim().split(/\s+/)[0] || "אלופה";
     const greeting = getDayGreeting();
-    const today = new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+    const today = new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Jerusalem" }).format(new Date());
 
     return (
-        <div className="studio-home relative h-full w-full bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
+        <div data-home-ready={hydrated} className="studio-home relative h-full w-full bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
             {/* Ambient atmospheric lighting */}
             <div
                 aria-hidden="true"
@@ -168,13 +215,12 @@ export default function TraineeDashboard({
                             </p>
                             <h1 className="break-words font-bold leading-[1.08] tracking-[-0.03em] text-[#142217]">
                                 <span className="studio-home-hello block font-semibold text-[#142217]/85">
-                                    {loading ? "שלום לך" : "היי,"}
+                                    היי,
                                 </span>
-                                {!loading && (
-                                    <span data-long-name={firstName.length > 10 ? "" : undefined} className="studio-home-name mt-0.5 block font-bold text-[#142217]">
-                                        {firstName}<span className="text-[#c37a61]">.</span>
-                                    </span>
-                                )}
+                                <span aria-busy={loading} data-long-name={firstName.length > 10 ? "" : undefined} className="studio-home-name mt-0.5 block font-bold text-[#142217]">
+                                    {loading ? <span className="studio-home-name-placeholder" aria-hidden="true" /> : <>{firstName}<span className="text-[#c37a61]">.</span></>}
+                                    {loading && <span className="sr-only">טוענים את הפרטים שלך…</span>}
+                                </span>
                             </h1>
                         </div>
 
@@ -228,13 +274,23 @@ export default function TraineeDashboard({
                         </div>
 
                         {nextClass && (
-                            <span className="text-xs font-bold text-[#d8e0b5]">
-                                {getRelativeTimeHebrew(nextClass.start_time)}
+                            <span role={classError ? "status" : undefined} className="text-xs font-bold text-[#d8e0b5]">
+                                {classError ? "העדכון לא זמין" : getRelativeTimeHebrew(nextClass.start_time, "Asia/Jerusalem")}
                             </span>
                         )}
                     </div>
 
-                    <div className="studio-home-workout-content relative flex flex-col">
+                    <div className="studio-home-workout-content relative">
+                        {/* The same empty-state geometry sizes loading and booked content. */}
+                        <div aria-hidden="true" className="studio-home-workout-reserve">
+                            <EmptyWorkoutCopy />
+                            <span className="studio-home-workout-action flex items-center justify-center gap-2 px-4 py-2 font-bold">
+                                <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                                <span>למערכת השעות ושריון מקום</span>
+                                <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+                            </span>
+                        </div>
+                        <div className="studio-home-workout-body">
                         {classLoading ? (
                             <div className="flex min-h-[5.5rem] items-center justify-center" role="status">
                                 <p className="text-sm font-semibold text-white animate-pulse">טוענים את האימון הבא…</p>
@@ -242,7 +298,7 @@ export default function TraineeDashboard({
                         ) : (
                             <>
                                 <div className="flex-1">
-                                    {classError ? (
+                                    {classError && !nextClass ? (
                                         <p role="status" className="text-sm font-semibold leading-relaxed text-white">
                                             לא הצלחנו לעדכן את האימון הבא.
                                         </p>
@@ -275,15 +331,7 @@ export default function TraineeDashboard({
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-1">
-                                            <p className="studio-home-empty-title font-bold leading-[1.12] tracking-tight text-white">
-                                                קצת זמן<br />
-                                                <span className="text-[#d8e0b5]">בשבילך.</span>
-                                            </p>
-                                            <p className="studio-home-empty-description font-medium leading-relaxed text-[#f4f6ea]">
-                                                לוח האימונים פתוח לשריון מקום. בואי נבחר את השעה המושלמת עבורך.
-                                            </p>
-                                        </div>
+                                        <EmptyWorkoutCopy />
                                     )}
                                 </div>
 
@@ -309,6 +357,7 @@ export default function TraineeDashboard({
                                 )}
                             </>
                         )}
+                        </div>
                     </div>
                 </section>
 
@@ -324,14 +373,14 @@ export default function TraineeDashboard({
                                     className="studio-home-ticket-count font-bold leading-none tabular-nums text-[#142217]"
                                     aria-busy={loading}
                                 >
-                                    {loading ? "–" : tickets}
+                                    {loading || (dataError && !hasData) ? "–" : tickets}
                                 </span>
                                 <span className="studio-home-ticket-label font-bold text-[#142217]">
                                     {tickets === 1 ? "אימון זמין ביתרה" : "אימונים זמינים"}
                                 </span>
                             </div>
-                            <p className="studio-home-ticket-description mt-0.5 font-semibold text-[#283824]">
-                                {subscription?.is_active
+                            <p role={dataError ? "status" : undefined} title={subscription?.tier_display_name} className="studio-home-ticket-description mt-0.5 font-semibold text-[#283824]">
+                                {loading ? "טוענים את היתרה…" : dataError ? "היתרה לא עודכנה" : subscription?.is_active
                                     ? subscription.tier_display_name
                                     : tickets > 0
                                     ? "כרטיסייה פעילה"
@@ -340,13 +389,13 @@ export default function TraineeDashboard({
                         </div>
                     </div>
 
-                    <Link
+                    {dataError ? <button type="button" onClick={() => void refreshData(true, userId)} className="studio-home-membership studio-home-retry rounded-lg border-2 border-[#142217] px-2.5 py-1 font-bold">רענון</button> : <Link
                         href="/subscription"
                         className="studio-home-membership inline-flex shrink-0 items-center gap-1 rounded-lg border-2 border-[#142217] bg-[#f2f4e8] px-2.5 py-1 font-bold text-[#142217] shadow-sm transition-all hover:bg-[#142217] hover:text-white active:bg-[#142217] active:text-white"
                     >
-                        <span>{tickets > 0 ? "המנוי שלי" : "רכישת מנוי"}</span>
+                        <span>{loading ? "פרטי מנוי" : tickets > 0 ? "המנוי שלי" : "רכישת מנוי"}</span>
                         <ArrowLeft aria-hidden="true" className="h-3 w-3" strokeWidth={2.4} />
-                    </Link>
+                    </Link>}
                 </div>
             </main>
         </div>

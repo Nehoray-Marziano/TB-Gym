@@ -223,7 +223,7 @@ export default function LandingPage() {
     };
 
     const handleVerifyCode = async () => {
-        if (!otpCode) return;
+        if (isLoading || !otpCode) return;
         setAuthError("");
         setIsLoading(true);
         const { data, error } = await supabase.auth.verifyOtp({

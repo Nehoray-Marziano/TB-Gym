@@ -4,15 +4,12 @@ import "./globals.css";
 
 import { ToastProvider } from "@/components/ui/use-toast";
 import { ThemeProvider } from "@/components/theme-provider";
-import { GymStoreProvider } from "@/providers/GymStoreProvider";
+import GymBootstrapProvider from "@/providers/GymBootstrapProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ConnectionStatus from "@/components/ConnectionStatus";
 import { PWAInstallProvider } from "@/components/PWAInstallProvider";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 import MotionProvider from "@/components/MotionProvider";
-import { APPLE_STARTUP_IMAGES, LAUNCH_BACKGROUND, LAUNCH_CRITICAL_CSS } from "@/lib/pwa-launch.mjs";
-
-
 // Only load the Hebrew font we actually use
 const varelaRound = Varela_Round({
   variable: "--font-varela-round",
@@ -26,21 +23,18 @@ export const metadata: Metadata = {
   description: "האימונים, ההרשמות והיתרה שלך במקום אחד.",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "סטודיו טליה",
-    startupImage: APPLE_STARTUP_IMAGES,
   },
   icons: {
     icon: "/pwa-icon-v3-192.png",
     shortcut: "/pwa-icon-v3-192.png",
     apple: "/apple-touch-icon-v3.png",
   },
-
 };
 
 export const viewport: Viewport = {
-  themeColor: LAUNCH_BACKGROUND,
-  colorScheme: "light",
+  themeColor: "#e9eadc",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -52,39 +46,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" suppressHydrationWarning style={{ backgroundColor: LAUNCH_BACKGROUND, colorScheme: "light" }}>
-      <head>
-        {/* Next's appleWebApp.capable emits only mobile-web-app-capable. Apple
-            still needs its own tag for startup images and status-bar geometry. */}
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        {/* Supporting browsers wait for the page markup instead of painting
-            a partially parsed login. No hydration dependency or timer. */}
-        <link rel="expect" href="#studio-document-ready" blocking="render" />
-        <style id="studio-launch-critical">{LAUNCH_CRITICAL_CSS}</style>
-      </head>
+    <html lang="he" dir="rtl" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        style={{ backgroundColor: LAUNCH_BACKGROUND }}
         className={`${varelaRound.variable} antialiased font-sans`}
       >
-
         <ServiceWorkerRegister />
         <ConnectionStatus />
         <ThemeProvider>
           <MotionProvider>
             <ToastProvider>
-              <GymStoreProvider>
+              <GymBootstrapProvider>
                 <ConnectedOneSignalProvider />
                 <PWAInstallProvider>
                   {children}
                 </PWAInstallProvider>
-              </GymStoreProvider>
+              </GymBootstrapProvider>
             </ToastProvider>
           </MotionProvider>
         </ThemeProvider>
-        <span id="studio-document-ready" hidden />
-      </body >
-    </html >
+      </body>
+    </html>
   );
 }
 

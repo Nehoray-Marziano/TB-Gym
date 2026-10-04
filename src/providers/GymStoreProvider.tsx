@@ -3,53 +3,73 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import type { AuthChangeEvent, Session as AuthSession } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabaseClient";
-
-type Profile = {
-    id: string;
-    full_name: string;
-    role: string;
-    email?: string;
-};
-
-type Subscription = {
-    tier_name: string;
-    tier_display_name: string;
-    sessions: number;
-    price_nis: number;
-    expires_at: string;
-    is_active: boolean;
-};
+import { loadGymSnapshot, type GymSnapshot, type Profile, type Subscription } from "@/lib/gym-data";
 
 type GymStoreContextType = {
+    userId: string | null | undefined;
     profile: Profile | null;
     tickets: number;  // Available tickets count
     subscription: Subscription | null;
     loading: boolean;
-    refreshData: (force?: boolean, userId?: string) => Promise<void>;
+    error: boolean;
+    hasData: boolean;
+    hydrateData: (snapshot: GymSnapshot) => void;
+    refreshData: (force?: boolean, userId?: string) => Promise<boolean>;
     cancelBooking: (sessionId: string) => Promise<{ success: boolean; message: string }>;
 };
 
 const GymStoreContext = createContext<GymStoreContextType>({
+    userId: undefined,
     profile: null,
     tickets: 0,
     subscription: null,
     loading: true,
-    refreshData: async () => { },
+    error: false,
+    hasData: false,
+    hydrateData: () => { },
+    refreshData: async () => false,
     cancelBooking: async () => ({ success: false, message: "Not implemented" }),
 });
 
 export const useGymStore = () => useContext(GymStoreContext);
 
 
-export function GymStoreProvider({ children }: { children: React.ReactNode }) {
-    const [loading, setLoading] = useState(true);
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [tickets, setTickets] = useState<number>(0);
-    const [subscription, setSubscription] = useState<Subscription | null>(null);
-    const fetchedRef = useRef(false);
-    const inFlightFetchRef = useRef<Promise<void> | null>(null);
+export function GymStoreProvider({ children, initialData, initialUserId, initialEmail = "" }: {
+    children: React.ReactNode;
+    initialData?: GymSnapshot | null;
+    initialUserId?: string;
+    initialEmail?: string;
+}) {
+    const [accountUserId, setAccountUserId] = useState<string | null | undefined>(initialData?.userId ?? initialUserId ?? (initialData === null ? null : undefined));
+    const [loading, setLoading] = useState(initialData === undefined);
+    const [error, setError] = useState(false);
+    const [hasData, setHasData] = useState(Boolean(initialData));
+    const [profile, setProfile] = useState<Profile | null>(initialData?.profile ?? null);
+    const [tickets, setTickets] = useState(initialData?.tickets ?? 0);
+    const [subscription, setSubscription] = useState<Subscription | null>(initialData?.subscription ?? null);
+    const fetchedRef = useRef(initialData !== undefined);
+    const inFlightFetchRef = useRef<Promise<boolean> | null>(null);
     const requestVersionRef = useRef(0);
-    const currentUserRef = useRef<string | null>(null);
+    const currentUserRef = useRef<string | null>(initialData?.userId ?? initialUserId ?? null);
+    const emailRef = useRef(initialData?.profile?.email ?? initialEmail);
+    const hasDataRef = useRef(Boolean(initialData));
+    const lastFetchRef = useRef(initialData ? Date.now() : 0);
+
+    const hydrateData = useCallback((snapshot: GymSnapshot) => {
+        requestVersionRef.current += 1;
+        inFlightFetchRef.current = null;
+        fetchedRef.current = true;
+        currentUserRef.current = snapshot.userId;
+        setAccountUserId(snapshot.userId);
+        emailRef.current = snapshot.profile?.email ?? "";
+        hasDataRef.current = true;
+        setProfile(snapshot.profile);
+        setTickets(snapshot.tickets);
+        setSubscription(snapshot.subscription);
+        setLoading(false);
+        setError(false);
+        setHasData(true);
+    }, []);
 
     // Lazy-initialize supabase client only when needed (client-side only)
     const getClient = useCallback(() => {
@@ -83,65 +103,71 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
     const fetchData = useCallback((force: boolean = false, userId?: string) => {
         // The provider and dashboard can request the same fresh data during one
         // navigation. Share that request instead of repeating the three RPCs.
-        if (!force && inFlightFetchRef.current) return inFlightFetchRef.current;
+        if (!force && inFlightFetchRef.current && (!userId || userId === currentUserRef.current)) return inFlightFetchRef.current;
+        // The server snapshot (or a completed login fetch) is already fresh.
+        // Coalesce immediate entry requests without delaying forced updates.
+        if (!force && hasDataRef.current && (!userId || userId === currentUserRef.current) && Date.now() - lastFetchRef.current < 1000) return Promise.resolve(true);
 
         const requestVersion = ++requestVersionRef.current;
+        fetchedRef.current = true;
         const isCurrent = () => requestVersionRef.current === requestVersion;
+        if (!hasDataRef.current || (userId && userId !== currentUserRef.current)) {
+            setLoading(true);
+            setError(false);
+        }
 
         const request = (async () => {
             const supabase = getClient();
             if (!supabase) {
                 console.error("[GymStore] Supabase client is not available (check env vars)");
-                if (isCurrent()) setLoading(false);
-                return;
+                if (isCurrent()) { setError(true); setLoading(false); }
+                return false;
             }
 
             try {
                 // Use passed userId if available (from SSR), otherwise check auth
-                let uid = userId;
-                let authenticatedEmail = "";
+                let uid = userId ?? currentUserRef.current ?? undefined;
+                let authenticatedEmail = emailRef.current;
                 if (!uid) {
                     const { data: { user }, error: authError } = await supabase.auth.getUser();
                     if (authError || !user) {
                         if (isCurrent()) {
                             currentUserRef.current = null;
+                            setAccountUserId(null);
+                            hasDataRef.current = false;
                             setProfile(null);
                             setTickets(0);
                             setSubscription(null);
+                            setHasData(false);
+                            setError(Boolean(authError));
                         }
-                        return;
+                        return false;
                     }
                     uid = user.id;
                     authenticatedEmail = user.email || "";
                 }
 
-                const [profileRes, ticketRes, subRes] = await Promise.all([
-                    supabase.from("profiles").select("id, full_name, role").eq("id", uid).single(),
-                    supabase.rpc("get_available_tickets", { p_user_id: uid }),
-                    supabase.rpc("get_user_subscription", { p_user_id: uid }),
-                ]);
-
-                if (!isCurrent()) return;
-                currentUserRef.current = uid ?? null;
-
-                if (profileRes.data) {
-                    let userEmail = authenticatedEmail;
-                    if (!userEmail) {
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (!isCurrent()) return;
-                        userEmail = user?.email || "";
-                    }
-
-                    setProfile({ ...profileRes.data, email: userEmail });
-                } else {
-                    setProfile(null);
-                }
-
-                setTickets(ticketRes.data ?? 0);
-                setSubscription(subRes.data?.is_active ? subRes.data : null);
+                if (!uid) return false;
+                if (!isCurrent()) return false;
+                currentUserRef.current = uid;
+                setAccountUserId(uid);
+                const snapshot = await loadGymSnapshot(supabase, uid, authenticatedEmail);
+                if (!isCurrent()) return false;
+                currentUserRef.current = uid;
+                emailRef.current = authenticatedEmail;
+                hasDataRef.current = true;
+                lastFetchRef.current = Date.now();
+                setProfile(snapshot.profile);
+                setTickets(snapshot.tickets);
+                setSubscription(snapshot.subscription);
+                setError(false);
+                setHasData(true);
+                return true;
 
             } catch (error) {
                 console.error("Error refreshing gym data:", error);
+                if (isCurrent()) setError(true);
+                return false;
             } finally {
                 if (isCurrent()) setLoading(false);
             }
@@ -168,13 +194,32 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
                     requestVersionRef.current += 1;
                     inFlightFetchRef.current = null;
                     currentUserRef.current = null;
+                    setAccountUserId(null);
+                    hasDataRef.current = false;
+                    emailRef.current = "";
                     setProfile(null);
                     setTickets(0);
                     setSubscription(null);
                     setLoading(false);
+                    setError(false);
+                    setHasData(false);
                 } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                     if (session?.user && currentUserRef.current !== session.user.id) {
-                        void fetchData(true, session.user.id);
+                        currentUserRef.current = session.user.id;
+                        setAccountUserId(session.user.id);
+                        hasDataRef.current = false;
+                        emailRef.current = session.user.email ?? "";
+                        setProfile(null);
+                        setTickets(0);
+                        setSubscription(null);
+                        setLoading(true);
+                        setError(false);
+                        setHasData(false);
+                        // Release the auth callback before requesting data.
+                        // Login awaits the same request before navigating.
+                        setTimeout(() => {
+                            if (currentUserRef.current === session.user.id) void fetchData(false, session.user.id);
+                        }, 0);
                     }
                 }
             });
@@ -192,16 +237,21 @@ export function GymStoreProvider({ children }: { children: React.ReactNode }) {
         if (fetchedRef.current) return;
         fetchedRef.current = true;
 
-        // Always fetch fresh data on mount - don't rely on cache
+        // A server snapshot is already fresh; only bootstrap on the client when
+        // the server could not supply one.
         fetchData();
     }, [fetchData]);
 
     return (
         <GymStoreContext.Provider value={{
+            userId: accountUserId,
             profile,
             tickets,
             subscription,
             loading,
+            error,
+            hasData,
+            hydrateData,
             refreshData: fetchData,
             cancelBooking,
         }}>
