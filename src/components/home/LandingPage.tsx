@@ -6,54 +6,14 @@ import {
     AlertCircle,
     ArrowLeft,
     ArrowRight,
-    CalendarDays,
     CheckCircle2,
     Mail,
-    ShieldCheck,
-    Sparkles,
-    Ticket,
     X,
 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlass";
 
 type LoginView = "email" | "otp";
-
-interface StudioFeature {
-    id: string;
-    icon: typeof CalendarDays;
-    title: string;
-    desc: string;
-    badge: string;
-    detail: string;
-}
-
-const STUDIO_FEATURES: StudioFeature[] = [
-    {
-        id: "schedule",
-        icon: CalendarDays,
-        title: "לוח אימונים גמיש",
-        desc: "שריון מקום מהיר לפי הימים והשעות שלך",
-        badge: "מתעדכן",
-        detail: "שיעורי בוקר, ערב וסופי שבוע בקצב שמתאים לשגרה שלך.",
-    },
-    {
-        id: "intimate",
-        icon: Sparkles,
-        title: "קבוצות בוטיק אינטימיות",
-        desc: "עד 8 מתאמנות עם יחס אישי ומדויק",
-        badge: "אינטימי",
-        detail: "תשומת לב מלאה לכל תנועה, דיוק בטכניקה והתאמה אישית.",
-    },
-    {
-        id: "tickets",
-        icon: Ticket,
-        title: "כרטיסיות ומעקב חכם",
-        desc: "מעקב יתרה, תוקף מנוי וביטול עצמאי",
-        badge: "בזמן אמת",
-        detail: "שקיפות מלאה ללא אותיות קטנות — כל המידע זמין לך מיד.",
-    },
-];
 
 function GoogleMark({ className = "h-4 w-4 shrink-0" }: { className?: string }) {
     return (
@@ -102,7 +62,6 @@ export default function LandingPage() {
     const [authError, setAuthError] = useState("");
     const [resendSuccess, setResendSuccess] = useState(false);
     const [isEmblemPressed, setIsEmblemPressed] = useState(false);
-    const [activeFeature, setActiveFeature] = useState<string | null>(null);
 
     const welcomeRef = useRef<HTMLDivElement>(null);
     const emailInputRef = useRef<HTMLInputElement>(null);
@@ -175,13 +134,6 @@ export default function LandingPage() {
         setTimeout(() => setIsEmblemPressed(false), 450);
         if (typeof navigator !== "undefined" && navigator.vibrate) {
             navigator.vibrate(15);
-        }
-    };
-
-    const toggleFeature = (id: string) => {
-        setActiveFeature((prev) => (prev === id ? null : id));
-        if (typeof navigator !== "undefined" && navigator.vibrate) {
-            navigator.vibrate(10);
         }
     };
 
