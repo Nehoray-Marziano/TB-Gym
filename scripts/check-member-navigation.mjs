@@ -21,17 +21,18 @@ import BookingExperience from "@/components/book/BookingExperience";
 import { MemberNavigation } from "@/components/BottomNav";
 import { StudioModal } from "@/components/ui/StudioModal";
 import { TraineeIdentity } from "@/components/TraineeIdentity";
+import TraineeShell from "@/components/TraineeShell";
 export default function Preview() {
   const [path, setPath] = useState("/book");
   const [long, setLong] = useState(false);
   const [busy, setBusy] = useState(false);
-  return <TraineeIdentity userId="00000000-0000-0000-0000-000000000000"><div className="studio-app-shell">
-    <div className="h-full overflow-hidden">
+  return <TraineeIdentity userId="00000000-0000-0000-0000-000000000000"><TraineeShell>
+    <div className="min-h-0 flex-1 overflow-hidden">
       <BookingExperience previewSessions={${JSON.stringify(sessions)}} previewTickets={3} previewLoading={false}/>
       <div hidden><button id="change-route" onClick={()=>setPath(path==="/book"?"/profile":"/book")}/><button id="long-modal" onClick={()=>setLong(true)}/></div>
       {long && <StudioModal titleId="long-title" busy={busy} onClose={()=>setLong(false)} actions={<><button id="fixture-confirm" disabled={busy}>כן, לבטל את ההרשמה</button><button id="fixture-return" data-modal-cancel disabled={busy} onClick={()=>setLong(false)}>להישאר רשומה (חזרה)</button></>}><button id="set-busy" type="button" hidden onClick={()=>setBusy(!busy)}/><h2 id="long-title">לבטל את ההרשמה?</h2><p>{"אימון עם שם ארוך מאוד והסבר על הביטול. ".repeat(100)}</p><input id="modal-input" aria-label="בדיקת מקלדת"/></StudioModal>}
     </div><MemberNavigation pathname={path}/>
-  </div></TraineeIdentity>;
+  </TraineeShell></TraineeIdentity>;
 }`;
 
 let chrome, ws, created = false;
@@ -58,7 +59,7 @@ try {
     }
     assert(serverReady, "Development server did not discover the fixture route");
     const profile = await mkdtemp(join(output, "chrome-"));
-    chrome = spawn("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", [
+    chrome = spawn(process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", [
         "--headless=new", "--disable-gpu", "--no-sandbox", "--remote-debugging-port=0", "--remote-allow-origins=*",
         `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "about:blank",
     ], { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });

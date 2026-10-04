@@ -224,7 +224,7 @@ a,
 
 .studio-member-navigation {
   position: fixed;
-  bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  bottom: calc(0.75rem + env(safe-area-inset-bottom) + var(--studio-viewport-bottom, 0px));
   left: 50%;
   z-index: var(--studio-z-navigation);
   width: calc(100% - 2rem);

@@ -1,5 +1,6 @@
 // Run against `next dev`: node scripts/check-home-layout.mjs [http://127.0.0.1:3100]
 // Add --safe-areas to check notch and home-indicator clearance.
+// Add --pwa to check sign-in entry, viewport settling, app resume and pinch zoom.
 // The temporary route renders the real home and dock with synthetic data only.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -13,22 +14,25 @@ const output = await mkdtemp(join(tmpdir(), "talia-home-layout-"));
 const fixtureDir = new URL("../src/app/home-layout-check/", import.meta.url);
 const fixtureFile = new URL("page.tsx", fixtureDir);
 const safeAreas = process.argv.includes("--safe-areas");
-const viewports = safeAreas ? [[320, 568], [390, 844]] : [[320, 568], [360, 640], [375, 667], [390, 664], [390, 844], [412, 915], [430, 932], [768, 1024], [1366, 768], [1920, 1080], [667, 375], [844, 390], [915, 412]];
-const states = ["welcome", "empty", "booked", "long", "admin", "loading", "error"];
+const pwa = process.argv.includes("--pwa");
+const viewports = pwa ? [[360, 780], [390, 844], [412, 915]] : safeAreas ? [[320, 568], [390, 844]] : [[320, 568], [360, 640], [375, 667], [390, 664], [390, 844], [412, 915], [430, 932], [768, 1024], [1366, 768], [1920, 1080], [667, 375], [844, 390], [915, 412]];
+const states = pwa ? ["empty", "booked", "long", "admin-empty", "loading", "error"] : ["welcome", "empty", "booked", "long", "admin", "admin-empty", "loading", "error"];
 const fixture = `"use client";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import TraineeDashboard from "@/components/home/TraineeDashboard";
 import { MemberNavigation } from "@/components/BottomNav";
+import PageEntrance from "@/components/PageEntrance";
+import TraineeShell from "@/components/TraineeShell";
 function Preview() {
   const state = useSearchParams().get("state");
   const live = state === "loading" || state === "error";
   const booked = state === "booked" || state === "long" || state === "admin";
-  return <><TraineeDashboard userId="00000000-0000-0000-0000-000000000000"
-    previewProfile={{ full_name: state === "long" ? "אלכסנדרהמשהישראלי בדיקה" : "נועה בדיקה", role: state === "admin" ? "administrator" : "trainee" }}
+  return <TraineeShell><div className="relative min-h-0 flex-1 w-full overflow-hidden"><PageEntrance><TraineeDashboard userId="00000000-0000-0000-0000-000000000000"
+    previewProfile={{ full_name: state === "long" ? "אלכסנדרהמשהישראלי בדיקה" : "נועה בדיקה", role: state?.startsWith("admin") ? "administrator" : "trainee" }}
     previewTickets={state === "empty" ? 0 : 12}
     {...(live ? {} : { previewNextClass: booked ? { id: "layout-fixture", title: state === "long" ? "אימון כוח וחיטוב לכל הגוף בקבוצת הבוקר המתקדמת" : "אימון כוח וחיטוב", start_time: ${JSON.stringify(new Date(Date.now() + 5 * 86400000).toISOString())} } : null })}
-  /><MemberNavigation pathname="/dashboard" /></>;
+  /></PageEntrance></div><MemberNavigation pathname="/dashboard" /></TraineeShell>;
 }
 export default function LayoutCheck() { return <Suspense><Preview /></Suspense>; }
 `;
@@ -86,6 +90,8 @@ try {
     await call("Emulation.setSafeAreaInsetsOverride", { insets: { top: 47, bottom: 34, left: 0, right: 0 } });
   }
   await call("Page.addScriptToEvaluateOnNewDocument", { source: `
+    const visibleHeight = Number(new URLSearchParams(location.search).get("visibleHeight"));
+    if (visibleHeight > 0) Object.defineProperty(window.visualViewport, "height", { configurable: true, value: visibleHeight });
     const nativeFetch = window.fetch.bind(window);
     window.fetch = (input, options) => {
       const url = typeof input === "string" ? input : input.url || String(input);
@@ -98,6 +104,7 @@ try {
   ` });
   const inspect = `(() => {
     const main = document.querySelector("main");
+    const viewportHeight = window.visualViewport?.scale === 1 ? Math.min(innerHeight, window.visualViewport.height) : innerHeight;
     const issues = [];
     const rect = element => element.getBoundingClientRect();
     const visible = element => {
@@ -117,7 +124,7 @@ try {
       if (!node.textContent.trim() || !visible(parent) || parent.closest("script, style")) continue;
       const range = document.createRange(); range.selectNodeContents(node);
       const text = range.getBoundingClientRect();
-      if (text.left < -1 || text.right > innerWidth + 1 || text.top < -1 || text.bottom > innerHeight + 1) issues.push("text outside viewport: " + label(parent));
+      if (text.left < -1 || text.right > innerWidth + 1 || text.top < -1 || text.bottom > viewportHeight + 1) issues.push("text outside viewport: " + label(parent));
       const section = parent.closest(".studio-home-heading, .studio-home-workout, .studio-home-balance");
       if (section && (text.top < rect(section).top - 1 || text.bottom > rect(section).bottom + 1)) issues.push("text outside section: " + label(parent));
       for (let ancestor = parent; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
@@ -130,6 +137,10 @@ try {
     }
     const nav = document.querySelector('nav[aria-label="ניווט ראשי"]');
     const limit = nav ? rect(nav).top : innerHeight;
+    const shell = document.querySelector(".studio-app-shell");
+    if (shell && Math.abs(rect(shell).height - viewportHeight) > 1) issues.push("shell does not fit visible viewport");
+    if (shell && Math.abs(rect(main).height - rect(shell).height) > 1) issues.push("home does not inherit shell height");
+    if (nav && rect(nav).bottom > viewportHeight + 1) issues.push("navigation outside visible viewport");
     for (const target of main.querySelectorAll("a, button")) {
       if (!visible(target)) continue;
       const box = rect(target);
@@ -146,13 +157,15 @@ try {
     }
     window.scrollTo(0, 9999);
     if (scrollY !== 0) issues.push("page can scroll");
-    return { issues: [...new Set(issues)], width: innerWidth, height: innerHeight,
+    return { issues: [...new Set(issues)], width: innerWidth, height: innerHeight, viewportHeight,
+      shellHeight: shell ? rect(shell).height : null, topPadding: mainStyle.paddingTop,
       bodyFont: getComputedStyle(document.querySelector(".studio-welcome-description, .studio-home-empty-description, .studio-home-workout-time") || main).fontSize,
       cardHeight: workout ? Math.round(rect(workout).height) : null,
       headingHeight: heading ? Math.round(rect(heading).height) : null };
   })()`;
   for (const [width, height] of viewports) {
     await call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 1000 });
+    if (pwa) await call("Emulation.setSafeAreaInsetsOverride", { insets: { top: width === 390 ? 47 : 0, bottom: width === 390 ? 34 : 0, left: 0, right: 0 } });
     await call("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: width === 375 ? "reduce" : "no-preference" }] });
     for (const state of states) {
       await call("Page.navigate", { url: `${baseUrl}${state === "welcome" ? "/auth/login" : `/home-layout-check?state=${state}`}` });
@@ -171,6 +184,39 @@ try {
       if (measurement.issues.length || (width === 390 && height === 844)) {
         const screenshot = await call("Page.captureScreenshot", { format: "png" });
         await writeFile(join(output, `${caseName}.png`), Buffer.from(screenshot.data, "base64"));
+      }
+      if (pwa) {
+        const check = async phase => {
+          await evaluate("new Promise(resolve => setTimeout(resolve, 150))");
+          const result = await evaluate(inspect);
+          const name = `${caseName}-${phase}`;
+          results.push({ case: name, ...result });
+          if (result.issues.length) {
+            failures.push({ case: name, issues: result.issues });
+            console.log(`FAIL ${name}: ${result.issues.join("; ")}`);
+          }
+          if (state === "admin-empty") {
+            const screenshot = await call("Page.captureScreenshot", { format: "png" });
+            await writeFile(join(output, `${name}.png`), Buffer.from(screenshot.data, "base64"));
+          }
+          return result;
+        };
+        await evaluate(`Object.defineProperty(window.visualViewport, 'height', { configurable: true, value: ${height - 96} }); window.visualViewport.dispatchEvent(new Event('resize'));`);
+        const settled = await check("settled");
+        await evaluate(`Object.defineProperty(window.visualViewport, 'scale', { configurable: true, value: 2 }); window.visualViewport.dispatchEvent(new Event('resize'));`);
+        const zoomedHeight = await evaluate("document.querySelector('.studio-app-shell').getBoundingClientRect().height");
+        assert.equal(zoomedHeight, settled.shellHeight, "Pinch zoom preserves the shell's layout height");
+        await evaluate("delete window.visualViewport.scale; delete window.visualViewport.height; window.dispatchEvent(new Event('pageshow'));");
+        await check("resumed");
+        await call("Page.navigate", { url: `${baseUrl}/home-layout-check?state=${state}&visibleHeight=${height - 96}` });
+        let hydrated = false;
+        for (let attempt = 0; attempt < 100; attempt++) {
+          hydrated = await evaluate("Boolean(document.querySelector('.studio-app-shell')?.style.getPropertyValue('--studio-viewport-bottom'))");
+          if (hydrated) break;
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        assert(hydrated, `Sign-in shell did not hydrate: ${caseName}`);
+        await check("sign-in-entry");
       }
     }
     console.log(`Checked ${width}x${height}`);
