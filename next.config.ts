@@ -35,6 +35,12 @@ const withPWA = withPWAInit({
   reloadOnOnline: false,
   // The home page redirects according to the signed-in user. Never precache it.
   cacheStartUrl: false,
+  // The plugin otherwise injects a separate NetworkFirst start-url cache even
+  // with cacheStartUrl disabled, potentially reviving an obsolete launch page.
+  dynamicStartUrl: false,
+  // Apple downloads the matching native image. Do not precache every device's
+  // launch image in every browser during service-worker installation.
+  publicExcludes: ["!noprecache/**/*", "!pwa-startup/**/*"],
   // Fallback for offline pages
   fallbacks: {
     document: '/~offline',

@@ -8,8 +8,7 @@ const artwork = source.slice(source.indexOf('>') + 1, source.lastIndexOf('</svg>
   .replaceAll('fill="#000000"', 'fill="#162218"'); // Deep Studio Ink
 
 // Cream Boutique Canvas #e9eadc
-// Using consistent background & geometry eliminates the jarring dark-to-light flash
-// when transitioning from OS native launcher splash to the web app first paint.
+// Use the same opaque canvas for installed icons and Android's native launch.
 const canvas = () => `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <rect width="1024" height="1024" fill="#e9eadc"/>
   <g transform="translate(512 512) scale(0.72) translate(-512 -512)">${artwork}</g>

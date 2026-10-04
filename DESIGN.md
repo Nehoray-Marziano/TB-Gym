@@ -24,6 +24,8 @@ The fixed bottom navigation owns Home, Schedule, and Account. It stays available
 
 The public introduction reserves the studio emblem's intrinsic dimensions before its image loads. Its fixed shell follows the visual viewport before paint, on resize, and on app resume, falling back to the window height. Safe-area padding remains inside that height so both sign-in buttons and the reassurance footer stay visible after a logged-out PWA cold launch. Pinch zoom preserves the layout size. `scripts/check-pwa-startup.mjs` checks the logged-out start URL, delayed logo loading, relaunch, safe areas, and a visible viewport shorter than the CSS viewport.
 
+Launch uses a native, static splash: the existing dark TB mark centered on the canonical cream canvas. Android derives it from the manifest and installed icons; Apple uses the generated portrait/landscape PNGs linked in the initial head. `src/lib/pwa-startup.mjs` adapts the canonical canvas/ink to static assets, the manifest, and inline root backgrounds; `scripts/check-native-startup.mjs` verifies color agreement. Keep the existing `default` status-bar mode consistent throughout launch. The OS owns splash dismissal. Do not add a React splash, root Suspense/loading fallback above authentication, a minimum display timer, or device-specific splash layout CSS. Server auth redirects must finish before a destination document renders. See `docs/pwa-startup.md` for generation, cleanup evidence, platform coverage, and verification limits.
+
 
 ## Elevation & Depth
 

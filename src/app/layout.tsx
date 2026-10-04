@@ -10,6 +10,7 @@ import ConnectionStatus from "@/components/ConnectionStatus";
 import { PWAInstallProvider } from "@/components/PWAInstallProvider";
 import ConnectedOneSignalProvider from "@/components/ConnectedOneSignalProvider";
 import MotionProvider from "@/components/MotionProvider";
+import { APPLE_STARTUP_IMAGES, PWA_BACKGROUND } from "@/lib/pwa-startup.mjs";
 // Only load the Hebrew font we actually use
 const varelaRound = Varela_Round({
   variable: "--font-varela-round",
@@ -21,11 +22,6 @@ const varelaRound = Varela_Round({
 export const metadata: Metadata = {
   title: "סטודיו טליה | האימונים שלך",
   description: "האימונים, ההרשמות והיתרה שלך במקום אחד.",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "סטודיו טליה",
-  },
   icons: {
     icon: "/pwa-icon-v3-192.png",
     shortcut: "/pwa-icon-v3-192.png",
@@ -34,7 +30,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e9eadc",
+  themeColor: PWA_BACKGROUND,
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -46,9 +43,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" suppressHydrationWarning>
+    <html lang="he" dir="rtl" suppressHydrationWarning style={{ backgroundColor: PWA_BACKGROUND, colorScheme: "light" }}>
+      <head>
+        {/* Native launch configuration precedes body rendering. Keep the
+            existing default status-bar geometry throughout the launch. */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="סטודיו טליה" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        {APPLE_STARTUP_IMAGES.map(({ href, media }) => (
+          <link key={href} rel="apple-touch-startup-image" href={href} media={media} />
+        ))}
+      </head>
       <body
         suppressHydrationWarning
+        style={{ backgroundColor: PWA_BACKGROUND }}
         className={`${varelaRound.variable} antialiased font-sans`}
       >
         <ServiceWorkerRegister />
