@@ -74,24 +74,20 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, amount, userN
             <header className="membership-payment-header">
                 <div className="membership-payment-brand"><Image src="/Bit_logo.svg" alt="ביט" width={44} height={44} className="membership-bit-logo" /><span>סטודיו טליה<span>תשלום דרך ביט</span></span></div>
                 <button ref={closeRef} type="button" onClick={onClose} aria-label="סגירת פרטי התשלום" className="membership-payment-close"><X aria-hidden="true" /></button>
-                <p className="membership-payment-eyebrow">הבחירה שלך</p>
                 <h2 id="payment-title">כמעט שם.</h2>
                 <div className="membership-payment-total"><div><strong>{tierDisplay}</strong><span>לחודש · ללא התחייבות שנתית</span></div><strong dir="ltr">{amount}<span>₪</span></strong></div>
-                <p id="payment-description">עוד רגע עוברים לביט. הנה כל הפרטים להעברה.</p>
             </header>
             <div className="membership-payment-body">
                 <div className="membership-payment-copy-section">
-                    <p className="membership-copy-label">לצרף לתיאור התשלום בביט</p>
+                    <p className="membership-copy-label">תיאור ההעברה בביט</p>
                     <div className="membership-copy-box"><p dir="auto">{paymentDescription}</p><button type="button" onClick={handleCopy} aria-label="העתקת תיאור התשלום">{copyState === "copied" ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}<span>{copyState === "copied" ? "הועתק" : "העתקה"}</span></button></div>
-                    <p className="membership-copy-feedback" role="status">{copyState === "copied" ? "התיאור הועתק. הדביקי אותו בשדה התיאור בביט." : copyState === "error" ? "לא הצלחנו להעתיק. נסי שוב באמצעות כפתור ההעתקה." : "העתיקי עכשיו, והדביקי בתיאור ההעברה בביט."}</p>
+                    <p id="payment-description" className={`membership-copy-feedback${error ? " membership-payment-error" : ""}`} role={error ? "alert" : "status"}>{error || (copyState === "copied" ? "התיאור הועתק. הדביקי אותו בשדה התיאור בביט." : copyState === "error" ? "לא הצלחנו להעתיק. נסי שוב באמצעות כפתור ההעתקה." : "העתיקי עכשיו, והדביקי בתיאור ההעברה בביט.")}</p>
                 </div>
-                <div className="membership-payment-notice"><span><Clock3 aria-hidden="true" /></span><p><strong>האימונים בדרך אלייך</strong>המנוי יופעל לאחר אישור התשלום על ידי טליה.</p></div>
+                <div className="membership-payment-notice"><span><Clock3 aria-hidden="true" /></span><p>המנוי יופעל לאחר אישור התשלום על ידי טליה.</p></div>
             </div>
             </div>
             <footer className="membership-payment-actions">
-                {error && <p className="membership-payment-error" role="alert">{error}</p>}
                 <BitConfirmSlider onConfirm={handleConfirm} onClose={onClose} />
-                <p className="membership-payment-hint">ההעברה עצמה מתבצעת בביט.</p>
             </footer>
         </div>}
     </dialog>;

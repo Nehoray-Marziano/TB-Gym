@@ -221,7 +221,6 @@
 .membership-page :is(button, a, summary):focus-visible, .membership-carousel:focus-visible { outline: 3px solid var(--scene-accent); outline-offset: 5px; }
 .membership-carousel:focus-visible { outline-offset: -5px; }
 .membership-card button:focus-visible { outline-color: var(--card-accent); }
-.membership-page .membership-payment-dialog button:focus-visible { outline: 3px solid var(--studio-coral-ink); outline-offset: 4px; }
 .membership-page :is(button, a, summary) { scroll-margin-block: 24px; }
 
 @keyframes membership-sheen { to { transform: translateX(-140%); } }
