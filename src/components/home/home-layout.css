@@ -313,7 +313,11 @@
 }
 
 @container (max-height: 600px) {
-  .studio-home-emblem { width: clamp(56px, 12cqh, 80px); height: clamp(56px, 12cqh, 80px); }
+  .studio-home-emblem {
+    height: clamp(52px, 10cqh, 68px);
+    width: auto;
+    aspect-ratio: 690 / 544;
+  }
   .studio-home-botanical { width: clamp(80px, 20cqh, 112px); height: clamp(80px, 20cqh, 112px); }
   .studio-home-name { font-size: clamp(26px, 9cqw, 32px); }
   .studio-home-name:where([data-long-name]) { font-size: clamp(18px, 6.5cqw, 26px); }
@@ -324,7 +328,11 @@
 }
 
 @container (max-height: 540px) {
-  .studio-home-emblem { width: 56px; height: 56px; }
+  .studio-home-emblem {
+    height: 48px;
+    width: auto;
+    aspect-ratio: 690 / 544;
+  }
   .studio-home-botanical { width: 80px; height: 80px; }
   .studio-home-name { font-size: 26px; }
   .studio-home-heading { padding-bottom: 4px; }
@@ -348,16 +356,12 @@
 
 /* Notches and browser chrome can leave less room than the device height implies. */
 @container (max-height: 420px) {
-  .studio-home-emblem { width: 44px; height: 44px; }
-  .studio-home-heading { gap: 4px; }
-  .studio-home-heading header > div { flex-wrap: nowrap; }
-  .studio-home-heading header > div > div {
-    min-width: 0;
-    flex-shrink: 1;
-    padding-inline: 8px;
-    white-space: normal;
-    line-height: 1.25;
+  .studio-home-emblem {
+    height: 40px;
+    width: auto;
+    aspect-ratio: 690 / 544;
   }
+  .studio-home-heading { gap: 4px; }
   .studio-home-botanical { width: 56px; height: 56px; }
   .studio-home-name { font-size: 20px; }
   .studio-home-hello { font-size: 14px; }
@@ -404,7 +408,7 @@
     gap: 24px;
     padding-bottom: 0;
   }
-  .studio-home-heading header { gap: 16px; }
+  .studio-home-heading header { width: auto; justify-content: flex-start; gap: 16px; }
   .studio-home-greeting { flex: 1; }
   .studio-home-greeting .studio-home-hello { display: inline; margin-inline-end: 8px; }
   .studio-home-greeting .studio-home-name { display: inline; }
