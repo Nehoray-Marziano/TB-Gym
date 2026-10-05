@@ -141,6 +141,9 @@ export default function LandingPage() {
     const handleGoogleLogin = async () => {
         setAuthError("");
         setIsLoading(true);
+        try {
+            sessionStorage.setItem("talia_just_logged_in", "1");
+        } catch {}
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: { redirectTo: `${window.location.origin}/auth/callback` },
@@ -188,6 +191,9 @@ export default function LandingPage() {
             setAuthError("הקוד לא תקין או שפג תוקפו. בדקי ונסי שוב.");
             setIsLoading(false);
         } else if (data?.session) {
+            try {
+                sessionStorage.setItem("talia_just_logged_in", "1");
+            } catch {}
             window.scrollTo(0, 0);
             window.location.href = "/dashboard";
         } else {

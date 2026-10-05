@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarDays, Clock3, Sparkles, Ticket } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, Ticket } from "lucide-react";
 import { loadUpcomingSession, type GymSnapshot, type UpcomingSession } from "@/lib/gym-data";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { getRelativeTimeHebrew } from "@/lib/utils";
@@ -165,7 +165,6 @@ export default function TraineeDashboard({
 
     const firstName = profile?.full_name?.trim().split(/\s+/)[0] || "אלופה";
     const greeting = getDayGreeting();
-    const today = new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Jerusalem" }).format(new Date());
 
     return (
         <div data-home-ready={hydrated} className="studio-home relative h-full w-full bg-[#eceee0] bg-[radial-gradient(ellipse_120%_70%_at_50%_-10%,#faf9f2_0%,#e8ebdc_55%,#dfe2ce_100%)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
@@ -178,32 +177,28 @@ export default function TraineeDashboard({
             <main className="studio-home-main relative mx-auto">
                 {/* 1 & 2: Header + Personal Greeting grouped cohesively */}
                 <div className="studio-home-heading flex flex-col">
-                    {/* Header: Studio Brand Emblem & Date / Admin Badge */}
-                    <header className="flex shrink-0 items-center justify-between gap-3 pt-0.5">
-                        <Link
-                            href="/dashboard"
-                            className="group flex items-center transition-transform active:scale-95"
-                            aria-label="סטודיו טליה - תזונה • אימונים"
-                        >
-                            {/* The shared in-app mark omits the introductory tagline. */}
-                            <StudioLogo className="studio-home-emblem shrink-0 bg-[var(--studio-ink)] transition-transform group-hover:scale-[1.02]" />
-                        </Link>
-
-                        <div className="flex items-center gap-2">
-                            {profile?.role === "administrator" && (
-                                <Link
-                                    href="/admin"
-                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--studio-deep)] px-3 py-1.5 text-xs font-bold text-[var(--studio-deep-contrast)] shadow-sm transition-transform active:scale-95"
-                                >
-                                    <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-text)]" />
-                                    <span>ניהול</span>
-                                </Link>
-                            )}
-                            <div className="flex items-center gap-1.5 rounded-full border border-[#8b9978] bg-white px-3 py-1.5 text-xs font-bold text-[#142217] shadow-[0_2px_6px_rgba(20,32,22,0.06)] whitespace-nowrap shrink-0">
-                                <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 text-[#1e2e1c]" strokeWidth={2.4} />
-                                <span>{today}</span>
+                    {/* Header: Centered TB Brand Mark (acts as ניהול button when logged in as administrator) */}
+                    <header className="flex shrink-0 items-center justify-center pt-0.5">
+                        {profile?.role === "administrator" ? (
+                            <Link
+                                href="/admin"
+                                className="group inline-flex items-center justify-center transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--studio-ink)] cursor-pointer"
+                                aria-label="ניהול"
+                                title="ניהול"
+                            >
+                                <StudioLogo
+                                    tight
+                                    className="studio-home-emblem shrink-0 bg-[var(--studio-ink)] transition-transform group-hover:scale-[1.03]"
+                                />
+                            </Link>
+                        ) : (
+                            <div className="inline-flex items-center justify-center select-none" aria-label="סטודיו טליה">
+                                <StudioLogo
+                                    tight
+                                    className="studio-home-emblem shrink-0 bg-[var(--studio-ink)]"
+                                />
                             </div>
-                        </div>
+                        )}
                     </header>
 
                     {/* Personal Greeting with Harmonious Terracotta Sun & 100% Uncropped Botanical Art */}

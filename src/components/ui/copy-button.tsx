@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Check, CircleAlert, Copy, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,8 @@ type CopyButtonProps = {
     className?: string;
 };
 
+const COPY_SUCCESS_FEEDBACK_MS = 900;
+
 /** Never echoes the copied value in feedback, logs, or application storage. */
 export function CopyButton({ value, label, disabled = false, className }: CopyButtonProps) {
     const [status, setStatus] = useState<"idle" | "copying" | "copied" | "error">("idle");
@@ -18,7 +20,7 @@ export function CopyButton({ value, label, disabled = false, className }: CopyBu
 
     useEffect(() => {
         if (status !== "copied" && status !== "error") return;
-        const timer = setTimeout(() => setStatus("idle"), 2500);
+        const timer = setTimeout(() => setStatus("idle"), status === "copied" ? COPY_SUCCESS_FEEDBACK_MS : 2500);
         return () => clearTimeout(timer);
     }, [status]);
 
@@ -50,7 +52,7 @@ export function CopyButton({ value, label, disabled = false, className }: CopyBu
             >
                 {status === "copied" ? <Check aria-hidden="true" /> : status === "error" ? <CircleAlert aria-hidden="true" /> : status === "copying" ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Copy aria-hidden="true" />}
             </button>
-            <span className="studio-copy-feedback" role="status" aria-live="polite" aria-atomic="true" data-visible={status === "copied" || status === "error"} data-error={status === "error"}>
+            <span className="studio-copy-feedback" role="status" aria-live="polite" aria-atomic="true" data-visible={status === "copied" || status === "error"} data-error={status === "error"} style={{ "--studio-copy-feedback-duration": `${COPY_SUCCESS_FEEDBACK_MS}ms` } as CSSProperties}>
                 {status === "copied" ? "הועתק" : status === "error" ? "ההעתקה נכשלה. נסי שוב." : ""}
             </span>
         </span>

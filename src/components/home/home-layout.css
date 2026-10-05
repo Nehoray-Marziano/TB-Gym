@@ -41,8 +41,19 @@
 }
 
 .studio-home-main > * { min-width: 0; }
-.studio-home-heading header > div { min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
-.studio-home-heading header a[href="/admin"] { min-height: 44px; }
+.studio-home-heading header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.studio-home-heading header a[href="/admin"] {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .studio-welcome-main {
   max-width: 544px;
@@ -225,8 +236,10 @@
   padding-bottom: clamp(4px, 1.6cqh, 16px);
 }
 .studio-home-emblem {
-  width: clamp(56px, 14cqh, 112px);
-  height: clamp(56px, 14cqh, 112px);
+  height: clamp(60px, 11.5cqh, 84px);
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 690 / 544;
 }
 .studio-home-eyebrow { font-size: clamp(12px, 2cqh, 16px); }
 .studio-home-hello { font-size: clamp(16px, 2.8cqh, 22px); }

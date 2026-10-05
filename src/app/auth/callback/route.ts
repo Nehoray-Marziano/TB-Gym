@@ -59,6 +59,12 @@ export async function GET(request: Request) {
 
         if (!error) {
             console.log("[AuthCallback] Session exchange successful, redirecting to:", redirectUrl)
+            // Flag that the user just logged in so the client can prompt PWA installation
+            redirectResponse.cookies.set("talia_just_logged_in", "1", {
+                path: '/',
+                maxAge: 120, // 2 minutes
+                sameSite: 'lax',
+            })
             // Return the redirect response that NOW has the cookies attached
             return redirectResponse
         } else {

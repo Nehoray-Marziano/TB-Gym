@@ -180,6 +180,7 @@ a,
 .studio-copy-button[data-error="true"] { color: var(--studio-danger); }
 .studio-copy-button svg { width: 18px; height: 18px; }
 .studio-copy-feedback {
+  --studio-copy-feedback-offset: 4px;
   position: absolute;
   z-index: 1;
   bottom: 100%;
@@ -193,12 +194,32 @@ a,
   font-size: 12px;
   line-height: 1.5;
   pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
 }
-.studio-copy-feedback[data-visible="false"] { padding: 0; }
+.studio-copy-feedback[data-visible="true"] { visibility: visible; opacity: 1; }
+.studio-copy-feedback[data-visible="true"][data-error="false"] {
+  animation: studio-copy-feedback-pop var(--studio-copy-feedback-duration) ease-out both;
+}
+.studio-copy-feedback[data-visible="true"][data-error="true"] {
+  animation: studio-copy-feedback-enter 160ms ease-out both;
+}
 .studio-copy-feedback[data-error="true"] { background: var(--studio-danger); }
 /* Stay inside textarea containers that clip animated disclosure content. */
-.studio-copy-field-multiline .studio-copy-feedback { bottom: auto; top: calc(100% + 4px); }
-@media (prefers-reduced-motion: reduce) { .studio-copy-button { transition: none; } }
+.studio-copy-field-multiline .studio-copy-feedback { --studio-copy-feedback-offset: -4px; bottom: auto; top: calc(100% + 4px); }
+@keyframes studio-copy-feedback-pop {
+  0% { opacity: 0; transform: translateY(var(--studio-copy-feedback-offset)) scale(.96); }
+  16%, 82% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(var(--studio-copy-feedback-offset)) scale(.98); }
+}
+@keyframes studio-copy-feedback-enter {
+  from { opacity: 0; transform: translateY(var(--studio-copy-feedback-offset)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-copy-button { transition: none; }
+  .studio-copy-feedback[data-visible="true"][data-error] { animation: none; }
+}
 @media (forced-colors: active) { .studio-copy-button { border: 1px solid ButtonText; } }
 
 /* Animate only the elements that need it. A blanket transform creates stacking

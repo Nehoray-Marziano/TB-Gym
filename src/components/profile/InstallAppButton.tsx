@@ -9,7 +9,7 @@ const DISMISS_KEY = "talia_install_nudge_dismissed";
 const DISMISS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export default function InstallAppButton({ home = false }: { home?: boolean }) {
-    const { isStandalone, isIOS, canInstall, promptInstall } = useInstallApp();
+    const { isStandalone, isIOS, canInstall, promptInstall, openPrompt } = useInstallApp();
     const [instructionsOpen, setInstructionsOpen] = useState(false);
     const [showHome, setShowHome] = useState(false);
     const reduceMotion = useReducedMotion();
@@ -32,7 +32,9 @@ export default function InstallAppButton({ home = false }: { home?: boolean }) {
     };
 
     const handleClick = async () => {
-        if (canInstall) {
+        if (openPrompt) {
+            openPrompt();
+        } else if (canInstall) {
             await promptInstall();
         } else {
             setInstructionsOpen(true);

@@ -28,14 +28,28 @@ export function usePWAInstall(): PWAInstallState {
         let active = true;
         queueMicrotask(() => {
             if (!active) return;
-            setIsStandalone(mediaQuery.matches || (navigator as Navigator & { standalone?: boolean }).standalone === true || document.referrer.includes("android-app://"));
+            setIsStandalone(
+                mediaQuery.matches ||
+                (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+                document.referrer.includes("android-app://") ||
+                window.matchMedia("(display-mode: fullscreen)").matches ||
+                window.matchMedia("(display-mode: minimal-ui)").matches
+            );
             setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream);
+
+            // Check if event was cached earlier on window
+            if ((window as unknown as { __taliaDeferredPrompt?: BeforeInstallPromptEvent }).__taliaDeferredPrompt) {
+                deferredPromptRef.current = (window as unknown as { __taliaDeferredPrompt: BeforeInstallPromptEvent }).__taliaDeferredPrompt;
+                setCanInstall(true);
+            }
         });
 
         // Listen for the install prompt event (Android/Chrome)
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault(); // Prevent auto-show
-            deferredPromptRef.current = e as BeforeInstallPromptEvent;
+            const promptEvent = e as BeforeInstallPromptEvent;
+            deferredPromptRef.current = promptEvent;
+            (window as unknown as { __taliaDeferredPrompt?: BeforeInstallPromptEvent }).__taliaDeferredPrompt = promptEvent;
             setCanInstall(true);
         };
 
@@ -46,7 +60,11 @@ export function usePWAInstall(): PWAInstallState {
         // User must actually open the installed app to be in standalone mode
         const handleInstalled = () => {
             deferredPromptRef.current = null;
+            delete (window as unknown as { __taliaDeferredPrompt?: BeforeInstallPromptEvent }).__taliaDeferredPrompt;
             setCanInstall(false);
+            try {
+                localStorage.setItem("talia_pwa_installed", "1");
+            } catch {}
         };
         window.addEventListener("appinstalled", handleInstalled);
 
@@ -65,18 +83,25 @@ export function usePWAInstall(): PWAInstallState {
     }, []);
 
     const promptInstall = useCallback(async (): Promise<boolean> => {
-        if (!deferredPromptRef.current) {
+        const promptEvent = deferredPromptRef.current || (typeof window !== "undefined" ? (window as unknown as { __taliaDeferredPrompt?: BeforeInstallPromptEvent }).__taliaDeferredPrompt : null);
+        if (!promptEvent) {
             console.warn("[PWA] No install prompt available");
             return false;
         }
 
         try {
-            await deferredPromptRef.current.prompt();
-            const { outcome } = await deferredPromptRef.current.userChoice;
+            await promptEvent.prompt();
+            const { outcome } = await promptEvent.userChoice;
             deferredPromptRef.current = null;
+            if (typeof window !== "undefined") {
+                delete (window as unknown as { __taliaDeferredPrompt?: BeforeInstallPromptEvent }).__taliaDeferredPrompt;
+            }
             setCanInstall(false);
 
             if (outcome === "accepted") {
+                try {
+                    localStorage.setItem("talia_pwa_installed", "1");
+                } catch {}
                 return true;
             } else {
                 return false;

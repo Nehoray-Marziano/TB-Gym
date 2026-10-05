@@ -85,6 +85,10 @@ export default function OnboardingPage() {
             }).eq("id", user.id);
             if (profileError) throw profileError;
 
+            try {
+                sessionStorage.setItem("talia_just_logged_in", "1");
+            } catch {}
+
             setTimeout(() => {
                 router.push("/");
                 router.refresh();
