@@ -226,14 +226,15 @@
 
 .studio-home-main {
   max-width: 608px;
-  grid-template-rows: minmax(min-content, 1fr) auto auto;
+  grid-template-rows: auto auto auto;
+  align-content: start;
   /* The shared dock is 72px tall, with 12px beneath and 12px above. */
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 .studio-home-heading {
-  justify-content: space-between;
-  gap: clamp(8px, 1.8cqh, 20px);
-  padding-bottom: clamp(4px, 1.6cqh, 16px);
+  justify-content: flex-start;
+  gap: clamp(4px, 1cqh, 10px);
+  padding-bottom: clamp(2px, 0.8cqh, 8px);
 }
 .studio-home-emblem {
   height: clamp(60px, 11.5cqh, 84px);

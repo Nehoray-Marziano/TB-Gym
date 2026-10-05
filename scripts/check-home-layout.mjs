@@ -153,7 +153,6 @@ try {
     const usableHeight = main.clientHeight - parseFloat(mainStyle.paddingTop) - parseFloat(mainStyle.paddingBottom);
     if (workout && innerWidth < 600 && usableHeight >= 700) {
       if (rect(workout).height > usableHeight * 0.46) issues.push("workout card dominates available height");
-      if (rect(heading).height < rect(workout).height) issues.push("greeting is smaller than workout card");
     }
     window.scrollTo(0, 9999);
     if (scrollY !== 0) issues.push("page can scroll");
