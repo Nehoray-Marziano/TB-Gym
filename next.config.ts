@@ -82,6 +82,23 @@ const nextConfig: NextConfig = {
   turbopack: {},
   distDir: process.env.TALIA_BUILD_DIR || ".next",
   env: { APP_BUILD_ID: getAppBuildId() },
+  async redirects() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) return [];
+    const sessionCookie = `sb-${new URL(supabaseUrl).hostname.split(".")[0]}-auth-token`;
+    // The PWA starts at /. Route returning sessions before rendering the root
+    // layout, which would otherwise load an account just to discard it on redirect.
+    // Supabase SSR may split a session into numbered cookie chunks.
+    // Cookie presence is only a routing hint: /dashboard still verifies the
+    // session and onboarding, and awaits every initial data request. Stale or
+    // forged cookies therefore reach /auth/login without revealing member data.
+    return [sessionCookie, `${sessionCookie}.0`].map(key => ({
+      source: "/",
+      has: [{ type: "cookie" as const, key, value: ".+" }],
+      destination: "/dashboard",
+      permanent: false,
+    }));
+  },
   async headers() {
     return [{
       source: "/sw.js",

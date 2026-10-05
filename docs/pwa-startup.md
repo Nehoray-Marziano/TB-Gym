@@ -4,6 +4,9 @@ The launch design is the existing dark TB mark centered on the canonical cream
 canvas. The operating system owns its lifetime. There is no React splash,
 root loading boundary, minimum display timer, animation, or client-side asset
 generator. Login and authenticated destinations resolve normally on the server.
+Returning sessions take a cookie-conditional redirect from `/` before the root
+account provider renders; `/dashboard` still verifies authentication and waits
+for all initial data. See [startup timing investigation](startup-performance-2026-10-05.md).
 
 Android generates its native splash from the manifest's name, opaque
 `background_color`, `theme_color`, and PNG icons. Normal v4 icons have a

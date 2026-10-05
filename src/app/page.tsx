@@ -1,12 +1,11 @@
 import LandingPage from "@/components/home/LandingPage";
-import { createClient } from "@/utils/supabase/server";
+import { getGymIdentity } from "@/lib/gym-bootstrap";
 import { redirect } from "next/navigation";
 
 export default async function Home() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
+  const { userId } = await getGymIdentity();
 
-  if (data?.claims?.sub) {
+  if (userId) {
     redirect("/dashboard");
   }
 
