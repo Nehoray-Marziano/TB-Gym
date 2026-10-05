@@ -143,6 +143,8 @@ try {
     expect(profiles.length === 26, 'Every auth account has exactly one profile');
     expect(profiles.filter(p => p.role === 'trainee').length === 24, 'New accounts default to trainee');
     expect(profiles.filter(p => p.role === 'trainee').every(p => p.onboarding_completed === false), 'New trainees require onboarding');
+    expect(redirects(await web('/dashboard',users[0]),'/onboarding'),'Incomplete trainee dashboard redirects to onboarding');
+    expect(redirects(await web('/book',users[0]),'/onboarding'),'Incomplete trainee cannot bypass onboarding through booking route');
     await pool(users.map((u, i) => async () => {
       data(await u.client.from('profiles').update({ full_name: `[${runId}] User ${i}`, age: 25, phone: '0500000000', onboarding_completed: true }).eq('id', u.id).select('id').single(), 'save own onboarding');
       data(await u.client.from('health_declarations').upsert({ id: u.id, is_healthy: true, medical_conditions: null }), 'save synthetic declaration');
@@ -166,12 +168,18 @@ try {
       const created=await manager.client.from('subscription_tiers').insert(row).select('id').single();
       expect(!created.error,'Administrator can maintain catalog');
       if(!created.error){
-        const changed=await trainees[0].client.from('subscription_tiers').update({price_nis:2}).eq('id',created.data.id).select('id');
-        expect(!!changed.error||changed.data.length===0,'Trainee cannot change plan prices');
-        const deleted=await anon.from('subscription_tiers').delete().eq('id',created.data.id).select('id');
-        expect(!!deleted.error||deleted.data.length===0,'Anonymous cannot delete a plan');
+        for(const [label,client] of [['Anonymous',anon],['Trainee',trainees[0].client]]) {
+          const changed=await client.from('subscription_tiers').update({price_nis:2}).eq('id',created.data.id).select('id');
+          expect(!!changed.error||changed.data.length===0,`${label} cannot change plan prices`);
+          const deleted=await client.from('subscription_tiers').delete().eq('id',created.data.id).select('id');
+          expect(!!deleted.error||deleted.data.length===0,`${label} cannot delete a plan`);
+        }
         const current=data(await service.from('subscription_tiers').select('price_nis').eq('id',created.data.id).single(),'inspect catalog fixture');
         expect(Number(current.price_nis)===1,'Rejected catalog mutations preserve price');
+        const updated=await manager.client.from('subscription_tiers').update({price_nis:3}).eq('id',created.data.id).select('price_nis').single();
+        expect(!updated.error&&Number(updated.data?.price_nis)===3,'Administrator can update catalog fixture');
+        const removed=await manager.client.from('subscription_tiers').delete().eq('id',created.data.id).select('id');
+        expect(!removed.error&&removed.data.length===1,'Administrator can delete catalog fixture');
       }
     } finally {
       data(await service.from('subscription_tiers').delete().eq('name',name),'cleanup catalog fixture');

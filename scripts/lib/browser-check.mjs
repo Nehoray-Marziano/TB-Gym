@@ -11,8 +11,8 @@ export async function openBrowser(output) {
     chrome.on('error',bad); chrome.stderr.on('data',b=>{const m=b.toString().match(/DevTools listening on (ws:\/\/\S+)/);if(m){clearTimeout(timer);ok(m[1]);}});
   });
   const ws=new WebSocket(endpoint); await new Promise((ok,bad)=>{ws.onopen=ok;ws.onerror=bad;});
-  let n=0; const pending=new Map(),errors=[];
-  ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);if(m.error)p.bad(Error(JSON.stringify(m.error)));else p.ok(m.result);};
+  let n=0; const pending=new Map(),errors=[],listeners=new Map();
+  ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);for(const fn of listeners.get(m.method)||[])Promise.resolve().then(()=>fn(m.params)).catch(error=>errors.push({event:m.method,message:error.message}));const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);if(m.error)p.bad(Error(JSON.stringify(m.error)));else p.ok(m.result);};
   const send=(method,params={},sessionId)=>new Promise((ok,bad)=>{const id=++n,timer=setTimeout(()=>{pending.delete(id);bad(Error(`${method} timed out`));},60000);pending.set(id,{ok,bad,timer});ws.send(JSON.stringify({id,method,params,sessionId}));});
   const {targetId}=await send('Target.createTarget',{url:'about:blank'});
   const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
@@ -25,5 +25,5 @@ export async function openBrowser(output) {
   const input=async(selector,value)=>{await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});const proto=e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));})()`);};
   const shot=async name=>{const r=await call('Page.captureScreenshot',{format:'png'});await writeFile(join(output,`${name}.png`),Buffer.from(r.data,'base64'));};
   await call('Page.enable');await call('Runtime.enable');await call('Network.enable');await call('Network.setBypassServiceWorker',{bypass:true});
-  return {call,send,evaluate,wait,click,textClick,input,shot,errors,delay,close:async()=>{try{await send('Browser.close');}catch{}ws.close();chrome.kill();}};
+  return {call,send,evaluate,wait,click,textClick,input,shot,errors,delay,on:(event,fn)=>{listeners.set(event,[...(listeners.get(event)||[]),fn]);},close:async()=>{try{await send('Browser.close');}catch{}ws.close();chrome.kill();}};
 }

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type Profile = { id: string; full_name: string; role: string; email?: string };
+export type Profile = { id: string; full_name: string; role: string; email?: string; onboarding_completed?: boolean };
 export type Subscription = {
     tier_name: string;
     tier_display_name: string;
@@ -21,7 +21,7 @@ export type UpcomingSession = { id: string; title: string; start_time: string };
 export async function loadGymSnapshot(supabase: SupabaseClient, userId: string, email = ""): Promise<GymSnapshot> {
     const signal = AbortSignal.timeout(10000);
     const [profile, tickets, subscription] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, role").eq("id", userId).abortSignal(signal).maybeSingle(),
+        supabase.from("profiles").select("id, full_name, role, onboarding_completed").eq("id", userId).abortSignal(signal).maybeSingle(),
         supabase.rpc("get_available_tickets", { p_user_id: userId }).abortSignal(signal),
         supabase.rpc("get_user_subscription", { p_user_id: userId }).abortSignal(signal),
     ]);
