@@ -180,9 +180,10 @@ export default function TraineeDashboard({
                     {/* Header: Centered TB Brand Mark (acts as ניהול button when logged in as administrator) */}
                     <header className="flex shrink-0 items-center justify-center pt-0.5">
                         {profile?.role === "administrator" ? (
-                            <Link
-                                href="/admin"
-                                className="group inline-flex items-center justify-center transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--studio-ink)] cursor-pointer"
+                            <button
+                                type="button"
+                                onClick={() => router.push("/admin")}
+                                className="group inline-flex items-center justify-center border-0 bg-transparent p-0 transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--studio-ink)] cursor-pointer select-none [-webkit-touch-callout:none]"
                                 aria-label="ניהול"
                                 title="ניהול"
                             >
@@ -190,7 +191,7 @@ export default function TraineeDashboard({
                                     tight
                                     className="studio-home-emblem shrink-0 bg-[var(--studio-ink)] transition-transform group-hover:scale-[1.03]"
                                 />
-                            </Link>
+                            </button>
                         ) : (
                             <div className="inline-flex items-center justify-center select-none" aria-label="סטודיו טליה">
                                 <StudioLogo

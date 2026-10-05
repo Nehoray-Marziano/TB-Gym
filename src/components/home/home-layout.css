@@ -47,12 +47,19 @@
   align-items: center;
   justify-content: center;
 }
+.studio-home-heading header button,
 .studio-home-heading header a[href="/admin"] {
   min-height: 44px;
   min-width: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .studio-welcome-main {
