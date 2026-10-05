@@ -1,5 +1,7 @@
 # Final correctness campaign — 5 October 2026
 
+The subsequent [deeper concurrency audit](concurrency-hardening-2026-10-05.md) covers held-lock deadline crossings, retry deduplication, mutable balance-page counts, and the expanded 595-assertion campaign.
+
 **Result: all four initially reported defects, plus a newly exposed onboarding-routing gap, are fixed and verified in production.** After the user's explicit approval, migrations 17 and 18 were applied together in Supabase, the source corrections were pushed, and production was verified at application commit `8df103f7e9272f35d2dd89216322f7d33bef6699`. The post-fix campaign passed **453/453** assertions, the deployed signup/onboarding browser flow passed **17/17**, and the real Auth lifecycle passed **13/13**. Cleanup was verified independently. The tested flows are cleared within the limits below.
 
 The initial application under test was `4ac18b827fcf4b9a7af64f49bf8a8abf8eb3c1f5` on `https://tb-gym.vercel.app`, with Supabase project `asoqaeujdduqqjfyayht`. Vercel reported Ready; Supabase reported Healthy, Nano compute, and no separate test branch. The source fixes first deployed as `9fedc9c`; the additional routing correction deployed as `8df103f`. Production promotion was confirmed through the uncached `/api/app-version` endpoint before the passing browser and full live campaigns. Tests used uniquely tagged synthetic accounts/sessions in this project. Existing member balances, profiles and bookings were never mutation targets.
