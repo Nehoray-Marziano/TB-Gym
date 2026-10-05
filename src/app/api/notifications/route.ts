@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
 const ONESIGNAL_APP_ID = "2e5776b6-3487-4a5d-bca0-04570c82d150";
-const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
 
 interface NotificationPayload {
     title: string;
@@ -20,7 +19,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body: NotificationPayload = await request.json();
+        let body: NotificationPayload;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
+        }
         const { title, message, targetRole, targetUserIds, url } = body;
         if (typeof title !== "string" || !title.trim() || title.length > 120 ||
             typeof message !== "string" || !message.trim() || message.length > 1000 ||
@@ -38,7 +42,8 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        if (!ONESIGNAL_REST_API_KEY) {
+        const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+        if (!apiKey) {
             console.error("ONESIGNAL_REST_API_KEY not set");
             return NextResponse.json({ error: "Notification service not configured" }, { status: 500 });
         }
@@ -84,7 +89,7 @@ export async function POST(request: NextRequest) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json; charset=utf-8",
-                "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}`,
+                "Authorization": `Basic ${apiKey}`,
             },
             body: JSON.stringify(notificationPayload),
         });

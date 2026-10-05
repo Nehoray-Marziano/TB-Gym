@@ -10,10 +10,17 @@ export async function POST(req: Request) {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
         if (profile?.role !== 'administrator') return NextResponse.json({ error: 'Administrator access required' }, { status: 403 });
 
-        const { userId, amount } = await req.json();
+        let body: { userId?: unknown; amount?: unknown };
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid ticket notification' }, { status: 400 });
+        }
+
+        const { userId, amount } = body;
 
         if (typeof userId !== 'string' || !/^[0-9a-f-]{36}$/i.test(userId) ||
-            !Number.isInteger(amount) || amount === 0 || Math.abs(amount) > 100) {
+            typeof amount !== 'number' || !Number.isInteger(amount) || amount === 0 || Math.abs(amount) > 100) {
             return NextResponse.json({ error: 'Invalid ticket notification' }, { status: 400 });
         }
 

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:pwa": "node --test scripts/test-pwa-update.mjs",
     "test:home": "node --experimental-strip-types --test scripts/test-gym-data.mjs",
+    "test:notifications": "node --test scripts/test-notifications.mjs",
     "push:done": "node scripts/push-when-done.mjs",
     "stress:bookings": "node scripts/stress-bookings.mjs",
     "stress:edge": "node scripts/edge-cases.mjs",
