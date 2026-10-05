@@ -42,7 +42,7 @@ async function request(path, sessionCookie) {
   });
   const headersMs = Math.round(performance.now() - started);
   const body = await response.text();
-  return { response, body, timing: { path, status: response.status, headersMs, totalMs: Math.round(performance.now() - started), bytes: Buffer.byteLength(body) } };
+  return { response, body, timing: { path, status: response.status, headersMs, totalMs: Math.round(performance.now() - started), bytes: Buffer.byteLength(body), vercelId: response.headers.get('x-vercel-id') } };
 }
 
 // Public entry remains public; protected routes still enforce authentication.

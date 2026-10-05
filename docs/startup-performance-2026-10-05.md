@@ -80,3 +80,37 @@ the actual database region before changing it.
 References: [Supabase getClaims](https://supabase.com/docs/reference/javascript/auth-getclaims),
 [Next.js conditional redirects](https://nextjs.org/docs/app/api-reference/config/next-config-js/redirects),
 [Vercel function regions](https://vercel.com/docs/functions/configuring-functions/region).
+
+## Follow-up: colocate server execution with the database
+
+After deploying `3b6f8c9`, the same browser campaign measured 3,576 ms cold
+and 2,480 / 1,588 ms warm first contentful paint. Redirect time dropped to
+142–162 ms. Initial data and guest/invalid-session regression checks passed.
+
+The remaining location mismatch was subsequently verified through public DNS
+and AWS's published address allocation data:
+
+- `db.asoqaeujdduqqjfyayht.supabase.co` resolves to
+  `2406:da14:1d4f:7400:8d18:cda:9832:abfe`.
+- That address falls in AWS's EC2 prefix `2406:da14::/35`, allocated to
+  `ap-northeast-1` (Tokyo). This identifies the database's region from its
+  address allocation; no authenticated dashboard setting was available because
+  the browser automation connection timed out.
+- The live version endpoint for `3b6f8c9` returned
+  `X-Vercel-Id: fra1::iad1::...`, placing server execution in Washington, D.C.
+
+`vercel.json` now selects the single `hnd1` function region, Vercel's Tokyo
+region. This follows Vercel's recommendation to execute database-backed functions
+near their database. It changes execution placement only: the database, data,
+signing keys, session validation, and complete-data rendering gate stay as they
+are. Static files continue to use the global CDN. No additional regions or paid
+add-ons are requested. Removing the region override restores the project default.
+
+The benchmark now records `x-vercel-id` for every HTTP measurement so deployed
+placement can be verified together with timings. Compare `before-colocation`
+and `after-colocation` reports under `scratch/startup-performance/`; a local
+build cannot establish the latency benefit of a production region change.
+
+Location references: [AWS IP address allocations](https://ip-ranges.amazonaws.com/ip-ranges.json),
+[Vercel region identifiers](https://vercel.com/docs/regions),
+[Vercel region configuration](https://vercel.com/docs/functions/configuring-functions/region).
