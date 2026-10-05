@@ -286,7 +286,7 @@ try {
   });
   await phase('Ticket adjustment bounds, expiry and concurrent conservation', async () => {
     const a=trainees[0]; await resetTickets(trainees,0);
-    for(const q of [0,101,-101,null,-1]) expect(denied(await rpc(manager.client,'admin_grant_tickets',{p_user_id:a.id,p_quantity:q})), `Invalid adjustment ${q} rejected`);
+    for(const q of [0,101,-101,-2147483648,2147483647,null,-1]) expect(denied(await rpc(manager.client,'admin_grant_tickets',{p_user_id:a.id,p_quantity:q})), `Invalid adjustment ${q} rejected`);
     expect(denied(await rpc(manager.client,'admin_grant_tickets',{p_user_id:randomUUID(),p_quantity:1})), 'Adjustment to missing user rejected');
     expect(denied(await rpc(manager.client,'admin_grant_tickets',{p_user_id:a.id,p_quantity:1,p_expires_at:new Date(Date.now()-1000).toISOString()})), 'Past expiry grant rejected');
     await grant(a,100); expect((await tickets([a.id])).length===100,'Maximum grant creates exactly 100 tickets');
@@ -359,6 +359,104 @@ try {
     expect(denied(await rpc(a.client,'book_session',{p_session_id:randomUUID()})),'Booking missing session rejected');
     expect(denied(await rpc(a.client,'cancel_booking',{p_session_id:randomUUID()})),'Cancellation missing session rejected');
   });
+  await phase('Mixed operations under overlapping locks', async () => {
+    const group=trainees.slice(0,8), ids=group.map(u=>u.id);
+    await resetTickets(trainees,0);
+    for(const u of group) await grant(u,80);
+    for(let wave=0;wave<8;wave++) {
+      const lessons=await Promise.all(Array.from({length:4},(_,i)=>lesson(`mixed-${wave}-${i}`,8)));
+      for(let i=0;i<8;i++) {
+        if(!good(await rpc(group[i].client,'book_session',{p_session_id:lessons[i%2]}))) throw Error('Mixed seed failed');
+      }
+      const seeded=await bookings(lessons), before=await tickets(ids), jobs=[];
+      const queue=(client,name,args,delta=0,userId=null)=>jobs.push({client,name,args,delta,userId});
+      for(let i=0;i<8;i++) {
+        const u=group[i], admin=i%2?manager:manager2;
+        queue(u.client,'book_session',{p_session_id:lessons[i%4]});
+        queue(u.client,'cancel_booking',{p_session_id:lessons[i%2]});
+        queue(u.client,'book_session',{p_session_id:lessons[(i+1)%4]});
+        queue(admin.client,'admin_grant_tickets',{p_user_id:u.id,p_quantity:2,p_expires_at:expiry},2,u.id);
+        queue(admin.client,'admin_grant_tickets',{p_user_id:u.id,p_quantity:-2},-2,u.id);
+      }
+      for(const b of seeded) queue(manager.client,'admin_cancel_booking',{p_booking_id:b.id});
+      for(const id of lessons.slice(0,2)) {
+        queue(manager.client,'admin_delete_session',{p_session_id:id});
+        queue(manager2.client,'admin_delete_session',{p_session_id:id});
+      }
+      for(let i=0;i<4;i++) queue((i%2?manager:manager2).client,'admin_create_session',payload(`mixed-private-${wave}-${i}`,8,(i%2?[...ids].reverse():ids)));
+      // Deterministically vary arrival order while preserving a reproducible seed.
+      const offset=(wave*17)%jobs.length, ordered=[...jobs.slice(offset),...jobs.slice(0,offset)];
+      const replies=await Promise.all(ordered.map(async job=>({...job,reply:await rpc(job.client,job.name,job.args)})));
+      const lockErrors=replies.filter(({reply:r})=>['40P01','57014','55P03'].includes(r.error?.code)||/deadlock|statement timeout|lock timeout/i.test(r.error?.message||r.data?.message||''));
+      expect(lockErrors.length===0,`Mixed wave ${wave}: no deadlocks or lock/statement timeouts`,lockErrors.map(j=>({name:j.name,code:j.reply.error?.code,message:j.reply.error?.message||j.reply.data?.message})));
+      const made=replies.filter(j=>j.name==='admin_create_session'&&good(j.reply)).map(j=>j.reply.data.session_id);
+      sessions.push(...made); await persist();
+      const allLessons=[...lessons,...made], after=await tickets(ids);
+      for(const u of group) {
+        const delta=replies.filter(j=>j.userId===u.id&&good(j.reply)).reduce((sum,j)=>sum+j.delta,0);
+        expect(after.filter(t=>t.user_id===u.id).length===before.filter(t=>t.user_id===u.id).length+delta,`Mixed wave ${wave}: trainee ${ids.indexOf(u.id)} ticket conservation`);
+      }
+      await invariant(`Mixed wave ${wave}`,allLessons,group);
+      for(const id of allLessons) {
+        const remaining=data(await service.from('gym_sessions').select('id').eq('id',id),'mixed session presence');
+        if(remaining.length) await removeLesson(id);
+      }
+      expect((await bookings(allLessons)).length===0&&(await tickets(ids)).every(t=>!t.used_at&&!t.used_for_session),`Mixed wave ${wave}: complete removal refunds every ticket`);
+    }
+  });
+  await phase('Admin retries, concurrent duplicate delivery and request ownership', async () => {
+    const [a,b,c]=trainees; await resetTickets(trainees,0); await grant(a,50); await grant(b,50);
+    const total=async u=>(await tickets([u.id])).length;
+    const positive={p_request_id:randomUUID(),p_user_id:a.id,p_quantity:3,p_expires_at:expiry};
+    const adds=await Promise.all(Array.from({length:24},()=>rpc(manager.client,'admin_grant_tickets_once',positive)));
+    expect(adds.every(good)&&adds.filter(r=>!r.data.replayed).length===1,'24 concurrent deliveries of one grant apply exactly once');
+    expect(await total(a)===53,'Duplicate grant creates exactly three tickets');
+    expect(denied(await rpc(manager2.client,'admin_grant_tickets_once',positive)),'Another administrator cannot replay an actor-owned request');
+    expect(denied(await rpc(a.client,'admin_grant_tickets_once',positive)),'Trainee cannot invoke retry-safe grant');
+    expect(denied(await rpc(anon,'admin_grant_tickets_once',positive)),'Anonymous cannot invoke retry-safe grant');
+    expect(denied(await rpc(manager.client,'admin_grant_tickets_once',{...positive,p_quantity:4})),'Request ID cannot be reused for a changed quantity');
+    expect(denied(await rpc(manager.client,'admin_create_session_once',{...payload('cross-operation'),p_request_id:positive.p_request_id})),'Request ID cannot be reused for a different operation');
+    for(const [name,client] of [['Trainee',a.client],['Administrator',manager.client]]) {
+      expect(!!(await client.from('admin_mutation_receipts').select('request_id').eq('request_id',positive.p_request_id)).error,`${name} cannot read internal receipts directly`);
+      expect(!!(await client.from('admin_mutation_receipts').update({result:{success:true}}).eq('request_id',positive.p_request_id)).error,`${name} cannot forge internal receipts`);
+    }
+    const lost={...positive,p_request_id:randomUUID(),p_quantity:2};
+    // Deliberately discard the successful reply, as with a network disconnect
+    // after COMMIT. Retry the identical logical action, not a new request ID.
+    await rpc(manager.client,'admin_grant_tickets_once',lost);
+    const replay=await rpc(manager.client,'admin_grant_tickets_once',lost);
+    expect(good(replay)&&replay.data.replayed&&await total(a)===55,'Lost grant acknowledgment retry cannot mint a second batch');
+    const negative={p_request_id:randomUUID(),p_user_id:a.id,p_quantity:-3};
+    const debits=await Promise.all(Array.from({length:24},()=>rpc(manager.client,'admin_grant_tickets_once',negative)));
+    expect(debits.every(good)&&debits.filter(r=>!r.data.replayed).length===1&&await total(a)===52,'24 deliveries of one reduction remove exactly three tickets');
+    const distinct=await Promise.all(Array.from({length:4},()=>rpc(manager.client,'admin_grant_tickets_once',{...positive,p_quantity:1,p_request_id:randomUUID()})));
+    expect(distinct.every(good)&&await total(a)===56,'Four intentional separate grants still apply four times');
+    const failed={p_request_id:randomUUID(),p_user_id:a.id,p_quantity:-100};
+    expect(denied(await rpc(manager.client,'admin_grant_tickets_once',failed))&&await total(a)===56,'Insufficient reduction leaves balance unchanged');
+    expect(data(await service.from('admin_mutation_receipts').select('request_id').eq('request_id',failed.p_request_id),'failed receipt').length===0,'Failed reduction leaves no successful receipt');
+    await grant(a,44);
+    expect(good(await rpc(manager.client,'admin_grant_tickets_once',failed))&&await total(a)===0,'Same failed intent can succeed after resources become available');
+    await grant(a,6);
+    const privateAction={...payload('retry-private',2,[a.id,b.id]),p_request_id:randomUUID()};
+    const invites=await Promise.all(Array.from({length:24},(_,i)=>rpc(manager.client,'admin_create_session_once',{...privateAction,p_user_ids:i%2?[b.id,a.id]:[a.id,b.id]})));
+    const privateIds=[...new Set(invites.filter(good).map(r=>r.data.session_id))];sessions.push(...privateIds);await persist();
+    expect(invites.every(good)&&privateIds.length===1&&invites.filter(r=>!r.data.replayed).length===1,'24 reversed-order private creation deliveries return one session');
+    expect((await bookings(privateIds)).length===2,'Retried private creation persists exactly two invitations');
+    await invariant('Retried private creation',privateIds,[a,b]);
+    const lostClass={...payload('lost-class-reply',2,[a.id,b.id]),p_request_id:randomUUID()};
+    await rpc(manager.client,'admin_create_session_once',lostClass);
+    const classReplay=await rpc(manager.client,'admin_create_session_once',lostClass);
+    if(good(classReplay))sessions.push(classReplay.data.session_id);
+    expect(good(classReplay)&&classReplay.data.replayed&&data(await service.from('gym_sessions').select('id').eq('title',lostClass.p_title),'lost class count').length===1,'Lost class acknowledgment retry cannot create another class');
+    const failedClass={...payload('retry-insufficient',1,[c.id]),p_request_id:randomUUID()};
+    expect(denied(await rpc(manager.client,'admin_create_session_once',failedClass)),'Retry-safe creation rejects insufficient invitation atomically');
+    expect(data(await service.from('gym_sessions').select('id').eq('title',failedClass.p_title),'failed class count').length===0&&data(await service.from('admin_mutation_receipts').select('request_id').eq('request_id',failedClass.p_request_id),'failed class receipt').length===0,'Failed invitation leaves neither class nor receipt');
+    await grant(c,1);
+    const retried=await rpc(manager.client,'admin_create_session_once',failedClass);
+    expect(good(retried),'Failed creation intent can succeed after ticket grant');
+    if(good(retried))sessions.push(retried.data.session_id);
+    for(const id of [...privateIds,classReplay.data?.session_id,retried.data?.session_id].filter(Boolean))await removeLesson(id);
+  });
   await phase('Production HTTP authorization and bounded parallel page load', async () => {
     const a=trainees[0];
     for(const path of ['/admin','/admin/schedule','/admin/trainees']) {
@@ -425,7 +523,7 @@ finally {
       const userIds=users.map(u=>u.id);
       for(const [table,col] of [['bookings','user_id'],['user_tickets','user_id'],['user_subscriptions','user_id'],['health_declarations','id']])await attempt(table,async()=>data(await service.from(table).delete().in(col,userIds),`cleanup ${table}`));
       for(const u of users)await attempt('Auth user',async()=>data(await service.auth.admin.deleteUser(u.id),'delete disposable auth account'));
-      for(const [table,col] of [['profiles','id'],['health_declarations','id'],['user_tickets','user_id'],['user_subscriptions','user_id'],['user_credits','user_id'],['bookings','user_id']]) {
+      for(const [table,col] of [['profiles','id'],['health_declarations','id'],['user_tickets','user_id'],['user_subscriptions','user_id'],['user_credits','user_id'],['bookings','user_id'],['admin_mutation_receipts','actor_id']]) {
         expect(data(await service.from(table).select(col).in(col,userIds),`verify ${table}`).length===0,`Cleanup leaves zero fixture ${table}`);
       }
       const removed=await pool(users.map(u=>()=>service.auth.admin.getUserById(u.id)),4);

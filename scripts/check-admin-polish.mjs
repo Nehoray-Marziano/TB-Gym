@@ -16,6 +16,11 @@ import AdminShell from "@/components/admin/AdminShell";
 import Schedule from "@/app/admin/schedule/page";
 import Trainees from "@/app/admin/trainees/page";
 import Overview from "@/app/admin/page";
+import { getSupabaseClient } from "@/lib/supabaseClient";
+if (typeof window !== "undefined") {
+    const qaClient = getSupabaseClient();
+    qaClient.auth.getSession = async () => ({data:{session:{user:{id:"qa-admin"}}},error:null} as Awaited<ReturnType<typeof qaClient.auth.getSession>>);
+}
 export default function Preview() {
     const [view,setView] = useState("schedule");
     return <AdminShell><div hidden><button id="qa-schedule" onClick={()=>setView("schedule")}/><button id="qa-trainees" onClick={()=>setView("trainees")}/><button id="qa-overview" onClick={()=>setView("overview")}/></div>{view==="schedule"?<Schedule/>:view==="trainees"?<Trainees/>:<Overview/>}</AdminShell>;
@@ -25,16 +30,21 @@ const mock = `(() => {
     const profiles = Array.from({length:32},(_,i)=>({id:"qa-user-"+i,full_name:i===0?"מתאמנת בדיקה עם שם ארוך במיוחד לבדיקת שבירת שורות":"מתאמנת בדיקה "+i,email:"qa"+i+"@example.invalid",phone:"050000"+String(i).padStart(4,"0"),role:"trainee"}));
     let sessions = Array.from({length:34},(_,i)=>({id:"qa-session-"+i,title:i===0?"אימון כוח ועיצוב עם שם ארוך במיוחד לבדיקה":"אימון בדיקה "+i,start_time:new Date(Date.now()+(i<30?i+24:-i)*3600000).toISOString(),end_time:new Date(Date.now()+(i<30?i+25:1-i)*3600000).toISOString(),max_capacity:10,current_bookings:3,bookings:[{count:3}]}));
     let bookings = profiles.slice(0,3).map((user,i)=>({id:"qa-booking-"+i,user_id:user.id,status:"confirmed",created_at:new Date().toISOString(),users:user}));
-    window.__qa = {fail:null,delay:250,calls:{},empty:false};
+    const balances=new Map(profiles.map(p=>[p.id,8])), receipts=new Map();
+    window.__qa = {fail:null,delay:250,calls:{},empty:false,requests:[],lose:null};
     const original = window.fetch;
     window.fetch = async (input,init={}) => {
         const url = new URL(typeof input==="string"?input:input.url,location.href);
         if(url.pathname.startsWith("/rest/v1/") || url.pathname.startsWith("/api/notifications")) {
-            const name=url.pathname.split("/").at(-1);
+            const raw=url.pathname.split("/").at(-1), name=raw.replace(/_once$/, "");
             window.__qa.calls[name]=(window.__qa.calls[name]||0)+1;
             await new Promise(r=>setTimeout(r,window.__qa.delay));
-            const fail=window.__qa.fail===name;
-            const data=window.__qa.empty?[]:name==="profiles"?profiles:name==="user_tickets"?profiles.flatMap(p=>Array.from({length:8},(_,i)=>({id:p.id+"-ticket-"+i,user_id:p.id}))):name==="gym_sessions_with_counts"?sessions:name==="bookings"?bookings:name==="get_available_tickets"?8:{success:true,user_ids:[]};
+            const fail=window.__qa.fail===name||(name==="admin_list_trainees"&&window.__qa.fail==="profiles");
+            const body=JSON.parse(init.body||"{}");
+            if(raw.endsWith("_once"))window.__qa.requests.push({name,requestId:body.p_request_id});
+            if(!fail && name==="admin_grant_tickets"&&!receipts.has(body.p_request_id)){balances.set(body.p_user_id,balances.get(body.p_user_id)+body.p_quantity);receipts.set(body.p_request_id,true);}
+            if(!fail && window.__qa.lose===name){window.__qa.lose=null;throw new TypeError("Synthetic lost reply after commit");}
+            const data=window.__qa.empty?[]:name==="admin_list_trainees"?profiles.map(p=>({...p,tickets:balances.get(p.id)})):name==="profiles"?profiles:name==="user_tickets"?profiles.flatMap(p=>Array.from({length:balances.get(p.id)},(_,i)=>({id:p.id+"-ticket-"+i,user_id:p.id}))):name==="gym_sessions_with_counts"?sessions:name==="bookings"?bookings:name==="get_available_tickets"?8:{success:true,user_ids:[]};
             if(!fail && name==="admin_cancel_booking"){const body=JSON.parse(init.body||"{}");bookings=bookings.filter(b=>b.id!==body.p_booking_id);}
             if(!fail && name==="admin_delete_session"){const body=JSON.parse(init.body||"{}");sessions=sessions.filter(s=>s.id!==body.p_session_id);}
             return new Response(JSON.stringify(fail?{message:"Synthetic failure",code:"QA500"}:data),{status:fail?500:200,headers:{"Content-Type":"application/json","Content-Range":"0-31/32"}});
@@ -118,6 +128,7 @@ try {
     await evaluate("window.__qa.fail=null;window.__qa.delay=250");
     await click('.studio-modal-actions button');
     await check("Create success closes and acknowledges",`!document.querySelector('dialog:modal') && document.body.innerText.includes('האימון פורסם בהצלחה')`);
+    await check("Create retry preserves one request ID",`(()=>{const r=window.__qa.requests.filter(r=>r.name==='admin_create_session').slice(-2);return r.length===2&&r[0].requestId===r[1].requestId&&!!r[0].requestId})()`);
     await click('button[aria-label="אימון חדש"]');
     await check("Reopened create has clean fields",`document.getElementById('new-session-title').value===''`);
     await clickText("בחירת מתאמנות");
@@ -172,8 +183,15 @@ try {
     await check("Ticket failure retains adjustment",`document.getElementById('ticket-change').value==='8' && !!document.querySelector('.studio-modal [role=alert]')`);
     await evaluate("window.__qa.fail=null;window.__qa.delay=250");await click('.studio-modal-actions button');
     await check("Ticket success closes sheet and updates balance",`!document.querySelector('dialog:modal') && document.querySelector('article').innerText.includes('16')`);
+    await check("Ticket retry preserves one request ID",`(()=>{const r=window.__qa.requests.filter(r=>r.name==='admin_grant_tickets').slice(-2);return r.length===2&&r[0].requestId===r[1].requestId&&!!r[0].requestId})()`);
     await clickText("עדכון יתרה","article");
     await check("Fresh ticket opening resets adjustment",`document.getElementById('ticket-change').value===''`);
+    await input('#ticket-change','2');
+    await evaluate("window.__qa.lose='admin_grant_tickets'");await click('.studio-modal-actions button');
+    await check("Lost committed reply leaves ticket draft available to retry",`document.getElementById('ticket-change').value==='2'&&!!document.querySelector('.studio-modal [role=alert]')&&!document.querySelector('.studio-modal-actions button').disabled`);
+    await click('.studio-modal-actions button');
+    await check("Lost reply retry displays persisted balance without a second addition",`!document.querySelector('dialog:modal')&&document.querySelector('article').innerText.includes('18')`);
+    await check("New acknowledged action gets a new ID and its lost-reply retry keeps it",`(()=>{const r=window.__qa.requests.filter(r=>r.name==='admin_grant_tickets').slice(-3);return r.length===3&&r[0].requestId!==r[1].requestId&&r[1].requestId===r[2].requestId})()`);
     await key("Escape");await view("overview");await screenshot("overview-390");
     await check("Overview has stable populated counts",`document.querySelector('[aria-label="הפעילות בסטודיו"]').innerText.includes('32')`);
     for (const size of [{width:320,height:568},{width:390,height:400},{width:320,height:284},{width:430,height:932},{width:1280,height:800}]) {

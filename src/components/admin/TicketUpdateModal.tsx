@@ -34,7 +34,7 @@ function TicketUpdateSheet({ onClose, onConfirm, traineeName, currentBalance, is
         setSubmitting(true);
         setError(null);
         try { await onConfirm(amount); }
-        catch { setError("לא הצלחנו לעדכן את היתרה. נסי שוב; השינוי שהזנת נשמר כאן."); }
+        catch { setError("לא הצלחנו לאשר שהיתרה עודכנה. נסי שוב עם אותו שינוי; ניסיון חוזר לא יבצע אותו פעמיים."); }
         finally { setSubmitting(false); }
     };
     return <StudioModal variant="admin" titleId="ticket-update-title" descriptionId="ticket-update-description" busy={busy} onClose={onClose} actions={

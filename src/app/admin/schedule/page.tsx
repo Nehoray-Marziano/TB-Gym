@@ -2,6 +2,7 @@
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getAdminMutationRequestId, completeAdminMutationIntent } from "@/lib/adminMutationIntent";
 import { AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { Bell, Calendar as CalendarIcon, Clock, Trash2, Users, Plus, X } from "lucide-react";
@@ -177,15 +178,21 @@ export default function AdminSchedulePage() {
             const end = new Date(start.getTime() + 60 * 60 * 1000);
 
             const finalCapacity = isPrivateSession ? selectedTrainees.length : newSession.max_capacity;
-            const { error } = await supabase.rpc("admin_create_session", {
+            const actorId = (await supabase.auth.getSession()).data.session?.user.id;
+            if (!actorId) throw new Error("Authentication required");
+            const payload = {
                 p_title: newSession.title,
                 p_description: newSession.description,
                 p_start_time: start.toISOString(),
                 p_end_time: end.toISOString(),
                 p_max_capacity: finalCapacity,
-                p_user_ids: isPrivateSession ? selectedTrainees.map(t => t.id) : [],
-            });
+                p_user_ids: isPrivateSession ? selectedTrainees.map(t => t.id).sort() : [],
+            };
+            const requestId = await getAdminMutationRequestId("create_session", actorId, payload);
+            const { data, error } = await supabase.rpc("admin_create_session_once", { ...payload, p_request_id: requestId });
             if (error) throw error;
+            if (!data?.success) throw new Error(data?.message || "Lesson creation failed");
+            completeAdminMutationIntent("create_session", actorId, requestId);
 
             closeCreate();
             setActiveTab("upcoming");
@@ -196,7 +203,7 @@ export default function AdminSchedulePage() {
             fetchSessions();
         } catch (err) {
             console.error(err);
-            setCreateError("לא הצלחנו לשמור את האימון. הפרטים נשמרו כאן, ואפשר לנסות שוב.");
+            setCreateError("לא הצלחנו לאשר שהאימון נשמר. נסי שוב עם אותם פרטים; ניסיון חוזר לא יפרסם אותו פעמיים.");
         } finally {
             mutationLock.current = false;
             setIsCreating(false);

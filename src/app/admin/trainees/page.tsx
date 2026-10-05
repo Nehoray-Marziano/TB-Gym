@@ -9,6 +9,7 @@ import StudioLogo from "@/components/StudioLogo";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { AdminError, AdminLoading } from "@/components/admin/AdminFeedback";
 import { CopyButton } from "@/components/ui/copy-button";
+import { getAdminMutationRequestId, completeAdminMutationIntent } from "@/lib/adminMutationIntent";
 
 type Profile = {
     id: string;
@@ -40,32 +41,11 @@ export default function AdminTraineesPage() {
         const request = ++requestId.current;
         setFetchError(null);
         try {
-            const cutoff = new Date().toISOString();
-            const [profilesRes, ticketsRes] = await Promise.all([
-                supabase.from("profiles").select("id,full_name,email,phone,role").order("full_name", { ascending: true }),
-                supabase.from("user_tickets").select("id,user_id").is("used_at", null).gt("expires_at", cutoff).order("user_id").order("id").range(0, 999),
-            ]);
-            if (profilesRes.error) throw profilesRes.error;
-            const traineeProfiles = ((profilesRes.data || []) as Profile[]).filter((profile) => profile.role !== "administrator");
-            const counts = new Map<string, number>();
-            if (ticketsRes.error) {
-                const fallback = await Promise.all(traineeProfiles.map((profile) => supabase.rpc("get_available_tickets", { p_user_id: profile.id })));
-                if (fallback.some(result => result.error)) throw new Error("Ticket balance unavailable");
-                fallback.forEach((result, index) => counts.set(traineeProfiles[index].id, result.data || 0));
-            } else {
-                let rows = ticketsRes.data || [];
-                let offset = rows.length;
-                while (rows.length > 0) {
-                    rows.forEach(({ user_id }: { user_id: string }) => counts.set(user_id, (counts.get(user_id) || 0) + 1));
-                    if (rows.length < 1000) break;
-                    const next = await supabase.from("user_tickets").select("id,user_id").is("used_at", null).gt("expires_at", cutoff).order("user_id").order("id").range(offset, offset + 999);
-                    if (next.error) throw next.error;
-                    rows = next.data || [];
-                    offset += rows.length;
-                }
-            }
+            const { data, error } = await supabase.rpc("admin_list_trainees");
+            if (error) throw error;
+            if (!Array.isArray(data)) throw new Error("Trainee balances unavailable");
             if (request !== requestId.current) return;
-            setTrainees(traineeProfiles.map((profile) => ({ ...profile, tickets: counts.get(profile.id) || 0 })));
+            setTrainees(data as Trainee[]);
         } catch {
             if (request === requestId.current) setFetchError("לא הצלחנו לטעון את המתאמנות והיתרות. נסי שוב.");
         } finally {
@@ -85,18 +65,22 @@ export default function AdminTraineesPage() {
         requestId.current++;
         setGrantingTickets(userId);
         try {
-            // 1. Grant Tickets DB
-            const { data, error } = await supabase.rpc("admin_grant_tickets", {
+            const actorId = (await supabase.auth.getSession()).data.session?.user.id;
+            if (!actorId) throw new Error("Authentication required");
+            const payload = {
                 p_user_id: userId,
                 p_quantity: quantity,
-            });
+            };
+            const requestId = await getAdminMutationRequestId("grant_tickets", actorId, payload);
+            const { data, error } = await supabase.rpc("admin_grant_tickets_once", { ...payload, p_request_id: requestId });
 
             if (error) throw error;
             if (!data?.success) throw new Error(data?.message || "Ticket update failed");
 
-            setTrainees(prev => prev.map(t =>
-                t.id === userId ? { ...t, tickets: t.tickets + quantity } : t
-            ));
+            completeAdminMutationIntent("grant_tickets", actorId, requestId);
+            // A replay or another admin's simultaneous change makes local
+            // balance + quantity unreliable. Reload the persisted balance.
+            await fetchTrainees();
             toast({ title: "הכרטיסים עודכנו בהצלחה", type: "success" });
             setIsTicketModalOpen(false);
             void fetch('/api/notifications/grant-tickets', {
