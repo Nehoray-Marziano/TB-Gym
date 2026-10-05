@@ -27,7 +27,7 @@ export async function runPaymentScenarios({ call, evaluate, screenshot, baseUrl 
         })()`);
         await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:start.x,y:start.y}]});
         for (let step=1;step<=10;step++) {
-            await call('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:start.x-start.travel*fraction*step/10,y:start.y}]});
+            await call('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:start.x+start.travel*fraction*step/10,y:start.y}]});
             await wait(20);
         }
         if (capture) await screenshot('payment-slider-drag');
@@ -55,6 +55,10 @@ export async function runPaymentScenarios({ call, evaluate, screenshot, baseUrl 
         })()`);
         assert(bounds.left>=0 && bounds.right<=width && bounds.bottom<=height && bounds.closeTop>=0 && bounds.doc<=width,'Receipt and fixed actions must fit the phone');
         assert(bounds.sheetTop>=12 && bounds.sheetBottom<=height-12 && bounds.overflow<=1,`Payment card must fit without scrolling at ${width}×${height}: ${JSON.stringify(bounds)}`);
+        assert(await evaluate(`(() => {
+            const rail=document.querySelector('.membership-slide-rail'),handle=document.querySelector('.membership-slide-handle');
+            return !document.querySelector('.membership-payment-secondary-actions') && !document.querySelector('.membership-slide-alternative') && !document.querySelector('.membership-payment-cancel') && rail.dir==='ltr' && handle.getBoundingClientRect().left-rail.getBoundingClientRect().left<10;
+        })()`),'Links must be removed and the handle must start on the left');
         await screenshot(`payment-v2-${width}`);
         for (const [index,tone] of [[0,'terracotta'],[1,'sage'],[2,'champagne'],[1,'sage']]) {
             await evaluate("document.querySelector('.membership-payment-close').click()");
@@ -82,6 +86,17 @@ export async function runPaymentScenarios({ call, evaluate, screenshot, baseUrl 
         await evaluate("navigator.clipboard.writeText=async text=>{window.__copiedText=text};document.querySelector('.membership-copy-box button').click()");
         await until("document.querySelector('.membership-copy-box button').textContent.includes('הועתק')",'Clipboard retry must succeed');
         await evaluate("window.__bitOpens=0;window.open=()=>{window.__bitOpens++;return {opener:window}}");
+        await slide(-.45);
+        assert(await evaluate("document.querySelector('dialog').open && window.__bitOpens===0"),'A leftward drag must never confirm or act as a tap');
+        if (width===390) {
+            const arrowPositions=[];
+            for (let frame=0;frame<20;frame++) {
+                arrowPositions.push(await evaluate("new DOMMatrix(getComputedStyle(document.querySelector('.membership-slide-handle svg')).transform).e"));
+                await wait(100);
+            }
+            assert(Math.max(...arrowPositions)-Math.min(...arrowPositions)>3,'Idle arrow must visibly guide the swipe to the right');
+            assert(await evaluate("getComputedStyle(document.querySelector('.membership-slide-rail'),'::after').animationName==='membership-slide-sheen'"),'Rail must own the directional sheen');
+        }
         await slide(.45,false,width===390);
         assert(await evaluate("document.querySelector('dialog').open && new DOMMatrix(getComputedStyle(document.querySelector('.membership-slide-handle')).transform).e===0"),'Partial slide must return to its starting position');
         await slide(1,true);
@@ -106,6 +121,16 @@ export async function runPaymentScenarios({ call, evaluate, screenshot, baseUrl 
             await call('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
             await until("!document.querySelector('dialog').open",'Enter must activate the non-drag confirmation');
             assert.equal(await evaluate('window.__bitOpens'),1,'Keyboard confirmation must open exactly once');
+            await evaluate("document.querySelector('.is-active .membership-card-purchase').click()");
+            await until("document.querySelector('dialog').open",'Receipt must reopen for tap confirmation');
+            await wait(300);
+            await evaluate("window.__bitOpens=0");
+            const tap=await evaluate("(() => {const r=document.querySelector('.membership-slide-handle').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
+            await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[tap]});
+            await wait(60);
+            await call('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+            await until("!document.querySelector('dialog').open",'Tapping the handle must provide a non-drag alternative');
+            assert.equal(await evaluate('window.__bitOpens'),1,'Tap confirmation must open exactly once');
         }
         if (width===430) {
             await call('Emulation.setSafeAreaInsetsOverride',{insets:{top:44,bottom:34,left:0,right:0}});
@@ -114,7 +139,8 @@ export async function runPaymentScenarios({ call, evaluate, screenshot, baseUrl 
             await until("document.querySelector('dialog').open",'Safe-area payment must open');
             await fitsWithoutScroll('Safe areas must preserve the full card');
             assert(await evaluate("getComputedStyle(document.querySelector('.membership-payment-sheet')).animationName==='none'"),'Reduced motion must remove card entrance');
-            await evaluate("document.querySelector('.membership-payment-cancel').focus()");
+            assert(await evaluate("getComputedStyle(document.querySelector('.membership-slide-handle svg')).animationName==='none' && getComputedStyle(document.querySelector('.membership-slide-rail'),'::after').animationName==='none'"),'Reduced motion must disable both swipe animations');
+            await evaluate("document.querySelector('.membership-slide-handle').focus()");
             await call('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
             await call('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
             assert(await evaluate("document.activeElement.matches('.membership-payment-close')"),'Tab must wrap inside payment');
@@ -124,5 +150,5 @@ export async function runPaymentScenarios({ call, evaluate, screenshot, baseUrl 
             assert(await evaluate("document.activeElement.matches('.membership-card-purchase')"),'Escape must restore purchase focus');
         }
     }
-    console.log(JSON.stringify({receiptMobileSizes:true,zeroScroll:true,matchingTierMaterials:true,clipboardSuccessAndRetry:true,partialSlideReturns:true,cancelledSlideSafe:true,fullSlideOpensOnce:true,blockedPopupRetry:true,keyboardConfirmation:true,safeAreas:true,reducedMotion:true,focusTrapAndRestoration:true}));
+    console.log(JSON.stringify({receiptMobileSizes:true,zeroScroll:true,matchingTierMaterials:true,linksRemoved:true,leftToRightSwipe:true,idleSwipeMotion:true,clipboardSuccessAndRetry:true,partialSlideReturns:true,cancelledSlideSafe:true,fullSlideOpensOnce:true,blockedPopupRetry:true,keyboardAndTapConfirmation:true,safeAreas:true,reducedMotion:true,focusTrapAndRestoration:true}));
 }

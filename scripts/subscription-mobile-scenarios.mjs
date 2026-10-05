@@ -178,11 +178,11 @@ export async function runMobileScenarios({ call, evaluate, screenshot, baseUrl, 
     assert(await evaluate("window.__copiedText.includes('12') && document.querySelector('.membership-copy-feedback').textContent.length>20"),"Copy carries selected tier");
     await evaluate("navigator.clipboard.writeText=async()=>{throw new Error('synthetic denied')};document.querySelector('.membership-copy-box button').click()");
     await wait(100);
-    assert(await evaluate("document.querySelector('.membership-copy-feedback').textContent.includes('ידנית')"),"Clipboard failure is recoverable");
-    await evaluate("window.open=()=>null;document.querySelector('.membership-bit-button').click()");
+    assert(await evaluate("document.querySelector('.membership-copy-feedback').textContent.includes('כפתור ההעתקה')"),"Clipboard failure is recoverable through the copy button");
+    await evaluate("window.open=()=>null;document.querySelector('.membership-slide-handle').click()");
     await wait(100);
     assert(await evaluate("document.querySelector('dialog').open && Boolean(document.querySelector('.membership-payment-error'))"),"Blocked Bit popup keeps instructions available");
-    await evaluate("window.open=url=>{window.__paymentUrl=url;return {opener:window}};document.querySelector('.membership-bit-button').click()");
+    await evaluate("window.open=url=>{window.__paymentUrl=url;return {opener:window}};document.querySelector('.membership-slide-handle').click()");
     await until("!document.querySelector('dialog').open", "Synthetic handoff must close instructions");
     assert(await evaluate("window.__paymentUrl.startsWith('https://www.bitpay.co.il/') && Boolean(document.querySelector('.membership-handoff'))"),"Handoff must await Talia approval");
     await evaluate("document.querySelector('.membership-faq summary').click();window.scrollTo(0,document.documentElement.scrollHeight)");

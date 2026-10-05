@@ -87,7 +87,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, amount, userN
             </div>
             </div>
             <footer className="membership-payment-actions">
-                <BitConfirmSlider onConfirm={handleConfirm} onClose={onClose} />
+                <BitConfirmSlider onConfirm={handleConfirm} />
             </footer>
         </div>}
     </dialog>;

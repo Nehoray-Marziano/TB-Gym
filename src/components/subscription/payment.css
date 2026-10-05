@@ -63,24 +63,25 @@
 .membership-payment-actions { flex: 0 0 auto; padding: 8px 22px 16px; }
 .membership-payment-error { color: var(--payment-ink); }
 .membership-slide-rail { --slide-x: 0px; --slide-progress: 0; position: relative; isolation: isolate; height: 64px; overflow: hidden; border: 1px solid var(--payment-rule); border-radius: 40px; background: var(--payment-accent); color: var(--payment-action-ink); }
-.membership-slide-fill { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: color-mix(in srgb, var(--payment-action-ink) 18%, var(--payment-accent)); transform: scaleX(var(--slide-progress)); transform-origin: right center; transition: transform 340ms cubic-bezier(.22, 1, .36, 1); }
-.membership-slide-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0 68px 0 30px; font-size: 16px; opacity: calc(1 - var(--slide-progress) * 2); pointer-events: none; transition: opacity 180ms; }
-.membership-slide-destination { position: absolute; left: 20px; top: 21px; opacity: calc(.35 + var(--slide-progress) * .65); pointer-events: none; }
+.membership-slide-rail::after { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(100deg, transparent 25%, color-mix(in srgb, var(--payment-action-ink) 22%, transparent) 50%, transparent 75%); transform: translateX(-120%); pointer-events: none; animation: membership-slide-sheen 3.2s 700ms ease-in-out infinite; }
+.membership-slide-fill { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: color-mix(in srgb, var(--payment-action-ink) 22%, var(--payment-accent)); transform: scaleX(var(--slide-progress)); transform-origin: left center; transition: transform 380ms cubic-bezier(.16, 1.2, .3, 1); }
+.membership-slide-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0 30px 0 68px; font-size: 16px; opacity: calc(1 - var(--slide-progress) * 2); transform: translateX(calc(var(--slide-progress) * 12px)); pointer-events: none; transition: opacity 180ms, transform 380ms; }
+.membership-slide-destination { position: absolute; right: 20px; top: 21px; opacity: calc(.3 + var(--slide-progress) * .7); transform: scale(calc(.8 + var(--slide-progress) * .2)); pointer-events: none; transition: transform 380ms, opacity 180ms; }
 .membership-slide-destination svg { width: 20px; height: 20px; }
-.membership-slide-handle { position: absolute; right: 8px; top: 7px; display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--payment-action-ink); color: var(--payment-accent); cursor: grab; touch-action: none; transform: translateX(var(--slide-x)); transition: transform 340ms cubic-bezier(.22, 1, .36, 1), background 160ms; }
+.membership-slide-handle { position: absolute; left: 8px; top: 7px; display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--payment-action-ink); color: var(--payment-accent); cursor: grab; touch-action: none; transform: translateX(var(--slide-x)); box-shadow: 0 3px 8px color-mix(in srgb, var(--payment-action-ink) 18%, transparent); transition: transform 380ms cubic-bezier(.16, 1.2, .3, 1), background 160ms, box-shadow 180ms; }
 .membership-slide-handle:hover { background: color-mix(in srgb, var(--payment-action-ink) 88%, var(--payment-accent)); }
 .membership-slide-handle:active { cursor: grabbing; }
-.membership-slide-handle svg { width: 23px; height: 23px; }
-.membership-slide-rail[data-dragging="true"] :is(.membership-slide-handle, .membership-slide-fill, .membership-slide-label) { transition: none; }
-.membership-payment-secondary-actions { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-.membership-slide-alternative, .membership-payment-cancel { flex: 1; min-width: 0; min-height: 44px; padding: 0 4px; border: 0; border-radius: 22px; background: transparent; font: inherit; font-size: 13px; cursor: pointer; transition: background 160ms; }
-.membership-slide-alternative { color: var(--payment-ink); text-decoration: underline; text-decoration-color: var(--payment-rule); text-underline-offset: 4px; }
-.membership-payment-cancel { color: var(--payment-muted); }
-.membership-slide-alternative:hover, .membership-slide-alternative:active, .membership-payment-cancel:hover, .membership-payment-cancel:active { background: color-mix(in srgb, var(--payment-ink) 7%, transparent); }
+.membership-slide-handle svg { width: 23px; height: 23px; animation: membership-slide-arrow 2.6s 500ms ease-in-out infinite; }
+.membership-slide-rail[data-dragging="true"] :is(.membership-slide-handle, .membership-slide-fill, .membership-slide-label, .membership-slide-destination) { transition: none; }
+.membership-slide-rail[data-dragging="true"]::after { animation: none; opacity: 0; }
+.membership-slide-rail[data-dragging="true"] .membership-slide-handle { box-shadow: 0 4px 14px color-mix(in srgb, var(--payment-action-ink) 32%, transparent); }
+.membership-slide-rail[data-dragging="true"] .membership-slide-handle svg { animation: none; transform: translateX(calc(var(--slide-progress) * 3px)); }
 .membership-payment-dialog button:focus-visible { outline: 2px solid var(--payment-accent); outline-offset: 3px; }
 .membership-slide-handle:focus-visible { outline-color: var(--payment-action-ink); outline-offset: 2px; }
 .membership-payment-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes membership-payment-enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes membership-slide-sheen { 0%, 30% { transform: translateX(-120%); } 75%, 100% { transform: translateX(120%); } }
+@keyframes membership-slide-arrow { 0%, 15%, 65%, 100% { transform: translateX(0); } 30%, 50% { transform: translateX(5px); } 40% { transform: translateX(2px); } }
 @media (max-width: 359px), (max-height: 700px) {
   .membership-payment-header { padding: 14px 18px 12px; }
   .membership-payment-close { top: 14px; inset-inline-end: 14px; }
@@ -93,10 +94,10 @@
   .membership-payment-notice { padding-block: 10px; }
   .membership-payment-actions { padding: 6px 18px 12px; }
   .membership-slide-label { font-size: 14px; }
-  .membership-payment-secondary-actions button { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .membership-payment-sheet { animation: none; }
+  .membership-slide-rail::after, .membership-slide-handle svg { animation: none; }
   .membership-payment-dialog *, .membership-payment-dialog *::before { transition: none; }
 }
 @media (forced-colors: active) {
