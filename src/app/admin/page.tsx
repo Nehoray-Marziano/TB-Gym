@@ -250,8 +250,8 @@ export default function AdminDashboardPage() {
                                 </div>
 
                                 {/* Class Title */}
-                                <div className="relative mt-3">
-                                    <h2 className="text-2xl font-bold tracking-tight text-[var(--studio-deep)]">
+                                <div className="relative mt-3 min-w-0">
+                                    <h2 className="truncate text-2xl font-bold tracking-tight text-[var(--studio-deep)]" title={nextSessionToday.title}>
                                         {nextSessionToday.title}
                                     </h2>
                                     {nextSessionToday.description && (
@@ -458,14 +458,17 @@ export default function AdminDashboardPage() {
                                             key={session.id}
                                             type="button"
                                             onClick={() => setSelectedRosterSession(session)}
-                                            className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-[var(--admin-surface)] p-3 text-right transition-all hover:bg-white/5 active:scale-[0.99]"
+                                            className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-[var(--admin-surface)] p-3 text-right transition-all hover:bg-white/5 active:scale-[0.99]"
                                         >
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex min-w-0 flex-1 items-center gap-3">
                                                 <div className="flex h-10 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-white/5 font-mono text-xs font-bold text-[var(--studio-accent-text)]">
                                                     {formatHour(session.start_time)}
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="truncate text-sm font-bold text-[var(--studio-deep-contrast)]">
+                                                <div className="min-w-0 flex-1 overflow-hidden">
+                                                    <p
+                                                        className="truncate text-sm font-bold text-[var(--studio-deep-contrast)]"
+                                                        title={session.title}
+                                                    >
                                                         {session.title}
                                                     </p>
                                                     <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
@@ -474,9 +477,9 @@ export default function AdminDashboardPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex shrink-0 items-center gap-2">
                                                 <span
-                                                    className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${
+                                                    className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold tabular-nums ${
                                                         isFull
                                                             ? "bg-[var(--studio-danger)]/20 text-red-300"
                                                             : "bg-white/10 text-[var(--studio-deep-contrast)]"
@@ -484,7 +487,7 @@ export default function AdminDashboardPage() {
                                                 >
                                                     {session.current_bookings || 0} / {session.max_capacity}
                                                 </span>
-                                                <ChevronLeft aria-hidden="true" className="h-4 w-4 text-[var(--admin-muted)]" />
+                                                <ChevronLeft aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" />
                                             </div>
                                         </button>
                                     );

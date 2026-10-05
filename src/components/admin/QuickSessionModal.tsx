@@ -171,15 +171,21 @@ function QuickSessionSheet({
                 <form id="quick-session-form" onSubmit={handleCreate} className="space-y-4">
                     {/* Session Title */}
                     <div className="space-y-2">
-                        <label htmlFor="quick-title" className="block text-xs font-bold text-[var(--studio-ink)]">
-                            שם האימון
-                        </label>
+                        <div className="flex items-center justify-between">
+                            <label htmlFor="quick-title" className="block text-xs font-bold text-[var(--studio-ink)]">
+                                שם האימון
+                            </label>
+                            <span className="text-[11px] tabular-nums text-[var(--studio-muted)]">
+                                {title.length}/30
+                            </span>
+                        </div>
                         <CopyableInput
                             id="quick-title"
                             copyLabel="העתקת שם האימון"
                             type="text"
+                            maxLength={30}
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            onChange={(e) => setTitle(e.target.value.slice(0, 30))}
                             placeholder="לדוגמה: פילאטיס מכשירים"
                             required
                             className="min-h-12 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-sm font-bold outline-none"

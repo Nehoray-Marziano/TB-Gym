@@ -510,12 +510,18 @@ export default function AdminSchedulePage() {
                             <form id="create-session-form" noValidate onSubmit={handleCreate} className="space-y-5">
                                 <fieldset disabled={isCreating} className="min-w-0 space-y-5 border-0 p-0">
                                 <div className="space-y-2">
-                                    <label htmlFor="new-session-title" className="text-xs font-bold">שם האימון</label>
+                                    <div className="flex items-center justify-between">
+                                        <label htmlFor="new-session-title" className="text-xs font-bold">שם האימון</label>
+                                        <span className="text-[11px] tabular-nums text-[var(--studio-muted)]">
+                                            {newSession.title.length}/30
+                                        </span>
+                                    </div>
                                     <CopyableInput copyLabel="העתקת שם האימון"
                                         id="new-session-title"
                                         type="text"
+                                        maxLength={30}
                                         value={newSession.title}
-                                        onChange={e => setNewSession({ ...newSession, title: e.target.value })}
+                                        onChange={e => setNewSession({ ...newSession, title: e.target.value.slice(0, 30) })}
                                         className="min-h-14 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-base font-bold outline-none focus:border-[var(--studio-accent-text)]"
                                         required aria-invalid={!!createError && !newSession.title.trim()} aria-describedby={createError ? "create-session-error" : undefined} placeholder="למשל, אימון כוח"
                                     />
