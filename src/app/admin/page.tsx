@@ -7,7 +7,6 @@ import {
     Bell,
     Users,
     Clock,
-    AlertTriangle,
     ChevronLeft,
     Sparkles,
     CheckCircle2,
@@ -31,15 +30,6 @@ type RawSession = {
     current_bookings: number;
 };
 
-type AlertItem = {
-    id: string;
-    type: "low_tickets" | "full_capacity" | "open_spots";
-    title: string;
-    subtitle: string;
-    badgeText?: string;
-    trainee?: TraineeBalance;
-};
-
 export default function AdminDashboardPage() {
     const supabase = getSupabaseClient();
 
@@ -53,7 +43,6 @@ export default function AdminDashboardPage() {
     // Modal states
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isGrantOpen, setIsGrantOpen] = useState(false);
-    const [grantTargetTrainee, setGrantTargetTrainee] = useState<TraineeBalance | null>(null);
     const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
     const [selectedRosterSession, setSelectedRosterSession] = useState<SessionSummary | null>(null);
 
@@ -137,45 +126,6 @@ export default function AdminDashboardPage() {
         return sessions.filter((s) => new Date(s.start_time) > currentTime).length;
     }, [sessions]);
 
-    // Smart Attention Alerts
-    const alerts: AlertItem[] = useMemo(() => {
-        const list: AlertItem[] = [];
-
-        // 1. Full sessions today
-        const fullSessions = todaySessions.filter((s) => (s.current_bookings || 0) >= s.max_capacity);
-        if (fullSessions.length > 0) {
-            const firstFull = fullSessions[0];
-            const timeStr = new Date(firstFull.start_time).toLocaleTimeString("he-IL", {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "Asia/Jerusalem",
-            });
-            list.push({
-                id: `full-${firstFull.id}`,
-                type: "full_capacity",
-                title: `תפוסה מלאה: ${firstFull.title}`,
-                subtitle: `אימון השעה ${timeStr} מלא לחלוטין (${firstFull.max_capacity}/${firstFull.max_capacity})`,
-                badgeText: "100% תפוסה",
-            });
-        }
-
-        // 2. Trainees with 0 or negative tickets
-        const lowBalanceTrainees = trainees.filter((t) => t.tickets <= 0);
-        if (lowBalanceTrainees.length > 0) {
-            const firstLow = lowBalanceTrainees[0];
-            list.push({
-                id: `low-${firstLow.id}`,
-                type: "low_tickets",
-                title: `${firstLow.full_name} ביתרת ${firstLow.tickets} אימונים`,
-                subtitle: "לחצי כאן לטעינת כרטיסייה מהירה",
-                badgeText: "נדרשת טעינה",
-                trainee: firstLow,
-            });
-        }
-
-        return list;
-    }, [todaySessions, trainees]);
-
     const formatHour = (iso: string) => {
         return new Date(iso).toLocaleTimeString("he-IL", {
             hour: "2-digit",
@@ -251,7 +201,10 @@ export default function AdminDashboardPage() {
 
                                 {/* Class Title */}
                                 <div className="relative mt-3 min-w-0">
-                                    <h2 className="truncate text-2xl font-bold tracking-tight text-[var(--studio-deep)]" title={nextSessionToday.title}>
+                                    <h2
+                                        className="truncate text-2xl font-bold tracking-tight text-[var(--studio-deep)]"
+                                        title={nextSessionToday.title}
+                                    >
                                         {nextSessionToday.title}
                                     </h2>
                                     {nextSessionToday.description && (
@@ -355,10 +308,7 @@ export default function AdminDashboardPage() {
 
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setGrantTargetTrainee(null);
-                                    setIsGrantOpen(true);
-                                }}
+                                onClick={() => setIsGrantOpen(true)}
                                 className="group flex min-h-[4.75rem] flex-col items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-[var(--admin-surface)] p-2 text-center transition-all hover:border-[var(--studio-accent-bg)]/40 hover:bg-white/5 active:scale-95"
                             >
                                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#c37a61]/20 text-[var(--studio-coral-text)] transition-transform group-hover:scale-110">
@@ -380,67 +330,7 @@ export default function AdminDashboardPage() {
                         </div>
                     </section>
 
-                    {/* 3. ATTENTION & ALERTS HUB */}
-                    <section aria-label="מרכז התראות ותשומת לב">
-                        <div className="rounded-2xl border border-white/10 bg-[var(--admin-surface)] p-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <AlertTriangle aria-hidden="true" className="h-4 w-4 text-[var(--studio-coral-text)]" />
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">
-                                        מרכז תשומת לב ({alerts.length})
-                                    </h3>
-                                </div>
-                            </div>
-
-                            {alerts.length === 0 ? (
-                                <div className="flex items-center gap-2.5 rounded-xl bg-white/5 px-3.5 py-3 text-xs text-[var(--studio-deep-contrast)]/90">
-                                    <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-emerald-400 shrink-0" />
-                                    <span>הכל מתנהל כשורה בסטודיו — אין התראות דורשות טיפול ✦</span>
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {alerts.map((alert) => (
-                                        <div
-                                            key={alert.id}
-                                            className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/5 p-3"
-                                        >
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="truncate text-xs font-bold text-[var(--studio-deep-contrast)]">
-                                                        {alert.title}
-                                                    </p>
-                                                    {alert.badgeText && (
-                                                        <span className="shrink-0 rounded-md bg-[var(--studio-coral-bg)]/25 px-1.5 py-0.5 text-[10px] font-bold text-[var(--studio-coral-text)]">
-                                                            {alert.badgeText}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="mt-0.5 text-[11px] text-[var(--admin-muted)]">
-                                                    {alert.subtitle}
-                                                </p>
-                                            </div>
-
-                                            {alert.trainee && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setGrantTargetTrainee(alert.trainee || null);
-                                                        setIsGrantOpen(true);
-                                                    }}
-                                                    className="flex min-h-8 shrink-0 items-center gap-1 rounded-lg bg-[var(--studio-accent-bg)] px-2.5 text-[11px] font-bold text-[var(--studio-ink)] transition-transform active:scale-95"
-                                                >
-                                                    <span>הטענה</span>
-                                                    <ChevronLeft aria-hidden="true" className="h-3 w-3" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </section>
-
-                    {/* 4. TODAY'S SCHEDULE TIMELINE (Remaining Sessions) */}
+                    {/* 3. TODAY'S SCHEDULE TIMELINE (Remaining Sessions) */}
                     {otherSessionsToday.length > 0 && (
                         <section aria-label="ציר הזמן של שאר היום">
                             <div className="mb-2.5 flex items-center justify-between">
@@ -496,7 +386,7 @@ export default function AdminDashboardPage() {
                         </section>
                     )}
 
-                    {/* 5. STUDIO PULSE VITALS */}
+                    {/* 4. STUDIO PULSE VITALS */}
                     <section aria-label="מדדי דופק הסטודיו">
                         <div className="grid grid-cols-3 gap-2.5">
                             <div className="rounded-2xl border border-white/10 bg-[var(--admin-surface)] p-3.5">
@@ -544,11 +434,7 @@ export default function AdminDashboardPage() {
 
             <QuickGrantModal
                 isOpen={isGrantOpen}
-                initialTrainee={grantTargetTrainee}
-                onClose={() => {
-                    setIsGrantOpen(false);
-                    setGrantTargetTrainee(null);
-                }}
+                onClose={() => setIsGrantOpen(false)}
                 onGranted={() => {
                     void loadDashboardData();
                 }}
