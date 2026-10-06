@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Admin Daily Operational Dashboard
+ * Focused on real-time workout status, quick operational modals, and daily timeline.
+ */
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
     Plus,
