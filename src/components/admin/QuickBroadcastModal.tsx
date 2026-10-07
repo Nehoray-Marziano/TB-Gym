@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { sendNotificationRequest } from "@/lib/notificationRequest";
 import { X } from "lucide-react";
 import { StudioModal } from "@/components/ui/StudioModal";
 import { AdminBusyLabel, AdminError } from "@/components/admin/AdminFeedback";
@@ -45,16 +46,17 @@ function QuickBroadcastSheet({ onClose }: { onClose: () => void }) {
     const [message, setMessage] = useState(PRESETS[0].message);
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const sendLock = useRef(false);
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim() || !message.trim() || isSending) return;
-
+        if (!title.trim() || !message.trim() || isSending || sendLock.current) return;
+        sendLock.current = true;
         setIsSending(true);
         setError(null);
 
         try {
-            const res = await fetch("/api/notifications", {
+            const res = await sendNotificationRequest("/api/notifications", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -75,6 +77,7 @@ function QuickBroadcastSheet({ onClose }: { onClose: () => void }) {
             console.error(err);
             setError("לא הצלחנו לשלוח את ההודעה כרגע. נסי שוב בעוד רגע.");
         } finally {
+            sendLock.current = false;
             setIsSending(false);
         }
     };
@@ -120,7 +123,7 @@ function QuickBroadcastSheet({ onClose }: { onClose: () => void }) {
                 </>
             }
         >
-            <form id="broadcast-form" onSubmit={handleSend} className="space-y-4">
+            <form id="broadcast-form" noValidate onSubmit={handleSend} className="space-y-4">
                 {/* Presets */}
                 <div>
                     <span className="mb-2 block text-xs font-bold text-[var(--studio-ink)]">
@@ -160,6 +163,7 @@ function QuickBroadcastSheet({ onClose }: { onClose: () => void }) {
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="כותרת קצרה ומזמינה"
                         required
+                        maxLength={120}
                         className="min-h-12 w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] px-4 text-sm font-bold outline-none"
                     />
                 </div>
@@ -176,6 +180,7 @@ function QuickBroadcastSheet({ onClose }: { onClose: () => void }) {
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="כתבי כאן את פרטי ההודעה..."
                         required
+                        maxLength={1000}
                         className="w-full rounded-2xl border border-[#1b251c]/20 bg-[var(--studio-card)] p-3.5 text-sm font-medium outline-none resize-none focus:border-[var(--studio-accent-text)]"
                     />
                 </div>

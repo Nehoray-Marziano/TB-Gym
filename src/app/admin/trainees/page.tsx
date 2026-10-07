@@ -1,6 +1,7 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import { sendNotificationRequest } from "@/lib/notificationRequest";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { User, Ticket } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -83,7 +84,7 @@ export default function AdminTraineesPage() {
             await fetchTrainees();
             toast({ title: "הכרטיסים עודכנו בהצלחה", type: "success" });
             setIsTicketModalOpen(false);
-            void fetch('/api/notifications/grant-tickets', {
+            void sendNotificationRequest('/api/notifications/grant-tickets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, amount: quantity })

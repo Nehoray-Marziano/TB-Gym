@@ -1,6 +1,7 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import { sendNotificationRequest } from "@/lib/notificationRequest";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getAdminMutationRequestId, completeAdminMutationIntent } from "@/lib/adminMutationIntent";
 import { AnimatePresence } from "framer-motion";
@@ -77,7 +78,7 @@ export default function AdminSchedulePage() {
         setNotifySending(true);
         setNotifyError(null);
         try {
-            const response = await fetch("/api/notifications", {
+            const response = await sendNotificationRequest("/api/notifications", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -230,7 +231,7 @@ export default function AdminSchedulePage() {
 
             if (data?.user_ids?.length > 0) {
                 try {
-                    await fetch("/api/notifications", {
+                    await sendNotificationRequest("/api/notifications", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -241,6 +242,7 @@ export default function AdminSchedulePage() {
                     });
                 } catch (e) {
                     console.error("Failed to notify users about session deletion", e);
+                    toast({ title: "האימון נמחק, אבל לא נשלחה התראה למתאמנות", type: "error" });
                 }
             }
 
@@ -287,7 +289,7 @@ export default function AdminSchedulePage() {
 
             // Notify User
             try {
-                await fetch("/api/notifications", {
+                await sendNotificationRequest("/api/notifications", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -298,6 +300,7 @@ export default function AdminSchedulePage() {
                 });
             } catch (e) {
                 console.error("Failed to notify user removal", e);
+                toast({ title: "ההרשמה בוטלה, אבל לא נשלחה התראה", type: "error" });
             }
 
             setSessionBookings(previous => previous.filter(item => item.id !== booking.id));

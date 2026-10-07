@@ -25,13 +25,16 @@ export async function POST(request: NextRequest) {
         } catch {
             return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
         }
+        if (!body || typeof body !== "object" || Array.isArray(body)) {
+            return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
+        }
         const { title, message, targetRole, targetUserIds, url } = body;
         if (typeof title !== "string" || !title.trim() || title.length > 120 ||
             typeof message !== "string" || !message.trim() || message.length > 1000 ||
-            (targetRole && !["administrator", "trainee"].includes(targetRole)) ||
-            (targetUserIds && (!Array.isArray(targetUserIds) || targetUserIds.length > 100 ||
-                targetUserIds.some(id => typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id)))) ||
-            (url && (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//")))) {
+            (targetRole !== undefined && !["administrator", "trainee"].includes(targetRole)) ||
+            (targetUserIds !== undefined && (!Array.isArray(targetUserIds) || !targetUserIds.length || targetUserIds.length > 100 ||
+                targetUserIds.some(id => typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)))) ||
+            (url !== undefined && (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//") || /[\\\x00-\x1f]/.test(url)))) {
             return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
         }
 
@@ -81,9 +84,7 @@ export async function POST(request: NextRequest) {
             ];
         }
 
-        if (url) {
-            notificationPayload.url = new URL(url, request.url).toString();
-        }
+        notificationPayload.url = new URL(url || (targetUserIds?.length || targetRole === "trainee" ? "/dashboard" : "/admin"), request.url).toString();
 
         const response = await fetch("https://onesignal.com/api/v1/notifications", {
             method: "POST",
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
                 "Authorization": `Basic ${apiKey}`,
             },
             body: JSON.stringify(notificationPayload),
+            signal: AbortSignal.timeout(15_000),
         });
 
         const result = await response.json();
@@ -101,12 +103,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Failed to send notification", details: result }, { status: 500 });
         }
 
+        if (typeof result?.id !== "string" || !result.id.trim() || result.recipients === 0) {
+            return NextResponse.json({ error: "No subscribed recipients", details: result?.errors }, { status: 400 });
+        }
+
         console.log("Notification sent:", result);
         // Result typically contains { id: '...', recipients: N }
         return NextResponse.json({
             success: true,
             id: result.id,
-            recipients: result.recipients || 0
+            recipients: result.recipients
         });
 
     } catch (error: unknown) {

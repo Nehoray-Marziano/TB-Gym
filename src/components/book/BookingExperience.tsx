@@ -1,6 +1,7 @@
 "use client";
 
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import { sendNotificationRequest } from "@/lib/notificationRequest";
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { StudioModal } from "@/components/ui/StudioModal";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
@@ -311,7 +312,7 @@ export default function BookingExperience({
             void Promise.all([refreshData(true), fetchSessions()]);
 
             const targetSession = sessions.find(s => s.id === sessionId);
-            void fetch("/api/notifications", {
+            void sendNotificationRequest("/api/notifications", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -349,7 +350,7 @@ export default function BookingExperience({
                 fetchSessions();
                 void refreshData(true);
 
-                void fetch("/api/notifications", {
+                void sendNotificationRequest("/api/notifications", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

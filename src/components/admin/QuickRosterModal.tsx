@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { sendNotificationRequest } from "@/lib/notificationRequest";
 import { X, Phone, MessageCircle, UserX, Clock, Users } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { StudioModal } from "@/components/ui/StudioModal";
@@ -107,7 +108,7 @@ function QuickRosterSheet({
             if (cancelErr) throw cancelErr;
 
             // Notify user
-            void fetch("/api/notifications", {
+            void sendNotificationRequest("/api/notifications", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -115,7 +116,10 @@ function QuickRosterSheet({
                     message: `הוסרת מהאימון "${session.title}". הזיכוי הוחזר לחשבונך.`,
                     targetUserIds: [cancellingBooking.user_id],
                 }),
-            }).catch(console.error);
+            }).catch(error => {
+                console.error(error);
+                toast({ title: "ההרשמה בוטלה, אבל לא נשלחה התראה", type: "error" });
+            });
 
             toast({ title: "ההרשמה בוטלה והזיכוי הוחזר למתאמנת", type: "success" });
             setCancellingBooking(null);

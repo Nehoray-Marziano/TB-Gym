@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test, { describe, beforeEach, afterEach, before, after } from 'node:test';
+import test, { describe, beforeEach, before, after } from 'node:test';
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -567,7 +567,7 @@ describe('2. /api/notifications/grant-tickets Endpoint Tests', () => {
             assert.equal(call.body.android_channel_id, '4f8844c7-685b-40b0-ae58-48aa9d7c7530');
             assert.equal(call.body.web_push_topic, 'ticket-update');
             assert.equal(call.body.ttl, 86400);
-            assert.equal(call.body.url, 'https://tb-gym.vercel.app/dashboard');
+            assert.equal(call.body.url, 'http://localhost:3000/dashboard');
             assert.equal(call.body.chrome_web_require_interaction, true);
             assert.equal(call.body.android_vibrate, true);
             assert.equal(call.body.channel_for_external_user_ids, 'push');
@@ -621,7 +621,7 @@ describe('3. Client SDK, Service Worker & Integration Architecture', () => {
     });
 
     test('OneSignalProvider source verifies core configuration and guards', async () => {
-        const providerSource = await readFile(resolve(rootDir, 'src/providers/OneSignalProvider.tsx'), 'utf8');
+        const providerSource = await readFile(resolve(rootDir, 'src/providers/OneSignalProvider.tsx'), 'utf8') + await readFile(resolve(rootDir, 'src/lib/oneSignalClient.ts'), 'utf8');
         assert.match(providerSource, /appId:\s*["']2e5776b6-3487-4a5d-bca0-04570c82d150["']/, 'App ID must match studio OneSignal app');
         assert.match(providerSource, /serviceWorkerPath:\s*["']sw\.js["']/, 'Service worker path must be sw.js');
         assert.match(providerSource, /welcomeNotification:\s*\{\s*disable:\s*true\s*\}/, 'Welcome notification must be disabled');
@@ -635,7 +635,7 @@ describe('3. Client SDK, Service Worker & Integration Architecture', () => {
         const profileSource = await readFile(resolve(rootDir, 'src/components/profile/ProfileClient.tsx'), 'utf8');
         assert.match(profileSource, /permission === ["']granted["']/, 'Must check for granted permission state');
         assert.match(profileSource, /permission === ["']denied["']/, 'Must check for denied permission state');
-        assert.match(profileSource, /Notifications\.requestPermission\(\)/, 'Must request permission via OneSignal SDK');
+        assert.match(profileSource, /enablePushNotifications\(\)/, 'Must enable a OneSignal push subscription');
     });
 
     test('Foreground notification event dispatch triggers expected toast structure', () => {
@@ -663,5 +663,64 @@ describe('3. Client SDK, Service Worker & Integration Architecture', () => {
         assert.equal(capturedToasts.length, 2);
         assert.equal(capturedToasts[1].title, 'הודעה חדשה');
         assert.equal(capturedToasts[1].description, 'תזכורת לאימון');
+    });
+});
+
+describe('4. Delivery failure regressions', () => {
+    beforeEach(() => configureMockAuth({ user: { id: ADMIN_UUID }, role: 'administrator' }));
+    for (const [name, handler, payload] of [
+        ['general', () => notificationsPost, { title: 'בדיקה', message: 'בדיקת התראה', targetRole: 'trainee' }],
+        ['tickets', () => grantTicketsPost, { userId: VALID_UUID_1, amount: 1 }],
+    ]) {
+        const send = (body = payload) => handler()(new NextRequest(`https://tb-gym.vercel.app/api/notifications${name === 'tickets' ? '/grant-tickets' : ''}`, {
+            method: 'POST', body: JSON.stringify(body),
+        }));
+        test(`${name}: HTTP 200 with no notification ID is not success`, async () => {
+            mockOneSignalResponse.body = { id: '', errors: ['All included players are not subscribed'] };
+            const response = await send();
+            assert.notEqual(response.status, 200);
+            assert.notEqual((await response.json()).success, true);
+        });
+        test(`${name}: empty provider response is not success`, async () => {
+            mockOneSignalResponse.body = {};
+            assert.notEqual((await send()).status, 200);
+        });
+        test(`${name}: explicit zero recipients is not success`, async () => {
+            mockOneSignalResponse.body = { id: 'notification-id', recipients: 0 };
+            assert.notEqual((await send()).status, 200);
+        });
+        test(`${name}: HTTP 503 without an errors field is not success`, async () => {
+            mockOneSignalResponse = { ok: false, status: 503, body: { message: 'Unavailable' } };
+            assert.notEqual((await send()).status, 200);
+        });
+        test(`${name}: valid ID without legacy recipients field is accepted`, async () => {
+            mockOneSignalResponse.body = { id: 'notification-id' };
+            const response = await send();
+            assert.equal(response.status, 200);
+            assert.equal((await response.json()).success, true);
+        });
+        test(`${name}: null JSON body is rejected as invalid input`, async () => {
+            assert.equal((await send(null)).status, 400);
+            assert.equal(capturedFetches.length, 0);
+        });
+        test(`${name}: strings of hyphens are not UUIDs`, async () => {
+            const body = name === 'tickets' ? { ...payload, userId: '-'.repeat(36) } : { ...payload, targetUserIds: ['-'.repeat(36)] };
+            assert.equal((await send(body)).status, 400);
+            assert.equal(capturedFetches.length, 0);
+        });
+    }
+    test('backslash URL cannot navigate outside the app', async () => {
+        const response = await notificationsPost(new NextRequest('https://tb-gym.vercel.app/api/notifications', {
+            method: 'POST', body: JSON.stringify({ title: 'Test', message: 'Test', url: '/\\evil.example' }),
+        }));
+        assert.equal(response.status, 400);
+        assert.equal(capturedFetches.length, 0);
+    });
+    test('empty user targeting never falls through to an admin broadcast', async () => {
+        const response = await notificationsPost(new NextRequest('https://tb-gym.vercel.app/api/notifications', {
+            method: 'POST', body: JSON.stringify({ title: 'Test', message: 'Test', targetUserIds: [] }),
+        }));
+        assert.equal(response.status, 400);
+        assert.equal(capturedFetches.length, 0);
     });
 });

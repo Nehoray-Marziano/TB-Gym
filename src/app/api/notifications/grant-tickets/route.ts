@@ -17,9 +17,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid ticket notification' }, { status: 400 });
         }
 
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+            return NextResponse.json({ error: 'Invalid ticket notification' }, { status: 400 });
+        }
         const { userId, amount } = body;
 
-        if (typeof userId !== 'string' || !/^[0-9a-f-]{36}$/i.test(userId) ||
+        if (typeof userId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId) ||
             typeof amount !== 'number' || !Number.isInteger(amount) || amount === 0 || Math.abs(amount) > 100) {
             return NextResponse.json({ error: 'Invalid ticket notification' }, { status: 400 });
         }
@@ -58,23 +61,27 @@ export async function POST(req: Request) {
                 web_push_topic: "ticket-update",  // Groups notifications
                 ttl: 86400, // 24 hours - ensures delivery
                 // Open dashboard when clicked
-                url: "https://tb-gym.vercel.app/dashboard",
+                url: new URL('/dashboard', req.url).toString(),
                 // Force notification to persist until user interacts
                 chrome_web_require_interaction: true,
                 // Add vibration pattern (Android)
                 android_vibrate: true,
                 channel_for_external_user_ids: "push",
-            })
+            }),
+            signal: AbortSignal.timeout(15_000),
         });
 
         const data = await response.json();
 
         console.log("[Notification API] OneSignal Response:", JSON.stringify(data, null, 2));
 
-        if (data.errors) {
-            console.error("[Notification API] OneSignal Error:", data.errors);
+        if (!response.ok) {
+            return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 });
+        }
+        if (typeof data?.id !== 'string' || !data.id.trim() || data.recipients === 0) {
+            console.error("[Notification API] OneSignal Error:", data?.errors);
             // If the error is "All included players are not subscribed", it means the userId is not found or unsubscribed.
-            return NextResponse.json({ error: data.errors }, { status: 400 });
+            return NextResponse.json({ error: data?.errors || 'No subscribed recipients' }, { status: 400 });
         }
 
         return NextResponse.json({ success: true, data });

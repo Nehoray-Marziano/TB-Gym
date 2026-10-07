@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { sendNotificationRequest } from "@/lib/notificationRequest";
 import { StudioModal } from "@/components/ui/StudioModal";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -129,7 +130,7 @@ export default function MyBookingsPage() {
                 void refreshData(true);
                 void fetchBookings();
 
-                void fetch("/api/notifications", {
+                void sendNotificationRequest("/api/notifications", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

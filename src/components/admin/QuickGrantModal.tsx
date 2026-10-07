@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { sendNotificationRequest } from "@/lib/notificationRequest";
 import { X, ArrowLeft } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { StudioModal } from "@/components/ui/StudioModal";
@@ -135,11 +136,14 @@ function QuickGrantSheet({
             completeAdminMutationIntent("grant_tickets", actorId, requestId);
 
             // Optional notification
-            void fetch("/api/notifications/grant-tickets", {
+            void sendNotificationRequest("/api/notifications/grant-tickets", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: selectedTrainee.id, amount: quantity }),
-            }).catch(console.error);
+            }).catch(error => {
+                console.error(error);
+                toast({ title: "היתרה עודכנה, אבל לא נשלחה התראה", type: "error" });
+            });
 
             toast({
                 title: quantity > 0 ? `נוספו ${quantity} אימונים בהצלחה` : `הופחתו ${Math.abs(quantity)} אימונים`,
@@ -296,7 +300,7 @@ function QuickGrantSheet({
                     )}
                 </div>
             ) : (
-                <form id="quick-grant-form" onSubmit={handleGrant} className="space-y-5">
+                <form id="quick-grant-form" noValidate onSubmit={handleGrant} className="space-y-5">
                     {/* Visual balance comparison */}
                     <div className="flex items-center justify-between rounded-2xl bg-[var(--studio-deep)] p-4 text-[var(--studio-deep-contrast)]">
                         <div className="flex-1 text-center">

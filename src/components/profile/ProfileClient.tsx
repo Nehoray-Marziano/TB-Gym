@@ -11,6 +11,7 @@ import StudioBotanical from "@/components/StudioBotanical";
 import { useGymStore } from "@/providers/GymStoreProvider";
 import InstallAppButton from "@/components/profile/InstallAppButton";
 import { CopyableInput, CopyableTextarea } from "@/components/ui/copyable-field";
+import { enablePushNotifications } from "@/lib/oneSignalClient";
 
 
 type UserProfile = {
@@ -32,15 +33,13 @@ type ProfileClientProps = {
     initialHealth: HealthDeclaration;
 };
 
-type BrowserOneSignal = {
-    Notifications: { requestPermission: () => Promise<void> };
-};
-
 export default function ProfileClient({ initialProfile, initialHealth }: ProfileClientProps) {
     const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
     const [health, setHealth] = useState<HealthDeclaration>(initialHealth);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [notificationBusy, setNotificationBusy] = useState(false);
+    const notificationLock = useRef(false);
     const reduceMotion = useReducedMotion();
 
     // Form State
@@ -263,45 +262,42 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 <button
                     type="button"
                     onClick={async () => {
+                        if (notificationLock.current) return;
+                        notificationLock.current = true;
+                        setNotificationBusy(true);
                         if (navigator.vibrate) navigator.vibrate(10);
-
-                        // Check if Notifications API is supported
-                        if (!("Notification" in window)) {
-                            toast({ title: "הדפדפן לא תומך בהתראות", type: "error" });
-                            return;
-                        }
-
-                        // Native Permission Check
-                        const permission = Notification.permission;
-
-                        if (permission === "granted") {
-                            toast({ title: "התראות כבר מופעלות ✓", description: "ניתן לשנות בהגדרות הדפדפן/אפליקציה", type: "success" });
-                            return;
-                        }
-
-                        if (permission === "denied") {
-                            toast({
-                                title: "התראות חסומות בהגדרות 🚫",
-                                description: "אנא היכנסי להגדרות המכשיר ואשרי התראות ידנית.",
-                                type: "error"
-                            });
-                            return;
-                        }
-
-                        // Default state - Request Permission via OneSignal logic to ensure syncing
-                        const oneSignal = (window as Window & { OneSignal?: BrowserOneSignal }).OneSignal;
-                        if (oneSignal) {
-                            try {
-                                await oneSignal.Notifications.requestPermission();
-                                // We don't manually toast here because the browser prompt handles the UX, 
-                                // and OneSignal often triggers its own outcome events. 
-                                // But we can assume if they click Allow, it works.
-                            } catch (e) {
-                                console.error("Notification error:", e);
-                                toast({ title: "שגיאה בבקשת אישור", type: "error" });
+                        try {
+                            const permission = await enablePushNotifications();
+                            if (permission === "unsupported") {
+                                toast({ title: "הדפדפן לא תומך בהתראות", type: "error" });
+                                return;
                             }
+
+                            if (permission === "granted") {
+                                toast({ title: "ההתראות מופעלות ✓", description: "ניתן לשנות בהגדרות הדפדפן/אפליקציה", type: "success" });
+                                return;
+                            }
+
+                            if (permission === "denied") {
+                                toast({
+                                    title: "התראות חסומות בהגדרות 🚫",
+                                    description: "אנא היכנסי להגדרות המכשיר ואשרי התראות ידנית.",
+                                    type: "error"
+                                });
+                                return;
+                            }
+
+                            toast({ title: "ההתראות עדיין לא הופעלו", description: "לחצי שוב ואשרי התראות בחלון הדפדפן.", type: "info" });
+                        } catch (e) {
+                            console.error("Notification error:", e);
+                            toast({ title: "לא הצלחנו להפעיל התראות", description: "בדקי את החיבור ונסי שוב בעוד רגע.", type: "error" });
+                        } finally {
+                            notificationLock.current = false;
+                            setNotificationBusy(false);
                         }
                     }}
+                    disabled={notificationBusy}
+                    aria-busy={notificationBusy}
                     className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-[#162218]/10 bg-[var(--studio-card)] p-5 text-start transition-colors active:bg-[var(--studio-accent-bg)]/20"
                 >
                     <div className="flex items-center gap-4">
