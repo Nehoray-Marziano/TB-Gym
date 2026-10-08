@@ -48,26 +48,32 @@ assert.equal(manifest.theme_color, PWA_BACKGROUND);
 for (const size of [192, 512]) {
   assert(manifest.icons.some(icon => icon.sizes === `${size}x${size}` && icon.purpose === "any"));
 }
-// Chromium's UpdateBestSplashIcon prefers MASKABLE before ANY. Every eligible
-// entry must preserve the transparent mark, not just the first/512px ANY icon.
-assert(manifest.icons.every(icon => icon.purpose === "any"), "No higher-priority opaque splash candidate");
-for (const icon of manifest.icons) {
+// Launcher icons are intentionally opaque olive; Apple startup images retain
+// their independent cream canvas and centered dark mark.
+const brand = css.match(/--studio-brand:\s*(#[\da-f]{6})\s*;/i)?.[1];
+assert(brand, "Canonical brand color exists");
+const brandRgb = brand.slice(1).match(/../g).map(value => parseInt(value, 16));
+assert(manifest.icons.every(icon => icon.purpose === "any"));
+const iconCandidates = [...manifest.icons, { src: "/apple-touch-icon-v5.png", sizes: "180x180" }];
+for (const icon of iconCandidates) {
   const response = await fetch(new URL(icon.src, baseUrl));
   assert.equal(response.status, 200);
   const bytes = Buffer.from(await response.arrayBuffer());
   const metadata = await sharp(bytes).metadata();
   assert.equal(`${metadata.width}x${metadata.height}`, icon.sizes);
+  assert.equal(metadata.hasAlpha, false, "Launcher icon has no transparency");
   const { data, info } = await sharp(bytes).raw().toBuffer({ resolveWithObject: true });
-  assert.equal(info.channels, 4);
+  assert.equal(info.channels, 3);
   let artwork = 0;
   for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
     const offset = (y * info.width + x) * info.channels;
+    const pixel = [...data.subarray(offset, offset + 3)];
     if (x < info.width * 0.1 || x >= info.width * 0.9 || y < info.height * 0.1 || y >= info.height * 0.9) {
-      assert.equal(data[offset + 3], 0, "Every splash candidate has no rectangular backing outside its mark");
+      assert.deepEqual(pixel, brandRgb, "Launcher backing uses the canonical olive green");
     }
-    if (data[offset + 3]) artwork++;
+    if (pixel.some((value, channel) => value !== brandRgb[channel])) artwork++;
   }
-  assert(artwork > 0);
+  assert(artwork > 0, "Light studio mark exists");
 }
 const canvas = [233, 234, 220];
 for (const image of APPLE_STARTUP_IMAGES) {

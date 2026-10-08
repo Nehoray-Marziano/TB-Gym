@@ -9,14 +9,14 @@ account provider renders; `/dashboard` still verifies authentication and waits
 for all initial data. See [startup timing investigation](startup-performance-2026-10-05.md).
 
 Android generates its native splash from the manifest's name, opaque
-`background_color`, `theme_color`, and PNG icons. Normal v4 icons have a
-transparent surround so their square bitmap is not a second cream tile inside
-the native splash. The manifest intentionally omits maskable entries:
-Chromium's `ShortcutInfo::UpdateBestSplashIcon` selects MASKABLE before ANY,
-regardless of their ordering. An opaque maskable entry bypasses the transparent
-normal icon. The launcher may add its own backing to a normal icon; the native
-splash's unboxed mark takes priority. The Apple home-screen icon stays opaque.
-Regenerate with `node scripts/generate-pwa-icons.mjs`.
+`background_color`, `theme_color`, and PNG icons. Version 5 launcher icons use
+an opaque olive field adapted from `--studio-brand` and a light TB mark using
+`PWA_BACKGROUND`. The owner requested a recognizable green icon instead of
+v4's transparent mark. Android can therefore show a green tile during native
+launch; the manifest retains normal `any` entries. Apple launcher icons share
+the green treatment, while Apple's separate startup images keep the cream
+canvas and dark mark. OS glass/reflection effects require a physical device
+check. Regenerate with `node scripts/generate-pwa-icons.mjs`.
 Keep the 192/512 sizes, standalone display, `/` start URL, stable `/` ID, and
 `/` scope.
 
@@ -90,7 +90,7 @@ normal icons remove the bitmap's background tile; this is an app-side
 mitigation, not proof that the browser's native icon treatment is fixed.
 The first v4 change mistakenly retained maskable manifest entries, so Android
 could still prefer the opaque bitmap. Those entries are now removed, and the
-asset check requires transparency for every eligible manifest icon. Older
+v4 asset check required transparency for every eligible manifest icon. The v5 check instead requires an opaque canonical olive background. Older
 maskable PNG URLs remain available for compatibility with cached metadata but
 are no longer advertised or generated.
 
