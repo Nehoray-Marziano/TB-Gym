@@ -13,6 +13,7 @@ import {
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlass";
 import { CopyableInput } from "@/components/ui/copyable-field";
+import LegalLinks from "@/components/legal/LegalLinks";
 
 type LoginView = "email" | "otp";
 
@@ -406,10 +407,7 @@ export default function LandingPage() {
                         </div>
                     </LiquidGlassButton>
 
-                    {/* Reassurance Micro-Copy: High contrast (8.05:1 AAA) */}
-                    <p className="studio-welcome-reassurance text-center font-medium text-[#384834]">
-                        כניסה מאובטחת ללא סיסמה • הפרטים שלך שמורים
-                    </p>
+                    <LegalLinks className="studio-welcome-reassurance" />
                 </div>
             </main>
 

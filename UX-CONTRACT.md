@@ -26,6 +26,8 @@ This contract covers the admin overview, schedule and trainee management. Hebrew
 
 ## Shared behavior
 
+- Public privacy and terms documents use `LegalPage` with normal document scrolling, the canonical global scrollbar and `LegalLinks` on Login and Account. The pages require no authentication. The verified data flow and wording scope are documented in `docs/legal-pages.md`; `src/lib/legal.ts` owns the contact name, email, telephone and update date supplied by the publisher. Contact links use native `mailto:` and `tel:` URLs with isolated LTR values. These read-only pages do not add data mutations, deletion actions, consent collection or payment behavior.
+
 - StudioModal owns modal semantics, focus trapping, safe initial focus, Escape, inert background, focus restoration, body/route scroll locks and visual-viewport sizing. Its admin variant owns the bottom sheet on phones and centered surface on wider screens. Content scrolls independently of the persistent action footer. The most recently opened native dialog owns keyboard handling.
 - Calendar popovers and MUI time dialogs portal into the current StudioModal container. Escape closes the inner popup first. Cancelling the clock discards its draft; accepting commits the time. Child focus returns to its actual trigger.
 - Pending mutations lock dismissal and duplicate submission. Failed mutations preserve the form/confirmation and present an inline retry message. Notification retries are explicit and never automatic.

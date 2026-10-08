@@ -12,6 +12,7 @@ import { useGymStore } from "@/providers/GymStoreProvider";
 import InstallAppButton from "@/components/profile/InstallAppButton";
 import { CopyableInput, CopyableTextarea } from "@/components/ui/copyable-field";
 import { enablePushNotifications } from "@/lib/oneSignalClient";
+import LegalLinks from "@/components/legal/LegalLinks";
 
 
 type UserProfile = {
@@ -319,7 +320,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 </button>
             </section>
 
-            <p className="mt-12 text-center text-xs text-[var(--studio-muted)]">סטודיו טליה</p>
+            <LegalLinks className="mt-8" />
+            <p className="mt-2 text-center text-xs text-[var(--studio-muted)]">סטודיו טליה</p>
             </main>
         </div>
     );

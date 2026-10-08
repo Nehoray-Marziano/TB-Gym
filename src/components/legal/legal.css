@@ -1,0 +1,45 @@
+.studio-legal-page {
+  min-height: 100dvh;
+  background: var(--studio-canvas);
+  color: var(--studio-ink);
+  padding: max(1rem, env(safe-area-inset-top)) 1.25rem calc(2rem + env(safe-area-inset-bottom));
+}
+.studio-legal-container { max-width: 40rem; margin-inline: auto; }
+.studio-legal-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.studio-legal-back { display: inline-flex; align-items: center; gap: 0.5rem; }
+.studio-legal-page a {
+  cursor: pointer;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+.studio-legal-page a:focus-visible { outline: 2px solid var(--studio-ink); outline-offset: 4px; border-radius: 0.25rem; }
+.studio-legal-page a:hover,
+.studio-legal-page a:active { text-decoration-thickness: 2px; }
+.studio-legal-intro {
+  padding-block: 0.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.studio-legal-brand { color: var(--studio-muted); font-size: 0.875rem; }
+.studio-legal-intro h1 { margin-block: 0.75rem; font-size: clamp(1.875rem, 7vw, 2.5rem); line-height: 1.3; font-weight: 700; overflow-wrap: anywhere; }
+.studio-legal-intro > p { line-height: 1.8; }
+.studio-legal-intro .studio-legal-date { margin-top: 0.75rem; color: var(--studio-muted); font-size: 0.875rem; }
+.studio-legal-document section { padding-block: 1.25rem; scroll-margin-block-start: 1rem; }
+.studio-legal-document h2 { margin-bottom: 0.5rem; font-size: 1.125rem; font-weight: 700; line-height: 1.5; }
+.studio-legal-document p,
+.studio-legal-document ul { margin-top: 0.75rem; font-size: 1rem; line-height: 1.95; overflow-wrap: anywhere; }
+.studio-legal-document ul { list-style: disc; padding-inline-start: 1.5rem; }
+.studio-legal-document li + li { margin-top: 0.5rem; }
+.studio-legal-document a { color: var(--studio-ink); }
+.studio-legal-contact { display: flex; flex-direction: column; align-items: flex-start; font-style: normal; line-height: 1.8; }
+.studio-legal-contact a { display: inline-flex; align-items: center; max-width: 100%; overflow-wrap: anywhere; }
+.studio-legal-contact bdi { overflow-wrap: anywhere; }
+.studio-legal-footer { padding-top: 1.5rem; text-align: center; }
+.studio-legal-footer > a { display: inline-flex; align-items: center; }
+@media print {
+  .studio-legal-page { padding: 0; min-height: auto; }
+  .studio-legal-header, .studio-legal-footer { display: none; }
+  .studio-legal-intro { padding: 0; background: none; color: var(--studio-ink); }
+  .studio-legal-intro p { color: var(--studio-ink); }
+  .studio-legal-document h2 { break-after: avoid; }
+}
