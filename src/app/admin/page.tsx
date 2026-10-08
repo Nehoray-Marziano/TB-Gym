@@ -148,9 +148,9 @@ export default function AdminDashboardPage() {
     };
 
     return (
-        <div className="space-y-6 text-[var(--studio-deep-contrast)]">
+        <div className="studio-admin-home text-[var(--studio-deep-contrast)]">
             {/* Header: Studio Brand & Daily Cockpit Status */}
-            <header className="flex items-center justify-between gap-3">
+            <header className="studio-admin-home-header flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <StudioLogo tight className="h-10 w-10 shrink-0 bg-[var(--studio-accent-bg)]" />
                     <div>
@@ -184,7 +184,7 @@ export default function AdminDashboardPage() {
             ) : (
                 <>
                     {/* 1. HERO STAGE: Today's Active / Next Workout */}
-                    <section aria-label="האימון הבא היום">
+                    <section className="studio-admin-home-workout" aria-label="האימון הבא היום">
                         {nextSessionToday ? (
                             <div className="relative isolate overflow-hidden rounded-[2rem_1.2rem_2rem_1.2rem] bg-gradient-to-br from-[#8b8e6f] via-[#7d8063] to-[#6a6c52] p-5 text-[var(--studio-ink)] shadow-xl">
                                 <StudioBotanical className="studio-botanical-drift pointer-events-none absolute -bottom-14 -left-20 h-48 w-80 text-[var(--studio-deep)]/25" />
@@ -219,7 +219,7 @@ export default function AdminDashboardPage() {
                                 </div>
 
                                 {/* Occupancy Bar */}
-                                <div className="relative mt-4 rounded-xl bg-[var(--studio-deep)]/10 p-3 backdrop-blur-xs">
+                                <div className="studio-admin-home-occupancy relative mt-4 rounded-xl bg-[var(--studio-deep)]/10 p-3 backdrop-blur-xs">
                                     <div className="flex items-center justify-between text-xs font-bold">
                                         <span className="text-[var(--studio-deep)]/80">רשומות לאימון</span>
                                         <span className="tabular-nums text-[var(--studio-deep)]">
@@ -297,7 +297,7 @@ export default function AdminDashboardPage() {
                     </section>
 
                     {/* 2. RAPID IN-PLACE ACTIONS (Open Modals Directly - NOT Navigation Links!) */}
-                    <section aria-label="פעולות תפעול מהירות">
+                    <section className="studio-admin-home-actions" aria-label="פעולות תפעול מהירות">
                         <div className="grid grid-cols-3 gap-2.5">
                             <button
                                 type="button"
@@ -336,7 +336,7 @@ export default function AdminDashboardPage() {
 
                     {/* 3. TODAY'S SCHEDULE TIMELINE (Remaining Sessions) */}
                     {otherSessionsToday.length > 0 && (
-                        <section aria-label="ציר הזמן של שאר היום">
+                        <section className="studio-admin-home-timeline" aria-label="ציר הזמן של שאר היום">
                             <div className="mb-2.5 flex items-center justify-between">
                                 <h3 className="text-xs font-bold text-[var(--admin-muted)]">
                                     עוד היום בסטודיו ({otherSessionsToday.length})
@@ -344,7 +344,7 @@ export default function AdminDashboardPage() {
                                 <span className="text-[11px] text-[var(--admin-muted)]">לחצי לצפייה ברשומות</span>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="studio-admin-home-sessions space-y-2" tabIndex={0} role="region" aria-label="האימונים הנוספים היום">
                                 {otherSessionsToday.map((session) => {
                                     const isFull = (session.current_bookings || 0) >= session.max_capacity;
                                     return (
@@ -391,7 +391,7 @@ export default function AdminDashboardPage() {
                     )}
 
                     {/* 4. STUDIO PULSE VITALS */}
-                    <section aria-label="מדדי דופק הסטודיו">
+                    <section className="studio-admin-home-vitals" aria-label="מדדי דופק הסטודיו">
                         <div className="grid grid-cols-3 gap-2.5">
                             <div className="rounded-2xl border border-white/10 bg-[var(--admin-surface)] p-3.5">
                                 <p className="text-[11px] font-semibold text-[var(--admin-muted)]">תפוסה היום</p>

@@ -9,6 +9,28 @@
 
 .studio-admin { background: var(--admin-canvas); color: var(--studio-deep-contrast); }
 .studio-admin-main { width: 100%; max-width: 32rem; margin-inline: auto; padding: max(20px, env(safe-area-inset-top)) 20px calc(7rem + env(safe-area-inset-bottom)); }
+/* Only the daily home owns a viewport; management lists retain document scrolling. */
+.studio-admin:has(.studio-admin-home) .studio-admin-main { height: 100dvh; padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+.studio-admin-home { display: flex; flex-direction: column; height: 100%; gap: clamp(12px, 2dvh, 20px); overflow-y: auto; }
+.studio-admin-home > :is(header, section) { flex-shrink: 0; }
+.studio-admin-home-header > div:first-child { min-width: 0; }
+.studio-admin-home-header h1 { font-size: clamp(20px, 5.5vw, 29.6px); line-height: 1.15; }
+.studio-admin-home-header > div:last-child { flex-shrink: 0; padding-inline: 8px; font-size: 10px; }
+.studio-admin-home > .studio-admin-home-timeline { display: flex; flex-direction: column; flex: 1 0 84px; min-height: 0; }
+.studio-admin-home-timeline > div:first-child { flex-shrink: 0; }
+.studio-admin-home-sessions { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+.studio-admin-home-sessions:focus-visible { outline: 2px solid var(--studio-accent-text); outline-offset: -2px; }
+@media (max-height: 740px) {
+  .studio-admin-home { gap: 10px; }
+  .studio-admin-home-workout > div { padding: 12px; }
+  .studio-admin-home-workout > div > .relative:not(svg) { margin-top: 8px; }
+  .studio-admin-home-workout > div > .relative:first-child { margin-top: 0; }
+  .studio-admin-home-occupancy { padding: 8px; }
+  .studio-admin-home-actions button { min-height: 64px; gap: 4px; }
+  .studio-admin-home-actions button > div { width: 24px; height: 24px; }
+  .studio-admin-home-vitals > div > div { padding: 10px; }
+  .studio-admin-home-vitals p:nth-child(2) { margin-top: 4px; }
+}
 .studio-admin-nav { position: fixed; inset-inline: 0; bottom: 0; z-index: 50; border-top: 1px solid var(--admin-border); background: color-mix(in srgb, var(--admin-canvas) 94%, transparent); padding-bottom: env(safe-area-inset-bottom); backdrop-filter: blur(16px); }
 .studio-admin-nav-link { color: var(--admin-muted); transition: color 180ms ease, background 180ms ease; }
 .studio-admin-nav-link[aria-current="page"] { color: var(--studio-accent-text); }
