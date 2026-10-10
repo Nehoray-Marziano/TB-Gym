@@ -9,14 +9,22 @@ account provider renders; `/dashboard` still verifies authentication and waits
 for all initial data. See [startup timing investigation](startup-performance-2026-10-05.md).
 
 Android generates its native splash from the manifest's name, opaque
-`background_color`, `theme_color`, and PNG icons. Version 5 launcher icons use
-an opaque olive field adapted from `--studio-brand` and a light TB mark using
-`PWA_BACKGROUND`. The owner requested a recognizable green icon instead of
-v4's transparent mark. Android can therefore show a green tile during native
-launch; the manifest retains normal `any` entries. Apple launcher icons share
-the green treatment, while Apple's separate startup images keep the cream
-canvas and dark mark. OS glass/reflection effects require a physical device
-check. Regenerate with `node scripts/generate-pwa-icons.mjs`.
+`background_color`, `theme_color`, and PNG icons. Version 6 separates the
+roles: `/pwa-icon-v6-192.png` is opaque olive with a larger light TB, and
+`/pwa-splash-v6-512.png` is the original dark TB with transparent surroundings.
+The 512px splash pixels match the pre-v5 v4 asset exactly. The enlarged launcher
+uses the existing tight `tb_logo.svg` paths at 68% canvas width, preserving all
+letter, barbell and leaf geometry without additional stroke or generated art.
+Chrome's normal primary targets 48dp; its splash targets 128dp. Size selection
+therefore separates these assets at Android densities greater than 1.5 and up
+to 4. Do not include green 512px or maskable icons in the Android manifest:
+maskable candidates have priority for both roles and would restore the tile.
+This is browser selection by size, not a manifest splash-purpose extension.
+Fresh installation on the reported Poco F8 Ultra remains the native acceptance
+check. Devices with density overrides outside this range or other installation
+browsers require a separate check. Apple launcher metadata uses the enlarged
+opaque green icon; its independent cream startup images retain the dark mark.
+Regenerate with `node scripts/generate-pwa-icons.mjs`.
 Keep the 192/512 sizes, standalone display, `/` start URL, stable `/` ID, and
 `/` scope.
 

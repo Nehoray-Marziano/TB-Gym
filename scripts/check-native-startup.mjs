@@ -48,13 +48,26 @@ assert.equal(manifest.theme_color, PWA_BACKGROUND);
 for (const size of [192, 512]) {
   assert(manifest.icons.some(icon => icon.sizes === `${size}x${size}` && icon.purpose === "any"));
 }
-// Launcher icons are intentionally opaque olive; Apple startup images retain
-// their independent cream canvas and centered dark mark.
+// Verify the two native roles independently; a green splash recreates the tile.
 const brand = css.match(/--studio-brand:\s*(#[\da-f]{6})\s*;/i)?.[1];
 assert(brand, "Canonical brand color exists");
 const brandRgb = brand.slice(1).match(/../g).map(value => parseInt(value, 16));
 assert(manifest.icons.every(icon => icon.purpose === "any"));
-const iconCandidates = [...manifest.icons, { src: "/apple-touch-icon-v5.png", sizes: "180x180" }];
+assert.deepEqual(manifest.icons.map(icon => [icon.src, icon.sizes]), [
+  ["/pwa-splash-v6-512.png", "512x512"],
+  ["/pwa-icon-v6-192.png", "192x192"],
+]);
+// Chromium requests a 48dp primary and a 128dp splash, preferring the smallest
+// raster at/above its ideal size. Check actual manifest candidates across the
+// normal Android phone-density range, including fractional density settings.
+// Sources: WebappsIconUtils.java and ManifestIconSelector::FindBestMatchingIcon.
+const bySize = [...manifest.icons].sort((a, b) => parseInt(a.sizes) - parseInt(b.sizes));
+const selectedIcon = ideal => bySize.find(icon => parseInt(icon.sizes) >= ideal) ?? bySize.at(-1);
+for (const density of [1.75, 2, 2.625, 2.75, 3, 3.5, 4]) {
+  assert.equal(selectedIcon(Math.round(48 * density)).src, "/pwa-icon-v6-192.png", `Density ${density}: green launcher`);
+  assert.equal(selectedIcon(Math.round(128 * density)).src, "/pwa-splash-v6-512.png", `Density ${density}: transparent splash`);
+}
+const iconCandidates = [manifest.icons[1], { src: "/apple-touch-icon-v6.png", sizes: "180x180" }];
 for (const icon of iconCandidates) {
   const response = await fetch(new URL(icon.src, baseUrl));
   assert.equal(response.status, 200);
@@ -75,6 +88,18 @@ for (const icon of iconCandidates) {
   }
   assert(artwork > 0, "Light studio mark exists");
 }
+const splashResponse = await fetch(new URL(manifest.icons[0].src, baseUrl));
+assert.equal(splashResponse.status, 200);
+const splashBytes = Buffer.from(await splashResponse.arrayBuffer());
+const splashMetadata = await sharp(splashBytes).metadata();
+assert.equal(splashMetadata.width, 512);
+assert.equal(splashMetadata.height, 512);
+assert.equal(splashMetadata.hasAlpha, true, "Android splash mark has a transparent surround");
+assert.deepEqual(
+  await sharp(splashBytes).raw().toBuffer(),
+  await sharp(await readFile(new URL("../public/pwa-icon-v4-512.png", import.meta.url))).raw().toBuffer(),
+  "Android splash preserves the old dark logo exactly without a green tile",
+);
 const canvas = [233, 234, 220];
 for (const image of APPLE_STARTUP_IMAGES) {
   const response = await fetch(new URL(image.href, baseUrl));

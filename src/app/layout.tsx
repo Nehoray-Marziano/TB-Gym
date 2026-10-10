@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   title: "סטודיו טליה | האימונים שלך",
   description: "האימונים, ההרשמות והיתרה שלך במקום אחד.",
   icons: {
-    icon: "/pwa-icon-v5-192.png",
-    shortcut: "/pwa-icon-v5-192.png",
-    apple: "/apple-touch-icon-v5.png",
+    icon: "/pwa-icon-v6-192.png",
+    shortcut: "/pwa-icon-v6-192.png",
+    apple: "/apple-touch-icon-v6.png",
   },
 };
 
