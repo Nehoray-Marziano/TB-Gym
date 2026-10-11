@@ -1,6 +1,4 @@
 import sharp from "sharp";
-import path from "path";
-import fs from "fs";
 
 async function processBranch() {
     const inputPath = "C:/Users/U6071035/.gemini/antigravity/brain/672d7f39-fa4f-41ce-bdf0-e103627cedbc/.user_uploaded/media_1790841462951.png";

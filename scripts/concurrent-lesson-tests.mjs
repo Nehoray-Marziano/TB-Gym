@@ -159,7 +159,7 @@ async function runScenario1() {
   console.log(`📋 DB Confirmed Bookings: ${confirmed.length} (Max Capacity: ${session.max_capacity})`);
   console.log(`🎟️ Tickets Consumed: ${usedTickets.length} / 4`);
 
-  rejections.forEach((r, i) => {
+  rejections.forEach((r) => {
     console.log(`   - Rejected user ${r.userIndex} reason: "${r.res.data?.message}"`);
   });
 

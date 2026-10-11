@@ -1,8 +1,12 @@
 "use client";
 
+import { bookingMessage } from "@/lib/bookingMessage";
+
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { sendNotificationRequest } from "@/lib/notificationRequest";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
+import { sessionCache } from "@/lib/sessionStorage";
+import { useCurrentTime } from "@/hooks/useCurrentTime";
 import { StudioModal } from "@/components/ui/StudioModal";
 import { useGymStore, type Session } from "@/providers/GymStoreProvider";
 import { AnimatePresence, useReducedMotion } from "framer-motion";
@@ -27,34 +31,6 @@ import confetti from "canvas-confetti";
 import Link from "next/link";
 import "@/app/(trainee)/book/book.css";
 
-function bookingMessage(message: string | undefined) {
-    if (!message) return "משהו השתבש בתהליך. נסי שוב בעוד רגע.";
-    const lower = message.toLowerCase();
-    if (lower.includes("too late") || lower.includes("10 hour")) {
-        return "ניתן לבטל ללא חיוב עד 10 שעות לפני תחילת האימון.";
-    }
-    if (lower.includes("not found") || lower.includes("already cancel")) {
-        return "לא נמצאה הרשמה פעילה לאימון זה, או שהאימון כבר בוטל.";
-    }
-    if (lower.includes("auth") || lower.includes("login")) {
-        return "כדי לבטל או להירשם, יש להתחבר מחדש למערכת.";
-    }
-    if (lower.includes("already start")) {
-        return "לא ניתן לבטל אימון שכבר החל.";
-    }
-    if (lower.includes("already book") || lower.includes("כבר רשומה")) {
-        return "את כבר רשומה לאימון הזה.";
-    }
-    if (lower.includes("full") || lower.includes("מלא")) {
-        return "האימון מלא, לא נותרו מקומות פנויים.";
-    }
-    if (lower.includes("no ticket") || lower.includes("אין כרטיס")) {
-        return "אין לך כרטיסיות זמינות להרשמה.";
-    }
-    if (/^[\u0590-\u05FF\s!?.]+$/.test(message)) return message;
-    return "לא הצלחנו להשלים את הפעולה כרגע. נסי שוב בעוד רגע.";
-}
-
 const HEBREW_DAYS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
 
 function getDayKey(date: Date): string {
@@ -77,23 +53,34 @@ export default function BookingExperience({
     previewSessions,
     previewTickets,
     previewSubscription,
-    previewLoading,
+    previewLoading
 }: BookingExperienceProps = {}) {
+    const now = useCurrentTime();
     const supabase = getSupabaseClient();
     const contextUserId = useTraineeUserId(propUserId || "00000000-0000-0000-0000-000000000000");
     const userId = propUserId || contextUserId;
     const { toast } = useToast();
     const reduceMotion = useReducedMotion();
 
-    const { tickets: storeTickets, subscription: storeSubscription, refreshData, cancelBooking: globalCancel } = useGymStore();
+    const {
+        tickets: storeTickets,
+        subscription: storeSubscription,
+        refreshData,
+        cancelBooking: globalCancel
+    } = useGymStore();
     const tickets = previewTickets !== undefined ? previewTickets : storeTickets;
     const subscription = previewSubscription !== undefined ? previewSubscription : storeSubscription;
 
     const [sessions, setSessions] = useState<Session[]>(previewSessions ?? []);
-    const [loading, setLoading] = useState(previewLoading !== undefined ? previewLoading : previewSessions === undefined);
+    const [loading, setLoading] = useState(
+        previewLoading !== undefined ? previewLoading : previewSessions === undefined
+    );
     const [refreshing, setRefreshing] = useState(false);
     const [bookingId, setBookingId] = useState<string | null>(null);
     const [loadError, setLoadError] = useState(false);
+    const readVersion = useRef(0);
+    const bookingLock = useRef(false);
+    const cancelLock = useRef(false);
 
     // Filter states
     const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
@@ -106,9 +93,14 @@ export default function BookingExperience({
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        let active = true;
+        queueMicrotask(() => {
+            if (active) setMounted(true);
+        });
+        return () => {
+            active = false;
+        };
     }, []);
-
 
     // Confetti celebration helper
     const triggerCelebration = useCallback(() => {
@@ -119,75 +111,100 @@ export default function BookingExperience({
                 spread: 70,
                 origin: { y: 0.8 },
                 colors: ["#8b8e6f", "#cbd3aa", "#c37a61", "#f6f6ed", "#162218"],
-                disableForReducedMotion: true,
+                disableForReducedMotion: true
             });
         } catch {
             // fallback gracefully
         }
     }, [reduceMotion]);
 
-    const fetchSessions = useCallback(async (isManualRefresh = false) => {
-        if (isManualRefresh) setRefreshing(true);
-        try {
-            const [sessionRes, bookingsRes] = await Promise.all([
-                supabase
-                    .from("gym_sessions_with_counts")
-                    .select("*")
-                    .gte("start_time", new Date().toISOString())
-                    .order("start_time", { ascending: true }),
-                supabase
-                    .from("bookings")
-                    .select("session_id")
-                    .eq("user_id", userId)
-                    .eq("status", "confirmed")
-            ]);
+    const fetchSessions = useCallback(
+        async (isManualRefresh = false) => {
+            const version = ++readVersion.current;
+            if (isManualRefresh) setRefreshing(true);
+            try {
+                const signal = AbortSignal.timeout(10_000);
+                const [sessionRes, bookingsRes] = await Promise.all([
+                    supabase
+                        .from("gym_sessions_with_counts")
+                        .select("*")
+                        .gte("start_time", new Date().toISOString())
+                        .order("start_time", { ascending: true })
+                        .abortSignal(signal),
+                    supabase
+                        .from("bookings")
+                        .select("session_id")
+                        .eq("user_id", userId)
+                        .eq("status", "confirmed")
+                        .abortSignal(signal)
+                ]);
 
-            if (sessionRes.error || bookingsRes.error) {
-                throw sessionRes.error || bookingsRes.error;
-            }
+                if (sessionRes.error || bookingsRes.error) {
+                    throw sessionRes.error || bookingsRes.error;
+                }
+                if (version !== readVersion.current) return;
 
-            const sessionData = sessionRes.data;
-            const myBookings = bookingsRes.data;
+                const sessionData = sessionRes.data;
+                const myBookings = bookingsRes.data;
 
-            if (sessionData) {
-                const registeredIds = new Set(myBookings?.map((b: { session_id: string }) => b.session_id));
-                const sessionsWithStatus = sessionData.map((session: Session) => ({
-                    ...session,
-                    isRegistered: registeredIds.has(session.id),
-                }));
-                setSessions(sessionsWithStatus);
-                sessionStorage.setItem(`talia_sessions_${userId}`, JSON.stringify(sessionsWithStatus));
-                setLoadError(false);
+                if (sessionData) {
+                    const registeredIds = new Set(myBookings?.map((b: { session_id: string }) => b.session_id));
+                    const sessionsWithStatus = sessionData.map((session: Session) => ({
+                        ...session,
+                        isRegistered: registeredIds.has(session.id)
+                    }));
+                    setSessions(sessionsWithStatus);
+                    sessionCache.setItem(`talia_sessions_${userId}`, JSON.stringify(sessionsWithStatus));
+                    setLoadError(false);
+                }
+            } catch (error) {
+                console.error("Error fetching sessions:", error);
+                if (version === readVersion.current) setLoadError(true);
+            } finally {
+                if (version === readVersion.current) {
+                    setLoading(false);
+                    setRefreshing(false);
+                }
             }
-        } catch (error) {
-            console.error("Error fetching sessions:", error);
-            setLoadError(true);
-        } finally {
-            setLoading(false);
-            if (isManualRefresh) {
-                setTimeout(() => setRefreshing(false), 450);
-            }
-        }
-    }, [supabase, userId]);
+        },
+        [supabase, userId]
+    );
 
     // Initial load and visibility sync
     useEffect(() => {
+        let active = true;
         if (previewSessions !== undefined) {
-            setSessions(previewSessions);
-            setLoading(previewLoading !== undefined ? previewLoading : false);
-            return;
+            queueMicrotask(() => {
+                if (!active) return;
+                setSessions(previewSessions);
+                setLoading(previewLoading !== undefined ? previewLoading : false);
+            });
+            return () => {
+                active = false;
+            };
         }
 
-        const cached = sessionStorage.getItem(`talia_sessions_${userId}`);
-        if (cached) {
-            try {
-                setSessions(JSON.parse(cached));
-                setLoading(false);
-            } catch {
-                sessionStorage.removeItem(`talia_sessions_${userId}`);
+        queueMicrotask(() => {
+            if (!active) return;
+            const cached = sessionCache.getItem(`talia_sessions_${userId}`);
+            if (cached) {
+                try {
+                    const parsed: unknown = JSON.parse(cached);
+                    if (
+                        !Array.isArray(parsed) ||
+                        parsed.some(
+                            (item) => !item || typeof item.id !== "string" || typeof item.start_time !== "string"
+                        )
+                    )
+                        throw new Error("Invalid schedule cache");
+                    setSessions(parsed);
+                    setLoading(false);
+                } catch {
+                    sessionCache.removeItem(`talia_sessions_${userId}`);
+                }
             }
-        }
-        fetchSessions();
+            fetchSessions();
+        });
 
         const handleVisibility = () => {
             if (document.visibilityState === "visible") {
@@ -195,7 +212,11 @@ export default function BookingExperience({
             }
         };
         document.addEventListener("visibilitychange", handleVisibility);
-        return () => document.removeEventListener("visibilitychange", handleVisibility);
+        return () => {
+            active = false;
+            readVersion.current += 1;
+            document.removeEventListener("visibilitychange", handleVisibility);
+        };
     }, [previewSessions, previewLoading, fetchSessions, userId]);
 
     // Generate upcoming 14 days calendar strip
@@ -209,8 +230,8 @@ export default function BookingExperience({
             date.setDate(today.getDate() + i);
             const key = getDayKey(date);
 
-            const daySessions = sessions.filter(s => getDayKey(new Date(s.start_time)) === key);
-            const hasRegistered = daySessions.some(s => s.isRegistered);
+            const daySessions = sessions.filter((s) => getDayKey(new Date(s.start_time)) === key);
+            const hasRegistered = daySessions.some((s) => s.isRegistered);
 
             list.push({
                 date,
@@ -221,7 +242,7 @@ export default function BookingExperience({
                 isToday: i === 0,
                 isTomorrow: i === 1,
                 sessionsCount: daySessions.length,
-                hasRegistered,
+                hasRegistered
             });
         }
         return list;
@@ -252,7 +273,7 @@ export default function BookingExperience({
             startTime: new Intl.DateTimeFormat("he-IL", { hour: "2-digit", minute: "2-digit" }).format(start),
             endTime: new Intl.DateTimeFormat("he-IL", { hour: "2-digit", minute: "2-digit" }).format(end),
             durationMinutes,
-            dateKey: sessionKey,
+            dateKey: sessionKey
         };
     };
 
@@ -279,61 +300,73 @@ export default function BookingExperience({
     }, [sessions, selectedDateKey, filterStatus]);
 
     const myBookingsCount = useMemo(() => {
-        return sessions.filter(s => s.isRegistered).length;
+        return sessions.filter((s) => s.isRegistered).length;
     }, [sessions]);
 
     // Booking action handler
     const handleBook = async (sessionId: string) => {
+        if (bookingLock.current) return;
+        bookingLock.current = true;
+        readVersion.current += 1;
+        setRefreshing(false);
         setBookingId(sessionId);
         if (navigator.vibrate) navigator.vibrate(12);
+        try {
+            const { data, error } = await supabase.rpc("book_session", { p_session_id: sessionId });
 
-        const { data, error } = await supabase.rpc("book_session", { p_session_id: sessionId });
+            if (error) {
+                toast({ title: "לא הצלחנו לרשום אותך", description: bookingMessage(error.message), type: "error" });
+            } else if (!data?.success) {
+                toast({ title: "לא ניתן להירשם", description: bookingMessage(data?.message), type: "error" });
+            } else {
+                // Haptic success celebration
+                if (navigator.vibrate) navigator.vibrate([15, 60, 20]);
+                triggerCelebration();
 
-        if (error) {
-            toast({ title: "לא הצלחנו לרשום אותך", description: bookingMessage(error.message), type: "error" });
-        } else if (data && !data.success) {
-            toast({ title: "לא ניתן להירשם", description: bookingMessage(data.message), type: "error" });
-        } else {
-            // Haptic success celebration
-            if (navigator.vibrate) navigator.vibrate([15, 60, 20]);
-            triggerCelebration();
+                sessionCache.removeItem(`talia_upcoming_${userId}`);
+                toast({ title: "נרשמת בהצלחה! 🎉", description: "המקום שלך שמור. נתראה באימון!", type: "success" });
 
-            sessionStorage.removeItem(`talia_upcoming_${userId}`);
-            toast({ title: "נרשמת בהצלחה! 🎉", description: "המקום שלך שמור. נתראה באימון!", type: "success" });
+                setSessions((current) =>
+                    current.map((session) =>
+                        session.id === sessionId
+                            ? { ...session, isRegistered: true, current_bookings: session.current_bookings + 1 }
+                            : session
+                    )
+                );
 
-            setSessions(current =>
-                current.map(session =>
-                    session.id === sessionId
-                        ? { ...session, isRegistered: true, current_bookings: session.current_bookings + 1 }
-                        : session
-                )
-            );
+                void Promise.all([refreshData(true), fetchSessions()]);
 
-            void Promise.all([refreshData(true), fetchSessions()]);
-
-            const targetSession = sessions.find(s => s.id === sessionId);
-            void sendNotificationRequest("/api/notifications", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: "הרשמה חדשה! 🎉",
-                    message: `מתאמנת נרשמה לאימון ${targetSession?.title || ""}`,
-                    targetRole: "administrator"
-                })
-            }).catch(err => console.error("Notification error:", err));
+                const targetSession = sessions.find((s) => s.id === sessionId);
+                void sendNotificationRequest("/api/notifications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: "הרשמה חדשה! 🎉",
+                        message: `מתאמנת נרשמה לאימון ${targetSession?.title || ""}`,
+                        targetRole: "administrator"
+                    })
+                }).catch((err) => console.error("Notification error:", err));
+            }
+        } catch {
+            toast({ title: "לא הצלחנו לרשום אותך", description: "בדקי את החיבור ונסי שוב.", type: "error" });
+        } finally {
+            bookingLock.current = false;
+            setBookingId(null);
+            setSessionForBooking(null);
         }
-        setBookingId(null);
-        setSessionForBooking(null);
     };
 
     // Cancellation action handler
     const confirmCancel = async () => {
-        if (!sessionToCancel || isCancelling) return;
+        if (!sessionToCancel || cancelLock.current) return;
+        cancelLock.current = true;
+        readVersion.current += 1;
+        setRefreshing(false);
         setIsCancelling(true);
 
         const prevSessions = [...sessions];
-        setSessions(curr =>
-            curr.map(s =>
+        setSessions((curr) =>
+            curr.map((s) =>
                 s.id === sessionToCancel.id
                     ? { ...s, isRegistered: false, current_bookings: Math.max(0, s.current_bookings - 1) }
                     : s
@@ -344,7 +377,7 @@ export default function BookingExperience({
             const result = await globalCancel(sessionToCancel.id);
 
             if (result.success) {
-                sessionStorage.removeItem(`talia_upcoming_${userId}`);
+                sessionCache.removeItem(`talia_upcoming_${userId}`);
                 if (navigator.vibrate) navigator.vibrate(15);
                 toast({ title: "האימון בוטל", description: "הכרטיסייה הוחזרה לחשבונך", type: "success" });
                 fetchSessions();
@@ -358,7 +391,7 @@ export default function BookingExperience({
                         message: `מתאמנת ביטלה את ההרשמה לאימון ${sessionToCancel.title}`,
                         targetRole: "administrator"
                     })
-                }).catch(err => console.error("Cancellation notification error:", err));
+                }).catch((err) => console.error("Cancellation notification error:", err));
                 setSessionToCancel(null);
             } else {
                 setSessions(prevSessions);
@@ -370,6 +403,7 @@ export default function BookingExperience({
             toast({ title: "לא ניתן לבטל", description: "משהו השתבש בתהליך. נסי שוב בעוד רגע.", type: "error" });
             setSessionToCancel(null);
         } finally {
+            cancelLock.current = false;
             setIsCancelling(false);
         }
     };
@@ -423,7 +457,10 @@ export default function BookingExperience({
     };
 
     return (
-        <div data-member-scroll className="studio-book-page relative h-full w-full overflow-y-auto overscroll-contain bg-[var(--studio-canvas)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20">
+        <div
+            data-member-scroll
+            className="studio-book-page relative h-full w-full overflow-y-auto overscroll-contain bg-[var(--studio-canvas)] text-[var(--studio-ink)] selection:bg-[var(--studio-brand)]/20"
+        >
             {/* Top Atmospheric Glow */}
             <div
                 aria-hidden="true"
@@ -436,12 +473,20 @@ export default function BookingExperience({
                     <div className="flex items-center justify-between gap-3">
                         {/* Right side (RTL start): Studio Brand Identity */}
                         <div className="flex items-center gap-2.5">
-                            <Link href="/dashboard" className="studio-tap-feedback flex shrink-0 items-center" aria-label="חזרה לבית">
+                            <Link
+                                href="/dashboard"
+                                className="studio-tap-feedback flex shrink-0 items-center"
+                                aria-label="חזרה לבית"
+                            >
                                 <StudioLogo className="h-8.5 w-8.5 bg-[var(--studio-ink)] rounded-xl" />
                             </Link>
                             <div>
-                                <p className="text-[10px] font-bold tracking-wider text-[var(--studio-brand)] uppercase">סטודיו טליה</p>
-                                <h1 className="text-xl font-bold leading-tight tracking-tight text-[var(--studio-ink)]">לוח אימונים</h1>
+                                <p className="text-[10px] font-bold tracking-wider text-[var(--studio-brand)] uppercase">
+                                    סטודיו טליה
+                                </p>
+                                <h1 className="text-xl font-bold leading-tight tracking-tight text-[var(--studio-ink)]">
+                                    לוח אימונים
+                                </h1>
                             </div>
                         </div>
 
@@ -453,7 +498,13 @@ export default function BookingExperience({
                                 aria-label="יתרת כרטיסיות ומנויים"
                             >
                                 <Ticket aria-hidden="true" className="h-3.5 w-3.5 text-[var(--studio-coral-bg)]" />
-                                <span>{tickets > 0 ? `${tickets} כרטיסיות` : subscription?.is_active ? "מנוי פעיל" : "רכישת כרטיסייה"}</span>
+                                <span>
+                                    {tickets > 0
+                                        ? `${tickets} כרטיסיות`
+                                        : subscription?.is_active
+                                          ? "מנוי פעיל"
+                                          : "רכישת כרטיסייה"}
+                                </span>
                             </Link>
 
                             <button
@@ -463,7 +514,10 @@ export default function BookingExperience({
                                 className="studio-tap-feedback flex h-8.5 w-8.5 items-center justify-center rounded-full border border-[var(--studio-ink)]/10 bg-white/70 text-[var(--studio-ink)] shadow-sm active:bg-white"
                                 aria-label="רענון לוח אימונים"
                             >
-                                <RotateCw aria-hidden="true" className={`h-4 w-4 ${refreshing ? "animate-spin text-[var(--studio-coral-bg)]" : ""}`} />
+                                <RotateCw
+                                    aria-hidden="true"
+                                    className={`h-4 w-4 ${refreshing ? "animate-spin text-[var(--studio-coral-bg)]" : ""}`}
+                                />
                             </button>
                         </div>
                     </div>
@@ -472,7 +526,9 @@ export default function BookingExperience({
                     <div className="mt-2.5 flex items-center justify-between text-xs text-[var(--studio-muted)]">
                         <p className="font-medium">בחרי את השעה שלך · מקום פנוי מחכה לך</p>
                         {!loading && sessions.length > 0 && (
-                            <span className="font-bold text-[var(--studio-subtle)]">{sessions.length} אימונים קרובים</span>
+                            <span className="font-bold text-[var(--studio-subtle)]">
+                                {sessions.length} אימונים קרובים
+                            </span>
                         )}
                     </div>
                 </header>
@@ -480,7 +536,10 @@ export default function BookingExperience({
                 <div className="px-4.5 pt-3">
                     {/* Error Notice */}
                     {loadError && (
-                        <div role="alert" className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-[var(--studio-warning-bg)] p-3.5 text-xs font-medium text-[var(--studio-warning-ink)] shadow-sm">
+                        <div
+                            role="alert"
+                            className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-[var(--studio-warning-bg)] p-3.5 text-xs font-medium text-[var(--studio-warning-ink)] shadow-sm"
+                        >
                             <div className="flex items-center gap-2">
                                 <AlertCircle className="h-4 w-4 shrink-0 text-[var(--studio-warning-ink)]" />
                                 <span>לא הצלחנו לעדכן את הלוח בזמן אמת.</span>
@@ -531,11 +590,13 @@ export default function BookingExperience({
                                             isSelected
                                                 ? "bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)] shadow-md shadow-[#162218]/15"
                                                 : day.sessionsCount > 0
-                                                ? "border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] text-[var(--studio-ink)]"
-                                                : "border border-dashed border-[var(--studio-ink)]/8 bg-[var(--studio-neutral-bg)]/40 text-[var(--studio-muted)] opacity-60"
+                                                  ? "border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] text-[var(--studio-ink)]"
+                                                  : "border border-dashed border-[var(--studio-ink)]/8 bg-[var(--studio-neutral-bg)]/40 text-[var(--studio-muted)] opacity-60"
                                         }`}
                                     >
-                                        <span className={`text-[10px] font-bold ${isSelected ? "text-[var(--studio-accent-text)]" : ""}`}>
+                                        <span
+                                            className={`text-[10px] font-bold ${isSelected ? "text-[var(--studio-accent-text)]" : ""}`}
+                                        >
                                             {day.isToday ? "היום" : day.dayLetter}
                                         </span>
                                         <span className="text-base font-bold tabular-nums leading-none">
@@ -545,7 +606,9 @@ export default function BookingExperience({
                                             {day.hasRegistered ? (
                                                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--studio-accent-text)] ring-2 ring-[var(--studio-accent-bg)]/40" />
                                             ) : day.sessionsCount > 0 ? (
-                                                <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-[var(--studio-coral-text)]" : "bg-[var(--studio-coral-bg)]"}`} />
+                                                <span
+                                                    className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-[var(--studio-coral-text)]" : "bg-[var(--studio-coral-bg)]"}`}
+                                                />
                                             ) : (
                                                 <span className="h-1 w-1 rounded-full bg-transparent" />
                                             )}
@@ -606,7 +669,10 @@ export default function BookingExperience({
                     {loading ? (
                         <div className="space-y-3.5" aria-busy="true" aria-label="טוען אימונים">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-44 animate-pulse rounded-[1.75rem] border border-[var(--studio-ink)]/6 bg-[var(--studio-card)] p-4.5">
+                                <div
+                                    key={i}
+                                    className="h-44 animate-pulse rounded-[1.75rem] border border-[var(--studio-ink)]/6 bg-[var(--studio-card)] p-4.5"
+                                >
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="h-5 w-24 rounded-full bg-black/10" />
                                         <div className="h-5 w-20 rounded-full bg-black/10" />
@@ -620,9 +686,16 @@ export default function BookingExperience({
                     ) : sessions.length === 0 ? (
                         /* Global Empty State */
                         <div className="relative overflow-hidden rounded-[2rem] border border-[var(--studio-ink)]/10 bg-[var(--studio-deep)] px-6 py-9 text-[var(--studio-deep-contrast)] shadow-lg">
-                            <StudioBotanical sun={false} className="studio-botanical-drift pointer-events-none absolute -bottom-16 -left-16 h-52 w-72 text-[var(--studio-accent-text)]/20" />
-                            <p className="relative mb-2 text-xs font-bold text-[var(--studio-accent-text)]">היומן מתעדכן</p>
-                            <h2 className="relative mb-3 text-2xl font-bold leading-tight">אין כרגע אימונים זמינים בלוח.</h2>
+                            <StudioBotanical
+                                sun={false}
+                                className="studio-botanical-drift pointer-events-none absolute -bottom-16 -left-16 h-52 w-72 text-[var(--studio-accent-text)]/20"
+                            />
+                            <p className="relative mb-2 text-xs font-bold text-[var(--studio-accent-text)]">
+                                היומן מתעדכן
+                            </p>
+                            <h2 className="relative mb-3 text-2xl font-bold leading-tight">
+                                אין כרגע אימונים זמינים בלוח.
+                            </h2>
                             <p className="relative max-w-xs text-sm leading-relaxed text-[#cbd3aa]">
                                 ברגע שייפתחו אימונים נוספים לשבוע הקרוב, תוכלי להירשם כאן בלחיצה.
                             </p>
@@ -677,8 +750,8 @@ export default function BookingExperience({
                                             session.isRegistered
                                                 ? "border-[#203123] bg-gradient-to-br from-[#162218] via-[#1c2c1f] to-[#142016] text-[#f6f6ed] shadow-[0_8px_24px_rgba(22,34,24,0.14)]"
                                                 : isFull
-                                                ? "border-[var(--studio-ink)]/8 bg-[var(--studio-card)]/80 text-[var(--studio-ink)] opacity-75"
-                                                : "border-[var(--studio-ink)]/10 bg-[var(--studio-card)] text-[var(--studio-ink)] shadow-[0_4px_16px_rgba(22,34,24,0.04)]"
+                                                  ? "border-[var(--studio-ink)]/8 bg-[var(--studio-card)]/80 text-[var(--studio-ink)] opacity-75"
+                                                  : "border-[var(--studio-ink)]/10 bg-[var(--studio-card)] text-[var(--studio-ink)] shadow-[0_4px_16px_rgba(22,34,24,0.04)]"
                                         }`}
                                     >
                                         <div className="p-4.5">
@@ -686,14 +759,18 @@ export default function BookingExperience({
                                             <div className="flex items-center justify-between gap-2 mb-3">
                                                 {/* Date & Relative Day Badge */}
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                                                        session.isRegistered
-                                                            ? "bg-[var(--studio-accent-bg)]/35 text-[var(--studio-accent-text)]"
-                                                            : "bg-[var(--studio-neutral-bg)] text-[var(--studio-ink)]"
-                                                    }`}>
+                                                    <span
+                                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                                                            session.isRegistered
+                                                                ? "bg-[var(--studio-accent-bg)]/35 text-[var(--studio-accent-text)]"
+                                                                : "bg-[var(--studio-neutral-bg)] text-[var(--studio-ink)]"
+                                                        }`}
+                                                    >
                                                         {info.relativeDay} · {info.day} {info.month}
                                                     </span>
-                                                    <span className={`text-[11px] font-medium ${session.isRegistered ? "text-[#cbd3aa]" : "text-[var(--studio-muted)]"}`}>
+                                                    <span
+                                                        className={`text-[11px] font-medium ${session.isRegistered ? "text-[#cbd3aa]" : "text-[var(--studio-muted)]"}`}
+                                                    >
                                                         {info.durationMinutes} דק׳
                                                     </span>
                                                 </div>
@@ -727,19 +804,26 @@ export default function BookingExperience({
                                                         {session.title}
                                                     </h3>
                                                     {session.description && (
-                                                        <p className={`mt-1 text-xs line-clamp-2 leading-relaxed ${session.isRegistered ? "text-[#b8c7ae]" : "text-[var(--studio-muted)]"}`}>
+                                                        <p
+                                                            className={`mt-1 text-xs line-clamp-2 leading-relaxed ${session.isRegistered ? "text-[#b8c7ae]" : "text-[var(--studio-muted)]"}`}
+                                                        >
                                                             {session.description}
                                                         </p>
                                                     )}
                                                 </div>
 
                                                 {/* Large Time Pill (Isolated LTR for correct numeric display) */}
-                                                <div className={`shrink-0 rounded-2xl p-2.5 text-center ${
-                                                    session.isRegistered
-                                                        ? "bg-white/10 text-white"
-                                                        : "bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)]"
-                                                }`}>
-                                                    <div className="text-base font-bold tabular-nums leading-none" dir="ltr">
+                                                <div
+                                                    className={`shrink-0 rounded-2xl p-2.5 text-center ${
+                                                        session.isRegistered
+                                                            ? "bg-white/10 text-white"
+                                                            : "bg-[var(--studio-deep)] text-[var(--studio-deep-contrast)]"
+                                                    }`}
+                                                >
+                                                    <div
+                                                        className="text-base font-bold tabular-nums leading-none"
+                                                        dir="ltr"
+                                                    >
                                                         {info.startTime}
                                                     </div>
                                                     <div className="mt-1 text-[10px] font-medium opacity-80" dir="ltr">
@@ -751,27 +835,31 @@ export default function BookingExperience({
                                             {/* Capacity Dots Indicator */}
                                             <div className="mt-3.5 flex items-center justify-between border-t border-black/5 pt-3 text-xs">
                                                 <div className="flex items-center gap-1.5" aria-hidden="true">
-                                                    {Array.from({ length: Math.min(10, session.max_capacity) }).map((_, idx) => {
-                                                        const isFilled = idx < (session.current_bookings || 0);
-                                                        return (
-                                                            <span
-                                                                key={idx}
-                                                                className={`studio-capacity-dot ${
-                                                                    session.isRegistered
-                                                                        ? isFilled
-                                                                            ? "bg-[var(--studio-accent-text)]"
-                                                                            : "bg-white/20"
-                                                                        : isFilled
-                                                                        ? isAlmostFull
-                                                                            ? "bg-[var(--studio-coral-bg)]"
-                                                                            : "bg-[var(--studio-brand)]"
-                                                                        : "bg-[var(--studio-ink)]/15"
-                                                                }`}
-                                                            />
-                                                        );
-                                                    })}
+                                                    {Array.from({ length: Math.min(10, session.max_capacity) }).map(
+                                                        (_, idx) => {
+                                                            const isFilled = idx < (session.current_bookings || 0);
+                                                            return (
+                                                                <span
+                                                                    key={idx}
+                                                                    className={`studio-capacity-dot ${
+                                                                        session.isRegistered
+                                                                            ? isFilled
+                                                                                ? "bg-[var(--studio-accent-text)]"
+                                                                                : "bg-white/20"
+                                                                            : isFilled
+                                                                              ? isAlmostFull
+                                                                                  ? "bg-[var(--studio-coral-bg)]"
+                                                                                  : "bg-[var(--studio-brand)]"
+                                                                              : "bg-[var(--studio-ink)]/15"
+                                                                    }`}
+                                                                />
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
-                                                <span className={`text-[11px] font-semibold tabular-nums ${session.isRegistered ? "text-[#cbd3aa]" : "text-[var(--studio-muted)]"}`}>
+                                                <span
+                                                    className={`text-[11px] font-semibold tabular-nums ${session.isRegistered ? "text-[#cbd3aa]" : "text-[var(--studio-muted)]"}`}
+                                                >
                                                     {session.current_bookings || 0} מתוך {session.max_capacity} מתאמנות
                                                 </span>
                                             </div>
@@ -785,7 +873,10 @@ export default function BookingExperience({
                                                     onClick={(e) => addToCalendar(e, session)}
                                                     className="studio-tap-feedback flex min-h-12 flex-1 items-center justify-center gap-2 px-3 text-xs font-bold text-white transition-colors active:bg-white/10"
                                                 >
-                                                    <CalendarPlus aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)]" />
+                                                    <CalendarPlus
+                                                        aria-hidden="true"
+                                                        className="h-4 w-4 text-[var(--studio-accent-text)]"
+                                                    />
                                                     <span>הוספה ליומן</span>
                                                 </button>
                                                 <div className="w-px bg-white/10" />
@@ -822,14 +913,20 @@ export default function BookingExperience({
                                                         {isBookingThis
                                                             ? "רושמים אותך..."
                                                             : isFull
-                                                            ? "האימון מלא"
-                                                            : "שמרי לי מקום"}
+                                                              ? "האימון מלא"
+                                                              : "שמרי לי מקום"}
                                                     </span>
 
                                                     {isBookingThis ? (
-                                                        <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                                        <span
+                                                            aria-hidden="true"
+                                                            className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                                                        />
                                                     ) : !isFull ? (
-                                                        <ArrowLeft aria-hidden="true" className="h-4 w-4 text-[var(--studio-accent-text)]" />
+                                                        <ArrowLeft
+                                                            aria-hidden="true"
+                                                            className="h-4 w-4 text-[var(--studio-accent-text)]"
+                                                        />
                                                     ) : null}
                                                 </button>
                                             </div>
@@ -845,54 +942,64 @@ export default function BookingExperience({
             {/* 5. Native iOS/Android Bottom Sheet: Booking Confirmation Modal */}
             <AnimatePresence>
                 {mounted && sessionForBooking && (
-                    <StudioModal titleId="book-modal-title" descriptionId="book-modal-policy" variant="booking" busy={Boolean(bookingId)} onClose={() => setSessionForBooking(null)}
-                        actions={<>
-                            {tickets > 0 || subscription?.is_active ? (
+                    <StudioModal
+                        titleId="book-modal-title"
+                        descriptionId="book-modal-policy"
+                        variant="booking"
+                        busy={Boolean(bookingId)}
+                        onClose={() => setSessionForBooking(null)}
+                        actions={
+                            <>
+                                {tickets > 0 || subscription?.is_active ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleBook(sessionForBooking.id)}
+                                        disabled={Boolean(bookingId)}
+                                        className="studio-tap-feedback flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-deep)] px-4 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-lg shadow-[#162218]/20 active:bg-[#203123]"
+                                    >
+                                        {bookingId === sessionForBooking.id ? (
+                                            <>
+                                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                                <span>רושמים אותך...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Check className="h-4 w-4 text-[var(--studio-accent-text)]" />
+                                                <span>אישור והרשמה לאימון</span>
+                                            </>
+                                        )}
+                                    </button>
+                                ) : (
+                                    <Link
+                                        href="/subscription"
+                                        className="studio-tap-feedback flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-coral-bg)] px-4 text-sm font-bold text-white shadow-lg active:brightness-95"
+                                    >
+                                        <Ticket className="h-4 w-4" />
+                                        <span>לרכישת כרטיסייה / מנוי</span>
+                                    </Link>
+                                )}
+
                                 <button
                                     type="button"
-                                    onClick={() => handleBook(sessionForBooking.id)}
+                                    data-modal-cancel
                                     disabled={Boolean(bookingId)}
-                                    className="studio-tap-feedback flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-deep)] px-4 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-lg shadow-[#162218]/20 active:bg-[#203123]"
+                                    onClick={() => !bookingId && setSessionForBooking(null)}
+                                    className="studio-tap-feedback flex min-h-11 w-full items-center justify-center rounded-2xl border border-[var(--studio-ink)]/12 px-4 text-xs font-bold text-[var(--studio-muted)]"
                                 >
-                                    {bookingId === sessionForBooking.id ? (
-                                        <>
-                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                            <span>רושמים אותך...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Check className="h-4 w-4 text-[var(--studio-accent-text)]" />
-                                            <span>אישור והרשמה לאימון</span>
-                                        </>
-                                    )}
+                                    חזרה ללוח
                                 </button>
-                            ) : (
-                                <Link
-                                    href="/subscription"
-                                    className="studio-tap-feedback flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-coral-bg)] px-4 text-sm font-bold text-white shadow-lg active:brightness-95"
-                                >
-                                    <Ticket className="h-4 w-4" />
-                                    <span>לרכישת כרטיסייה / מנוי</span>
-                                </Link>
-                            )}
-
-                            <button
-                                type="button"
-                                data-modal-cancel
-                                disabled={Boolean(bookingId)}
-                                onClick={() => !bookingId && setSessionForBooking(null)}
-                                className="studio-tap-feedback flex min-h-11 w-full items-center justify-center rounded-2xl border border-[var(--studio-ink)]/12 px-4 text-xs font-bold text-[var(--studio-muted)]"
-                            >
-                                חזרה ללוח
-                            </button>
-                        </>}>
+                            </>
+                        }
+                    >
                         {/* Grabber Notch */}
                         <div className="studio-sheet-notch mx-auto my-2" />
 
                         <div className="flex items-center justify-between pb-3 pt-2">
                             <div>
                                 <p className="text-[11px] font-bold text-[var(--studio-brand)]">סטודיו טליה</p>
-                                <h2 id="book-modal-title" className="text-xl font-bold">הרשמה לאימון</h2>
+                                <h2 id="book-modal-title" className="text-xl font-bold">
+                                    הרשמה לאימון
+                                </h2>
                             </div>
                             <button
                                 type="button"
@@ -908,15 +1015,25 @@ export default function BookingExperience({
                         {/* Session Detail Card */}
                         <div className="mt-3 rounded-2xl bg-[var(--studio-deep)] p-4 text-[var(--studio-deep-contrast)] shadow-inner">
                             <span className="text-[11px] font-bold text-[var(--studio-accent-text)]">
-                                {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).relativeDay} ·{" "}
-                                {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).weekday}
+                                {
+                                    formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time)
+                                        .relativeDay
+                                }{" "}
+                                · {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).weekday}
                             </span>
                             <h3 className="mt-1 text-lg font-bold leading-tight">{sessionForBooking.title}</h3>
                             <div className="mt-3 flex items-center justify-between text-xs text-[#cbd3aa]">
                                 <span className="flex items-center gap-1">
                                     <Clock3 className="h-3.5 w-3.5" />
-                                    {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).startTime} -{" "}
-                                    {formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time).endTime}
+                                    {
+                                        formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time)
+                                            .startTime
+                                    }{" "}
+                                    -{" "}
+                                    {
+                                        formatSessionInfo(sessionForBooking.start_time, sessionForBooking.end_time)
+                                            .endTime
+                                    }
                                 </span>
                                 <span>מדריכה: טליה</span>
                             </div>
@@ -932,8 +1049,8 @@ export default function BookingExperience({
                                         {tickets > 0
                                             ? `יירד כרטיס 1 מיתרתך (יישארו לך ${tickets - 1} כרטיסיות).`
                                             : subscription?.is_active
-                                            ? "האימון כלול במסגרת המנוי הפעיל שלך."
-                                            : "אין לך כרטיסיות זמינות. תוכלי לרכוש כרטיסייה חדשה כעת."}
+                                              ? "האימון כלול במסגרת המנוי הפעיל שלך."
+                                              : "אין לך כרטיסיות זמינות. תוכלי לרכוש כרטיסייה חדשה כעת."}
                                     </p>
                                 </div>
                             </div>
@@ -954,33 +1071,41 @@ export default function BookingExperience({
             {/* 6. Centered Accessibility-Compliant Confirmation Dialog: Cancellation Modal */}
             <AnimatePresence>
                 {mounted && sessionToCancel && (
-                    <StudioModal titleId="cancel-booking-title" descriptionId="cancel-booking-policy" variant="confirmation" busy={isCancelling} onClose={() => setSessionToCancel(null)}
-                        actions={<>
-                            <button
-                                type="button"
-                                onClick={confirmCancel}
-                                disabled={isCancelling}
-                                className="studio-tap-feedback flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-danger)] px-4 text-sm font-bold text-white shadow-lg shadow-[#a53d35]/30 hover:bg-[#8f322b] active:brightness-95 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--studio-danger)]"
-                            >
-                                {isCancelling ? (
-                                    <>
-                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                        <span>מבטלים את ההרשמה...</span>
-                                    </>
-                                ) : (
-                                    <span>כן, לבטל את ההרשמה</span>
-                                )}
-                            </button>
-                            <button
-                                type="button"
-                                data-modal-cancel
-                                onClick={() => setSessionToCancel(null)}
-                                disabled={isCancelling}
-                                className="studio-tap-feedback flex min-h-[46px] w-full items-center justify-center rounded-2xl border border-[var(--studio-ink)]/15 bg-white px-4 text-xs font-bold text-[var(--studio-ink)] shadow-sm hover:bg-[var(--studio-neutral-bg)]/50 active:bg-[var(--studio-ink)]/5 disabled:opacity-50"
-                            >
-                                להישאר רשומה (חזרה)
-                            </button>
-                        </>}>
+                    <StudioModal
+                        titleId="cancel-booking-title"
+                        descriptionId="cancel-booking-policy"
+                        variant="confirmation"
+                        busy={isCancelling}
+                        onClose={() => setSessionToCancel(null)}
+                        actions={
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={confirmCancel}
+                                    disabled={isCancelling}
+                                    className="studio-tap-feedback flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--studio-danger)] px-4 text-sm font-bold text-white shadow-lg shadow-[#a53d35]/30 hover:bg-[#8f322b] active:brightness-95 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--studio-danger)]"
+                                >
+                                    {isCancelling ? (
+                                        <>
+                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                            <span>מבטלים את ההרשמה...</span>
+                                        </>
+                                    ) : (
+                                        <span>כן, לבטל את ההרשמה</span>
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    data-modal-cancel
+                                    onClick={() => setSessionToCancel(null)}
+                                    disabled={isCancelling}
+                                    className="studio-tap-feedback flex min-h-[46px] w-full items-center justify-center rounded-2xl border border-[var(--studio-ink)]/15 bg-white px-4 text-xs font-bold text-[var(--studio-ink)] shadow-sm hover:bg-[var(--studio-neutral-bg)]/50 active:bg-[var(--studio-ink)]/5 disabled:opacity-50"
+                                >
+                                    להישאר רשומה (חזרה)
+                                </button>
+                            </>
+                        }
+                    >
                         <button
                             type="button"
                             onClick={() => !isCancelling && setSessionToCancel(null)}
@@ -996,8 +1121,12 @@ export default function BookingExperience({
                         </div>
 
                         <div className="text-center">
-                            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--studio-danger)]">ביטול הרשמה</p>
-                            <h2 id="cancel-booking-title" className="mt-1 text-xl font-bold leading-tight">לבטל את ההרשמה?</h2>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--studio-danger)]">
+                                ביטול הרשמה
+                            </p>
+                            <h2 id="cancel-booking-title" className="mt-1 text-xl font-bold leading-tight">
+                                לבטל את ההרשמה?
+                            </h2>
                         </div>
 
                         {/* Session Detail Card */}
@@ -1010,35 +1139,38 @@ export default function BookingExperience({
                             <p className="mt-2 text-xs text-[#cbd3aa] flex items-center justify-center gap-1.5">
                                 <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
                                 <span>
-                                    {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).startTime} - {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).endTime}
+                                    {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).startTime}{" "}
+                                    - {formatSessionInfo(sessionToCancel.start_time, sessionToCancel.end_time).endTime}
                                 </span>
                             </p>
                         </div>
 
                         {/* Dynamic Policy / 10-Hour Context */}
                         <div id="cancel-booking-policy">
-                        {(() => {
-                            const msUntil = new Date(sessionToCancel.start_time).getTime() - Date.now();
-                            const hoursUntil = msUntil / (1000 * 60 * 60);
-                            if (hoursUntil < 10 && hoursUntil > 0) {
+                            {(() => {
+                                const msUntil = new Date(sessionToCancel.start_time).getTime() - now;
+                                const hoursUntil = msUntil / (1000 * 60 * 60);
+                                if (hoursUntil < 10 && hoursUntil > 0) {
+                                    return (
+                                        <div className="mt-3.5 rounded-xl bg-[var(--studio-warning-bg)]/90 border border-[var(--studio-warning-ink)]/15 p-3 text-xs text-[var(--studio-warning-ink)] text-center leading-relaxed">
+                                            <p className="font-bold">לתשומת לבך:</p>
+                                            <p className="mt-0.5">
+                                                האימון מתקיים בעוד פחות מ-10 שעות. לפי מדיניות הסטודיו, ביטול ללא חיוב
+                                                מתאפשר עד 10 שעות לפני תחילת האימון.
+                                            </p>
+                                        </div>
+                                    );
+                                }
                                 return (
-                                    <div className="mt-3.5 rounded-xl bg-[var(--studio-warning-bg)]/90 border border-[var(--studio-warning-ink)]/15 p-3 text-xs text-[var(--studio-warning-ink)] text-center leading-relaxed">
-                                        <p className="font-bold">לתשומת לבך:</p>
-                                        <p className="mt-0.5">האימון מתקיים בעוד פחות מ-10 שעות. לפי מדיניות הסטודיו, ביטול ללא חיוב מתאפשר עד 10 שעות לפני תחילת האימון.</p>
-                                    </div>
+                                    <p className="mt-3.5 text-center text-xs leading-relaxed text-[var(--studio-muted)]">
+                                        המקום שלך יתפנה למתאמנת אחרת, והכרטיסייה תוחזר מיידית לחשבונך.
+                                    </p>
                                 );
-                            }
-                            return (
-                                <p className="mt-3.5 text-center text-xs leading-relaxed text-[var(--studio-muted)]">
-                                    המקום שלך יתפנה למתאמנת אחרת, והכרטיסייה תוחזר מיידית לחשבונך.
-                                </p>
-                            );
-                        })()}
+                            })()}
                         </div>
                     </StudioModal>
                 )}
             </AnimatePresence>
-
         </div>
     );
 }

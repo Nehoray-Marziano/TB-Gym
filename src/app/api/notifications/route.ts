@@ -99,15 +99,14 @@ export async function POST(request: NextRequest) {
         const result = await response.json();
 
         if (!response.ok) {
-            console.error("OneSignal error:", result);
-            return NextResponse.json({ error: "Failed to send notification", details: result }, { status: 500 });
+            console.error("OneSignal request failed:", response.status);
+            return NextResponse.json({ error: "Failed to send notification" }, { status: 500 });
         }
 
         if (typeof result?.id !== "string" || !result.id.trim() || result.recipients === 0) {
-            return NextResponse.json({ error: "No subscribed recipients", details: result?.errors }, { status: 400 });
+            return NextResponse.json({ error: "No subscribed recipients" }, { status: 400 });
         }
 
-        console.log("Notification sent:", result);
         // Result typically contains { id: '...', recipients: N }
         return NextResponse.json({
             success: true,
@@ -117,6 +116,6 @@ export async function POST(request: NextRequest) {
 
     } catch (error: unknown) {
         console.error("Notification API error:", error);
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Unexpected error" }, { status: 500 });
+        return NextResponse.json({ error: "Notification service unavailable" }, { status: 500 });
     }
 }

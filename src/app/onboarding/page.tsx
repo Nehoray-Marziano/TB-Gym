@@ -1,5 +1,7 @@
 "use client";
 
+import { sessionCache } from "@/lib/sessionStorage";
+
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import StudioLogo from "@/components/StudioLogo";
 import { useRouter } from "next/navigation";
@@ -86,7 +88,7 @@ export default function OnboardingPage() {
             if (profileError) throw profileError;
 
             try {
-                sessionStorage.setItem("talia_just_logged_in", "1");
+                sessionCache.setItem("talia_just_logged_in", "1");
             } catch {}
 
             setTimeout(() => {

@@ -3,6 +3,7 @@
 // Add --pwa to check sign-in entry, viewport settling, app resume and pinch zoom.
 // The temporary route renders the real home and dock with synthetic data only.
 import assert from "node:assert/strict";
+import { warmLocalRoute } from "./lib/browser-check.mjs";
 import { spawn } from "node:child_process";
 import { mkdtemp, mkdir, writeFile, unlink, rmdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -46,6 +47,8 @@ try {
   await mkdir(fixtureDir); // Refuse to overwrite an existing route.
   created = true;
   await writeFile(fixtureFile, fixture, { flag: "wx" });
+  await warmLocalRoute(baseUrl, "/home-layout-check");
+  await warmLocalRoute(baseUrl, "/auth/login");
   chrome = spawn(process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", ["--headless=new", "--disable-gpu", "--no-sandbox", `--user-data-dir=${join(output, "chrome")}`, "--remote-debugging-port=0", "--remote-allow-origins=*", "--no-first-run", "--no-default-browser-check", "about:blank"], { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
   const wsUrl = await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error("Chrome startup timed out")), 15000);

@@ -9,8 +9,10 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {openBrowser} from './lib/browser-check.mjs';
 config({path:'.env.local',quiet:true});config({path:'.env.stress.local',override:true,quiet:true});
 if(process.env.ALLOW_LIVE_CORRECTNESS!=='1')throw Error('Explicit disposable live testing authorization required');
-const base='https://tb-gym.vercel.app',url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,opts={auth:{persistSession:false,autoRefreshToken:false}};
+const base=process.env.BASE_URL||'https://tb-gym.vercel.app',url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,opts={auth:{persistSession:false,autoRefreshToken:false}};
+if(!['tb-gym.vercel.app','localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Unapproved browser target');
 const service=createClient(url,process.env.SUPABASE_SECRET_KEY,opts),runId=`deep-admin-ui-${Date.now()}-${randomUUID().slice(0,8)}`,dir=`scratch/deep-concurrency/${runId}`;
+const fixturePrefix=`[${runId.split('-').at(-1)}]`;
 const users=[],checks=[],requests=[],sessionIds=[];let manager,member,browser,lose='admin_grant_tickets_once',notifications=0;
 await mkdir(dir,{recursive:true});
 const data=(r,label)=>{if(r.error)throw Error(`${label}: ${r.error.message}`);return r.data;};
@@ -18,7 +20,7 @@ const good=r=>!r.error&&r.data?.success===true;
 const expect=(name,passed,evidence)=>{checks.push({name,passed:!!passed,evidence});console.log(`${passed?'PASS':'FAIL'} ${name}`);};
 async function persist(){await writeFile(`${dir}/report.json`,JSON.stringify({runId,userIds:users.map(u=>u.id),sessionIds,checks,requests,notifications},null,2));}
 const balance=async()=>{const r=await service.from('user_tickets').select('id',{count:'exact',head:true}).eq('user_id',member.id).is('used_at',null).gt('expires_at',new Date().toISOString());data(r,'own persisted balance');return r.count;};
-const classes=async()=>data(await service.from('gym_sessions').select('*').like('title',`[${runId}]%`),'own classes');
+const classes=async()=>data(await service.from('gym_sessions').select('*').like('title',`${fixturePrefix}%`),'own classes');
 try {
  const version=await fetch(base+'/api/app-version',{cache:'no-store'}).then(r=>r.json());
  expect('Production serves the intended hardening commit',version.version===process.env.EXPECTED_APP_VERSION,{version:version.version});
@@ -34,16 +36,16 @@ try {
  if(!good(await manager.client.rpc('admin_grant_tickets',{p_user_id:member.id,p_quantity:5,p_expires_at:new Date(Date.now()+365*86400000).toISOString()})))throw Error('Fixture grant failed');
  browser=await openBrowser(dir);await browser.call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  await browser.call('Network.setBlockedURLs',{urls:['*onesignal.com*']});
- await browser.call('Network.setCookies',{cookies:[...manager.cookies].map(([name,value])=>({name,value:encodeURIComponent(value),url:base,path:'/',secure:true,sameSite:'Lax'}))});
+ await browser.call('Network.setCookies',{cookies:[...manager.cookies].map(([name,value])=>({name,value:encodeURIComponent(value),url:base,path:'/',secure:new URL(base).protocol==='https:',sameSite:'Lax'}))});
  browser.on('Fetch.requestPaused',async({requestId,request})=>{
   const target=new URL(request.url),name=target.pathname.split('/').at(-1);
   const fulfill=(status,body)=>browser.call('Fetch.fulfillRequest',{requestId,responseCode:status,responseHeaders:[{name:'content-type',value:'application/json'},{name:'access-control-allow-origin',value:base},{name:'access-control-allow-credentials',value:'true'}],body:Buffer.from(JSON.stringify(body)).toString('base64')});
-  if(target.origin===base&&target.pathname.startsWith('/api/notifications')){notifications++;await fulfill(200,{});return;}
+  if(target.origin===base&&target.pathname.startsWith('/api/notifications')){notifications++;await fulfill(200,{success:true,id:'intercepted-fixture-only',recipients:1});return;}
   if(target.origin===new URL(url).origin&&target.pathname.startsWith('/rest/v1/')) {
    if(request.method==='OPTIONS'){await browser.call('Fetch.continueRequest',{requestId});return;}
    if(['admin_grant_tickets_once','admin_create_session_once'].includes(name)) {
     const args=JSON.parse(request.postData||'{}');
-    if(name==='admin_grant_tickets_once'&&args.p_user_id!==member.id||name==='admin_create_session_once'&&(!args.p_title?.startsWith(`[${runId}]`)||args.p_user_ids?.length))throw Error('Refusing a mutation outside disposable fixtures');
+    if(name==='admin_grant_tickets_once'&&args.p_user_id!==member.id||name==='admin_create_session_once'&&(!args.p_title?.startsWith(fixturePrefix)||args.p_user_ids?.length))throw Error('Refusing a mutation outside disposable fixtures');
     requests.push({name,requestId:args.p_request_id,lostReply:lose===name});
     if(lose===name) {
      lose=null;const result=await manager.client.rpc(name,args);
@@ -81,7 +83,7 @@ try {
  expect('Reloaded retry leaves persisted and displayed balance at seven',await balance()===7&&await browser.evaluate("document.querySelector('article').innerText.includes('7')"));await browser.shot('grant-retry-once');
  await browser.call('Page.navigate',{url:base+'/admin/schedule'});await browser.wait("!!document.querySelector('button[aria-label=\"אימון חדש\"]')",'deployed schedule',60000);
  await browser.click('button[aria-label="אימון חדש"]');await browser.wait("!!document.querySelector('#new-session-title')",'class form');
- const title=`[${runId}] Lost class reply`;await browser.input('#new-session-title',title);await browser.click('button[aria-label="בחירת תאריך האימון"]');
+ const title=`${fixturePrefix} Lost class reply`;await browser.input('#new-session-title',title);await browser.click('button[aria-label="בחירת תאריך האימון"]');
  await browser.wait("!!document.querySelector('.studio-admin-calendar')",'calendar');await browser.evaluate("[...document.querySelectorAll('.studio-admin-calendar button')].find(b=>b.textContent==='17'&&!b.disabled).click()");
  lose='admin_create_session_once';await browser.click('.studio-modal-actions button');await browser.wait("!!document.querySelector('.studio-modal [role=alert]')&&!document.querySelector('.studio-modal-actions button').disabled",'lost class reply recovery');
  expect('Lost class reply keeps the title and creates exactly one real class',await browser.evaluate(`document.querySelector('#new-session-title').value===${JSON.stringify(title)}`)&&(await classes()).length===1);await browser.shot('class-reply-lost');

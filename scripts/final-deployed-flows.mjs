@@ -7,7 +7,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { openBrowser } from './lib/browser-check.mjs';
 config({path:'.env.local',quiet:true});config({path:'.env.stress.local',override:true,quiet:true});
 if(process.env.ALLOW_LIVE_CORRECTNESS!=='1')throw Error('Explicit disposable live testing authorization required');
-const base='https://tb-gym.vercel.app',url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+const base=process.env.BASE_URL||'https://tb-gym.vercel.app',url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+if(!['tb-gym.vercel.app','localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Unapproved browser target');
 const service=createClient(url,process.env.SUPABASE_SECRET_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 const runId=`final-ui-${Date.now()}-${randomUUID().slice(0,8)}`,dir=`scratch/final-stress/${runId}`;
 const checks=[],ids=[],writes=[],verificationTypes=[];let browser,fail='health_declarations',sendIntercepts=0;
@@ -18,6 +19,7 @@ const profile=async()=>data(await service.from('profiles').select('full_name,age
 const health=async()=>data(await service.from('health_declarations').select('id,is_healthy,medical_conditions').eq('id',ids[0]),'read own fixture declaration');
 async function persist(){await writeFile(`${dir}/report.json`,JSON.stringify({runId,checks,userIds:ids,writes,verificationTypes,sendIntercepts},null,2));}
 async function login(email,token,wrongFirst=false){
+  expect('Generated OTP matches the six-to-eight-digit login contract',/^\d{6,8}$/.test(token),{length:token.length});
   await browser.call('Page.navigate',{url:base+'/'});
   await browser.wait("!!document.querySelector('.studio-welcome-email-button')",'deployed welcome hydrated',60000);
   await browser.wait("document.readyState==='complete'",'deployed scripts loaded',60000);
@@ -48,6 +50,7 @@ try{
   const signup=data(await service.auth.admin.generateLink({type:'signup',email,password,options:{data:{stress_run:runId,full_name:'Disposable deployed UI'}}}),'generate undelivered signup');
   ids.push(signup.user.id);await persist();
   browser=await openBrowser(dir);
+  if(process.env.PWA_TEST_MODE!=='1')await browser.call('Page.addScriptToEvaluateOnNewDocument',{source:"localStorage.setItem('talia_pwa_installed','1')"});
   await browser.call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await browser.call('Network.setBlockedURLs',{urls:['*onesignal.com*']});
   browser.on('Fetch.requestPaused',async({requestId,request})=>{
@@ -69,12 +72,17 @@ try{
   await login(email,signup.properties.email_otp,true);
   await browser.wait("location.pathname==='/onboarding'&&!!document.querySelector('#onboarding-name')",'new user enters onboarding',60000);
   expect('Deployed signup code authenticates and opens onboarding',true);
+  if(process.env.PWA_TEST_MODE==='1'){
+    await browser.delay(1500);
+    expect('Installation prompt never covers authenticated onboarding',await browser.evaluate("!document.querySelector('#install-pwa-title')"));
+  }
   expect('Deployed verification requests use email OTP',verificationTypes.length===2&&verificationTypes.every(t=>t==='email'),verificationTypes);
   const name=`[${runId}] Test Member`;
-  await browser.input('#onboarding-name',name);await browser.textClick('המשך');
-  await browser.wait("!!document.querySelector('#onboarding-age')",'age');await browser.input('#onboarding-age','25');await browser.textClick('המשך');
-  await browser.wait("!!document.querySelector('#onboarding-phone')",'phone');await browser.input('#onboarding-phone','0500000000');await browser.textClick('המשך');
-  await browser.wait("!!document.querySelector('button[aria-pressed]')",'health');await browser.textClick('אין משהו מיוחד שצריך לדעת');await browser.textClick('סיום');
+  const next=async()=>{await browser.wait("!document.querySelector('footer button:last-child').disabled",'onboarding step valid');await browser.click('footer button:last-child');};
+  await browser.input('#onboarding-name',name);await next();
+  await browser.wait("!!document.querySelector('#onboarding-age')",'age');await browser.input('#onboarding-age','25');await next();
+  await browser.wait("!!document.querySelector('#onboarding-phone')",'phone');await browser.input('#onboarding-phone','0500000000');await next();
+  await browser.wait("!!document.querySelector('button[aria-pressed]')",'health');await browser.textClick('אין משהו מיוחד שצריך לדעת');await next();
   await browser.wait("!!document.querySelector('[role=alert]')",'declaration rejection recovery');
   expect('Rejected declaration keeps deployed form and selected answer',await browser.evaluate("location.pathname==='/onboarding'&&!!document.querySelector('button[aria-pressed=true]')"));
   expect('Rejected declaration never marks profile complete',!(await profile()).onboarding_completed&&(await health()).length===0&&!writes.some(w=>w.table==='profiles'));
@@ -100,7 +108,7 @@ try{
   expect('No actual email-send request was made',sendIntercepts===2);
   expect('No unhandled browser exceptions',browser.errors.length===0,browser.errors.map(e=>({event:e.event,text:e.text,message:e.message})));
   await browser.shot('returning-login-complete');
-}catch(e){expect('Deployed flow campaign completed',false,e.message);if(browser){console.log(JSON.stringify(await browser.evaluate("({path:location.pathname,ready:document.readyState,buttons:[...document.querySelectorAll('button')].map(b=>({text:b.textContent.trim(),disabled:b.disabled})),alerts:[...document.querySelectorAll('[role=alert]')].map(e=>e.textContent)})")));}}
+}catch(e){expect('Deployed flow campaign completed',false,e.message);if(browser){await browser.shot('failure');console.log(JSON.stringify(await browser.evaluate("({path:location.pathname,ready:document.readyState,otpLength:document.querySelector('#login-code')?.value.length,inputs:[...document.querySelectorAll('input')].map(e=>({id:e.id,length:e.value.length})),buttons:[...document.querySelectorAll('button')].map(b=>({text:b.textContent.trim(),disabled:b.disabled})),alerts:[...document.querySelectorAll('[role=alert]')].map(e=>e.textContent)})")));}}
 finally{
   if(browser)await browser.close();
   for(const id of ids){

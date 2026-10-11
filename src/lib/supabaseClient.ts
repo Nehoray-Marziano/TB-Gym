@@ -10,7 +10,6 @@ let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null;
 export function getSupabaseClient() {
     if (typeof window === 'undefined') {
         // During SSR, return a placeholder that will be replaced on client
-        console.warn('[Supabase] getSupabaseClient called during SSR - returning placeholder');
         return null;
     }
 
@@ -48,7 +47,6 @@ export function getSupabaseClient() {
                     },
                 }
             );
-            console.log('[Supabase] Browser client initialized with persistent session');
         } catch (error) {
             console.error("[Supabase] Failed to initialize client:", error);
         }

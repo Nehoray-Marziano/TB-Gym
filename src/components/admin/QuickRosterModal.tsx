@@ -94,7 +94,10 @@ function QuickRosterSheet({
     }, [supabase, session.id]);
 
     useEffect(() => {
-        void loadBookings();
+        let active = true;
+        const counter = requestId;
+        queueMicrotask(() => { if (active) void loadBookings(); });
+        return () => { active = false; counter.current++; };
     }, [loadBookings]);
 
     const handleConfirmCancel = async () => {

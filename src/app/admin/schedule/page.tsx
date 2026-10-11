@@ -153,8 +153,9 @@ export default function AdminSchedulePage() {
     useEffect(() => {
         const sessionCounter = sessionsRequest;
         const bookingsCounter = bookingsRequest;
-        void fetchSessions();
-        return () => { sessionCounter.current++; bookingsCounter.current++; };
+        let active = true;
+        queueMicrotask(() => { if (active) void fetchSessions(); });
+        return () => { active = false; sessionCounter.current++; bookingsCounter.current++; };
     }, [fetchSessions]);
 
     const closeCreate = () => { setIsCalendarOpen(false); setShowTraineeSelector(false); setIsModalOpen(false); };

@@ -56,8 +56,9 @@ export default function AdminTraineesPage() {
 
     useEffect(() => {
         const counter = requestId;
-        void fetchTrainees();
-        return () => { counter.current++; };
+        let active = true;
+        queueMicrotask(() => { if (active) void fetchTrainees(); });
+        return () => { active = false; counter.current++; };
     }, [fetchTrainees]);
 
     const handleGrantTickets = async (userId: string, quantity: number) => {

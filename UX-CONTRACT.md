@@ -26,6 +26,9 @@ This contract covers the admin overview, schedule and trainee management. Hebrew
 
 ## Shared behavior
 
+- The email/OTP login sheet uses StudioModal's auth variant with the existing sheet geometry. It has app-owned validation, field-associated errors, focus restoration and a busy dismissal guard. Duplicate verification/send actions are blocked synchronously. Login failures retain the entered address/code and provide retry feedback.
+- Account editing waits for a successful profile, balance and health read. A failed health read never initializes an editable blank declaration. Booking reads ignore superseded results, expose failure separately from empty data, and revalidate on resume. Optional browser storage failure cannot reverse or hide a committed booking/sign-in.
+
 - Public privacy and terms documents use `LegalPage` with normal document scrolling, the canonical global scrollbar and `LegalLinks` on Login and Account. The pages require no authentication. The verified data flow and wording scope are documented in `docs/legal-pages.md`; `src/lib/legal.ts` owns the contact name, email, telephone and update date supplied by the publisher. Contact links use native `mailto:` and `tel:` URLs with isolated LTR values. These read-only pages do not add data mutations, deletion actions, consent collection or payment behavior.
 
 - StudioModal owns modal semantics, focus trapping, safe initial focus, Escape, inert background, focus restoration, body/route scroll locks and visual-viewport sizing. Its admin variant owns the bottom sheet on phones and centered surface on wider screens. Content scrolls independently of the persistent action footer. The most recently opened native dialog owns keyboard handling.
@@ -46,5 +49,11 @@ The local browser fixture imports the actual admin routes/components and interce
 The separate, explicitly requested final correctness campaign is owned by `scripts/final-correctness.mjs`. It creates uniquely tagged disposable fixtures, checks persisted bookings/ticket conservation and permissions after concurrent operations, and independently verifies cleanup. It generates OTP tokens without sending emails. `scripts/check-onboarding-correctness.mjs` covers failed declaration/profile writes and repeated submissions, retaining the draft until a successful save.
 
 Email-code verification in `LandingPage` uses the `email` type for both first-time signup and returning sign-in; selecting only `magiclink` rejects new-user confirmation codes. `scripts/final-auth-lifecycle.mjs` tests the actual component's configured verification type against disposable real Auth identities, including invalid and replayed tokens.
+
+Email-code entry accepts six to eight ASCII digits, matching generated codes from the configured Auth service. Invalid codes receive field feedback; repeated verification remains locked until its reply. An installation prompt that opened during login must not cover authentication/onboarding or remain visible after logout.
+
+Public occupancy totals count all confirmed bookings without exposing booking identities. Member reads of booking rows remain restricted to their own records. Migration 22 preserves session RLS and uses a narrowly scoped aggregate in an unexposed schema. Its PostgreSQL regression tests exercise the actual migration with separate member/anonymous roles.
+
+`scripts/final-member-flows.mjs` verifies real member profile/health edits, rejected reads and saves, duplicate submissions, booking/cancellation, reload persistence, identity switching and logout. Its independent service-side balance observer does not share or refresh the browser's Auth session. Optional installation prompts are suppressed for these checks; the onboarding production check separately verifies installation-prompt exclusion with prompts enabled. All push delivery is intercepted and all writes use disposable fixtures.
 
 The trainee server layout checks the saved onboarding completion flag from the existing request-scoped bootstrap before rendering member screens. `scripts/final-deployed-flows.mjs` tests production with one disposable identity, generated undelivered codes, and intercepted email-send/rejected-save requests. Successful verification and saves use the real Auth/database services; the test independently verifies fixture cleanup.

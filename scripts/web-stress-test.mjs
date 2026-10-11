@@ -74,25 +74,25 @@ export async function runWebStressTest(concurrencyLevels = [10, 20, 30]) {
         name: 'Public: /auth/login (Sign-in Page)',
         url: `${BASE_URL}/auth/login`,
         headers: {},
-        expected: (res, text) => res.status === 200
+        expected: (res) => res.status === 200
       },
       {
         name: 'Public: /auth/auth-code-error (Error Page)',
         url: `${BASE_URL}/auth/auth-code-error`,
         headers: {},
-        expected: (res, text) => res.status === 200
+        expected: (res) => res.status === 200
       },
       {
         name: 'Public: /subscription (Plans & Pricing)',
         url: `${BASE_URL}/subscription`,
         headers: {},
-        expected: (res, text) => res.status === 200
+        expected: (res) => res.status === 200
       },
       {
         name: 'Public: /~offline (PWA Offline Fallback)',
         url: `${BASE_URL}/~offline`,
         headers: {},
-        expected: (res, text) => res.status === 200
+        expected: (res) => res.status === 200
       },
       {
         name: 'Static / PWA: /manifest.webmanifest',
@@ -142,7 +142,7 @@ export async function runWebStressTest(concurrencyLevels = [10, 20, 30]) {
         name: 'Auth Trainee: /onboarding (Onboarding Flow)',
         url: `${BASE_URL}/onboarding`,
         getHeaders: (i) => ({ Cookie: trainees[i % trainees.length].cookieHeader }),
-        expected: (res, text) => res.status === 200
+        expected: (res) => res.status === 200
       },
 
       // 3. Security & RBAC Enforcement Under Load

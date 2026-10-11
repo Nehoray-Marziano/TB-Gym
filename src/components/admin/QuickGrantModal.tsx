@@ -72,7 +72,6 @@ function QuickGrantSheet({
 
     useEffect(() => {
         if (initialTrainee) {
-            setSelectedTrainee(initialTrainee);
             return;
         }
 
@@ -92,7 +91,7 @@ function QuickGrantSheet({
             }
         };
 
-        void load();
+        queueMicrotask(() => { if (active) void load(); });
         return () => {
             active = false;
         };

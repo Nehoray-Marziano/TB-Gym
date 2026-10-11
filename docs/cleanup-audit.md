@@ -1,5 +1,7 @@
 # Conservative PWA cleanup — 4 October 2026
 
+This is a historical report. Its older surrounding-workspace evidence/toolchain locations were consolidated by the [11 October workspace cleanup](workspace-cleanup-2026-10-11.md). The active app is `TB-Gym`; local npm tooling now lives in `../.tools/npm/`, and preserved older QA material is in the workspace archive.
+
 Baseline: `eedaebe` on `main`. The tracked working tree was clean. `BOOST.md`, referenced by the supplied instructions, was not found in the workspace.
 
 ## Application model and audit scope

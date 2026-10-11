@@ -25,9 +25,9 @@ export async function createClient() {
                 error: currentMockAuthError,
             }),
         },
-        from: (tableName) => ({
-            select: (columns) => ({
-                eq: (column, value) => ({
+        from: () => ({
+            select: () => ({
+                eq: () => ({
                     single: async () => ({
                         data: currentMockRole ? { role: currentMockRole } : null,
                         error: currentMockProfileError,

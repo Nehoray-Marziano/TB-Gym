@@ -41,6 +41,10 @@ The signed-out introduction uses an opaque, in-flow viewport canvas sized in ser
 
 ## Components
 
+Production recovery uses `AppRecovery` for Hebrew route errors, root-layout errors and missing pages, reusing the canonical palette, logo and visible return/retry controls. `StudioModal` now owns the email/OTP login sheet through its `auth` variant: it retains the existing bottom sheet geometry, traps/restores focus, isolates the background and guards dismissal during submission. Inline validation and retry messages belong to the login flow. Decorative PNGs use dimensioned, unoptimized Next Images to preserve the existing artwork and reserve geometry. All horizontal scrollers inherit the visible global scrollbar baseline.
+
+Login code labels follow the configured six-to-eight-digit Auth contract without promising a fixed length. Installation encouragement stays out of authentication/onboarding and signed-out views, including a prompt already opened during the preceding login route.
+
 Admin home fits the dynamic viewport above its fixed navigation. The remaining daily workouts scroll within the timeline; shorter screens use compact card spacing. Exceptionally small viewports and enlarged text retain accessible home overflow. Schedule and trainee management keep natural document scrolling. `scripts/check-admin-home-layout.mjs` verifies viewport fit, timeline scrolling, quick-action access and sibling scroll ownership.
 
 - Public legal documents at `/privacy` and `/terms` reuse `LegalPage` for a simple text header, short sections, natural document scrolling and print layout. `LegalLinks` owns the Hebrew link labels and 44px minimum targets on Login, Account and the documents. They remain outside the member shell and accessible without authentication. `src/lib/legal.ts` owns the publisher-supplied contact details and update date; the pages use the canonical studio palette and font without a decorative hero or section index.

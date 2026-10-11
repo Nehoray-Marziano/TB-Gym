@@ -14,7 +14,7 @@ export function useStudioModalContainer() { return useContext(ModalContainerCont
 type StudioModalProps = {
     titleId: string;
     descriptionId?: string;
-    variant?: "confirmation" | "booking" | "admin";
+    variant?: "confirmation" | "booking" | "admin" | "auth";
     role?: "dialog" | "alertdialog";
     busy?: boolean;
     onClose: () => void;
@@ -141,13 +141,13 @@ export function StudioModal({ titleId, descriptionId, variant = "confirmation", 
             }}>
             <ModalContainerContext.Provider value={container}>
             <motion.div className="studio-modal-surface" inert={!isPresent}
-                initial={reduceMotion ? false : { opacity: 0, y: variant === "booking" ? 48 : variant === "admin" ? 32 : 12 }}
+                initial={reduceMotion ? false : { opacity: 0, y: variant === "booking" || variant === "auth" ? 48 : variant === "admin" ? 32 : 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: variant === "booking" ? 48 : variant === "admin" ? 32 : 12 }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: variant === "booking" || variant === "auth" ? 48 : variant === "admin" ? 32 : 12 }}
                 transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.2, 0.8, 0.2, 1] }}>
                 {header && <div className="studio-modal-header">{header}</div>}
                 <div className="studio-modal-content">{children}</div>
-                <div className="studio-modal-actions">{actions}</div>
+                {actions && <div className="studio-modal-actions">{actions}</div>}
             </motion.div>
             </ModalContainerContext.Provider>
         </dialog>, document.body

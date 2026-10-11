@@ -400,7 +400,7 @@ describe('1. /api/notifications Endpoint Tests', () => {
             ]);
         });
 
-        test('handles OneSignal API failure gracefully (returns 500 with details)', async () => {
+        test('handles OneSignal API failure without exposing provider details', async () => {
             mockOneSignalResponse = {
                 ok: false,
                 status: 400,
@@ -414,7 +414,7 @@ describe('1. /api/notifications Endpoint Tests', () => {
             assert.equal(res.status, 500);
             const data = await res.json();
             assert.equal(data.error, 'Failed to send notification');
-            assert.deepEqual(data.details, { errors: ['Invalid application ID'] });
+            assert.equal(data.details, undefined);
         });
 
         test('returns success, ID, and recipients count on success', async () => {
@@ -596,7 +596,7 @@ describe('2. /api/notifications/grant-tickets Endpoint Tests', () => {
             const res = await grantTicketsPost(req);
             assert.equal(res.status, 400);
             const data = await res.json();
-            assert.deepEqual(data.error, ['All included players are not subscribed']);
+            assert.equal(data.error, 'No subscribed recipients');
         });
     });
 });

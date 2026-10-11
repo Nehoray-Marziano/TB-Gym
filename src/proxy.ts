@@ -53,10 +53,16 @@ export async function proxy(request: NextRequest) {
 export const config = {
     matcher: [
         /*
-         * Admin pages still use the proxy for token refresh. The shared
-         * trainee layout verifies claims once for dashboard, book, profile,
-         * and bookings, then stays mounted during tab navigation.
+         * Server Components cannot persist refreshed cookies. Refresh before
+         * every protected document/RSC request; layouts still verify identity
+         * and role before rendering any account data.
          */
         "/admin/:path*",
+        "/dashboard/:path*",
+        "/book/:path*",
+        "/my-bookings/:path*",
+        "/profile/:path*",
+        "/subscription/:path*",
+        "/onboarding/:path*",
     ],
 };

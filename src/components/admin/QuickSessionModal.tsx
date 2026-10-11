@@ -80,6 +80,11 @@ function QuickSessionSheet({
             return;
         }
 
+        if (!isPrivate && (!Number.isInteger(maxCapacity) || maxCapacity < 1)) {
+            setError("יש להזין מספר מקומות שלם וגדול מאפס.");
+            return;
+        }
+
         mutationLock.current = true;
         setIsCreating(true);
         setError(null);
@@ -168,7 +173,7 @@ function QuickSessionSheet({
                     </>
                 }
             >
-                <form id="quick-session-form" onSubmit={handleCreate} className="space-y-4">
+                <form id="quick-session-form" noValidate onSubmit={handleCreate} className="space-y-4">
                     {/* Session Title */}
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -220,6 +225,7 @@ function QuickSessionSheet({
                                 <PopoverTrigger asChild>
                                     <Button
                                         type="button"
+                                        onClick={() => setIsCalendarOpen(true)}
                                         variant="outline"
                                         className="h-12 w-full justify-between rounded-2xl border-[#1b251c]/20 bg-[var(--studio-card)] px-3 text-xs font-bold text-[var(--studio-ink)]"
                                     >

@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -230,7 +231,11 @@ export default function TraineeDashboard({
                             {/* Terracotta outer accent circle */}
                             <div className="absolute h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 rounded-full border-[1.5px] border-[#c37a61]/45" />
                             {/* Complete botanical branch - contained naturally, 100% uncropped */}
-                            <img
+                            <Image
+                                unoptimized
+                                loading="eager"
+                                width={784}
+                                height={986}
                                 src="/user_leaves_branch_dark.png"
                                 alt=""
                                 className="relative z-10 h-full w-full object-contain drop-shadow-[0_2px_4px_rgba(20,32,22,0.15)]"
@@ -250,7 +255,11 @@ export default function TraineeDashboard({
                         aria-hidden="true"
                         className="pointer-events-none absolute -left-20 -top-32 h-72 w-72 rounded-full border border-white/10 bg-[radial-gradient(circle,var(--studio-brand),transparent_70%)] opacity-35"
                     />
-                    <img
+                    <Image
+                        unoptimized
+                        loading="eager"
+                        width={784}
+                        height={986}
                         src="/user_leaves_branch.png"
                         alt=""
                         aria-hidden="true"

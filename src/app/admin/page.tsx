@@ -83,7 +83,9 @@ export default function AdminDashboardPage() {
     }, [supabase]);
 
     useEffect(() => {
-        void loadDashboardData();
+        let active = true;
+        queueMicrotask(() => { if (active) void loadDashboardData(); });
+        return () => { active = false; };
     }, [loadDashboardData, attempt]);
 
     // Sessions breakdown computed against current time

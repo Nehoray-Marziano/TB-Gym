@@ -16,7 +16,6 @@ test('PWA install prompt state machine tests', async (t) => {
     await t.test('logged-out user never prompts to install', () => {
         const isStandalone = false;
         const userId = null;
-        const justLoggedIn = false;
 
         const shouldPrompt = !isStandalone && Boolean(userId);
         assert.equal(shouldPrompt, false, "Must not prompt unauthenticated visitors");

@@ -1,5 +1,4 @@
 import sharp from "sharp";
-import fs from "fs";
 
 async function generateDarkAssets() {
     // 1. Generate studio_emblem_dark.png from icon.jpg
@@ -8,7 +7,7 @@ async function generateDarkAssets() {
 
     const image = sharp(inputPath);
     const meta = await image.metadata();
-    const { width, height } = meta;
+    const { width } = meta;
     const { data } = await image.raw().toBuffer({ resolveWithObject: true });
 
     const bgR = 140, bgG = 144, bgB = 110;
@@ -92,7 +91,6 @@ async function generateDarkAssets() {
     console.log(`Saved dark studio emblem to ${darkEmblemPath}`);
 
     // 2. Generate user_leaves_branch_dark.png from user_leaves_branch.png
-    const branchMeta = await sharp("public/user_leaves_branch.png").metadata();
     const branchRaw = await sharp("public/user_leaves_branch.png").raw().toBuffer({ resolveWithObject: true });
     const bW = branchRaw.info.width;
     const bH = branchRaw.info.height;

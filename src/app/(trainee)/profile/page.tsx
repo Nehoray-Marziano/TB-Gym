@@ -28,18 +28,38 @@ export default function ProfilePage() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [health, setHealth] = useState<HealthDeclaration>({ is_healthy: null, medical_conditions: "" });
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
+    const [reload, setReload] = useState(0);
 
     useEffect(() => {
+        let active = true;
         const fetchData = async () => {
+            setLoading(true);
+            setLoadError(false);
             try {
-                console.log("[Profile] Fetching fresh data from network");
-
+                const signal = AbortSignal.timeout(10_000);
                 // Fetch all data in parallel
                 const [profileRes, ticketRes, healthRes] = await Promise.all([
-                    supabase.from("profiles").select("*").eq("id", userId).single(),
-                    supabase.rpc("get_available_tickets", { p_user_id: userId }),
-                    supabase.from("health_declarations").select("*").eq("id", userId).single()
+                    supabase
+                        .from("profiles")
+                        .select("id, full_name, phone, role")
+                        .eq("id", userId)
+                        .abortSignal(signal)
+                        .single(),
+                    supabase.rpc("get_available_tickets", { p_user_id: userId }).abortSignal(signal),
+                    supabase
+                        .from("health_declarations")
+                        .select("is_healthy, medical_conditions")
+                        .eq("id", userId)
+                        .abortSignal(signal)
+                        .maybeSingle()
                 ]);
+
+                if (profileRes.error || ticketRes.error || healthRes.error)
+                    throw profileRes.error || ticketRes.error || healthRes.error;
+                if (!profileRes.data || typeof ticketRes.data !== "number" || !Number.isFinite(ticketRes.data))
+                    throw new Error("Account data unavailable");
+                if (!active) return;
 
                 const profileData = profileRes.data;
                 const ticketCount = ticketRes.data;
@@ -52,31 +72,63 @@ export default function ProfilePage() {
                         email: summary?.email || "",
                         phone: profileData.phone,
                         balance: ticketCount ?? 0,
-                        role: profileData.role,
+                        role: profileData.role
                     });
-                } else if (ticketCount !== null) {
-                    // Fallback if profile fetch fails but we have tickets (shouldn't happen often)
-                    console.warn("Profile fetch failed but tickets loaded");
                 }
 
                 setHealth(healthData || { is_healthy: null, medical_conditions: "" });
-
             } catch (error) {
                 console.error("Error fetching profile data:", error);
+                if (active) setLoadError(true);
             } finally {
-                setLoading(false);
+                if (active) setLoading(false);
             }
         };
 
         fetchData();
-    }, [supabase, userId, summary?.email]);
+        return () => {
+            active = false;
+        };
+    }, [supabase, userId, summary?.email, reload]);
 
     // Show loading skeleton only if we don't have cached data
-    if (loading && !profile && !summary) {
+    if (loading) {
         return <ProfileSkeleton />;
     }
 
-    const initialProfile = profile ?? (summary ? { id: summary.id, full_name: summary.full_name, email: summary.email || "", phone: "", balance: tickets, role: summary.role } : null);
+    if (loadError) {
+        return (
+            <div
+                data-member-scroll
+                className="h-full overflow-y-auto bg-[var(--studio-canvas)] px-5 py-8 text-[var(--studio-ink)]"
+            >
+                <div role="alert" className="mx-auto max-w-lg space-y-4">
+                    <h1 className="text-2xl font-bold">לא הצלחנו לטעון את החשבון</h1>
+                    <p className="text-sm text-[var(--studio-muted)]">הפרטים שלך נשמרו. בדקי את החיבור ונסי שוב.</p>
+                    <button
+                        type="button"
+                        onClick={() => setReload((value) => value + 1)}
+                        className="studio-tap-feedback min-h-12 rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)]"
+                    >
+                        ניסיון נוסף
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const initialProfile =
+        profile ??
+        (summary
+            ? {
+                  id: summary.id,
+                  full_name: summary.full_name,
+                  email: summary.email || "",
+                  phone: "",
+                  balance: tickets,
+                  role: summary.role
+              }
+            : null);
     return <ProfileClient initialProfile={initialProfile} initialHealth={health} />;
 }
 

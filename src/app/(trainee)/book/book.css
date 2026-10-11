@@ -6,16 +6,10 @@
   overscroll-behavior-x: none;
 }
 
-/* Day Strip Native Touch Scroll with hidden scrollbars */
+/* Day strip uses the global accessible scrollbar theme. */
 .studio-day-strip {
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   scroll-snap-type: x proximity;
-}
-
-.studio-day-strip::-webkit-scrollbar {
-  display: none;
 }
 
 .studio-day-strip > * {

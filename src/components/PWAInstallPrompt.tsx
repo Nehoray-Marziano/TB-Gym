@@ -19,6 +19,7 @@ export default function PWAInstallPrompt() {
     const { userId } = useGymStore();
     const { toast } = useToast();
     const pathname = usePathname();
+    const isExcludedRoute = Boolean(pathname?.includes("-check") || pathname?.startsWith("/auth/") || pathname?.startsWith("/onboarding"));
     const reduceMotion = useReducedMotion();
     const [installing, setInstalling] = useState(false);
     const [showManualGuide, setShowManualGuide] = useState(false);
@@ -33,7 +34,7 @@ export default function PWAInstallPrompt() {
         if (!userId) return;
 
         // Skip QA synthetic test fixtures, auth and onboarding routes
-        if (pathname?.includes("-check") || pathname?.startsWith("/auth/") || pathname?.startsWith("/onboarding")) {
+        if (isExcludedRoute) {
             return;
         }
 
@@ -102,7 +103,7 @@ export default function PWAInstallPrompt() {
         } catch {
             // Storage access might be restricted
         }
-    }, [userId, isStandalone, pathname, openPrompt]);
+    }, [userId, isStandalone, pathname, isExcludedRoute, openPrompt]);
 
     // Handle external appinstalled event
     useEffect(() => {
@@ -168,7 +169,8 @@ export default function PWAInstallPrompt() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isPromptOpen, handleDismiss]);
 
-    if (!isPromptOpen || isStandalone) return null;
+    // A prompt opened during login must not cover onboarding or survive logout.
+    if (!isPromptOpen || isStandalone || !userId || isExcludedRoute) return null;
 
     return (
         <AnimatePresence>

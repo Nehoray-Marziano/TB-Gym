@@ -53,7 +53,8 @@ export function GymStoreProvider({ children, initialData, initialUserId, initial
     const currentUserRef = useRef<string | null>(initialData?.userId ?? initialUserId ?? null);
     const emailRef = useRef(initialData?.profile?.email ?? initialEmail);
     const hasDataRef = useRef(Boolean(initialData));
-    const lastFetchRef = useRef(initialData ? Date.now() : 0);
+    const [bootstrapTime] = useState(() => initialData ? Date.now() : 0);
+    const lastFetchRef = useRef(bootstrapTime);
 
     const hydrateData = useCallback((snapshot: GymSnapshot) => {
         requestVersionRef.current += 1;
@@ -79,23 +80,17 @@ export function GymStoreProvider({ children, initialData, initialUserId, initial
     const cancelBooking = useCallback(async (sessionId: string) => {
         const supabase = getClient();
 
-        // Optimistically update tickets (add 1)
-        setTickets(prev => prev + 1);
-
         try {
             const { data, error } = await supabase.rpc("cancel_booking", { p_session_id: sessionId });
 
             if (error) throw error;
 
             if (!data?.success) {
-                setTickets(prev => prev - 1);
                 return data || { success: false, message: "No response from server" };
             }
             return data;
         } catch (error) {
             console.error("Cancel error:", error);
-            // Revert on failure
-            setTickets(prev => prev - 1);
             return { success: false, message: error instanceof Error ? error.message : "Failed to cancel" };
         }
     }, [getClient]);

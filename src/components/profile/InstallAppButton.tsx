@@ -20,14 +20,15 @@ export default function InstallAppButton({ home = false }: { home?: boolean }) {
             queueMicrotask(() => setShowHome(false));
             return;
         }
-        const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) || 0);
+        let dismissedAt = 0;
+        try { dismissedAt = Number(localStorage.getItem(DISMISS_KEY) || 0); } catch { /* Optional preference. */ }
         queueMicrotask(() => setShowHome(!dismissedAt || Date.now() - dismissedAt >= DISMISS_MS));
     }, [home, isStandalone, canInstall, isIOS]);
 
     if (isStandalone || (home && !showHome)) return null;
 
     const dismiss = () => {
-        localStorage.setItem(DISMISS_KEY, String(Date.now()));
+        try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* Optional preference. */ }
         setShowHome(false);
     };
 

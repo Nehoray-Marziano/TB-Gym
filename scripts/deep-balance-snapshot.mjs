@@ -39,7 +39,7 @@ try {
  expect('Atomic snapshot excludes its administrator',!data(await snapshot(),'role exclusion').some(u=>u.id===manager.id));
  expect('Anonymous cannot read administrator balance snapshot',!!(await anon.rpc('admin_list_trainees')).error);
  expect('Trainee cannot read administrator balance snapshot',!!(await group[0].client.rpc('admin_list_trainees')).error);
- const expired=data(await service.from('user_tickets').insert({user_id:ids[0],source:'admin',expires_at:new Date(Date.now()-1000).toISOString()}).select('id').single(),'expired fixture');
+ data(await service.from('user_tickets').insert({user_id:ids[0],source:'admin',expires_at:new Date(Date.now()-1000).toISOString()}).select('id').single(),'expired fixture');
  const afterExpiry=data(await snapshot(),'expiry snapshot').find(u=>u.id===ids[0]);
  expect('Expired tickets are excluded from the snapshot',afterExpiry.tickets===before.get(ids[0]));
  const jobs=Array.from({length:32},(_,i)=>manager.client.rpc('admin_grant_tickets_once',{p_request_id:randomUUID(),p_user_id:ids[i%4],p_quantity:i%2?1:-1,p_expires_at:expiry}));

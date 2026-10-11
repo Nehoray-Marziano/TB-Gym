@@ -5,15 +5,21 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 function getAppBuildId() {
-  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA;
+  if (process.env.VERCEL_GIT_COMMIT_SHA)
+    return process.env.VERCEL_GIT_COMMIT_SHA;
   if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
   // A deterministic fallback also works when the deployment omits Git metadata.
   const hash = createHash("sha256");
   const addDirectory = (directory: string) => {
-    for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    for (const entry of readdirSync(directory, { withFileTypes: true }).sort(
+      (a, b) => a.name.localeCompare(b.name),
+    )) {
       const file = join(directory, entry.name);
       if (entry.isDirectory()) addDirectory(file);
-      else if (entry.isFile() && !/^(sw\.js(\.map)?|workbox-.*|fallback-.*\.js)$/.test(entry.name)) {
+      else if (
+        entry.isFile() &&
+        !/^(sw\.js(\.map)?|workbox-.*|fallback-.*\.js)$/.test(entry.name)
+      ) {
         hash.update(file.slice(process.cwd().length));
         hash.update(readFileSync(file));
       }
@@ -21,7 +27,8 @@ function getAppBuildId() {
   };
   addDirectory(join(process.cwd(), "src"));
   addDirectory(join(process.cwd(), "public"));
-  for (const file of ["next.config.ts", "package-lock.json"]) hash.update(readFileSync(join(process.cwd(), file)));
+  for (const file of ["next.config.ts", "package-lock.json"])
+    hash.update(readFileSync(join(process.cwd(), file)));
   return hash.digest("hex");
 }
 
@@ -43,7 +50,7 @@ const withPWA = withPWAInit({
   publicExcludes: ["!noprecache/**/*", "!pwa-startup/**/*"],
   // Fallback for offline pages
   fallbacks: {
-    document: '/~offline',
+    document: "/~offline",
   },
   // The default routes cache pages, RSC payloads and API responses. Those can
   // contain another user's booking, balance or profile after an account switch.
@@ -54,30 +61,42 @@ const withPWA = withPWAInit({
     skipWaiting: false,
     // Also lets the previously deployed update button receive controllerchange.
     clientsClaim: true,
-    importScripts: ["/pwa-cache-cleanup.js", "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js"],
+    importScripts: [
+      "/pwa-cache-cleanup.js",
+      "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js",
+    ],
     runtimeCaching: [
       // Authenticated HTML and Next.js RSC requests always come from the
       // network. The precached offline page handles failed navigations.
       {
-        urlPattern: ({ request, url }) => url.origin === self.location.origin && request.mode === "navigate",
+        urlPattern: ({ request, url }) =>
+          url.origin === self.location.origin && request.mode === "navigate",
         handler: "NetworkOnly",
       },
       {
-        urlPattern: ({ request, url }) => url.origin === self.location.origin && request.headers.get("RSC") === "1",
+        urlPattern: ({ request, url }) =>
+          url.origin === self.location.origin &&
+          request.headers.get("RSC") === "1",
         handler: "NetworkOnly",
       },
       // Keep only immutable build assets available offline. User data and API
       // responses are never placed in Cache Storage.
       {
-        urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/_next/static/"),
+        urlPattern: ({ url }) =>
+          url.origin === self.location.origin &&
+          url.pathname.startsWith("/_next/static/"),
         handler: "CacheFirst",
-        options: { cacheName: "next-static-v1", expiration: { maxEntries: 128, maxAgeSeconds: 60 * 60 * 24 * 30 } },
+        options: {
+          cacheName: "next-static-v1",
+          expiration: { maxEntries: 128, maxAgeSeconds: 60 * 60 * 24 * 30 },
+        },
       },
     ],
   },
 });
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["localhost", "127.0.0.1"],
   reactCompiler: true,
   turbopack: {},
   distDir: process.env.TALIA_BUILD_DIR || ".next",
@@ -92,7 +111,7 @@ const nextConfig: NextConfig = {
     // Cookie presence is only a routing hint: /dashboard still verifies the
     // session and onboarding, and awaits every initial data request. Stale or
     // forged cookies therefore reach /auth/login without revealing member data.
-    return [sessionCookie, `${sessionCookie}.0`].map(key => ({
+    return [sessionCookie, `${sessionCookie}.0`].map((key) => ({
       source: "/",
       has: [{ type: "cookie" as const, key, value: ".+" }],
       destination: "/dashboard",
@@ -100,10 +119,25 @@ const nextConfig: NextConfig = {
     }));
   },
   async headers() {
-    return [{
-      source: "/sw.js",
-      headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
-    }];
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
+    ];
   },
 };
 

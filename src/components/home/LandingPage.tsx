@@ -1,15 +1,14 @@
 "use client";
+import Image from "next/image";
+import { StudioModal } from "@/components/ui/StudioModal";
+import { useRouter } from "next/navigation";
+
+import { sessionCache } from "@/lib/sessionStorage";
+import { isValidEmailOtp } from "@/lib/emailOtp";
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import {
-    AlertCircle,
-    ArrowLeft,
-    ArrowRight,
-    CheckCircle2,
-    Mail,
-    X,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Mail, X } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlass";
 import { CopyableInput } from "@/components/ui/copyable-field";
@@ -20,21 +19,29 @@ type LoginView = "email" | "otp";
 function GoogleMark({ className = "h-4 w-4 shrink-0" }: { className?: string }) {
     return (
         <svg aria-hidden="true" className={className} viewBox="0 0 24 24">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+            <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4"
+            />
+            <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853"
+            />
+            <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05"
+            />
+            <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335"
+            />
         </svg>
     );
 }
 
 function UserLeafIcon({ className = "h-5 w-5" }: { className?: string }) {
     return (
-        <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className={className}
-        >
+        <svg aria-hidden="true" viewBox="0 0 24 24" className={className}>
             <path
                 d="M11 20a10 10 0 0 0 10 -10 25.9 25.9 0 0 0 -1.04 -7.281 1 1 0 0 0 -1.755 -0.325C15.833 5.5 13 5.5 9.8 6.1A7 7 0 0 0 11 20"
                 fill="currentColor"
@@ -56,6 +63,7 @@ function UserLeafIcon({ className = "h-5 w-5" }: { className?: string }) {
 }
 
 export default function LandingPage() {
+    const router = useRouter();
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [loginView, setLoginView] = useState<LoginView>("email");
     const [email, setEmail] = useState("");
@@ -68,6 +76,7 @@ export default function LandingPage() {
     const welcomeRef = useRef<HTMLDivElement>(null);
     const emailInputRef = useRef<HTMLInputElement>(null);
     const otpInputRef = useRef<HTMLInputElement>(null);
+    const authLock = useRef(false);
 
     const supabase = getSupabaseClient();
     const reduceMotion = useReducedMotion();
@@ -79,9 +88,7 @@ export default function LandingPage() {
         const fitViewport = () => {
             // CSS owns the initial size. Only correct an actual discrepancy
             // (keyboard/resume), after paint, without rewriting the launch frame.
-            const height = viewport?.scale === 1
-                ? Math.min(window.innerHeight, viewport.height)
-                : window.innerHeight;
+            const height = viewport?.scale === 1 ? Math.min(window.innerHeight, viewport.height) : window.innerHeight;
             if (height > 0 && Math.abs(welcome.getBoundingClientRect().height - height) > 1) {
                 welcome.style.height = `${height}px`;
             }
@@ -98,6 +105,7 @@ export default function LandingPage() {
     }, []);
 
     const resetLoginState = () => {
+        if (authLock.current) return;
         setIsLoginOpen(false);
         setLoginView("email");
         setEmail("");
@@ -106,17 +114,6 @@ export default function LandingPage() {
         setResendSuccess(false);
         setIsLoading(false);
     };
-
-    // Keyboard accessibility: Close login modal on Escape key
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape" && isLoginOpen) {
-                resetLoginState();
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isLoginOpen]);
 
     // Auto-focus input when sheet opens or view changes
     useEffect(() => {
@@ -140,66 +137,89 @@ export default function LandingPage() {
     };
 
     const handleGoogleLogin = async () => {
+        if (authLock.current) return;
+        authLock.current = true;
         setAuthError("");
         setIsLoading(true);
         try {
-            sessionStorage.setItem("talia_just_logged_in", "1");
-        } catch {}
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: "google",
-            options: { redirectTo: `${window.location.origin}/auth/callback` },
-        });
-        if (error) {
-            console.error(error);
+            sessionCache.setItem("talia_just_logged_in", "1");
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: { redirectTo: `${window.location.origin}/auth/callback` }
+            });
+            if (error) throw error;
+        } catch {
             setAuthError("לא הצלחנו להתחבר עם גוגל. נסי שוב בעוד רגע.");
+            setIsLoginOpen(true);
+        } finally {
+            authLock.current = false;
             setIsLoading(false);
         }
     };
 
     const handleSendCode = async () => {
-        if (!email) return;
+        if (authLock.current) return;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+            setAuthError("יש להזין כתובת מייל תקינה.");
+            emailInputRef.current?.focus();
+            return;
+        }
+        authLock.current = true;
         setAuthError("");
         setResendSuccess(false);
         setIsLoading(true);
-        const { error } = await supabase.auth.signInWithOtp({
-            email,
-            options: { shouldCreateUser: true },
-        });
-        setIsLoading(false);
-
-        if (error) {
-            console.error(error);
-            setAuthError("לא הצלחנו לשלוח קוד. בדקי את הכתובת ונסי שוב.");
-        } else {
+        try {
+            const { error } = await supabase.auth.signInWithOtp({
+                email: email.trim(),
+                options: { shouldCreateUser: true }
+            });
+            if (error) throw error;
+            setEmail(email.trim());
             setLoginView("otp");
             setResendSuccess(true);
             setTimeout(() => setResendSuccess(false), 4000);
+        } catch {
+            setAuthError("לא הצלחנו לשלוח קוד. בדקי את הכתובת ונסי שוב.");
+        } finally {
+            authLock.current = false;
+            setIsLoading(false);
         }
     };
 
     const handleVerifyCode = async () => {
-        if (isLoading || !otpCode) return;
+        if (authLock.current) return;
+        if (!isValidEmailOtp(otpCode)) {
+            setAuthError("יש להזין את הקוד המספרי שנשלח למייל (6–8 ספרות).");
+            otpInputRef.current?.focus();
+            return;
+        }
+        authLock.current = true;
+        let navigating = false;
         setAuthError("");
         setIsLoading(true);
-        const { data, error } = await supabase.auth.verifyOtp({
-            email,
-            token: otpCode.trim(),
-            type: "email",
-        });
-
-        if (error) {
-            console.error(error);
+        try {
+            const { data, error } = await supabase.auth.verifyOtp({
+                email: email.trim(),
+                token: otpCode.trim(),
+                type: "email"
+            });
+            if (error) throw error;
+            if (data?.session) {
+                sessionCache.setItem("talia_just_logged_in", "1");
+                navigating = true;
+                window.scrollTo(0, 0);
+                router.replace("/dashboard");
+                router.refresh();
+            } else {
+                setAuthError("לא הצלחנו להשלים את הכניסה. נסי שוב.");
+            }
+        } catch {
             setAuthError("הקוד לא תקין או שפג תוקפו. בדקי ונסי שוב.");
-            setIsLoading(false);
-        } else if (data?.session) {
-            try {
-                sessionStorage.setItem("talia_just_logged_in", "1");
-            } catch {}
-            window.scrollTo(0, 0);
-            window.location.href = "/dashboard";
-        } else {
-            setAuthError("לא הצלחנו להשלים את הכניסה. נסי שוב.");
-            setIsLoading(false);
+        } finally {
+            if (!navigating) {
+                authLock.current = false;
+                setIsLoading(false);
+            }
         }
     };
 
@@ -218,22 +238,20 @@ export default function LandingPage() {
                 <div className="absolute -top-24 inset-x-0 h-96 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,142,111,0.22)_0%,transparent_70%)]" />
 
                 {/* Warm terracotta sun with gentle hardware-accelerated CSS breathing */}
-                <div
-                    className="studio-welcome-sun-halo absolute -left-10 top-20 h-56 w-56 rounded-full bg-[var(--studio-coral-bg)]/20 blur-3xl [@media(max-height:650px)]:top-12"
-                />
-                <div
-                    className="studio-welcome-sun absolute left-6 top-28 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_40%_40%,#d9886e_0%,#c37a61_70%,#9e553f_100%)] opacity-90 shadow-[0_4px_24px_rgba(195,122,97,0.3)] [@media(max-height:650px)]:h-18 [@media(max-height:650px)]:w-18 [@media(max-height:650px)]:top-16 [@media(max-height:650px)]:left-3"
-                >
-                    <div
-                        className="studio-welcome-sun-ring absolute -inset-2.5 rounded-full border border-[var(--studio-coral-bg)]/45 opacity-60"
-                    />
+                <div className="studio-welcome-sun-halo absolute -left-10 top-20 h-56 w-56 rounded-full bg-[var(--studio-coral-bg)]/20 blur-3xl [@media(max-height:650px)]:top-12" />
+                <div className="studio-welcome-sun absolute left-6 top-28 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_40%_40%,#d9886e_0%,#c37a61_70%,#9e553f_100%)] opacity-90 shadow-[0_4px_24px_rgba(195,122,97,0.3)] [@media(max-height:650px)]:h-18 [@media(max-height:650px)]:w-18 [@media(max-height:650px)]:top-16 [@media(max-height:650px)]:left-3">
+                    <div className="studio-welcome-sun-ring absolute -inset-2.5 rounded-full border border-[var(--studio-coral-bg)]/45 opacity-60" />
                 </div>
 
                 {/* Ambient sage glow */}
                 <div className="absolute bottom-16 right-0 h-72 w-72 rounded-full bg-[var(--studio-brand)]/14 blur-3xl pointer-events-none" />
 
                 {/* Botanical branch with GPU-friendly transform */}
-                <img
+                <Image
+                    unoptimized
+                    loading="eager"
+                    width={784}
+                    height={986}
                     src="/user_leaves_branch_dark.png"
                     alt=""
                     className="studio-welcome-branch absolute -bottom-10 left-7 h-[520px] w-auto max-w-none origin-bottom-left object-contain opacity-20 drop-shadow-[0_2px_8px_rgba(20,32,22,0.1)] pointer-events-none [@media(max-height:650px)]:h-[340px] [@media(max-height:650px)]:-bottom-4 [@media(max-height:650px)]:left-5"
@@ -256,11 +274,17 @@ export default function LandingPage() {
                         {/* Animated ambient touch halo ring */}
                         <motion.div
                             className="absolute inset-0 -z-10 rounded-full bg-[var(--studio-brand)]/35 blur-xl pointer-events-none"
-                            animate={isEmblemPressed ? { scale: [1, 1.45, 1.2], opacity: [0.3, 0.85, 0.4] } : { scale: 1, opacity: 0.15 }}
+                            animate={
+                                isEmblemPressed
+                                    ? { scale: [1, 1.45, 1.2], opacity: [0.3, 0.85, 0.4] }
+                                    : { scale: 1, opacity: 0.15 }
+                            }
                             transition={{ duration: 0.45 }}
                         />
 
-                        <img
+                        <Image
+                            unoptimized
+                            loading="eager"
                             src="/studio_emblem_dark.png"
                             fetchPriority="high"
                             width={998}
@@ -284,13 +308,16 @@ export default function LandingPage() {
                         style={{ textWrap: "balance" }}
                         className="font-bold leading-[0.92] tracking-[-0.05em]"
                     >
-                        <span className="studio-welcome-title-start block text-[var(--studio-ink)]">
-                            יש לך
-                        </span>
+                        <span className="studio-welcome-title-start block text-[var(--studio-ink)]">יש לך</span>
                         <span className="studio-welcome-title-focus relative inline-block text-[var(--studio-ink)]">
                             מקום
                             {/* Animated wavy underline drawing RTL with warm terracotta (#9e462d: 5.13:1 contrast) */}
-                            <svg aria-hidden="true" viewBox="0 0 240 20" preserveAspectRatio="none" className="absolute -bottom-2.5 right-0 h-3.5 w-full overflow-visible text-[#9e462d]">
+                            <svg
+                                aria-hidden="true"
+                                viewBox="0 0 240 20"
+                                preserveAspectRatio="none"
+                                className="absolute -bottom-2.5 right-0 h-3.5 w-full overflow-visible text-[#9e462d]"
+                            >
                                 <motion.path
                                     d="M236 4 C175 14 120 8 70 4 S14 12 4 15"
                                     fill="none"
@@ -299,10 +326,14 @@ export default function LandingPage() {
                                     strokeLinecap="round"
                                     initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
                                     animate={{ pathLength: 1, opacity: 1 }}
-                                    transition={reduceMotion ? undefined : {
-                                        pathLength: { duration: 0.85, delay: 0.2, ease: "easeOut" },
-                                        opacity: { duration: 0.05, delay: 0.2 },
-                                    }}
+                                    transition={
+                                        reduceMotion
+                                            ? undefined
+                                            : {
+                                                  pathLength: { duration: 0.85, delay: 0.2, ease: "easeOut" },
+                                                  opacity: { duration: 0.05, delay: 0.2 }
+                                              }
+                                    }
                                 />
                             </svg>
                         </span>
@@ -318,15 +349,24 @@ export default function LandingPage() {
 
                     {/* Studio Features: Compact boutique leaf list with high contrast (13.53:1 text, 7.67:1 icon) */}
                     <ul className="studio-welcome-features font-semibold text-[var(--studio-ink)]">
-                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
+                        <motion.li
+                            whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                            className="flex items-center gap-2 select-none"
+                        >
                             <UserLeafIcon className="h-4 w-4 text-[#384c34] shrink-0 drop-shadow-[0_1px_2px_rgba(20,32,22,0.1)]" />
                             <span>לוח אימונים גמיש ומעודכן</span>
                         </motion.li>
-                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
+                        <motion.li
+                            whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                            className="flex items-center gap-2 select-none"
+                        >
                             <UserLeafIcon className="h-4 w-4 text-[#384c34] shrink-0 drop-shadow-[0_1px_2px_rgba(20,32,22,0.1)]" />
                             <span>קבוצות בוטיק אינטימיות (עד 8 מתאמנות)</span>
                         </motion.li>
-                        <motion.li whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex items-center gap-2 select-none">
+                        <motion.li
+                            whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                            className="flex items-center gap-2 select-none"
+                        >
                             <UserLeafIcon className="h-4 w-4 text-[#384c34] shrink-0 drop-shadow-[0_1px_2px_rgba(20,32,22,0.1)]" />
                             <span>מעקב כרטיסיות ומנוי בזמן אמת</span>
                         </motion.li>
@@ -402,7 +442,10 @@ export default function LandingPage() {
                         className="studio-welcome-auth-button studio-welcome-email-button w-full"
                     >
                         <div className="studio-welcome-email flex w-full items-center justify-center gap-2 px-4 font-semibold text-[var(--studio-ink)]">
-                            <Mail aria-hidden="true" className="h-4 w-4 text-[#384c34] opacity-95 transition-transform group-hover:scale-105" />
+                            <Mail
+                                aria-hidden="true"
+                                className="h-4 w-4 text-[#384c34] opacity-95 transition-transform group-hover:scale-105"
+                            />
                             <span>כניסה עם קוד במייל</span>
                         </div>
                     </LiquidGlassButton>
@@ -414,195 +457,196 @@ export default function LandingPage() {
             {/* Mobile Login Sheet (Accessible Modal) */}
             <AnimatePresence>
                 {isLoginOpen && (
-                    <motion.div
-                        initial={reduceMotion ? false : { opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-end justify-center"
+                    <StudioModal
+                        variant="auth"
+                        titleId="login-title"
+                        descriptionId="login-desc"
+                        busy={isLoading}
+                        onClose={resetLoginState}
+                        actions={null}
                     >
-                        {/* Backdrop button with blur */}
-                        <motion.button
+                        {/* Drag grabber handle */}
+                        <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-[#1b251c]/20" />
+
+                        <button
                             type="button"
-                            aria-label="סגירת חלון התחברות"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
                             onClick={resetLoginState}
-                            className="absolute inset-0 h-full w-full bg-[#111a12]/70 backdrop-blur-xs cursor-pointer"
-                        />
-
-                        {/* Modal Container */}
-                        <motion.div
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="login-title"
-                            aria-describedby="login-desc"
-                            initial={reduceMotion ? false : { y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                            className="relative max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-t-[2.25rem] bg-[var(--studio-sheet)] px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 text-[var(--studio-ink)] shadow-2xl"
+                            disabled={isLoading}
+                            data-modal-cancel
+                            aria-label="סגירה"
+                            className="absolute left-6 top-6 flex h-10 w-10 items-center justify-center rounded-full border border-[#1b251c]/15 text-[var(--studio-ink)] hover:bg-[#1b251c]/5 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-[var(--studio-brand)]"
                         >
-                            {/* Drag grabber handle */}
-                            <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-[#1b251c]/20" />
+                            <X aria-hidden="true" className="h-4 w-4" />
+                        </button>
 
-                            <button
-                                type="button"
-                                onClick={resetLoginState}
-                                aria-label="סגירה"
-                                className="absolute left-6 top-6 flex h-10 w-10 items-center justify-center rounded-full border border-[#1b251c]/15 text-[var(--studio-ink)] hover:bg-[#1b251c]/5 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-[var(--studio-brand)]"
-                            >
-                                <X aria-hidden="true" className="h-4 w-4" />
-                            </button>
-
-                            <p className="mb-1 text-xs font-bold text-[#283824]">סטודיו טליה</p>
-                            <h2 id="login-title" className="max-w-[16rem] text-[2rem] font-bold leading-tight text-[var(--studio-ink)]">
-                                {loginView === "email" ? "נשלח לך קוד למייל" : "הקוד בדרך אלייך"}
-                            </h2>
-                            <p id="login-desc" className="mb-6 mt-2 max-w-[19rem] text-sm leading-relaxed text-[#384834]">
-                                {loginView === "email" ? (
-                                    "כתבי את הכתובת שלך ונשלח קוד חד־פעמי בן 6 ספרות לכניסה מיידית ללא צורך בסיסמה."
-                                ) : (
-                                    <>
-                                        הקוד נשלח אל{" "}
-                                        <span dir="ltr" className="font-bold text-[var(--studio-ink)] underline decoration-[#384c34]">
-                                            {email}
-                                        </span>
-                                        . הזיני אותו כאן:
-                                    </>
-                                )}
-                            </p>
-
-                            {resendSuccess && (
-                                <div
-                                    role="status"
-                                    className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25 p-2.5 text-xs font-bold text-emerald-900"
-                                >
-                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
-                                    <span>הקוד נשלח בהצלחה לכתובת המייל!</span>
-                                </div>
-                            )}
-
-                            {loginView === "email" && (
-                                <form
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        handleSendCode();
-                                    }}
-                                    className="space-y-4"
-                                >
-                                    <div>
-                                        <label htmlFor="login-email" className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]">
-                                            כתובת המייל שלך <span className="text-[#9e462d]">*</span>
-                                        </label>
-                                        <CopyableInput copyLabel="העתקת כתובת המייל"
-                                            ref={emailInputRef}
-                                            id="login-email"
-                                            type="email"
-                                            inputMode="email"
-                                            autoComplete="email"
-                                            required
-                                            dir="ltr"
-                                            value={email}
-                                            onChange={(event) => setEmail(event.target.value)}
-                                            placeholder="name@example.com"
-                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/25 bg-white px-4 text-base text-[var(--studio-ink)] outline-none transition-all placeholder:text-[#5d6958] focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-brand)]/25"
-                                        />
-                                    </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading || !email}
-                                        className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-md hover:bg-black disabled:opacity-50 active:scale-[0.985] transition-all cursor-pointer"
+                        <p className="mb-1 text-xs font-bold text-[#283824]">סטודיו טליה</p>
+                        <h2
+                            id="login-title"
+                            className="max-w-[16rem] text-[2rem] font-bold leading-tight text-[var(--studio-ink)]"
+                        >
+                            {loginView === "email" ? "נשלח לך קוד למייל" : "הקוד בדרך אלייך"}
+                        </h2>
+                        <p id="login-desc" className="mb-6 mt-2 max-w-[19rem] text-sm leading-relaxed text-[#384834]">
+                            {loginView === "email" ? (
+                                "כתבי את הכתובת שלך ונשלח קוד חד־פעמי לכניסה מיידית ללא צורך בסיסמה."
+                            ) : (
+                                <>
+                                    הקוד נשלח אל{" "}
+                                    <span
+                                        dir="ltr"
+                                        className="font-bold text-[var(--studio-ink)] underline decoration-[#384c34]"
                                     >
-                                        <span>{isLoading ? "שולחות קוד..." : "שלחי לי קוד"}</span>
-                                        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                                        {email}
+                                    </span>
+                                    . הזיני אותו כאן:
+                                </>
+                            )}
+                        </p>
+
+                        {resendSuccess && (
+                            <div
+                                role="status"
+                                className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25 p-2.5 text-xs font-bold text-emerald-900"
+                            >
+                                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+                                <span>הקוד נשלח בהצלחה לכתובת המייל!</span>
+                            </div>
+                        )}
+
+                        {loginView === "email" && (
+                            <form
+                                noValidate
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    handleSendCode();
+                                }}
+                                className="space-y-4"
+                            >
+                                <div>
+                                    <label
+                                        htmlFor="login-email"
+                                        className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]"
+                                    >
+                                        כתובת המייל שלך <span className="text-[#9e462d]">*</span>
+                                    </label>
+                                    <CopyableInput
+                                        copyLabel="העתקת כתובת המייל"
+                                        ref={emailInputRef}
+                                        id="login-email"
+                                        aria-invalid={Boolean(authError)}
+                                        aria-describedby={authError ? "login-error" : undefined}
+                                        type="email"
+                                        inputMode="email"
+                                        autoComplete="email"
+                                        required
+                                        dir="ltr"
+                                        value={email}
+                                        onChange={(event) => setEmail(event.target.value)}
+                                        placeholder="name@example.com"
+                                        className="min-h-14 w-full rounded-2xl border border-[#1b251c]/25 bg-white px-4 text-base text-[var(--studio-ink)] outline-none transition-all placeholder:text-[#5d6958] focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-brand)]/25"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || !email}
+                                    className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-md hover:bg-black disabled:opacity-50 active:scale-[0.985] transition-all cursor-pointer"
+                                >
+                                    <span>{isLoading ? "שולחות קוד..." : "שלחי לי קוד"}</span>
+                                    <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={resetLoginState}
+                                    className="flex min-h-10 w-full items-center justify-center text-xs font-bold text-[#384834] hover:text-[var(--studio-ink)] transition-colors"
+                                >
+                                    ביטול וחזרה
+                                </button>
+                            </form>
+                        )}
+
+                        {loginView === "otp" && (
+                            <form
+                                noValidate
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    handleVerifyCode();
+                                }}
+                                className="space-y-4"
+                            >
+                                <div>
+                                    <label
+                                        htmlFor="login-code"
+                                        className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]"
+                                    >
+                                        קוד האימות מהמייל <span className="text-[#9e462d]">*</span>
+                                    </label>
+                                    <CopyableInput
+                                        copyLabel="העתקת קוד האימות"
+                                        ref={otpInputRef}
+                                        id="login-code"
+                                        aria-invalid={Boolean(authError)}
+                                        aria-describedby={authError ? "login-error" : undefined}
+                                        type="text"
+                                        inputMode="numeric"
+                                        autoComplete="one-time-code"
+                                        maxLength={8}
+                                        required
+                                        dir="ltr"
+                                        value={otpCode}
+                                        onChange={(event) => setOtpCode(event.target.value)}
+                                        placeholder="••••••"
+                                        className="min-h-14 w-full rounded-2xl border border-[#1b251c]/25 bg-white px-4 text-center font-mono text-2xl tracking-[0.35em] text-[var(--studio-ink)] outline-none transition-all placeholder:text-[#5d6958] focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-brand)]/25"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || !isValidEmailOtp(otpCode)}
+                                    className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-md hover:bg-black disabled:opacity-50 active:scale-[0.985] transition-all cursor-pointer"
+                                >
+                                    <span>{isLoading ? "בודקות קוד..." : "אימות וכניסה"}</span>
+                                    <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                                </button>
+
+                                <div className="flex items-center justify-between pt-1 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAuthError("");
+                                            setLoginView("email");
+                                        }}
+                                        className="flex items-center gap-1.5 font-bold text-[#384834] hover:text-[var(--studio-ink)] transition-colors cursor-pointer"
+                                    >
+                                        <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+                                        שינוי כתובת מייל
                                     </button>
 
                                     <button
                                         type="button"
-                                        onClick={resetLoginState}
-                                        className="flex min-h-10 w-full items-center justify-center text-xs font-bold text-[#384834] hover:text-[var(--studio-ink)] transition-colors"
+                                        onClick={handleSendCode}
+                                        disabled={isLoading}
+                                        className="font-bold text-[#32452e] hover:underline cursor-pointer disabled:opacity-50"
                                     >
-                                        ביטול וחזרה
+                                        שליחה חוזרת
                                     </button>
-                                </form>
-                            )}
-
-                            {loginView === "otp" && (
-                                <form
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        handleVerifyCode();
-                                    }}
-                                    className="space-y-4"
-                                >
-                                    <div>
-                                        <label htmlFor="login-code" className="block text-xs font-bold mb-1.5 text-[var(--studio-ink)]">
-                                            קוד אימות בן 6 ספרות <span className="text-[#9e462d]">*</span>
-                                        </label>
-                                        <CopyableInput copyLabel="העתקת קוד האימות"
-                                            ref={otpInputRef}
-                                            id="login-code"
-                                            type="text"
-                                            inputMode="numeric"
-                                            autoComplete="one-time-code"
-                                            maxLength={8}
-                                            required
-                                            dir="ltr"
-                                            value={otpCode}
-                                            onChange={(event) => setOtpCode(event.target.value)}
-                                            placeholder="••••••"
-                                            className="min-h-14 w-full rounded-2xl border border-[#1b251c]/25 bg-white px-4 text-center font-mono text-2xl tracking-[0.35em] text-[var(--studio-ink)] outline-none transition-all placeholder:text-[#5d6958] focus:border-[var(--studio-brand)] focus:ring-2 focus:ring-[var(--studio-brand)]/25"
-                                        />
-                                    </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading || otpCode.trim().length < 6}
-                                        className="flex min-h-14 w-full items-center justify-between rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)] shadow-md hover:bg-black disabled:opacity-50 active:scale-[0.985] transition-all cursor-pointer"
-                                    >
-                                        <span>{isLoading ? "בודקות קוד..." : "אימות וכניסה"}</span>
-                                        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-                                    </button>
-
-                                    <div className="flex items-center justify-between pt-1 text-xs">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setAuthError("");
-                                                setLoginView("email");
-                                            }}
-                                            className="flex items-center gap-1.5 font-bold text-[#384834] hover:text-[var(--studio-ink)] transition-colors cursor-pointer"
-                                        >
-                                            <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
-                                            שינוי כתובת מייל
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={handleSendCode}
-                                            disabled={isLoading}
-                                            className="font-bold text-[#32452e] hover:underline cursor-pointer disabled:opacity-50"
-                                        >
-                                            שליחה חוזרת
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-
-                            {authError && (
-                                <div
-                                    role="alert"
-                                    aria-live="assertive"
-                                    className="mt-4 flex items-center gap-2 rounded-2xl bg-[var(--studio-danger)]/12 border border-[var(--studio-danger)]/30 p-3 text-sm font-bold text-[#8f2e27]"
-                                >
-                                    <AlertCircle className="h-4 w-4 shrink-0 text-[#8f2e27]" />
-                                    <span>{authError}</span>
                                 </div>
-                            )}
-                        </motion.div>
-                    </motion.div>
+                            </form>
+                        )}
+
+                        {authError && (
+                            <div
+                                id="login-error"
+                                role="alert"
+                                aria-live="assertive"
+                                className="mt-4 flex items-center gap-2 rounded-2xl bg-[var(--studio-danger)]/12 border border-[var(--studio-danger)]/30 p-3 text-sm font-bold text-[#8f2e27]"
+                            >
+                                <AlertCircle className="h-4 w-4 shrink-0 text-[#8f2e27]" />
+                                <span>{authError}</span>
+                            </div>
+                        )}
+                    </StudioModal>
                 )}
             </AnimatePresence>
         </div>

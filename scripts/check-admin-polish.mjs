@@ -93,7 +93,7 @@ try {
     };
     const key=async(key,modifiers=0)=>{const windowsVirtualKeyCode={Tab:9,Escape:27,Enter:13}[key];for(const type of ["keyDown","keyUp"])await call("Input.dispatchKeyEvent",{type,key,code:key,modifiers,windowsVirtualKeyCode});};
     const input=async(selector,value)=>{await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event("input",{bubbles:true}));})()`);};
-    const view=async name=>{await evaluate(`document.getElementById("qa-${name}").click()`);await waitFor(`document.querySelector("h1")?.textContent.includes(${JSON.stringify({schedule:"יומן",trainees:"המתאמנות",overview:"תמונת"}[name])})`,"view "+name);await delay(400);};
+    const view=async name=>{await evaluate(`document.getElementById("qa-${name}").click()`);await waitFor(`document.querySelector("h1")?.textContent.includes(${JSON.stringify({schedule:"יומן",trainees:"המתאמנות",overview:"חדר בקרה"}[name])})`,"view "+name);await delay(400);};
     await call("Page.enable");await call("Page.addScriptToEvaluateOnNewDocument",{source:mock});
     await call("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
     await call("Page.navigate",{url:baseUrl+"/admin-polish-check"});
@@ -193,7 +193,7 @@ try {
     await check("Lost reply retry displays persisted balance without a second addition",`!document.querySelector('dialog:modal')&&document.querySelector('article').innerText.includes('18')`);
     await check("New acknowledged action gets a new ID and its lost-reply retry keeps it",`(()=>{const r=window.__qa.requests.filter(r=>r.name==='admin_grant_tickets').slice(-3);return r.length===3&&r[0].requestId!==r[1].requestId&&r[1].requestId===r[2].requestId})()`);
     await key("Escape");await view("overview");await screenshot("overview-390");
-    await check("Overview has stable populated counts",`document.querySelector('[aria-label="הפעילות בסטודיו"]').innerText.includes('32')`);
+    await check("Overview has stable populated counts",`document.querySelector('[aria-label="מדדי דופק הסטודיו"]').innerText.includes('32')`);
     for (const size of [{width:320,height:568},{width:390,height:400},{width:320,height:284},{width:430,height:932},{width:1280,height:800}]) {
         await call("Emulation.setDeviceMetricsOverride",{...size,deviceScaleFactor:1,mobile:size.width<640});
         await view("schedule");await click('button[aria-label="אימון חדש"]');await delay(300);

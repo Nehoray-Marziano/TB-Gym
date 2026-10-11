@@ -6,7 +6,7 @@ async function makeThickEmblem() {
 
     const image = sharp(inputPath);
     const meta = await image.metadata();
-    const { width, height } = meta;
+    const { width } = meta;
     const { data } = await image.raw().toBuffer({ resolveWithObject: true });
 
     const bgR = 140, bgG = 144, bgB = 110;
