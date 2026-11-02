@@ -238,17 +238,19 @@ a,
 }
 
 .studio-page-enter {
-  --studio-page-enter-distance: clamp(16px, 5vw, 24px);
+  --studio-page-enter-distance: clamp(10px, 3vw, 16px);
   --studio-page-enter-x: 0px;
-  --studio-page-fade: studio-page-fade 160ms ease-out backwards;
+  --studio-page-fade: studio-page-fade 140ms ease-out backwards;
   animation: var(--studio-page-fade);
+  will-change: opacity;
 }
 
 .studio-page-enter:is([data-entry="left"], [data-entry="right"]) {
   /* Restore full contrast early while the shorter slide settles gently.
      Backwards fill releases the transform after the entrance, keeping fixed
      descendants and later dialogs in their normal containing block. */
-  animation: studio-page-enter 360ms cubic-bezier(.22,.75,.25,1) backwards, var(--studio-page-fade);
+  animation: studio-page-enter 220ms cubic-bezier(.16, 1, .3, 1) backwards, var(--studio-page-fade);
+  will-change: transform, opacity;
 }
 
 .studio-page-enter[data-entry="left"] {

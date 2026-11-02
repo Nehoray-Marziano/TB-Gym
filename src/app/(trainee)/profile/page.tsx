@@ -25,16 +25,24 @@ export default function ProfilePage() {
     const userId = useTraineeUserId();
     const { profile: summary, tickets } = useGymStore();
 
-    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [remoteProfile, setRemoteProfile] = useState<UserProfile | null>(null);
     const [health, setHealth] = useState<HealthDeclaration>({ is_healthy: null, medical_conditions: "" });
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!summary);
     const [loadError, setLoadError] = useState(false);
     const [reload, setReload] = useState(0);
+
+    const profile: UserProfile | null = remoteProfile ?? (summary ? {
+        id: summary.id,
+        full_name: summary.full_name,
+        email: summary.email || "",
+        phone: "",
+        balance: tickets,
+        role: summary.role
+    } : null);
 
     useEffect(() => {
         let active = true;
         const fetchData = async () => {
-            setLoading(true);
             setLoadError(false);
             try {
                 const signal = AbortSignal.timeout(10_000);
@@ -66,12 +74,12 @@ export default function ProfilePage() {
                 const healthData = healthRes.data;
 
                 if (profileData) {
-                    setProfile({
+                    setRemoteProfile({
                         id: profileData.id,
                         full_name: profileData.full_name,
                         email: summary?.email || "",
-                        phone: profileData.phone,
-                        balance: ticketCount ?? 0,
+                        phone: profileData.phone || "",
+                        balance: ticketCount ?? tickets,
                         role: profileData.role
                     });
                 }
@@ -89,14 +97,14 @@ export default function ProfilePage() {
         return () => {
             active = false;
         };
-    }, [supabase, userId, summary?.email, reload]);
+    }, [supabase, userId, summary?.email, reload, tickets]);
 
-    // Show loading skeleton only if we don't have cached data
-    if (loading) {
+    // Show loading skeleton only if we don't have profile yet and are loading
+    if (!profile && loading) {
         return <ProfileSkeleton />;
     }
 
-    if (loadError) {
+    if (loadError && !profile) {
         return (
             <div
                 data-member-scroll
@@ -107,7 +115,10 @@ export default function ProfilePage() {
                     <p className="text-sm text-[var(--studio-muted)]">הפרטים שלך נשמרו. בדקי את החיבור ונסי שוב.</p>
                     <button
                         type="button"
-                        onClick={() => setReload((value) => value + 1)}
+                        onClick={() => {
+                            setLoading(true);
+                            setReload((value) => value + 1);
+                        }}
                         className="studio-tap-feedback min-h-12 rounded-full bg-[var(--studio-deep)] px-6 text-sm font-bold text-[var(--studio-deep-contrast)]"
                     >
                         ניסיון נוסף
@@ -117,19 +128,7 @@ export default function ProfilePage() {
         );
     }
 
-    const initialProfile =
-        profile ??
-        (summary
-            ? {
-                  id: summary.id,
-                  full_name: summary.full_name,
-                  email: summary.email || "",
-                  phone: "",
-                  balance: tickets,
-                  role: summary.role
-              }
-            : null);
-    return <ProfileClient initialProfile={initialProfile} initialHealth={health} />;
+    return <ProfileClient initialProfile={profile} initialHealth={health} />;
 }
 
 // Inline skeleton component for faster initial render

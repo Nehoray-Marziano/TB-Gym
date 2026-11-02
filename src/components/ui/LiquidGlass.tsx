@@ -310,7 +310,7 @@ export const LiquidGlass = React.forwardRef<HTMLDivElement, LiquidGlassProps>(
     }, []);
 
     const glassRefs = React.useMemo(() => {
-      if (!size || !isChromium) return null;
+      if (!size || !isChromium || refraction <= 0) return null;
       try {
         const images = glassImages(size.w, size.h, radius, bezel, profile);
         if (!images) return null;

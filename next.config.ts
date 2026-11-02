@@ -101,6 +101,12 @@ const nextConfig: NextConfig = {
   turbopack: {},
   distDir: process.env.TALIA_BUILD_DIR || ".next",
   env: { APP_BUILD_ID: getAppBuildId() },
+  experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
   async redirects() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) return [];
