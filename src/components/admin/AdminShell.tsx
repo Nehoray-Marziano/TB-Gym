@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, CalendarDays, House, UsersRound, type LucideIcon } from "lucide-react";
 import PageEntrance from "@/components/PageEntrance";
 import { adminNavigationItems, isNavigationItemActive } from "@/lib/navigation";
@@ -12,9 +12,18 @@ import "./admin.css";
 const icons = { "/admin": House, "/admin/schedule": CalendarDays, "/admin/trainees": UsersRound, "/dashboard": ArrowRight };
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
     const pathname = usePathname();
     const [pending, setPending] = useState<{ from: string; target: string } | null>(null);
     const activePath = pending?.from === pathname ? pending.target : pathname;
+
+    useEffect(() => {
+        for (const item of adminNavigationItems) {
+            if (item.href !== pathname) {
+                router.prefetch(item.href);
+            }
+        }
+    }, [router, pathname]);
 
     useEffect(() => {
         const item = adminNavigationItems.find(item => isNavigationItemActive(activePath, item));

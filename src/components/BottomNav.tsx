@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CalendarDays, House, UserRound } from "lucide-react";
 import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { LiquidGlass } from "@/components/ui/LiquidGlass";
@@ -16,10 +16,20 @@ export default function BottomNav() {
 }
 
 export function MemberNavigation({ pathname }: { pathname: string }) {
+    const router = useRouter();
     const reduceMotion = useReducedMotion();
     const navRef = useMemberNavigation(pathname);
     const [pending, setPending] = useState<{ from: string; target: string } | null>(null);
     const activePath = pending?.from === pathname ? pending.target : pathname;
+
+    useEffect(() => {
+        // Eagerly prefetch sibling tabs upon mounting so tab switches are instantaneous
+        for (const item of memberNavigationItems) {
+            if (item.href !== pathname) {
+                router.prefetch(item.href);
+            }
+        }
+    }, [router, pathname]);
 
     return (
         <nav

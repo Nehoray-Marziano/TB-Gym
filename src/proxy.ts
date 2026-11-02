@@ -1,6 +1,6 @@
-
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { extractClaimsFromCookies } from "@/lib/auth-cookie";
 
 export async function proxy(request: NextRequest) {
     let response = NextResponse.next({
@@ -8,6 +8,13 @@ export async function proxy(request: NextRequest) {
             headers: request.headers,
         },
     });
+
+    // Fast path: if the session cookie contains a valid, unexpired access token,
+    // avoid blocking the request with an outbound remote auth network call.
+    const fastClaims = extractClaimsFromCookies(request.cookies.getAll());
+    if (fastClaims) {
+        return response;
+    }
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,8 +50,7 @@ export async function proxy(request: NextRequest) {
         }
     );
 
-    // Verifies the access token and refreshes it when necessary. With an
-    // asymmetric signing key this avoids a remote user lookup on each route.
+    // Verifies the access token and refreshes it when expired or missing.
     await supabase.auth.getClaims();
 
     return response;
