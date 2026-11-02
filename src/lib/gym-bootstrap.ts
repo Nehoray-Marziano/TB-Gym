@@ -5,6 +5,8 @@ import { createClient } from "@/utils/supabase/server";
 import { loadGymSnapshot } from "@/lib/gym-data";
 import { extractClaimsFromCookies } from "@/lib/auth-cookie";
 
+const onboardedUserCache = new Set<string>();
+
 // React cache is request-scoped: authenticated data is never shared across users.
 export const getGymIdentity = cache(async () => {
     const supabase = await createClient();
@@ -23,9 +25,22 @@ export const getGymIdentity = cache(async () => {
 
 /**
  * Lightweight check for onboarding completion without triggering the full
- * balance and subscription stored procedures.
+ * balance and subscription stored procedures. Uses in-memory and cookie
+ * hints to bypass remote Supabase DB queries on subsequent navigations.
  */
 export const getTraineeOnboardingStatus = cache(async (userId: string) => {
+    if (onboardedUserCache.has(userId)) {
+        return { role: "trainee", onboarding_completed: true };
+    }
+    try {
+        const cookieStore = await cookies();
+        if (cookieStore.get("tb-onboarded")?.value === "1") {
+            onboardedUserCache.add(userId);
+            return { role: "trainee", onboarding_completed: true };
+        }
+    } catch {
+        // Fall back to DB query
+    }
     const { supabase } = await getGymIdentity();
     const signal = AbortSignal.timeout(5000);
     try {
@@ -36,6 +51,9 @@ export const getTraineeOnboardingStatus = cache(async (userId: string) => {
             .abortSignal(signal)
             .maybeSingle();
         if (error || !data) return null;
+        if (data.onboarding_completed !== false) {
+            onboardedUserCache.add(userId);
+        }
         return data as { role?: string; onboarding_completed?: boolean };
     } catch {
         return null;

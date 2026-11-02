@@ -17,6 +17,16 @@ export function extractClaimsFromCookies(cookies: { name: string; value: string 
         // Sort chunks numerically: cookie, cookie.0, cookie.1, ...
         authCookies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
         let combined = authCookies.map(c => c.value).join("");
+        if (combined.startsWith('"') && combined.endsWith('"')) {
+            combined = combined.slice(1, -1);
+        }
+        if (combined.includes("%")) {
+            try {
+                combined = decodeURIComponent(combined);
+            } catch {
+                // Keep combined as-is
+            }
+        }
         if (combined.startsWith("base64-")) {
             combined = Buffer.from(combined.slice(7), "base64").toString("utf8");
         }

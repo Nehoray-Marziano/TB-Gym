@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, CalendarDays, House, UsersRound, type LucideIcon } from "lucide-react";
@@ -14,8 +14,6 @@ const icons = { "/admin": House, "/admin/schedule": CalendarDays, "/admin/traine
 export default function AdminShell({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const [pending, setPending] = useState<{ from: string; target: string } | null>(null);
-    const activePath = pending?.from === pathname ? pending.target : pathname;
 
     useEffect(() => {
         for (const item of adminNavigationItems) {
@@ -26,9 +24,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     }, [router, pathname]);
 
     useEffect(() => {
-        const item = adminNavigationItems.find(item => isNavigationItemActive(activePath, item));
+        const item = adminNavigationItems.find(item => isNavigationItemActive(pathname, item));
         document.title = `${item?.label ?? "ניהול"} | ניהול סטודיו טליה`;
-    }, [activePath]);
+    }, [pathname]);
 
     return (
         <div className="studio-admin min-h-dvh overflow-x-hidden">
@@ -43,12 +41,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                             href={item.href}
                             icon={icons[item.href]}
                             label={item.label}
-                            isActive={isNavigationItemActive(activePath, item)}
-                            onSelect={() => {
-                                if (!isNavigationItemActive(activePath, item)) {
-                                    setPending({ from: pathname, target: item.href });
-                                }
-                            }}
+                            isActive={isNavigationItemActive(pathname, item)}
+                            onPrefetch={() => router.prefetch(item.href)}
                         />
                     ))}
                 </div>
@@ -62,22 +56,23 @@ function NavIcon({
     icon: Icon,
     label,
     isActive,
-    onSelect
+    onPrefetch,
 }: {
     href: string;
     icon: LucideIcon;
     label: string;
     isActive: boolean;
-    onSelect: () => void;
+    onPrefetch?: () => void;
 }) {
     const reducedMotion = useReducedMotion();
     return (
         <Link
             href={href}
             prefetch
-            onClick={onSelect}
+            onTouchStart={onPrefetch}
+            onPointerDown={onPrefetch}
             aria-current={isActive ? "page" : undefined}
-            className="studio-admin-nav-link relative isolate flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-bold active:bg-white/10"
+            className="studio-admin-nav-link relative isolate flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-bold outline-none transition-transform duration-150 active:scale-[0.97] active:bg-white/10"
         >
             {isActive && (
                 <motion.span
