@@ -150,13 +150,13 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
     return (
         <div
             data-member-scroll
-            className="h-full w-full overflow-y-auto overscroll-contain bg-[var(--studio-canvas)] text-[var(--studio-ink)] [-webkit-overflow-scrolling:touch]"
+            className="h-full w-full overflow-y-auto overscroll-contain bg-[var(--studio-canvas)] text-[var(--studio-ink)] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-            <main className="mx-auto max-w-lg px-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+            <main className="mx-auto max-w-lg px-4.5 sm:px-5 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,calc(env(safe-area-inset-top)+0.25rem))]">
                 <header className="flex items-center justify-between gap-3">
                     <div>
                         <p className="text-xs font-bold text-[var(--studio-subtle)]">סטודיו טליה</p>
-                        <h1 className="mt-1 text-[clamp(2.4rem,11vw,3.3rem)] font-bold leading-none tracking-[-0.06em]">
+                        <h1 className="mt-0.5 text-[clamp(1.75rem,7vw,2.25rem)] font-bold leading-none tracking-tight">
                             החשבון שלי<span className="text-[var(--studio-coral-text)]">.</span>
                         </h1>
                     </div>
@@ -164,24 +164,24 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         type="button"
                         onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
                         disabled={loading}
-                        className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-[var(--studio-ink)]/15 px-3 text-xs font-bold disabled:opacity-50"
+                        className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-[var(--studio-ink)]/15 px-3 text-xs font-bold transition-transform active:scale-95 disabled:opacity-50"
                     >
                         {loading ? (
                             <span
                                 aria-hidden="true"
-                                className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                                className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
                             />
                         ) : isEditing ? (
-                            <Check aria-hidden="true" className="h-4 w-4" />
+                            <Check aria-hidden="true" className="h-3.5 w-3.5" />
                         ) : (
-                            <Edit2 aria-hidden="true" className="h-4 w-4" />
+                            <Edit2 aria-hidden="true" className="h-3.5 w-3.5" />
                         )}
                         {loading ? "שומרת" : isEditing ? "שמירה" : "עריכה"}
                     </button>
                 </header>
 
-                <div className="mt-6 flex items-center gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-coral-bg)] text-2xl font-bold text-[var(--studio-ink)]">
+                <div className="mt-3.5 flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-coral-bg)] text-xl font-bold text-[var(--studio-ink)]">
                         {formData.full_name?.charAt(0) || "?"}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -191,11 +191,11 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                 aria-label="שם מלא"
                                 value={formData.full_name}
                                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                className="w-full min-h-12 border-b border-[#68794f] bg-transparent text-xl font-bold outline-none"
+                                className="w-full min-h-10 border-b border-[#68794f] bg-transparent text-lg font-bold outline-none"
                                 placeholder="שם מלא"
                             />
                         ) : (
-                            <h2 className="break-words text-xl font-bold leading-tight">
+                            <h2 className="break-words text-lg font-bold leading-tight">
                                 {profile?.full_name || "אורחת"}
                             </h2>
                         )}
@@ -208,7 +208,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                 {!isEditing && (
                     <Link
                         href="/subscription"
-                        className="relative mb-4 mt-6 flex min-h-32 items-center gap-4 overflow-hidden rounded-[2rem_1.1rem_2rem_1.1rem] bg-[var(--studio-deep)] p-5 text-[var(--studio-deep-contrast)]"
+                        className="relative mb-2.5 mt-3 flex min-h-[5.25rem] items-center gap-3.5 overflow-hidden rounded-[1.5rem_0.9rem_1.5rem_0.9rem] bg-[var(--studio-deep)] px-4.5 py-2.5 text-[var(--studio-deep-contrast)] transition-transform active:scale-[0.99]"
                     >
                         <StudioBotanical
                             sun={false}
@@ -216,20 +216,20 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         />
                         <div className="relative flex-1">
                             <p className="text-xs font-bold text-[var(--studio-accent-text)]">יתרת האימונים</p>
-                            <p className="mt-2 text-xs">
+                            <p className="mt-1 text-xs">
                                 {subscription?.is_active ? subscription.tier_display_name : "בחירת מנוי"}{" "}
                                 <ArrowLeft aria-hidden="true" className="inline h-3.5 w-3.5" />
                             </p>
                         </div>
-                        <span className="relative text-[4.5rem] font-bold leading-none tabular-nums text-[var(--studio-accent-text)]">
+                        <span className="relative text-[3.25rem] font-bold leading-none tabular-nums text-[var(--studio-accent-text)]">
                             {profile.balance}
                         </span>
                     </Link>
                 )}
 
                 {/* Details List */}
-                <details className="group mb-3 overflow-hidden rounded-[1.5rem] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)]">
-                    <summary className="flex min-h-14 cursor-pointer items-center justify-between px-5 text-sm font-bold">
+                <details className="group mb-2.5 overflow-hidden rounded-[1.25rem] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)]">
+                    <summary className="flex min-h-11 cursor-pointer select-none items-center justify-between px-4 text-xs sm:text-sm font-bold">
                         פרטים אישיים והצהרת בריאות{" "}
                         <ChevronRight
                             aria-hidden="true"
@@ -238,13 +238,13 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     </summary>
 
                     {/* Phone */}
-                    <div className="overflow-hidden rounded-[1.75rem] border border-[#162218]/10 bg-[var(--studio-card)]">
-                        <div className="flex items-center gap-4 border-b border-[#162218]/10 p-5">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
-                                <Phone aria-hidden="true" className="h-5 w-5" />
+                    <div className="border-t border-[#162218]/10 bg-[var(--studio-card)]">
+                        <div className="flex items-center gap-3.5 border-b border-[#162218]/10 p-3.5">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
+                                <Phone aria-hidden="true" className="h-4 w-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-[var(--studio-muted)]">מספר נייד</p>
+                                <p className="text-xs font-medium text-[var(--studio-muted)]">מספר נייד</p>
                                 {isEditing ? (
                                     <CopyableInput
                                         copyLabel="העתקת מספר הנייד"
@@ -253,10 +253,10 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                         type="tel"
                                         dir="ltr"
                                         aria-label="מספר נייד"
-                                        className="min-h-12 w-full rounded-xl border border-[#162218]/15 bg-[var(--studio-canvas)] px-3 font-bold text-[var(--studio-ink)] outline-none focus:border-[#68794f]"
+                                        className="min-h-10 w-full rounded-lg border border-[#162218]/15 bg-[var(--studio-canvas)] px-2.5 text-sm font-bold text-[var(--studio-ink)] outline-none focus:border-[#68794f]"
                                     />
                                 ) : (
-                                    <p className="font-bold text-[var(--studio-ink)]" dir="ltr">
+                                    <p className="text-sm font-bold text-[var(--studio-ink)]" dir="ltr">
                                         {profile?.phone || "לא הוזן"}
                                     </p>
                                 )}
@@ -264,33 +264,33 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         </div>
 
                         {/* Health Declaration */}
-                        <div className="flex flex-col gap-2 p-5">
-                            <div className="flex items-center gap-4">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
-                                    <Shield aria-hidden="true" className="h-5 w-5" />
+                        <div className="flex flex-col gap-2 p-3.5">
+                            <div className="flex items-center gap-3.5">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-canvas)] text-[var(--studio-subtle)]">
+                                    <Shield aria-hidden="true" className="h-4 w-4" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-[var(--studio-muted)]">הצהרת בריאות</p>
+                                    <p className="text-xs font-medium text-[var(--studio-muted)]">הצהרת בריאות</p>
                                     {isEditing ? (
-                                        <div className="mt-3 flex flex-wrap gap-2">
+                                        <div className="mt-2 flex flex-wrap gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, is_healthy: true })}
-                                                className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${formData.is_healthy ? "border-[#68794f] bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "border-[#162218]/15 text-[var(--studio-muted)]"}`}
+                                                className={`min-h-9 rounded-full border px-3 text-xs font-bold transition-colors ${formData.is_healthy ? "border-[#68794f] bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]" : "border-[#162218]/15 text-[var(--studio-muted)]"}`}
                                             >
                                                 תקינה
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, is_healthy: false })}
-                                                className={`min-h-11 rounded-full border px-4 text-xs font-bold transition-colors ${!formData.is_healthy ? "border-[var(--studio-danger)] bg-[var(--studio-danger)]/10 text-[var(--studio-danger)]" : "border-[#162218]/15 text-[var(--studio-muted)]"}`}
+                                                className={`min-h-9 rounded-full border px-3 text-xs font-bold transition-colors ${!formData.is_healthy ? "border-[var(--studio-danger)] bg-[var(--studio-danger)]/10 text-[var(--studio-danger)]" : "border-[#162218]/15 text-[var(--studio-muted)]"}`}
                                             >
                                                 יש מגבלות
                                             </button>
                                         </div>
                                     ) : (
                                         <p
-                                            className={`font-bold ${health.is_healthy === false ? "text-[var(--studio-danger)]" : "text-[var(--studio-subtle)]"}`}
+                                            className={`text-sm font-bold ${health.is_healthy === false ? "text-[var(--studio-danger)]" : "text-[var(--studio-subtle)]"}`}
                                         >
                                             {health.is_healthy === null
                                                 ? "עוד לא עודכנה"
@@ -309,7 +309,7 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                         initial={reduceMotion ? false : { height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        className="mt-3 overflow-hidden"
+                                        className="mt-2 overflow-hidden"
                                     >
                                         {isEditing ? (
                                             <CopyableTextarea
@@ -318,11 +318,11 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                                                 onChange={(e) =>
                                                     setFormData({ ...formData, medical_conditions: e.target.value })
                                                 }
-                                                className="min-h-24 w-full rounded-xl border border-[#162218]/15 bg-[var(--studio-canvas)] p-3 text-sm text-[var(--studio-ink)] outline-none focus:border-[#68794f]"
+                                                className="min-h-20 w-full rounded-xl border border-[#162218]/15 bg-[var(--studio-canvas)] p-2.5 text-sm text-[var(--studio-ink)] outline-none focus:border-[#68794f]"
                                                 placeholder="פרטי את המגבלות..."
                                             />
                                         ) : (
-                                            <p className="rounded-xl bg-[var(--studio-canvas)] p-3 text-sm text-[var(--studio-muted)]">
+                                            <p className="rounded-xl bg-[var(--studio-canvas)] p-2.5 text-xs text-[var(--studio-muted)]">
                                                 {health.medical_conditions}
                                             </p>
                                         )}
@@ -333,8 +333,8 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     </div>
                 </details>
 
-                <section className="space-y-3">
-                    <h3 className="mb-3 mt-7 text-[1.35rem] font-bold">העדפות</h3>
+                <section className="space-y-2">
+                    <h3 className="mb-1 mt-2.5 text-xs font-bold text-[var(--studio-muted)] uppercase tracking-wider">העדפות</h3>
                     <InstallAppButton />
 
                     <button
@@ -388,13 +388,13 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                         }}
                         disabled={notificationBusy}
                         aria-busy={notificationBusy}
-                        className="flex min-h-20 w-full items-center justify-between gap-3 rounded-[1.5rem] border border-[#162218]/10 bg-[var(--studio-card)] p-5 text-start transition-colors active:bg-[var(--studio-accent-bg)]/20"
+                        className="flex min-h-[3.25rem] w-full items-center justify-between gap-3 rounded-[1.25rem] border border-[#162218]/10 bg-[var(--studio-card)] px-4 py-2 text-start transition-colors active:bg-[var(--studio-accent-bg)]/20 active:scale-[0.99]"
                     >
-                        <div className="flex items-center gap-4">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]">
-                                <Bell aria-hidden="true" className="h-5 w-5" />
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)]">
+                                <Bell aria-hidden="true" className="h-4.5 w-4.5" />
                             </div>
-                            <span className="text-sm font-bold">הפעלת התראות</span>
+                            <span className="text-xs sm:text-sm font-bold">הפעלת התראות</span>
                         </div>
                         <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--studio-muted)]" />
                     </button>
@@ -402,15 +402,15 @@ export default function ProfileClient({ initialProfile, initialHealth }: Profile
                     <button
                         type="button"
                         onClick={handleLogout}
-                        className="mt-7 flex min-h-14 w-full items-center justify-center gap-2 rounded-full border border-[var(--studio-danger)]/25 bg-[var(--studio-danger)]/10 px-4 text-sm font-bold text-[var(--studio-danger)] transition-colors active:bg-[var(--studio-danger)]/20"
+                        className="mt-2.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--studio-danger)]/25 bg-[var(--studio-danger)]/10 px-4 text-xs sm:text-sm font-bold text-[var(--studio-danger)] transition-colors active:bg-[var(--studio-danger)]/20 active:scale-[0.99]"
                     >
                         <LogOut aria-hidden="true" className="h-4 w-4" />
                         התנתקות
                     </button>
                 </section>
 
-                <LegalLinks className="mt-8" />
-                <p className="mt-2 text-center text-xs text-[var(--studio-muted)]">סטודיו טליה</p>
+                <LegalLinks className="mt-2.5" />
+                <p className="mt-1 text-center text-[11px] text-[var(--studio-muted)]">סטודיו טליה</p>
             </main>
         </div>
     );
