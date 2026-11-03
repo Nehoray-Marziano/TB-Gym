@@ -46,11 +46,13 @@ export function useMemberNavigation(pathname: string) {
         };
         const checkEnvironment = () => {
             frame = 0;
-            // Pure DOM selector checks without getClientRects/getComputedStyle to avoid forced reflow
             const modal = document.body.classList.contains("studio-modal-active") ||
                 document.documentElement.classList.contains("studio-modal-active") ||
-                Boolean(document.querySelector("dialog:modal, dialog[open]")) ||
-                Boolean(document.querySelector('[aria-modal="true"][role="dialog"]:not([hidden]), [aria-modal="true"][role="alertdialog"]:not([hidden])'));
+                Boolean(document.querySelector("dialog:modal")) ||
+                [...document.querySelectorAll('[aria-modal="true"][role="dialog"], [aria-modal="true"][role="alertdialog"]')].some(element =>
+                    !element.closest('[hidden], [aria-hidden="true"]') &&
+                    element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden"
+                );
             const viewport = window.visualViewport;
             const keyboard = viewport && viewport.scale === 1 && window.innerHeight - viewport.height > 150;
             const nextSuppressed = Boolean(modal || isEditing(document.activeElement) || keyboard);
@@ -121,14 +123,7 @@ export function useMemberNavigation(pathname: string) {
         const observer = new MutationObserver(records => {
             // Streaming/loading/error states can replace the route scroller
             // without changing the pathname. Seed it before the first gesture.
-            let hasChildChange = false;
-            for (let i = 0; i < records.length; i++) {
-                if (records[i].type === "childList") {
-                    hasChildChange = true;
-                    break;
-                }
-            }
-            if (hasChildChange) {
+            if (records.some(record => record.type === "childList")) {
                 const owner = nav.closest(".studio-app-shell")?.querySelector<HTMLElement>("[data-member-scroll]") ?? null;
                 if (owner !== scrollTarget && (owner || !scrollTarget?.isConnected)) {
                     scrollTarget = owner;

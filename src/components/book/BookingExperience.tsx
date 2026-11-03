@@ -71,47 +71,10 @@ export default function BookingExperience({
     const tickets = previewTickets !== undefined ? previewTickets : storeTickets;
     const subscription = previewSubscription !== undefined ? previewSubscription : storeSubscription;
 
-    const [sessions, setSessions] = useState<Session[]>(() => {
-        if (previewSessions !== undefined) return previewSessions;
-        if (typeof window === "undefined" || !userId) return [];
-        try {
-            const cached = sessionCache.getItem(`talia_sessions_${userId}`);
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                if (
-                    Array.isArray(parsed) &&
-                    parsed.length > 0 &&
-                    !parsed.some(
-                        (item) => !item || typeof item.id !== "string" || typeof item.start_time !== "string"
-                    )
-                ) {
-                    return parsed;
-                }
-            }
-        } catch {}
-        return [];
-    });
-    const [loading, setLoading] = useState(() => {
-        if (previewLoading !== undefined) return previewLoading;
-        if (previewSessions !== undefined) return false;
-        if (typeof window === "undefined" || !userId) return true;
-        try {
-            const cached = sessionCache.getItem(`talia_sessions_${userId}`);
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                if (
-                    Array.isArray(parsed) &&
-                    parsed.length > 0 &&
-                    !parsed.some(
-                        (item) => !item || typeof item.id !== "string" || typeof item.start_time !== "string"
-                    )
-                ) {
-                    return false;
-                }
-            }
-        } catch {}
-        return true;
-    });
+    const [sessions, setSessions] = useState<Session[]>(previewSessions ?? []);
+    const [loading, setLoading] = useState(
+        previewLoading !== undefined ? previewLoading : previewSessions === undefined
+    );
     const [refreshing, setRefreshing] = useState(false);
     const [bookingId, setBookingId] = useState<string | null>(null);
     const [loadError, setLoadError] = useState(false);

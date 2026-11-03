@@ -48,16 +48,16 @@ export default function InstallAppButton({ home = false }: { home?: boolean }) {
                 <button
                     type="button"
                     onClick={handleClick}
-                    className={`flex ${home ? "min-h-16 rounded-[22px] px-5" : "min-h-[3.25rem] rounded-[1.25rem] px-4 py-2"} w-full items-center gap-3.5 border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] text-start shadow-[0_4px_16px_-6px_rgba(22,34,24,0.05)] transition-all hover:border-[var(--studio-brand)]/40 active:bg-[var(--studio-accent-bg)]/20 active:scale-[0.99]`}
+                    className="flex min-h-16 w-full items-center gap-3.5 rounded-[22px] border border-[var(--studio-ink)]/10 bg-[var(--studio-card)] px-5 text-start shadow-[0_4px_16px_-6px_rgba(22,34,24,0.05)] transition-all hover:border-[var(--studio-brand)]/40 active:bg-[var(--studio-accent-bg)]/20 active:scale-[0.99]"
                 >
-                    <span className={`flex ${home ? "h-11 w-11 rounded-2xl" : "h-9 w-9 rounded-xl"} shrink-0 items-center justify-center bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] shadow-sm`}>
-                        <Download aria-hidden="true" className="h-4.5 w-4.5" />
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--studio-accent-bg)] text-[var(--studio-ink)] shadow-sm">
+                        <Download aria-hidden="true" className="h-5 w-5" />
                     </span>
                     <span className="min-w-0 flex-1">
-                        <span className="block text-xs sm:text-sm font-bold text-[var(--studio-ink)]">
+                        <span className="block text-sm font-bold text-[var(--studio-ink)]">
                             {home ? "הסטודיו איתך, בלחיצה אחת" : "להוסיף למסך הבית"}
                         </span>
-                        <span className="mt-0.5 block text-[11px] text-[var(--studio-muted)]">
+                        <span className="mt-0.5 block text-xs text-[var(--studio-muted)]">
                             {home ? "הוסיפי למסך הבית לחוויה המהירה והנוחה ביותר" : "כניסה מהירה בלי לפתוח דפדפן"}
                         </span>
                     </span>
